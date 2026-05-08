@@ -63,6 +63,8 @@ fun TDTaskCardWithCheckbox(
     categoryStripeColor: Color? = null,
     locationLabel: String? = null,
     onLocationClick: (() -> Unit)? = null,
+    isOverdue: Boolean = false,
+    overdueLabel: String? = null,
 ) {
     var showConfetti by remember { mutableStateOf(false) }
     var prevChecked by remember { mutableStateOf(isChecked) }
@@ -165,9 +167,37 @@ fun TDTaskCardWithCheckbox(
                         ),
                     )
                 }
-                if (!categoryLabel.isNullOrBlank() || !locationLabel.isNullOrBlank()) {
+                val showOverdueChip = isOverdue && !isChecked && !overdueLabel.isNullOrBlank()
+                if (showOverdueChip || !categoryLabel.isNullOrBlank() || !locationLabel.isNullOrBlank()) {
                     Spacer(Modifier.height(6.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (showOverdueChip) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .background(
+                                        color = TDTheme.colors.crossRed,
+                                        shape = RoundedCornerShape(8.dp),
+                                    )
+                                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_warning),
+                                    contentDescription = null,
+                                    tint = TDTheme.colors.background,
+                                    modifier = Modifier.size(12.dp),
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                TDText(
+                                    text = overdueLabel!!,
+                                    color = TDTheme.colors.background,
+                                    style = TDTheme.typography.subheading2,
+                                )
+                            }
+                            if (!categoryLabel.isNullOrBlank() || !locationLabel.isNullOrBlank()) {
+                                Spacer(Modifier.width(6.dp))
+                            }
+                        }
                         if (!categoryLabel.isNullOrBlank()) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -313,6 +343,20 @@ private fun TDTaskCheckBox(
             )
         }
     }
+}
+
+@TDPreviewForm
+@Composable
+private fun TDTaskCardOverduePreview() {
+    TDTaskCardWithCheckbox(
+        isChecked = false,
+        taskText = "Buy a cat food",
+        taskDescription = "1kg",
+        onCheckBoxClick = {},
+        isOverdue = true,
+        overdueLabel = "Gecikti",
+        categoryLabel = "Shopping",
+    )
 }
 
 @TDPreviewForm

@@ -59,7 +59,7 @@
     <string name="weekday_abbr_tue">Sal</string>
     <string name="weekday_abbr_wed">Çar</string>
     <string name="weekday_abbr_thu">Per</string>
-    <string name="weekday_abbr_fri">Cum</string>
+    <string name="weekday_abbr_fri">Cu</string>
     <string name="weekday_abbr_sat">Cmt</string>
     <string name="weekday_abbr_sun">Paz</string>
 </resources>

@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import com.example.uikit.R
 import com.todoapp.mobile.common.maskDescription
 import com.todoapp.mobile.common.maskTitle
+import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.ui.common.rememberOpenLocation
 import com.todoapp.uikit.components.TDTaskCardWithCheckbox
@@ -74,6 +75,8 @@ fun HomeTaskList(
     headerContent: LazyListScope.() -> Unit = {},
 ) {
     val isAnyDragging = reorderableLazyListState.isAnyItemDragging
+    val today = java.time.LocalDate.now()
+    val overdueLabel = stringResource(com.todoapp.mobile.R.string.status_overdue)
     LazyColumn(
         modifier = modifier,
         state = lazyListState,
@@ -134,6 +137,9 @@ fun HomeTaskList(
                 items = tasks,
                 key = { _, task -> task.id },
             ) { index, task ->
+                val isOverdue = !task.isCompleted &&
+                    task.recurrence == Recurrence.NONE &&
+                    task.date.isBefore(today)
                 ReorderableItem(
                     state = reorderableLazyListState,
                     key = task.id,
@@ -210,14 +216,14 @@ fun HomeTaskList(
                         ) {
                             val firstPhoto = task.photoUrls.firstOrNull()
                             if (firstPhoto != null) {
-                                androidx.compose.foundation.layout.Column(
+                                Column(
                                     modifier =
                                     Modifier
                                         .fillMaxWidth()
                                         .clip(
                                             androidx.compose.foundation.shape
                                                 .RoundedCornerShape(12.dp),
-                                        ).background(com.todoapp.uikit.theme.TDTheme.colors.lightPending),
+                                        ).background(TDTheme.colors.lightPending),
                                 ) {
                                     SecretOrNormalPhotoBanner(
                                         url =
@@ -243,16 +249,18 @@ fun HomeTaskList(
                                         isDragging = isDragging,
                                         isAnyDragging = isAnyDragging,
                                         shape =
-                                        androidx.compose.foundation.shape.RoundedCornerShape(
-                                            topStart = 0.dp,
-                                            topEnd = 0.dp,
-                                            bottomStart = 12.dp,
-                                            bottomEnd = 12.dp,
-                                        ),
+                                            RoundedCornerShape(
+                                                topStart = 0.dp,
+                                                topEnd = 0.dp,
+                                                bottomStart = 12.dp,
+                                                bottomEnd = 12.dp,
+                                            ),
                                         categoryLabel = categoryLabelFor(task),
                                         categoryIcon = categoryIconFor(task.category),
                                         locationLabel = task.locationName,
                                         onLocationClick = openLocation,
+                                        isOverdue = isOverdue,
+                                        overdueLabel = overdueLabel,
                                     )
                                 }
                             } else {
@@ -273,6 +281,8 @@ fun HomeTaskList(
                                     categoryIcon = categoryIconFor(task.category),
                                     locationLabel = task.locationName,
                                     onLocationClick = openLocation,
+                                    isOverdue = isOverdue,
+                                    overdueLabel = overdueLabel,
                                 )
                             }
                         }
@@ -326,8 +336,8 @@ internal fun HomeSwipeDismissBackground(direction: SwipeToDismissBoxValue) {
     }
 }
 
-@androidx.compose.runtime.Composable
-private fun categoryLabelFor(task: com.todoapp.mobile.domain.model.Task): String? {
+@Composable
+private fun categoryLabelFor(task: Task): String? {
     val categoryText = categoryDisplayText(task)
     val recurrenceText = recurrenceDisplayText(task.recurrence)
     return when {
@@ -338,8 +348,8 @@ private fun categoryLabelFor(task: com.todoapp.mobile.domain.model.Task): String
     }
 }
 
-@androidx.compose.runtime.Composable
-private fun categoryDisplayText(task: com.todoapp.mobile.domain.model.Task): String? {
+@Composable
+private fun categoryDisplayText(task: Task): String? {
     val category = task.category
     if (category == com.todoapp.mobile.domain.model.TaskCategory.PERSONAL) return null
     if (category == com.todoapp.mobile.domain.model.TaskCategory.OTHER) {
@@ -362,22 +372,22 @@ private fun categoryDisplayText(task: com.todoapp.mobile.domain.model.Task): Str
 
 @androidx.annotation.DrawableRes
 private fun categoryIconFor(category: com.todoapp.mobile.domain.model.TaskCategory): Int? = when (category) {
-    com.todoapp.mobile.domain.model.TaskCategory.SHOPPING -> com.example.uikit.R.drawable.ic_shopping_label
-    com.todoapp.mobile.domain.model.TaskCategory.MEDICINE -> com.example.uikit.R.drawable.ic_medication_label
-    com.todoapp.mobile.domain.model.TaskCategory.HEALTH -> com.example.uikit.R.drawable.ic_health_label
-    com.todoapp.mobile.domain.model.TaskCategory.WORK -> com.example.uikit.R.drawable.ic_work_label
-    com.todoapp.mobile.domain.model.TaskCategory.STUDY -> com.example.uikit.R.drawable.ic_study_label
-    com.todoapp.mobile.domain.model.TaskCategory.BIRTHDAY -> com.example.uikit.R.drawable.ic_birthday_label
+    com.todoapp.mobile.domain.model.TaskCategory.SHOPPING -> R.drawable.ic_shopping_label
+    com.todoapp.mobile.domain.model.TaskCategory.MEDICINE -> R.drawable.ic_medication_label
+    com.todoapp.mobile.domain.model.TaskCategory.HEALTH -> R.drawable.ic_health_label
+    com.todoapp.mobile.domain.model.TaskCategory.WORK -> R.drawable.ic_work_label
+    com.todoapp.mobile.domain.model.TaskCategory.STUDY -> R.drawable.ic_study_label
+    com.todoapp.mobile.domain.model.TaskCategory.BIRTHDAY -> R.drawable.ic_birthday_label
     com.todoapp.mobile.domain.model.TaskCategory.PERSONAL,
     com.todoapp.mobile.domain.model.TaskCategory.OTHER,
     -> null
 }
 
-@androidx.compose.runtime.Composable
-private fun recurrenceDisplayText(recurrence: com.todoapp.mobile.domain.model.Recurrence): String? = when (recurrence) {
-    com.todoapp.mobile.domain.model.Recurrence.NONE -> null
-    com.todoapp.mobile.domain.model.Recurrence.DAILY -> stringResource(com.todoapp.mobile.R.string.recurrence_daily)
-    com.todoapp.mobile.domain.model.Recurrence.WEEKLY -> stringResource(com.todoapp.mobile.R.string.recurrence_weekly)
-    com.todoapp.mobile.domain.model.Recurrence.MONTHLY -> stringResource(com.todoapp.mobile.R.string.recurrence_monthly)
-    com.todoapp.mobile.domain.model.Recurrence.YEARLY -> stringResource(com.todoapp.mobile.R.string.recurrence_yearly)
+@Composable
+private fun recurrenceDisplayText(recurrence: Recurrence): String? = when (recurrence) {
+    Recurrence.NONE -> null
+    Recurrence.DAILY -> stringResource(com.todoapp.mobile.R.string.recurrence_daily)
+    Recurrence.WEEKLY -> stringResource(com.todoapp.mobile.R.string.recurrence_weekly)
+    Recurrence.MONTHLY -> stringResource(com.todoapp.mobile.R.string.recurrence_monthly)
+    Recurrence.YEARLY -> stringResource(com.todoapp.mobile.R.string.recurrence_yearly)
 }
