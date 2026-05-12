@@ -519,19 +519,30 @@ private fun HomeSuggestCard(
     )
     val body = when {
         isMorning ->
-            stringResource(com.todoapp.mobile.R.string.donebot_suggest_morning_body_format, yesterdayCompleted)
+            if (yesterdayCompleted == 0) {
+                stringResource(com.todoapp.mobile.R.string.donebot_suggest_morning_body_zero)
+            } else {
+                stringResource(com.todoapp.mobile.R.string.donebot_suggest_morning_body_format, yesterdayCompleted)
+            }
 
         isEveningAllDone ->
             stringResource(com.todoapp.mobile.R.string.donebot_suggest_evening_all_done_body_format, completedCount)
 
         else -> {
             val total = pendingCount + completedCount
-            stringResource(
-                com.todoapp.mobile.R.string.donebot_suggest_evening_body_format,
-                completedCount,
-                total,
-                pendingCount,
-            )
+            if (completedCount == 0) {
+                stringResource(
+                    com.todoapp.mobile.R.string.donebot_suggest_evening_body_none_done_format,
+                    pendingCount,
+                )
+            } else {
+                stringResource(
+                    com.todoapp.mobile.R.string.donebot_suggest_evening_body_format,
+                    completedCount,
+                    total,
+                    pendingCount,
+                )
+            }
         }
     }
     val primaryCta = stringResource(
@@ -772,6 +783,26 @@ private fun HomeContentMorningSuggestPreview() {
 
 @com.todoapp.uikit.previews.TDPreview
 @Composable
+private fun HomeContentMorningSuggestZeroPreview() {
+    TDTheme {
+        HomeContent(
+            uiState =
+            HomePreviewData.successState(
+                tasks = HomePreviewData.sampleTasks,
+                completedTaskCountThisWeek = 5,
+                pendingTaskCountThisWeek = 8,
+                displayName = "Berat",
+                dayMode = com.todoapp.mobile.domain.model.DayMode.MORNING,
+                yesterdayCompletedCount = 0,
+            ),
+            onAction = {},
+            modifier = Modifier.padding(horizontal = 24.dp),
+        )
+    }
+}
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
 private fun HomeContentEveningSuggestPreview() {
     TDTheme {
         HomeContent(
@@ -782,6 +813,27 @@ private fun HomeContentEveningSuggestPreview() {
                 pendingTaskCountThisWeek = 8,
                 displayName = "Berat",
                 dayMode = com.todoapp.mobile.domain.model.DayMode.EVENING,
+                isEndOfDayMoment = true,
+            ),
+            onAction = {},
+            modifier = Modifier.padding(horizontal = 24.dp),
+        )
+    }
+}
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun HomeContentEveningSuggestNoneDonePreview() {
+    TDTheme {
+        HomeContent(
+            uiState =
+            HomePreviewData.successState(
+                tasks = HomePreviewData.sampleTasks.map { it.copy(isCompleted = false) },
+                completedTaskCountThisWeek = 0,
+                pendingTaskCountThisWeek = 8,
+                displayName = "Berat",
+                dayMode = com.todoapp.mobile.domain.model.DayMode.EVENING,
+                isEndOfDayMoment = true,
             ),
             onAction = {},
             modifier = Modifier.padding(horizontal = 24.dp),

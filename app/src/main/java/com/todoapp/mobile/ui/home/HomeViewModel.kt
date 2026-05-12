@@ -761,7 +761,15 @@ constructor(
         val state = _uiState.value as? UiState.Success ?: return
         when (state.dayMode) {
             com.todoapp.mobile.domain.model.DayMode.MORNING -> {
-                _navEffect.trySend(NavigationEffect.Navigate(Screen.Chat))
+                _navEffect.trySend(
+                    NavigationEffect.Navigate(
+                        route = Screen.Chat,
+                        popUpTo = Screen.Home,
+                        saveState = true,
+                        launchSingleTop = true,
+                        restoreState = true,
+                    ),
+                )
             }
             com.todoapp.mobile.domain.model.DayMode.EVENING,
             com.todoapp.mobile.domain.model.DayMode.NIGHT -> {

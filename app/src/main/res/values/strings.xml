@@ -492,6 +492,8 @@
     <string name="settings_section_accessibility">Accessibility</string>
     <string name="settings_section_about">About</string>
     <string name="settings_section_danger_zone">Danger Zone</string>
+    <string name="settings_profile_subtitle_no_email">No email</string>
+    <string name="settings_profile_avatar_content_description">Profile picture</string>
     <string name="settings_privacy_policy">Privacy Policy</string>
     <string name="settings_terms_of_service">Terms of Service</string>
     <string name="settings_delete_account">Delete Account</string>
@@ -827,9 +829,11 @@
     <!-- Home — suggest card (kept) -->
     <string name="donebot_suggest_morning_title">Ready for today?</string>
     <string name="donebot_suggest_morning_body_format">You finished %1$d tasks yesterday. Want to plan today together?</string>
+    <string name="donebot_suggest_morning_body_zero">You didn\'t complete any tasks yesterday. Ready to start fresh today?</string>
     <string name="donebot_suggest_morning_cta">See suggestions</string>
     <string name="donebot_suggest_evening_title">Time to wrap up</string>
     <string name="donebot_suggest_evening_body_format">%1$d of %2$d done. What about the remaining %3$d?</string>
+    <string name="donebot_suggest_evening_body_none_done_format">No tasks done yet today. What about the remaining %1$d?</string>
     <string name="donebot_suggest_evening_cta_primary">Move to tomorrow</string>
     <string name="donebot_suggest_evening_cta_secondary">Leave as is</string>
     <string name="donebot_suggest_evening_all_done_title">All done! 🎉</string>

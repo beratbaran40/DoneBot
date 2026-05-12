@@ -493,6 +493,8 @@
     <string name="settings_section_accessibility">Erişilebilirlik</string>
     <string name="settings_section_about">Hakkında</string>
     <string name="settings_section_danger_zone">Tehlikeli Alan</string>
+    <string name="settings_profile_subtitle_no_email">E-posta yok</string>
+    <string name="settings_profile_avatar_content_description">Profil fotoğrafı</string>
     <string name="settings_privacy_policy">Gizlilik Politikası</string>
     <string name="settings_terms_of_service">Kullanım Koşulları</string>
     <string name="settings_delete_account">Hesabı Sil</string>
@@ -828,9 +830,11 @@
 <!-- Home — suggest card (kept) -->
     <string name="donebot_suggest_morning_title">Bugüne hazır mısın?</string>
     <string name="donebot_suggest_morning_body_format">Dün %1$d görev tamamladın. Bugüne plan kurmak ister misin?</string>
+    <string name="donebot_suggest_morning_body_zero">Dün hiç görev tamamlamadın. Bugüne taze bir başlangıç yapalım mı?</string>
     <string name="donebot_suggest_morning_cta">Önerileri gör</string>
     <string name="donebot_suggest_evening_title">Bugünü kapatma vakti</string>
     <string name="donebot_suggest_evening_body_format">%1$d/%2$d görev tamamlandı. Kalan %3$d göreve ne yapalım?</string>
+    <string name="donebot_suggest_evening_body_none_done_format">Bugün henüz görev tamamlamadın. Kalan %1$d göreve ne yapalım?</string>
     <string name="donebot_suggest_evening_cta_primary">Yarına aktar</string>
     <string name="donebot_suggest_evening_cta_secondary">Olduğu gibi bırak</string>
     <string name="donebot_suggest_evening_all_done_title">Süpersin! 🎉</string>
