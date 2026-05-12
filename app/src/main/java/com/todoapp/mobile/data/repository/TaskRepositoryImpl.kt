@@ -391,7 +391,18 @@ constructor(
         id: Long,
         isCompleted: Boolean,
     ) = withContext(Dispatchers.IO) {
-        localDataSource.updateTaskCompletion(id, isCompleted)
+        val current = localDataSource.getTaskById(id) ?: return@withContext
+        if (current.isCompleted == isCompleted) return@withContext
+        // SYNCED rows must flip to PENDING_UPDATE so SyncWorker pushes the change; otherwise
+        // the next syncRemoteTasksWithLocal reconcile sees the local row as in-sync, compares
+        // it to the (still-uncompleted) server row, and overwrites the user's checkbox.
+        // PENDING_CREATE/UPDATE/DELETE must NOT be downgraded — SyncWorker pipeline expects
+        // those states to be processed in order.
+        val nextSyncStatus = when (current.syncStatus) {
+            SyncStatus.SYNCED -> SyncStatus.PENDING_UPDATE
+            else -> current.syncStatus
+        }
+        localDataSource.update(current.copy(isCompleted = isCompleted, syncStatus = nextSyncStatus))
     }
 
     override suspend fun getTaskById(id: Long): Task? = withContext(Dispatchers.IO) {
