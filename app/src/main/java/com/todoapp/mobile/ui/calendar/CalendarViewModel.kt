@@ -19,6 +19,7 @@ import com.todoapp.mobile.domain.repository.TaskRepository
 import com.todoapp.mobile.domain.repository.TaskSyncRepository
 import com.todoapp.mobile.domain.security.SecretModeConditionFactory
 import com.todoapp.mobile.domain.security.SecretModeReopenOptions
+import com.todoapp.mobile.domain.usecase.ObserveOverdueSummaryUseCase
 import com.todoapp.mobile.navigation.NavigationEffect
 import com.todoapp.mobile.navigation.Screen
 import com.todoapp.mobile.ui.calendar.CalendarContract.GroupTaskCalendarItem
@@ -48,6 +49,7 @@ import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.ZoneId
 import javax.inject.Inject
 
@@ -61,6 +63,8 @@ constructor(
     private val secretModePreferences: SecretPreferences,
     private val alarmScheduler: AlarmScheduler,
     private val pomodoroEngine: PomodoroEngine,
+    private val observeOverdueSummary: ObserveOverdueSummaryUseCase,
+    private val clock: Clock,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<UiState>(UiState.Success())
     val uiState = _uiState.asStateFlow()
@@ -75,8 +79,10 @@ constructor(
 
     init {
         taskSyncRepository.fetchTasks(force = true)
+        seedInitialOverdue()
         syncTasksWithSelectedDate()
         syncTaskDatesForMonth()
+        setupOverdueFlow()
     }
 
     fun onAction(uiAction: UiAction) {
@@ -85,14 +91,20 @@ constructor(
             is UiAction.OnDateSelect -> updateDate(uiAction)
             is UiAction.OnMonthForward ->
                 updateSuccessState {
+                    val newMonth = it.selectedMonth.plusMonths(1)
                     it.copy(
-                        selectedMonth = it.selectedMonth.plusMonths(1),
+                        selectedMonth = newMonth,
+                        hasOverdueBeforeDisplayedMonth =
+                        it.overdueDates.any { d -> d.isBefore(newMonth.atDay(1)) },
                     )
                 }
             is UiAction.OnMonthBack ->
                 updateSuccessState {
+                    val newMonth = it.selectedMonth.minusMonths(1)
                     it.copy(
-                        selectedMonth = it.selectedMonth.minusMonths(1),
+                        selectedMonth = newMonth,
+                        hasOverdueBeforeDisplayedMonth =
+                        it.overdueDates.any { d -> d.isBefore(newMonth.atDay(1)) },
                     )
                 }
             is UiAction.OnRetry -> retry()
@@ -145,6 +157,8 @@ constructor(
                 _navEffect.trySend(
                     NavigationEffect.Navigate(Screen.GroupTaskDetail(uiAction.groupId, uiAction.taskId)),
                 )
+            is UiAction.OnJumpToEarliestOverdue -> jumpToEarliestOverdue()
+            is UiAction.OnJournalTap -> _navEffect.trySend(NavigationEffect.Navigate(Screen.Journal))
         }
     }
 
@@ -351,7 +365,70 @@ constructor(
     }
 
     private fun updateDate(uiAction: UiAction.OnDateSelect) {
-        updateSuccessState { it.copy(selectedDate = uiAction.date) }
+        val newMonth = YearMonth.from(uiAction.date)
+        updateSuccessState {
+            it.copy(
+                selectedDate = uiAction.date,
+                selectedMonth = newMonth,
+                hasOverdueBeforeDisplayedMonth =
+                it.overdueDates.any { d -> d.isBefore(newMonth.atDay(1)) },
+            )
+        }
+    }
+
+    private fun jumpToEarliestOverdue() {
+        val state = _uiState.value as? UiState.Success ?: return
+        val earliest = state.overdueDates.minOrNull() ?: return
+        val newMonth = YearMonth.from(earliest)
+        updateSuccessState {
+            it.copy(
+                selectedDate = earliest,
+                selectedMonth = newMonth,
+                hasOverdueBeforeDisplayedMonth =
+                it.overdueDates.any { d -> d.isBefore(newMonth.atDay(1)) },
+            )
+        }
+    }
+
+    private fun seedInitialOverdue() {
+        viewModelScope.launch {
+            val today = LocalDate.now(clock)
+            val summary = observeOverdueSummary(today).first()
+            updateSuccessState { state ->
+                val firstOfDisplayed = state.selectedMonth.atDay(1)
+                state.copy(
+                    overdueDates = summary.dates,
+                    hasOverdueBeforeDisplayedMonth =
+                    summary.dates.any { it.isBefore(firstOfDisplayed) },
+                    overdueCount = summary.count,
+                )
+            }
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun setupOverdueFlow() {
+        viewModelScope.launch {
+            kotlinx.coroutines.flow.flow {
+                while (true) {
+                    emit(LocalDate.now(clock))
+                    delay(OVERDUE_TICK_MILLIS)
+                }
+            }
+                .distinctUntilChanged()
+                .flatMapLatest { today -> observeOverdueSummary(today) }
+                .collect { summary ->
+                    updateSuccessState { state ->
+                        val firstOfDisplayed = state.selectedMonth.atDay(1)
+                        state.copy(
+                            overdueDates = summary.dates,
+                            hasOverdueBeforeDisplayedMonth =
+                            summary.dates.any { it.isBefore(firstOfDisplayed) },
+                            overdueCount = summary.count,
+                        )
+                    }
+                }
+        }
     }
 
     private fun mapPersonalTasks(personalTasks: List<Task>): List<PersonalTaskCalendarItem> = personalTasks.map { task ->
@@ -446,5 +523,6 @@ constructor(
 
     companion object {
         private val DEFAULT_REMINDER_MINUTES = listOf(0L, 1L, 2L, 5L, 10L)
+        private const val OVERDUE_TICK_MILLIS = 60_000L
     }
 }

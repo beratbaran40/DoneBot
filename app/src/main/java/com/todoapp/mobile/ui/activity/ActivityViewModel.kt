@@ -13,6 +13,7 @@ import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.domain.model.toAlarmItem
 import com.todoapp.mobile.domain.repository.ActivityPreferences
 import com.todoapp.mobile.domain.repository.TaskRepository
+import com.todoapp.mobile.domain.usecase.ObserveOverdueSummaryUseCase
 import com.todoapp.mobile.navigation.NavigationEffect
 import com.todoapp.mobile.navigation.Screen
 import com.todoapp.mobile.ui.activity.ActivityContract.BestDay
@@ -51,6 +52,7 @@ constructor(
     private val alarmScheduler: AlarmScheduler,
     private val pomodoroEngine: PomodoroEngine,
     private val activityPreferences: ActivityPreferences,
+    private val observeOverdueSummary: ObserveOverdueSummaryUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState = _uiState.asStateFlow()
@@ -66,19 +68,32 @@ constructor(
     private val selectedMonthFlow = MutableStateFlow(YearMonth.from(today))
     private val slideDirectionFlow = MutableStateFlow(0)
     private val expandedWeekFlow = MutableStateFlow<Int?>(null)
+    private val overdueCountFlow = MutableStateFlow(0)
 
     init {
+        viewModelScope.launch {
+            observeOverdueSummary(today).collect { summary ->
+                overdueCountFlow.value = summary.count
+            }
+        }
         viewModelScope.launch {
             combine(
                 selectedMonthFlow,
                 activityPreferences.observeIncludeRecurring(),
                 slideDirectionFlow,
                 expandedWeekFlow,
-            ) { month, include, direction, expanded ->
-                StateInputs(month, include, direction, expanded)
+                overdueCountFlow,
+            ) { month, include, direction, expanded, overdueCount ->
+                StateInputs(month, include, direction, expanded, overdueCount)
             }
                 .flatMapLatest { inputs ->
-                    buildSuccessState(inputs.month, inputs.include, inputs.direction, inputs.expandedWeek)
+                    buildSuccessState(
+                        inputs.month,
+                        inputs.include,
+                        inputs.direction,
+                        inputs.expandedWeek,
+                        inputs.overdueCount,
+                    )
                 }
                 .catch { e -> _uiState.value = UiState.Error(e.message ?: "Unknown Error", e) }
                 .collect { _uiState.value = it }
@@ -90,6 +105,7 @@ constructor(
         val include: Boolean,
         val direction: Int,
         val expandedWeek: Int?,
+        val overdueCount: Int,
     )
 
     private fun buildSuccessState(
@@ -97,6 +113,7 @@ constructor(
         includeRecurring: Boolean,
         slideDirection: Int,
         expandedWeekIndex: Int?,
+        overdueCount: Int,
     ): Flow<UiState.Success> {
         val monthStart = selectedMonth.atDay(1)
         val monthEnd = selectedMonth.atEndOfMonth()
@@ -157,6 +174,7 @@ constructor(
                 expandedWeekIndex = expandedWeekIndex,
                 isSheetOpen = if (current is UiState.Success) current.isSheetOpen else false,
                 taskFormState = if (current is UiState.Success) current.taskFormState else TaskFormState(),
+                overdueCount = overdueCount,
             )
         }
 
@@ -301,6 +319,8 @@ constructor(
             UiAction.OnPendingStatCardTap -> navigateToFilteredTasks(isCompleted = false)
             is UiAction.OnToggleIncludeRecurring ->
                 viewModelScope.launch { activityPreferences.setIncludeRecurring(action.include) }
+            UiAction.OnViewOverdue -> _navEffect.trySend(NavigationEffect.Navigate(Screen.Calendar))
+            UiAction.OnJournalTap -> _navEffect.trySend(NavigationEffect.Navigate(Screen.Journal))
         }
     }
 

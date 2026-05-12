@@ -87,10 +87,13 @@ constructor(
     private var fetchJob: Job? = null
     private var pendingDeleteJob: Job? = null
 
+    private val displayedMonthFlow = MutableStateFlow(YearMonth.now(clock))
+
     init {
         taskSyncRepository.fetchTasks()
         loadInitialData()
         setupAuxiliaryFlows()
+        setupTaskDatesFlow()
     }
 
     override fun onCleared() {
@@ -136,6 +139,7 @@ constructor(
             is UiAction.OnToggleAdvancedSettings -> toggleAdvancedSettings()
             is UiAction.OnTaskClick -> openTaskDetail(uiAction.task)
             is UiAction.OnPomodoroTap -> navigateToPomodoro()
+            is UiAction.OnJournalTap -> _navEffect.trySend(NavigationEffect.Navigate(Screen.Journal))
             is UiAction.OnCompletedStatCardTap -> navigateToFilteredTasks(isCompleted = true)
             is UiAction.OnPendingStatCardTap -> navigateToFilteredTasks(isCompleted = false)
             is UiAction.OnSuccessfulBiometricAuthenticationHandle -> handleSuccessfulBiometricAuthentication()
@@ -144,6 +148,7 @@ constructor(
             is UiAction.OnUndoDelete -> undoDelete()
             is UiAction.OnPreviousMonth -> navigateToPreviousMonth()
             is UiAction.OnNextMonth -> navigateToNextMonth()
+            is UiAction.OnJumpToEarliestOverdue -> jumpToEarliestOverdue()
             is UiAction.OnGroupSelectionChanged ->
                 updateSuccessState {
                     it.copy(taskFormState = it.taskFormState.copy(selectedGroupId = uiAction.groupId))
@@ -255,38 +260,44 @@ constructor(
         fetchJob =
             viewModelScope.launch {
                 delay(LOADING_DELAY)
-                val today = LocalDate.now()
-                val overdueFlow =
-                    if (date == today) {
-                        taskRepository.observeOverdueTasks(today)
-                    } else {
-                        kotlinx.coroutines.flow.flowOf(emptyList<Task>())
-                    }
                 combine(
                     taskRepository.observeTasksByDate(date, includeRecurringInstances = false),
                     taskRepository.observePendingTasksInAWeek(date),
                     taskRepository.countCompletedTasksInAWeek(date),
                     taskRepository.observeTaskPhotoUrls(),
-                    overdueFlow,
-                ) { tasks, pendingTaskCount, completedTaskCount, photoUrls, overdue ->
-                    val merged = overdue + tasks
+                ) { tasks, pendingTaskCount, completedTaskCount, photoUrls ->
                     val withPhotos =
-                        merged.map { t ->
+                        tasks.map { t ->
                             val urls = t.remoteId?.let { photoUrls[it] } ?: emptyList()
                             if (urls.isNotEmpty()) t.copy(photoUrls = urls) else t
                         }
                     timber.log.Timber.tag("TaskFetch").d(
-                        "Home tasks=${withPhotos.size} (overdue=${overdue.size}), with photos=${withPhotos.count { it.photoUrls.isNotEmpty() }}, " +
+                        "Home tasks=${withPhotos.size}, with photos=${withPhotos.count { it.photoUrls.isNotEmpty() }}, " +
                             "in-mem map size=${photoUrls.size}",
                     )
                     DailyData(withPhotos, pendingTaskCount, completedTaskCount)
                 }.collect { data ->
                     var becameSuccess = false
+                    val isFirstSuccess = _uiState.value !is UiState.Success
                     val initialDisplayName =
-                        if (_uiState.value !is UiState.Success) {
+                        if (isFirstSuccess) {
                             dataStoreHelper.observeUser().first()?.displayName.orEmpty()
                         } else {
                             ""
+                        }
+                    val initialOverdue =
+                        if (isFirstSuccess) {
+                            taskRepository.observeOverdueTasks(LocalDate.now(clock)).first()
+                        } else {
+                            emptyList()
+                        }
+                    val initialTaskDates =
+                        if (isFirstSuccess) {
+                            val ym = YearMonth.from(date)
+                            taskRepository.observeRange(ym.atDay(1), ym.atEndOfMonth()).first()
+                                .map { it.date }.toSet()
+                        } else {
+                            emptySet()
                         }
                     _uiState.update { current ->
                         when (current) {
@@ -299,7 +310,15 @@ constructor(
 
                             else -> {
                                 becameSuccess = true
-                                createInitialState(date, data, initialDisplayName)
+                                val dates = initialOverdue.map { it.date }.toSet()
+                                val firstOfDisplayed = YearMonth.from(date).atDay(1)
+                                createInitialState(date, data, initialDisplayName).copy(
+                                    overdueDates = dates,
+                                    hasOverdueBeforeDisplayedMonth =
+                                    dates.any { d -> d.isBefore(firstOfDisplayed) },
+                                    overdueCount = initialOverdue.size,
+                                    taskDatesInMonth = initialTaskDates,
+                                )
                             }
                         }
                     }
@@ -328,12 +347,16 @@ constructor(
     )
 
     private fun changeSelectedDate(uiAction: UiAction.OnDateSelect) {
+        val newMonth = YearMonth.from(uiAction.date)
+        val firstOfNew = newMonth.atDay(1)
         updateSuccessState {
             it.copy(
                 selectedDate = uiAction.date,
-                displayedMonth = YearMonth.from(uiAction.date),
+                displayedMonth = newMonth,
+                hasOverdueBeforeDisplayedMonth = it.overdueDates.any { d -> d.isBefore(firstOfNew) },
             )
         }
+        displayedMonthFlow.value = newMonth
         fetchDailyTask(uiAction.date)
     }
 
@@ -341,7 +364,15 @@ constructor(
         val current = _uiState.value as? UiState.Success ?: return
         val newMonth = current.displayedMonth.minusMonths(1)
         val newDate = newMonth.atDay(1)
-        updateSuccessState { it.copy(displayedMonth = newMonth, selectedDate = newDate) }
+        val firstOfNew = newMonth.atDay(1)
+        updateSuccessState {
+            it.copy(
+                displayedMonth = newMonth,
+                selectedDate = newDate,
+                hasOverdueBeforeDisplayedMonth = it.overdueDates.any { d -> d.isBefore(firstOfNew) },
+            )
+        }
+        displayedMonthFlow.value = newMonth
         fetchDailyTask(newDate)
     }
 
@@ -349,8 +380,45 @@ constructor(
         val current = _uiState.value as? UiState.Success ?: return
         val newMonth = current.displayedMonth.plusMonths(1)
         val newDate = if (newMonth == YearMonth.now()) LocalDate.now() else newMonth.atDay(1)
-        updateSuccessState { it.copy(displayedMonth = newMonth, selectedDate = newDate) }
+        val firstOfNew = newMonth.atDay(1)
+        updateSuccessState {
+            it.copy(
+                displayedMonth = newMonth,
+                selectedDate = newDate,
+                hasOverdueBeforeDisplayedMonth = it.overdueDates.any { d -> d.isBefore(firstOfNew) },
+            )
+        }
+        displayedMonthFlow.value = newMonth
         fetchDailyTask(newDate)
+    }
+
+    private fun jumpToEarliestOverdue() {
+        val state = _uiState.value as? UiState.Success ?: return
+        val earliest = state.overdueDates.minOrNull() ?: return
+        val newMonth = YearMonth.from(earliest)
+        val firstOfNew = newMonth.atDay(1)
+        updateSuccessState {
+            it.copy(
+                displayedMonth = newMonth,
+                selectedDate = earliest,
+                hasOverdueBeforeDisplayedMonth = it.overdueDates.any { d -> d.isBefore(firstOfNew) },
+            )
+        }
+        displayedMonthFlow.value = newMonth
+        fetchDailyTask(earliest)
+    }
+
+    private fun setupTaskDatesFlow() {
+        viewModelScope.launch {
+            displayedMonthFlow
+                .flatMapLatest { month ->
+                    taskRepository.observeRange(month.atDay(1), month.atEndOfMonth())
+                }
+                .collect { tasks ->
+                    val dates = tasks.map { it.date }.toSet()
+                    updateSuccessState { it.copy(taskDatesInMonth = dates) }
+                }
+        }
     }
 
     private fun createTask() {
@@ -665,6 +733,27 @@ constructor(
                 }
                 kotlinx.coroutines.delay(AUX_TICK_MILLIS)
             }
+        }
+        viewModelScope.launch {
+            kotlinx.coroutines.flow.flow {
+                while (true) {
+                    emit(LocalDate.now(clock))
+                    kotlinx.coroutines.delay(AUX_TICK_MILLIS)
+                }
+            }
+                .distinctUntilChanged()
+                .flatMapLatest { today -> taskRepository.observeOverdueTasks(today) }
+                .collect { overdue ->
+                    val dates = overdue.map { it.date }.toSet()
+                    updateSuccessState { state ->
+                        val firstOfDisplayed = state.displayedMonth.atDay(1)
+                        state.copy(
+                            overdueDates = dates,
+                            hasOverdueBeforeDisplayedMonth = dates.any { d -> d.isBefore(firstOfDisplayed) },
+                            overdueCount = overdue.size,
+                        )
+                    }
+                }
         }
     }
 

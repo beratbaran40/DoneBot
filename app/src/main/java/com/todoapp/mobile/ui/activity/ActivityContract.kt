@@ -61,6 +61,7 @@ object ActivityContract {
             val yearlyProgress: Float = 0f,
             val isSheetOpen: Boolean = false,
             val taskFormState: TaskFormState = TaskFormState(),
+            val overdueCount: Int = 0,
         ) : UiState
 
         data class Error(
@@ -125,6 +126,10 @@ object ActivityContract {
         data class OnToggleIncludeRecurring(
             val include: Boolean,
         ) : UiAction
+
+        data object OnViewOverdue : UiAction
+
+        data object OnJournalTap : UiAction
     }
 
     sealed interface UiEffect

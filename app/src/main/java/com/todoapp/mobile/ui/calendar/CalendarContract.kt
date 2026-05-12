@@ -20,6 +20,9 @@ object CalendarContract {
             val viewerPhotoUrl: String? = null,
             val isSheetOpen: Boolean = false,
             val taskFormState: TaskFormState = TaskFormState(),
+            val overdueDates: Set<LocalDate> = emptySet(),
+            val hasOverdueBeforeDisplayedMonth: Boolean = false,
+            val overdueCount: Int = 0,
         ) : UiState
 
         data class Error(
@@ -93,6 +96,10 @@ object CalendarContract {
             val groupId: Long,
             val taskId: Long,
         ) : UiAction
+
+        data object OnJumpToEarliestOverdue : UiAction
+
+        data object OnJournalTap : UiAction
     }
 
     @Immutable

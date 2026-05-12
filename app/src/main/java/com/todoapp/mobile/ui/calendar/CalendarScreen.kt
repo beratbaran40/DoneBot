@@ -36,6 +36,7 @@ import com.todoapp.mobile.ui.calendar.CalendarContract.PersonalTaskCalendarItem
 import com.todoapp.mobile.ui.calendar.CalendarContract.UiAction
 import com.todoapp.mobile.ui.calendar.CalendarContract.UiEffect
 import com.todoapp.mobile.ui.calendar.CalendarContract.UiState
+import com.todoapp.mobile.ui.common.components.OverdueBanner
 import com.todoapp.mobile.ui.home.AddTaskSheet
 import com.todoapp.mobile.ui.home.HomeFabMenu
 import com.todoapp.mobile.ui.home.TaskFormUiAction
@@ -163,6 +164,14 @@ private fun CalendarSuccessContent(
                     .background(color = TDTheme.colors.background),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                if (uiState.hasOverdueBeforeDisplayedMonth && uiState.overdueCount > 0) {
+                    item {
+                        OverdueBanner(
+                            count = uiState.overdueCount,
+                            onView = { onAction(UiAction.OnJumpToEarliestOverdue) },
+                        )
+                    }
+                }
                 item {
                     TDDatePicker(
                         selectedDate = uiState.selectedDate,
@@ -170,6 +179,8 @@ private fun CalendarSuccessContent(
                         onMonthForward = { onAction(UiAction.OnMonthForward) },
                         onMonthBack = { onAction(UiAction.OnMonthBack) },
                         taskDates = uiState.taskDatesInMonth,
+                        overdueDates = uiState.overdueDates,
+                        hasOverdueBeforeDisplayedMonth = uiState.hasOverdueBeforeDisplayedMonth,
                         onDaySelect = { onAction(UiAction.OnDateSelect(it)) },
                         onDayDeselect = { onAction(UiAction.OnDateDeselect) },
                     )
@@ -244,11 +255,12 @@ private fun CalendarSuccessContent(
             HomeFabMenu(
                 onAddTask = { onAction(UiAction.OnShowBottomSheet) },
                 onPomodoro = { onAction(UiAction.OnPomodoroTap) },
+                onJournal = { onAction(UiAction.OnJournalTap) },
             )
             val viewerUrl = uiState.viewerPhotoUrl
             if (!viewerUrl.isNullOrBlank()) {
                 TDFullscreenImageViewer(
-                    imageUrl = viewerUrl,
+                    model = viewerUrl,
                     onDismiss = { onAction(UiAction.OnGroupTaskPhotoDismiss) },
                 )
             }

@@ -50,6 +50,9 @@
     <string name="cd_toggle_password_visibility">Şifre görünürlüğünü değiştir</string>
     <string name="cd_add_task">Görev ekle</string>
     <string name="cd_expand_chart">Grafiği genişlet</string>
+    <string name="cd_day_has_overdue">Bu günde kalmış görev var</string>
+    <string name="cd_day_has_tasks">Bu günde görev var</string>
+    <string name="cd_prev_month_has_overdue">Önceki aylarda kalmış görev var</string>
     <!-- Priority badge labels for group tasks -->
     <string name="priority_badge_high">YÜKSEK</string>
     <string name="priority_badge_medium">ORTA</string>

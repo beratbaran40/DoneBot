@@ -834,6 +834,9 @@
     <string name="donebot_suggest_evening_all_done_body_format">You completed all %1$d tasks for today. Great work!</string>
     <string name="donebot_suggest_evening_all_done_cta">Got it</string>
     <string name="donebot_suggest_dismiss_cd">Dismiss</string>
+    <string name="overdue_summary_count_one">%1$d overdue task</string>
+    <string name="overdue_summary_count_other">%1$d overdue tasks</string>
+    <string name="overdue_summary_view">View</string>
     <!-- Journal (Günlük) feature -->
     <string name="nav_journal_title">Journal</string>
     <string name="fab_label_journal">Journal</string>

@@ -40,6 +40,10 @@ object HomeContract {
             val yesterdayCompletedCount: Int = 0,
             val currentTimeFormatted: String = "",
             val lastRecurringFilter: HomeFilter = HomeFilter.DAILY,
+            val overdueDates: Set<LocalDate> = emptySet(),
+            val hasOverdueBeforeDisplayedMonth: Boolean = false,
+            val overdueCount: Int = 0,
+            val taskDatesInMonth: Set<LocalDate> = emptySet(),
         ) : UiState
 
         data class Error(
@@ -199,6 +203,10 @@ object HomeContract {
         data object OnSuggestCardDismiss : UiAction
 
         data object OnTimeTick : UiAction
+
+        data object OnJumpToEarliestOverdue : UiAction
+
+        data object OnJournalTap : UiAction
     }
 
     enum class HomeFilter {

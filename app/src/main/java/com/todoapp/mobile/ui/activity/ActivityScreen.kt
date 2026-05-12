@@ -44,6 +44,7 @@ import com.todoapp.mobile.ui.activity.ActivityContract.MonthTrend
 import com.todoapp.mobile.ui.activity.ActivityContract.TrendDirection
 import com.todoapp.mobile.ui.activity.ActivityContract.UiAction
 import com.todoapp.mobile.ui.activity.ActivityContract.UiState
+import com.todoapp.mobile.ui.common.components.OverdueBanner
 import com.todoapp.mobile.ui.home.AddTaskSheet
 import com.todoapp.mobile.ui.home.HomeFabMenu
 import com.todoapp.mobile.ui.home.TaskFormUiAction
@@ -157,6 +158,14 @@ private fun ActivitySuccessContent(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
             ) {
+                if (uiState.overdueCount > 0) {
+                    Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        OverdueBanner(
+                            count = uiState.overdueCount,
+                            onView = { onAction(UiAction.OnViewOverdue) },
+                        )
+                    }
+                }
                 TDMonthNavigator(
                     modifier =
                     Modifier
@@ -235,6 +244,7 @@ private fun ActivitySuccessContent(
             HomeFabMenu(
                 onAddTask = { onAction(UiAction.OnShowBottomSheet) },
                 onPomodoro = { onAction(UiAction.OnPomodoroTap) },
+                onJournal = { onAction(UiAction.OnJournalTap) },
             )
         }
     }

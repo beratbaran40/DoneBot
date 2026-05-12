@@ -50,6 +50,9 @@
     <string name="cd_toggle_password_visibility">Toggle password visibility</string>
     <string name="cd_add_task">Add task</string>
     <string name="cd_expand_chart">Expand chart</string>
+    <string name="cd_day_has_overdue">This day has overdue tasks</string>
+    <string name="cd_day_has_tasks">This day has tasks</string>
+    <string name="cd_prev_month_has_overdue">Previous months have overdue tasks</string>
     <!-- Priority badge labels for group tasks -->
     <string name="priority_badge_high">HIGH</string>
     <string name="priority_badge_medium">MED</string>

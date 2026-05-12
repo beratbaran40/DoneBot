@@ -14,9 +14,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,6 +32,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
@@ -48,6 +53,8 @@ fun TDDatePicker(
     onMonthForward: () -> Unit = {},
     onMonthBack: () -> Unit = {},
     taskDates: Set<LocalDate> = emptySet(),
+    overdueDates: Set<LocalDate> = emptySet(),
+    hasOverdueBeforeDisplayedMonth: Boolean = false,
     onDaySelect: (LocalDate) -> Unit,
     onDayDeselect: () -> Unit,
 ) {
@@ -87,15 +94,29 @@ fun TDDatePicker(
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(
-                onClick = onMonthBack,
-                modifier = Modifier.size(40.dp),
-            ) {
-                Icon(
-                    painterResource(R.drawable.ic_arrow_back),
-                    tint = TDTheme.colors.onBackground,
-                    contentDescription = "Previous Month",
-                )
+            val prevMonthOverdueCd = stringResource(R.string.cd_prev_month_has_overdue)
+            Box {
+                IconButton(
+                    onClick = onMonthBack,
+                    modifier = Modifier.size(40.dp),
+                ) {
+                    Icon(
+                        painterResource(R.drawable.ic_arrow_back),
+                        tint = TDTheme.colors.onBackground,
+                        contentDescription =
+                        if (hasOverdueBeforeDisplayedMonth) prevMonthOverdueCd else "Previous Month",
+                    )
+                }
+                if (hasOverdueBeforeDisplayedMonth) {
+                    Box(
+                        modifier =
+                        Modifier
+                            .align(Alignment.TopEnd)
+                            .offset(x = (-6).dp, y = 6.dp)
+                            .size(8.dp)
+                            .background(TDTheme.colors.crossRed, CircleShape),
+                    )
+                }
             }
             Spacer(Modifier.weight(1f))
             TDText(
@@ -155,7 +176,8 @@ fun TDDatePicker(
                         currentDate.year == selectedMonth.year && currentDate.month == selectedMonth.month
                     val isSelected = currentDate == selectedDate
                     val isToday = currentDate == today
-                    val hasTask = currentDate in taskDates
+                    val hasTask = isFromCurrentMonth && currentDate in taskDates
+                    val hasOverdue = isFromCurrentMonth && currentDate in overdueDates
                     TDCalendarCell(
                         modifier = Modifier.weight(1f),
                         dayText = currentDate.dayOfMonth.toString(),
@@ -163,6 +185,7 @@ fun TDDatePicker(
                         isToday = isToday,
                         isFromCurrentMonth = isFromCurrentMonth,
                         hasTask = hasTask,
+                        hasOverdue = hasOverdue,
                         onClick = { if (isSelected) onDayDeselect() else onDaySelect(currentDate) },
                     )
                 }
@@ -179,6 +202,7 @@ private fun TDCalendarCell(
     isToday: Boolean,
     isFromCurrentMonth: Boolean,
     hasTask: Boolean,
+    hasOverdue: Boolean = false,
     onClick: () -> Unit,
 ) {
     val animatedColor by animateColorAsState(
@@ -193,6 +217,19 @@ private fun TDCalendarCell(
             !isFromCurrentMonth -> TDTheme.colors.lightGray
             else -> TDTheme.colors.onBackground
         }
+    val overdueCd = stringResource(R.string.cd_day_has_overdue)
+    val hasTaskCd = stringResource(R.string.cd_day_has_tasks)
+    val barColor: Color? = when {
+        hasOverdue -> TDTheme.colors.crossRed
+        hasTask && isSelected -> Color.White
+        hasTask -> TDTheme.colors.pendingGray
+        else -> null
+    }
+    val barCd: String? = when {
+        hasOverdue -> overdueCd
+        hasTask -> hasTaskCd
+        else -> null
+    }
 
     Box(
         modifier =
@@ -232,16 +269,22 @@ private fun TDCalendarCell(
                 modifier = Modifier.height(12.dp),
                 contentAlignment = Alignment.TopCenter,
             ) {
-                when {
-                    isSelected -> Unit
-                    hasTask ->
-                        Box(
-                            Modifier
-                                .padding(top = 3.dp)
-                                .size(4.dp)
-                                .background(TDTheme.colors.pendingGray, CircleShape),
-                        )
-                    else -> Unit
+                if (barColor != null) {
+                    Box(
+                        modifier =
+                        Modifier
+                            .padding(top = 3.dp)
+                            .height(4.dp)
+                            .width(24.dp)
+                            .background(barColor, RoundedCornerShape(2.dp))
+                            .then(
+                                if (barCd != null) {
+                                    Modifier.semantics { contentDescription = barCd }
+                                } else {
+                                    Modifier
+                                },
+                            ),
+                    )
                 }
             }
         }
@@ -453,6 +496,34 @@ private fun TDDatePickerWithTaskDatesPreview() {
                     LocalDate.of(2025, 3, 21),
                     LocalDate.of(2025, 3, 28),
                 ),
+                onDaySelect = {},
+                onDayDeselect = {},
+            )
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@TDPreviewWide
+@Composable
+private fun TDDatePickerWithOverduePreview() {
+    TDTheme {
+        Column {
+            TDDatePicker(
+                selectedDate = LocalDate.of(2025, 3, 9),
+                selectedMonth = YearMonth.of(2025, 3),
+                taskDates =
+                setOf(
+                    LocalDate.of(2025, 3, 5),
+                    LocalDate.of(2025, 3, 20),
+                ),
+                overdueDates =
+                setOf(
+                    LocalDate.of(2025, 3, 3),
+                    LocalDate.of(2025, 3, 9),
+                    LocalDate.of(2025, 3, 15),
+                ),
+                hasOverdueBeforeDisplayedMonth = true,
                 onDaySelect = {},
                 onDayDeselect = {},
             )

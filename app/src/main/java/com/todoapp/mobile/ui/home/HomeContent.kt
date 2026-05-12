@@ -49,6 +49,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
 import com.todoapp.mobile.common.move
+import com.todoapp.mobile.ui.common.components.OverdueBanner
 import com.todoapp.mobile.ui.home.HomeContract.UiAction
 import com.todoapp.mobile.ui.home.HomeContract.UiState
 import com.todoapp.uikit.components.TDMonthlyDatePicker
@@ -278,10 +279,21 @@ fun HomeContent(
                             modifier = Modifier.fillMaxWidth(),
                             displayedMonth = uiState.displayedMonth,
                             selectedDate = uiState.selectedDate,
+                            taskDates = uiState.taskDatesInMonth,
+                            overdueDates = uiState.overdueDates,
+                            hasOverdueBeforeDisplayedMonth = uiState.hasOverdueBeforeDisplayedMonth,
                             onDateSelect = { onAction(UiAction.OnDateSelect(it)) },
                             onPreviousMonth = { onAction(UiAction.OnPreviousMonth) },
                             onNextMonth = { onAction(UiAction.OnNextMonth) },
                         )
+                    }
+                    if (uiState.hasOverdueBeforeDisplayedMonth && uiState.overdueCount > 0) {
+                        item {
+                            OverdueBanner(
+                                count = uiState.overdueCount,
+                                onView = { onAction(UiAction.OnJumpToEarliestOverdue) },
+                            )
+                        }
                     }
                     item { Spacer(Modifier.height(12.dp)) }
                     item {
@@ -336,6 +348,7 @@ fun HomeContent(
             HomeFabMenu(
                 onAddTask = { onAction(UiAction.OnShowBottomSheet) },
                 onPomodoro = { onAction(UiAction.OnPomodoroTap) },
+                onJournal = { onAction(UiAction.OnJournalTap) },
             )
             Box(
                 modifier =

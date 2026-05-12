@@ -249,12 +249,12 @@ fun HomeTaskList(
                                         isDragging = isDragging,
                                         isAnyDragging = isAnyDragging,
                                         shape =
-                                            RoundedCornerShape(
-                                                topStart = 0.dp,
-                                                topEnd = 0.dp,
-                                                bottomStart = 12.dp,
-                                                bottomEnd = 12.dp,
-                                            ),
+                                        RoundedCornerShape(
+                                            topStart = 0.dp,
+                                            topEnd = 0.dp,
+                                            bottomStart = 12.dp,
+                                            bottomEnd = 12.dp,
+                                        ),
                                         categoryLabel = categoryLabelFor(task),
                                         categoryIcon = categoryIconFor(task.category),
                                         locationLabel = task.locationName,

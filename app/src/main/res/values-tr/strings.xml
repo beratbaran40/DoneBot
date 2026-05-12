@@ -835,6 +835,9 @@
     <string name="donebot_suggest_evening_all_done_body_format">Bugün için planladığın %1$d görevin hepsini tamamladın. Harika iş!</string>
     <string name="donebot_suggest_evening_all_done_cta">Tamam</string>
     <string name="donebot_suggest_dismiss_cd">Kapat</string>
+    <string name="overdue_summary_count_one">%1$d görev geç kaldı</string>
+    <string name="overdue_summary_count_other">%1$d görev geç kaldı</string>
+    <string name="overdue_summary_view">Görüntüle</string>
     <!-- Günlük özelliği -->
     <string name="nav_journal_title">Günlük</string>
     <string name="fab_label_journal">Günlük</string>

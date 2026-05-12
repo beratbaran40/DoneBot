@@ -42,6 +42,7 @@ import com.todoapp.uikit.theme.TDTheme
 fun HomeFabMenu(
     onAddTask: () -> Unit,
     onPomodoro: () -> Unit,
+    onJournal: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var isFabMenuOpen by remember { mutableStateOf(false) }
@@ -71,6 +72,45 @@ fun HomeFabMenu(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.End,
         ) {
+            AnimatedVisibility(
+                visible = isFabMenuOpen,
+                enter = slideInVertically { it } + fadeIn(),
+                exit = slideOutVertically { it } + fadeOut(),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier =
+                        Modifier
+                            .background(TDTheme.colors.pendingGray, RoundedCornerShape(8.dp))
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                    ) {
+                        TDText(
+                            text = stringResource(com.todoapp.mobile.R.string.fab_label_journal),
+                            style = TDTheme.typography.subheading4,
+                            color = TDTheme.colors.background,
+                        )
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    IconButton(
+                        modifier =
+                        Modifier
+                            .size(48.dp)
+                            .background(TDTheme.colors.pendingGray, CircleShape),
+                        onClick = {
+                            isFabMenuOpen = false
+                            onJournal()
+                        },
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_journal),
+                            contentDescription = stringResource(com.todoapp.mobile.R.string.fab_label_journal),
+                            tint = TDTheme.colors.background,
+                            modifier = Modifier.size(28.dp),
+                        )
+                    }
+                }
+            }
+
             AnimatedVisibility(
                 visible = isFabMenuOpen,
                 enter = slideInVertically { it } + fadeIn(),
