@@ -178,7 +178,27 @@ constructor(
 
     private fun toggleComplete() {
         val current = _uiState.value as? UiState.Success ?: return
-        _uiState.value = current.copy(task = current.task.copy(isCompleted = !current.task.isCompleted))
+        val previousTask = current.task
+        val newCompleted = !previousTask.isCompleted
+        // Optimistic flip; same pattern as GroupDetailViewModel.handleTaskChecked.
+        _uiState.value = current.copy(task = previousTask.copy(isCompleted = newCompleted))
+        viewModelScope.launch {
+            val groupTask = GroupTask(
+                id = previousTask.id,
+                title = previousTask.title,
+                description = previousTask.description,
+                isCompleted = newCompleted,
+                priority = previousTask.priority,
+                dueDate = previousTask.rawDueDate,
+                assignee = null,
+            )
+            groupRepository
+                .updateGroupTaskStatus(groupId, taskId, groupTask, newCompleted)
+                .onFailure {
+                    _uiState.update { s -> (s as? UiState.Success)?.copy(task = previousTask) ?: s }
+                    _uiEffect.trySend(UiEffect.ShowToast(context.getString(R.string.failed_to_update_task)))
+                }
+        }
     }
 
     private fun openEditSheet() {
