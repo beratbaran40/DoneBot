@@ -141,11 +141,11 @@ private fun SettingsContent(
 
     Column(
         modifier =
-        modifier
-            .fillMaxSize()
-            .background(TDTheme.colors.background)
-            .padding(horizontal = 16.dp)
-            .verticalScroll(rememberScrollState()),
+            modifier
+                .fillMaxSize()
+                .background(TDTheme.colors.background)
+                .padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState()),
     ) {
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -154,7 +154,37 @@ private fun SettingsContent(
             onDismiss = onDismissPermission,
         )
 
-        SectionHeader(R.string.settings_section_appearance)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (uiState.isUserAuthenticated) {
+            ProfileRow(
+                displayName = uiState.displayName,
+                email = uiState.email,
+                avatarUrl = uiState.avatarUrl,
+                onClick = { onAction(UiAction.OnNavigateToProfile) },
+            )
+        } else {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { onAction(UiAction.OnLoginOrRegisterClick) },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TDText(
+                    text = stringResource(R.string.login_or_create_account),
+                    style = TDTheme.typography.heading6,
+                    color = TDTheme.colors.darkPending,
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Icon(
+                    painter = painterResource(com.example.uikit.R.drawable.ic_arrow_forward),
+                    contentDescription = null,
+                    tint = TDTheme.colors.darkPending,
+                )
+            }
+        }
+
+        SectionHeader(R.string.settings_section_personalization)
 
         ThemeSelector(
             currentTheme = uiState.currentTheme,
@@ -172,7 +202,7 @@ private fun SettingsContent(
             },
         )
 
-        SectionHeader(R.string.settings_section_reminders)
+        SectionHeader(R.string.settings_section_notifications)
 
         if (uiState.isUserAuthenticated) {
             Row(
@@ -225,7 +255,9 @@ private fun SettingsContent(
             )
         }
 
-        SectionHeader(R.string.settings_section_productivity)
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = TDTheme.colors.onBackground.copy(alpha = 0.1f))
+        Spacer(modifier = Modifier.height(16.dp))
 
         Row(
             Modifier
@@ -245,9 +277,7 @@ private fun SettingsContent(
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider(color = TDTheme.colors.onBackground.copy(alpha = 0.1f))
-        Spacer(modifier = Modifier.height(16.dp))
+        SectionHeader(R.string.settings_section_productivity)
 
         Row(
             Modifier
@@ -267,7 +297,7 @@ private fun SettingsContent(
             )
         }
 
-        SectionHeader(R.string.settings_section_privacy)
+        SectionHeader(R.string.settings_section_privacy_security)
 
         Row(
             Modifier
@@ -284,6 +314,36 @@ private fun SettingsContent(
                 painter = painterResource(com.example.uikit.R.drawable.ic_arrow_forward),
                 contentDescription = null,
                 tint = TDTheme.colors.onBackground,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = TDTheme.colors.onBackground.copy(alpha = 0.1f))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                TDText(
+                    text = stringResource(R.string.settings_journal_biometric_protection_title),
+                    style = TDTheme.typography.heading6,
+                    color = TDTheme.colors.onBackground,
+                )
+                TDText(
+                    text = stringResource(R.string.settings_journal_biometric_protection_description),
+                    style = TDTheme.typography.subheading2,
+                    color = TDTheme.colors.gray,
+                )
+            }
+            Switch(
+                checked = uiState.journalBiometricProtected,
+                onCheckedChange = { onAction(UiAction.OnJournalBiometricProtectionToggle(it)) },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = TDTheme.colors.white,
+                    checkedTrackColor = TDTheme.colors.pendingGray,
+                ),
             )
         }
 
@@ -380,7 +440,7 @@ private fun SettingsContent(
             )
         }
 
-        SectionHeader(R.string.settings_section_legal)
+        SectionHeader(R.string.settings_section_about)
 
         Row(
             Modifier
@@ -436,9 +496,9 @@ private fun SettingsContent(
             )
         }
 
-        SectionHeader(R.string.settings_section_account)
-
         if (uiState.isUserAuthenticated) {
+            SectionHeader(R.string.settings_section_account)
+
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -458,9 +518,7 @@ private fun SettingsContent(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = TDTheme.colors.onBackground.copy(alpha = 0.1f))
-            Spacer(modifier = Modifier.height(16.dp))
+            SectionHeader(R.string.settings_section_danger_zone)
 
             Row(
                 Modifier
@@ -477,28 +535,64 @@ private fun SettingsContent(
                 )
                 Spacer(modifier = Modifier.weight(1f))
             }
-        } else {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { onAction(UiAction.OnLoginOrRegisterClick) },
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                TDText(
-                    text = stringResource(R.string.login_or_create_account),
-                    style = TDTheme.typography.heading6,
-                    color = TDTheme.colors.darkPending,
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                Icon(
-                    painter = painterResource(com.example.uikit.R.drawable.ic_arrow_forward),
-                    contentDescription = null,
-                    tint = TDTheme.colors.darkPending,
-                )
-            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+@Composable
+private fun ProfileRow(
+    displayName: String,
+    email: String,
+    avatarUrl: String?,
+    onClick: () -> Unit,
+) {
+    val initials = remember(displayName, email) {
+        val source = displayName.trim().ifEmpty { email.trim() }
+        if (source.isBlank()) {
+            "?"
+        } else {
+            source.split(' ', '.', '@')
+                .filter { it.isNotBlank() }
+                .take(2)
+                .joinToString("") { it.first().uppercase() }
+                .ifEmpty { source.first().uppercase() }
+        }
+    }
+    val nameLine = displayName.ifBlank { email.substringBefore('@', missingDelimiterValue = email) }
+    val subtitle = email.ifBlank { stringResource(R.string.settings_profile_subtitle_no_email) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        com.todoapp.mobile.ui.groups.groupdetail.MemberAvatar(
+            initials = initials,
+            size = 48,
+            avatarUrl = avatarUrl,
+        )
+        Spacer(modifier = Modifier.size(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            TDText(
+                text = nameLine,
+                style = TDTheme.typography.heading5,
+                color = TDTheme.colors.onBackground,
+            )
+            TDText(
+                text = subtitle,
+                style = TDTheme.typography.subheading2,
+                color = TDTheme.colors.gray,
+            )
+        }
+        Icon(
+            painter = painterResource(com.example.uikit.R.drawable.ic_arrow_forward),
+            contentDescription = null,
+            tint = TDTheme.colors.onBackground,
+        )
     }
 }
 
@@ -549,11 +643,11 @@ private fun ExactAlarmsRow() {
             )
             TDText(
                 text =
-                if (canScheduleExact) {
-                    stringResource(R.string.settings_exact_alarms_status_enabled)
-                } else {
-                    stringResource(R.string.settings_exact_alarms_description)
-                },
+                    if (canScheduleExact) {
+                        stringResource(R.string.settings_exact_alarms_status_enabled)
+                    } else {
+                        stringResource(R.string.settings_exact_alarms_description)
+                    },
                 style = TDTheme.typography.subheading3,
                 color = TDTheme.colors.gray,
             )
@@ -608,18 +702,18 @@ private fun PermissionPager(
                 repeat(permissions.size) { index ->
                     Box(
                         modifier =
-                        Modifier
-                            .padding(horizontal = 4.dp)
-                            .size(8.dp)
-                            .background(
-                                color =
-                                if (pagerState.currentPage == index) {
-                                    TDTheme.colors.pendingGray
-                                } else {
-                                    TDTheme.colors.onBackground.copy(alpha = 0.3f)
-                                },
-                                shape = CircleShape,
-                            ),
+                            Modifier
+                                .padding(horizontal = 4.dp)
+                                .size(8.dp)
+                                .background(
+                                    color =
+                                        if (pagerState.currentPage == index) {
+                                            TDTheme.colors.pendingGray
+                                        } else {
+                                            TDTheme.colors.onBackground.copy(alpha = 0.3f)
+                                        },
+                                    shape = CircleShape,
+                                ),
                     )
                 }
             }
@@ -656,14 +750,14 @@ private fun SettingsScreenPreview() {
     TDTheme {
         SettingsScreen(
             uiState =
-            UiState(
-                currentTheme = ThemePreference.SYSTEM_DEFAULT,
-                selectedSecretMode = SecretModeReopenOptions.Immediate,
-                remainedSecretModeTime = "",
-                isSecretModeActive = true,
-                dailyPlanTime = LocalTime.of(9, 0),
-                visiblePermissions = listOf(PermissionType.OVERLAY, PermissionType.NOTIFICATION),
-            ),
+                UiState(
+                    currentTheme = ThemePreference.SYSTEM_DEFAULT,
+                    selectedSecretMode = SecretModeReopenOptions.Immediate,
+                    remainedSecretModeTime = "",
+                    isSecretModeActive = true,
+                    dailyPlanTime = LocalTime.of(9, 0),
+                    visiblePermissions = listOf(PermissionType.OVERLAY, PermissionType.NOTIFICATION),
+                ),
             onAction = {},
             onCheckPermissions = {},
             onDismissPermission = {},
@@ -678,14 +772,14 @@ private fun SettingsScreenPreview_Dark() {
     TDTheme {
         SettingsScreen(
             uiState =
-            UiState(
-                currentTheme = ThemePreference.SYSTEM_DEFAULT,
-                selectedSecretMode = SecretModeReopenOptions.Immediate,
-                remainedSecretModeTime = "",
-                isSecretModeActive = true,
-                dailyPlanTime = LocalTime.of(9, 0),
-                visiblePermissions = listOf(PermissionType.OVERLAY, PermissionType.NOTIFICATION),
-            ),
+                UiState(
+                    currentTheme = ThemePreference.SYSTEM_DEFAULT,
+                    selectedSecretMode = SecretModeReopenOptions.Immediate,
+                    remainedSecretModeTime = "",
+                    isSecretModeActive = true,
+                    dailyPlanTime = LocalTime.of(9, 0),
+                    visiblePermissions = listOf(PermissionType.OVERLAY, PermissionType.NOTIFICATION),
+                ),
             onAction = {},
             onCheckPermissions = {},
             onDismissPermission = {},

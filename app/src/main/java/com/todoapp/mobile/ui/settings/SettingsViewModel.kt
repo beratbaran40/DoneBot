@@ -14,6 +14,7 @@ import com.todoapp.mobile.domain.alarm.buildDailyPlanAlarmItem
 import com.todoapp.mobile.domain.constants.DailyPlanDefaults
 import com.todoapp.mobile.domain.repository.AuthRepository
 import com.todoapp.mobile.domain.repository.DailyPlanPreferences
+import com.todoapp.mobile.domain.repository.JournalBiometricPreferences
 import com.todoapp.mobile.domain.repository.LanguageRepository
 import com.todoapp.mobile.domain.repository.SecretPreferences
 import com.todoapp.mobile.domain.repository.ThemeRepository
@@ -62,6 +63,7 @@ constructor(
     private val authRepository: AuthRepository,
     private val dataStoreHelper: DataStoreHelper,
     private val userRepository: UserRepository,
+    private val journalBiometricPreferences: JournalBiometricPreferences,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(UiState())
@@ -138,6 +140,11 @@ constructor(
                 _uiState.update { it.copy(reduceMotionEnabled = enabled) }
             }
         }
+        viewModelScope.launch {
+            journalBiometricPreferences.observe().collect { enabled ->
+                _uiState.update { it.copy(journalBiometricProtected = enabled) }
+            }
+        }
     }
 
     fun checkPermission(context: Context) {
@@ -158,7 +165,14 @@ constructor(
     private fun observeAuthState() {
         viewModelScope.launch {
             dataStoreHelper.observeUser().collect { user ->
-                _uiState.update { it.copy(isUserAuthenticated = user != null) }
+                _uiState.update {
+                    it.copy(
+                        isUserAuthenticated = user != null,
+                        displayName = user?.displayName.orEmpty(),
+                        email = user?.email.orEmpty(),
+                        avatarUrl = user?.avatarUrl,
+                    )
+                }
             }
         }
     }
@@ -203,6 +217,8 @@ constructor(
                 _navEffect.trySend(NavigationEffect.Navigate(Screen.AlarmSounds))
             is UiAction.OnPushNotificationsToggle -> togglePushNotifications(action.enabled)
             is UiAction.OnReduceMotionToggle -> toggleReduceMotion(action.enabled)
+            is UiAction.OnJournalBiometricProtectionToggle ->
+                viewModelScope.launch { journalBiometricPreferences.set(action.enabled) }
             UiAction.OnDeleteAccountClick ->
                 _uiState.update { it.copy(showDeleteAccountDialog = true) }
             UiAction.OnDeleteAccountDismiss ->
