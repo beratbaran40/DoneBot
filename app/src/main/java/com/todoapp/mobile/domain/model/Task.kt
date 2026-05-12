@@ -47,8 +47,13 @@ data class Task(
     val locationLng: Double? = null,
 )
 
-fun Task.toAlarmItem(remindBeforeMinutes: Long = 0): AlarmItem = AlarmItem(
-    time = LocalDateTime.of(date, timeStart.minusMinutes(remindBeforeMinutes)),
+fun Task.toAlarmItem(
+    remindBeforeMinutes: Long = 0,
+    overrideStartTime: LocalTime? = null,
+): AlarmItem = AlarmItem(
+    // overrideStartTime lets callers swap in the user's morning-plan hour for all-day tasks,
+    // whose own timeStart is a 00:00 placeholder (see isAllDay docstring).
+    time = LocalDateTime.of(date, (overrideStartTime ?: timeStart).minusMinutes(remindBeforeMinutes)),
     // Append the location name with a bullet so the system tray notification reads like
     // "Doctor • Acıbadem Hastanesi". Locale-neutral separator (works in EN + TR copy).
     message = locationName?.takeIf { it.isNotBlank() }?.let { "$title • $it" } ?: title,

@@ -542,6 +542,7 @@
     <string name="reminder_6_hours">6 saat önce</string>
     <string name="reminder_12_hours">12 saat önce</string>
     <string name="reminder_1_day">1 gün önce</string>
+    <string name="reminder_in_past_warning">Bu hatırlatma zamanı geçmiş — zamanlamayı değiştirmedikçe çalışmayacak.</string>
     <string name="alarm_sounds">Alarm sesi</string>
     <string name="alarm_sounds_empty">Bu cihazda alarm sesi yok</string>
 

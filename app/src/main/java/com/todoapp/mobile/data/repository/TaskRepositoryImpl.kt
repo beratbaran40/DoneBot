@@ -18,6 +18,7 @@ import com.todoapp.mobile.data.source.local.datasource.TaskLocalDataSource
 import com.todoapp.mobile.data.source.remote.datasource.TaskRemoteDataSource
 import com.todoapp.mobile.domain.alarm.AlarmScheduler
 import com.todoapp.mobile.domain.alarm.AlarmType
+import com.todoapp.mobile.domain.constants.DailyPlanDefaults
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.domain.model.firesOn
@@ -25,6 +26,7 @@ import com.todoapp.mobile.domain.model.toAlarmItem
 import com.todoapp.mobile.domain.model.toDomain
 import com.todoapp.mobile.domain.repository.CompletedCountByDay
 import com.todoapp.mobile.domain.repository.DailyBucket
+import com.todoapp.mobile.domain.repository.DailyPlanPreferences
 import com.todoapp.mobile.domain.repository.MonthlyWeekBucket
 import com.todoapp.mobile.domain.repository.TaskRepository
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +39,8 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
 import javax.inject.Inject
 
 @Suppress("LargeClass")
@@ -50,6 +54,7 @@ constructor(
     private val pendingPhotoRepository: com.todoapp.mobile.domain.repository.PendingPhotoRepository,
     private val dailyCompletionDao: TaskDailyCompletionDao,
     private val alarmScheduler: AlarmScheduler,
+    private val dailyPlanPreferences: DailyPlanPreferences,
 ) : TaskRepository {
     private val taskPhotoUrls = kotlinx.coroutines.flow.MutableStateFlow<Map<Long, List<String>>>(emptyMap())
 
@@ -499,15 +504,18 @@ constructor(
         }.onFailure { Log.w("syncDailyCompletions", "failed: ${it.message}") }
     }
 
-    private fun scheduleRecurringAlarmIfNeeded(taskId: Long, task: Task) {
+    private suspend fun scheduleRecurringAlarmIfNeeded(taskId: Long, task: Task) {
         if (task.recurrence == Recurrence.NONE) return
+        // All-day tasks have a 00:00 placeholder timeStart; honor the user's daily-plan hour
+        // (or the 09:00 default) so a daily birthday-style reminder doesn't fire at midnight.
+        val effectiveTime = effectiveAlarmTime(task)
         runCatching {
             alarmScheduler.scheduleRecurring(
                 taskId = taskId,
                 recurrence = task.recurrence,
                 anchorDate = task.date,
-                hour = task.timeStart.hour,
-                minute = task.timeStart.minute,
+                hour = effectiveTime.hour,
+                minute = effectiveTime.minute,
                 message = task.title,
             )
         }.onFailure { Log.w("scheduleRecurring", "failed: ${it.message}") }
@@ -518,13 +526,32 @@ constructor(
         runCatching { alarmScheduler.cancelRecurring(taskId) }
     }
 
-    private fun rescheduleOneShotAlarm(task: Task) {
+    private suspend fun rescheduleOneShotAlarm(task: Task) {
         runCatching { alarmScheduler.cancelTask(task.toAlarmItem()) }
         if (task.recurrence != Recurrence.NONE) return
         val offset = task.reminderOffsetMinutes ?: return
+        val effectiveTime = effectiveAlarmTime(task)
+        val item = task.toAlarmItem(
+            remindBeforeMinutes = offset,
+            overrideStartTime = effectiveTime.takeIf { task.isAllDay },
+        )
+        // AlarmManager fires past triggerAtMillis values immediately. Without this guard,
+        // any update() on a task whose date+time has passed (e.g. isSecret toggle on an old
+        // task) would pop the alarm overlay the moment the row is saved.
+        val triggerMillis = item.time.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        if (triggerMillis <= System.currentTimeMillis()) {
+            timber.log.Timber.tag("scheduleOneShot").d("skip past trigger taskId=%d", task.id)
+            return
+        }
         runCatching {
-            alarmScheduler.schedule(task.toAlarmItem(remindBeforeMinutes = offset), AlarmType.TASK)
+            alarmScheduler.schedule(item, AlarmType.TASK)
         }.onFailure { Log.w("scheduleOneShot", "failed: ${it.message}") }
+    }
+
+    private suspend fun effectiveAlarmTime(task: Task): LocalTime = if (task.isAllDay) {
+        dailyPlanPreferences.observePlanTime().first() ?: DailyPlanDefaults.DEFAULT_PLAN_TIME
+    } else {
+        task.timeStart
     }
 
     override suspend fun syncRemoteTasksWithLocal(): Result<Unit> {

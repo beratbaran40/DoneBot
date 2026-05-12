@@ -321,6 +321,28 @@ private fun DetailsSuccessContent(
                     options = reminderOffsetOptions(),
                     onSelected = { onAction(UiAction.OnReminderOffsetChange(it)) },
                 )
+                if (uiState.isReminderInPast) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(TDTheme.colors.background, RoundedCornerShape(8.dp))
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            painter = painterResource(com.example.uikit.R.drawable.ic_warning),
+                            contentDescription = null,
+                            tint = TDTheme.colors.orange,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        TDText(
+                            text = stringResource(R.string.reminder_in_past_warning),
+                            style = TDTheme.typography.subheading1,
+                            color = TDTheme.colors.orange,
+                        )
+                    }
+                }
 
                 TDCompactOutlinedTextField(
                     label = stringResource(R.string.description),

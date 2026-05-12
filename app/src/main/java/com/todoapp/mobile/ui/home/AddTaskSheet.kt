@@ -48,6 +48,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.mobile.domain.constants.DailyPlanDefaults
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.ui.common.categoryOptions
@@ -66,6 +67,7 @@ import com.todoapp.uikit.components.TDReminderOffsetPicker
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDWheelTimePickerDialog
 import com.todoapp.uikit.theme.TDTheme
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -202,6 +204,29 @@ internal fun AddTaskSheet(
             options = reminderOffsetOptions(),
             onSelected = { onAction(TaskFormUiAction.ReminderOffsetChange(it)) },
         )
+        if (isReminderInPast(formState)) {
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(TDTheme.colors.background, RoundedCornerShape(8.dp))
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_warning),
+                    contentDescription = null,
+                    tint = TDTheme.colors.orange,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                TDText(
+                    text = stringResource(com.todoapp.mobile.R.string.reminder_in_past_warning),
+                    style = TDTheme.typography.subheading1,
+                    color = TDTheme.colors.orange,
+                )
+            }
+        }
         Spacer(Modifier.height(12.dp))
         TDCompactOutlinedTextField(
             label = stringResource(com.todoapp.mobile.R.string.description),
@@ -556,4 +581,20 @@ private fun SecretCheckbox(
                 .alpha(iconAlpha.value),
         )
     }
+}
+
+/**
+ * Mirrors DetailsViewModel.computeIsReminderInPast — UI-level guard so the user sees a warning
+ * the moment they pick a past time, without needing a round-trip through TaskFormState.
+ */
+private fun isReminderInPast(formState: TaskFormState): Boolean {
+    if (formState.selectedRecurrence != Recurrence.NONE) return false
+    val offset = formState.reminderOffsetMinutes ?: return false
+    val date = formState.dialogSelectedDate ?: return false
+    val effectiveTime = when {
+        formState.isAllDay -> DailyPlanDefaults.DEFAULT_PLAN_TIME
+        else -> formState.taskTimeStart ?: return false
+    }
+    val reminderTime = LocalDateTime.of(date, effectiveTime.minusMinutes(offset))
+    return reminderTime.isBefore(LocalDateTime.now())
 }

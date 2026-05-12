@@ -541,6 +541,7 @@
     <string name="reminder_6_hours">6 hours before</string>
     <string name="reminder_12_hours">12 hours before</string>
     <string name="reminder_1_day">1 day before</string>
+    <string name="reminder_in_past_warning">This reminder time has already passed — it won\'t fire until you reschedule.</string>
     <string name="alarm_sounds">Alarm sound</string>
     <string name="alarm_sounds_empty">No alarm sounds available</string>
 

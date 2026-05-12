@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.todoapp.mobile.R
+import com.todoapp.mobile.domain.constants.DailyPlanDefaults
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.domain.model.TaskCategory
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import javax.inject.Inject
 
@@ -64,29 +66,29 @@ constructor(
                     return@launch
                 }
                 originalTask = task
-                _uiState.value =
-                    UiState.Success(
-                        taskId = task.remoteId ?: -1L,
-                        taskTitle = task.title,
-                        taskTimeStart = task.timeStart,
-                        taskTimeEnd = task.timeEnd,
-                        taskDate = task.date,
-                        taskDescription = task.description.orEmpty(),
-                        dialogSelectedDate = task.date,
-                        isDirty = false,
-                        titleError = null,
-                        isSaving = false,
-                        photoUrls = task.photoUrls,
-                        locationName = task.locationName,
-                        locationAddress = task.locationAddress,
-                        locationLat = task.locationLat,
-                        locationLng = task.locationLng,
-                        selectedCategory = task.category,
-                        customCategoryName = task.customCategoryName.orEmpty(),
-                        selectedRecurrence = task.recurrence,
-                        reminderOffsetMinutes = task.reminderOffsetMinutes,
-                        isAllDay = task.isAllDay,
-                    )
+                val initial = UiState.Success(
+                    taskId = task.remoteId ?: -1L,
+                    taskTitle = task.title,
+                    taskTimeStart = task.timeStart,
+                    taskTimeEnd = task.timeEnd,
+                    taskDate = task.date,
+                    taskDescription = task.description.orEmpty(),
+                    dialogSelectedDate = task.date,
+                    isDirty = false,
+                    titleError = null,
+                    isSaving = false,
+                    photoUrls = task.photoUrls,
+                    locationName = task.locationName,
+                    locationAddress = task.locationAddress,
+                    locationLat = task.locationLat,
+                    locationLng = task.locationLng,
+                    selectedCategory = task.category,
+                    customCategoryName = task.customCategoryName.orEmpty(),
+                    selectedRecurrence = task.recurrence,
+                    reminderOffsetMinutes = task.reminderOffsetMinutes,
+                    isAllDay = task.isAllDay,
+                )
+                _uiState.value = initial.copy(isReminderInPast = computeIsReminderInPast(initial))
                 // Photos live server-side; fetch authoritative list via remoteId
                 task.remoteId?.let { remoteId ->
                     taskRepository.fetchRemoteTask(remoteId).onSuccess { remote ->
@@ -223,12 +225,33 @@ constructor(
             when (currentState) {
                 is UiState.Success -> {
                     val updated = transform(currentState)
-                    updated.copy(isDirty = computeIsDirty(updated))
+                    updated.copy(
+                        isDirty = computeIsDirty(updated),
+                        isReminderInPast = computeIsReminderInPast(updated),
+                    )
                 }
 
                 else -> currentState
             }
         }
+    }
+
+    private fun computeIsReminderInPast(state: UiState.Success): Boolean {
+        // Recurring tasks pick the next instance via AlarmSchedulerImpl.computeNextFire, so a
+        // "past" anchor time isn't actually a user-visible problem there.
+        if (state.selectedRecurrence != Recurrence.NONE) return false
+        val offset = state.reminderOffsetMinutes ?: return false
+        val effectiveTime = if (state.isAllDay) {
+            // Synchronous fallback to the 09:00 default — the repository will read the user's
+            // configured value at schedule time, but the warning's accuracy at the picker level
+            // only depends on whether the offset puts the alarm in the past relative to "today
+            // at default morning hour", which is the realistic scenario.
+            DailyPlanDefaults.DEFAULT_PLAN_TIME
+        } else {
+            state.taskTimeStart ?: return false
+        }
+        val reminderTime = LocalDateTime.of(state.taskDate, effectiveTime.minusMinutes(offset))
+        return reminderTime.isBefore(LocalDateTime.now())
     }
 
     private fun updateTitle(title: String) {
@@ -333,31 +356,31 @@ constructor(
             return
         }
 
-        _uiState.value =
-            UiState.Success(
-                taskId = existingTask.remoteId ?: -1L,
-                taskTitle = existingTask.title,
-                titleError = null,
-                taskTimeStart = existingTask.timeStart,
-                taskTimeEnd = existingTask.timeEnd,
-                taskDate = existingTask.date,
-                taskDescription = existingTask.description.orEmpty(),
-                dialogSelectedDate = existingTask.date,
-                isDirty = false,
-                isSaving = false,
-                photoUrls = existingTask.photoUrls,
-                pendingPhotoUploads = emptyList(),
-                pendingPhotoDeleteIds = emptySet(),
-                locationName = existingTask.locationName,
-                locationAddress = existingTask.locationAddress,
-                locationLat = existingTask.locationLat,
-                locationLng = existingTask.locationLng,
-                selectedCategory = existingTask.category,
-                customCategoryName = existingTask.customCategoryName.orEmpty(),
-                selectedRecurrence = existingTask.recurrence,
-                reminderOffsetMinutes = existingTask.reminderOffsetMinutes,
-                isAllDay = existingTask.isAllDay,
-            )
+        val reverted = UiState.Success(
+            taskId = existingTask.remoteId ?: -1L,
+            taskTitle = existingTask.title,
+            titleError = null,
+            taskTimeStart = existingTask.timeStart,
+            taskTimeEnd = existingTask.timeEnd,
+            taskDate = existingTask.date,
+            taskDescription = existingTask.description.orEmpty(),
+            dialogSelectedDate = existingTask.date,
+            isDirty = false,
+            isSaving = false,
+            photoUrls = existingTask.photoUrls,
+            pendingPhotoUploads = emptyList(),
+            pendingPhotoDeleteIds = emptySet(),
+            locationName = existingTask.locationName,
+            locationAddress = existingTask.locationAddress,
+            locationLat = existingTask.locationLat,
+            locationLng = existingTask.locationLng,
+            selectedCategory = existingTask.category,
+            customCategoryName = existingTask.customCategoryName.orEmpty(),
+            selectedRecurrence = existingTask.recurrence,
+            reminderOffsetMinutes = existingTask.reminderOffsetMinutes,
+            isAllDay = existingTask.isAllDay,
+        )
+        _uiState.value = reverted.copy(isReminderInPast = computeIsReminderInPast(reverted))
         _uiEffect.trySend(UiEffect.ShowToast(R.string.changes_cancelled))
     }
 

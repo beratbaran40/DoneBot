@@ -139,6 +139,13 @@ class AlarmSchedulerImpl(
 
     // Falls back to inexact when SCHEDULE_EXACT_ALARM isn't granted (Android 13+ user-controlled).
     private fun scheduleAt(triggerAtMillis: Long, pendingIntent: PendingIntent) {
+        // AlarmManager fires past triggers immediately ("set me a reminder for 9 AM yesterday"
+        // would pop the overlay right now). Repository call-sites already guard, but this is
+        // defense-in-depth for any future scheduler path that forgets to check.
+        if (triggerAtMillis <= System.currentTimeMillis()) {
+            Timber.tag(TAG).d("scheduleAt: skipping past trigger=%d", triggerAtMillis)
+            return
+        }
         runCatching {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
                 alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)

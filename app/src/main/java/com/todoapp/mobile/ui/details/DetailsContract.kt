@@ -34,6 +34,7 @@ object DetailsContract {
             val selectedRecurrence: Recurrence = Recurrence.NONE,
             val reminderOffsetMinutes: Long? = 0L,
             val isAllDay: Boolean = false,
+            val isReminderInPast: Boolean = false,
             // Staged photo uploads not yet on the server. Drained on Save.
             val pendingPhotoUploads: List<PendingPhoto> = emptyList(),
             // Existing photoIds that the user marked for deletion. Drained on Save.
