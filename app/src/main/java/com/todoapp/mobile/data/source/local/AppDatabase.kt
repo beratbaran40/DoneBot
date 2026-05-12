@@ -13,15 +13,17 @@ import com.todoapp.mobile.data.model.entity.GroupActivityEntity
 import com.todoapp.mobile.data.model.entity.GroupEntity
 import com.todoapp.mobile.data.model.entity.GroupMemberEntity
 import com.todoapp.mobile.data.model.entity.GroupTaskEntity
+import com.todoapp.mobile.data.model.entity.JournalEntryEntity
 import com.todoapp.mobile.data.model.entity.PendingPhotoEntity
 import com.todoapp.mobile.data.model.entity.PomodoroEntity
 import com.todoapp.mobile.data.model.entity.SyncStatus
 import com.todoapp.mobile.data.model.entity.TaskDailyCompletionEntity
 import com.todoapp.mobile.data.model.entity.TaskEntity
+import com.todoapp.mobile.data.source.local.converter.StringListConverter
 import com.todoapp.mobile.data.source.local.datasource.GroupDao
 
 @Database(
-    version = 18,
+    version = 19,
     entities = [
         TaskEntity::class,
         PomodoroEntity::class,
@@ -32,6 +34,7 @@ import com.todoapp.mobile.data.source.local.datasource.GroupDao
         PendingPhotoEntity::class,
         TaskDailyCompletionEntity::class,
         ChatMessageEntity::class,
+        JournalEntryEntity::class,
     ],
     autoMigrations = [
         AutoMigration(from = 1, to = 2, spec = AppDatabase.Migration1To2Spec::class),
@@ -51,9 +54,10 @@ import com.todoapp.mobile.data.source.local.datasource.GroupDao
         AutoMigration(from = 15, to = 16),
         AutoMigration(from = 16, to = 17),
         AutoMigration(from = 17, to = 18),
+        AutoMigration(from = 18, to = 19),
     ],
 )
-@TypeConverters(AppDatabase.SyncStatusConverter::class)
+@TypeConverters(AppDatabase.SyncStatusConverter::class, StringListConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     class Migration1To2Spec : AutoMigrationSpec {
         override fun onPostMigrate(db: SupportSQLiteDatabase) {
@@ -95,6 +99,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun taskDailyCompletionDao(): TaskDailyCompletionDao
 
     abstract fun chatMessageDao(): ChatMessageDao
+
+    abstract fun journalEntryDao(): JournalEntryDao
 
     class SyncStatusConverter {
         @TypeConverter

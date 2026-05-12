@@ -231,6 +231,22 @@ sealed class AppDestination(
         hasInfoDialog = true,
     )
 
+    data object Journal : AppDestination(
+        title = R.string.nav_journal_title,
+        route = Screen.Journal::class.qualifiedName!!,
+        icon = null,
+        selectedIcon = null,
+        hasInfoDialog = true,
+    )
+
+    data object JournalEntry : AppDestination(
+        title = R.string.journal_entry_screen_title,
+        route = Screen.JournalEntry::class.qualifiedName!!,
+        icon = null,
+        selectedIcon = null,
+        hasInfoDialog = true,
+    )
+
     companion object {
         val bottomBarItems = listOf(Home, Groups, Chat, Calendar, Activity)
         val topBarItems =
@@ -263,6 +279,11 @@ sealed class AppDestination(
                 Notifications,
                 Invitations,
                 AlarmSounds,
+                Journal,
+                // JournalEntry intentionally NOT listed — Round 3 hides the topbar for the
+                // editor screen so it can render its own floating back/info buttons over the
+                // paper background. Keeping the AppDestination object in case future
+                // surfaces need its title resource.
             )
     }
 }

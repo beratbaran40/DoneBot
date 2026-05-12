@@ -62,4 +62,7 @@
     <string name="weekday_abbr_fri">Cu</string>
     <string name="weekday_abbr_sat">Cmt</string>
     <string name="weekday_abbr_sun">Paz</string>
+    <!-- Günlük (journal) özelliği -->
+    <string name="td_mood_selector_label_cd">Ruh hali: %1$s</string>
+    <string name="td_journal_card_photo_count">%1$d fotoğraf</string>
 </resources>

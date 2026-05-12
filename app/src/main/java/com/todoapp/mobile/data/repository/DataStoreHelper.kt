@@ -139,6 +139,16 @@ constructor(
         }
     }
 
+    fun observeJournalBiometricProtected(): Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[JOURNAL_BIOMETRIC_PROTECTED] ?: false
+    }
+
+    suspend fun setJournalBiometricProtected(value: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[JOURNAL_BIOMETRIC_PROTECTED] = value
+        }
+    }
+
     companion object {
         private val json =
             Json {
@@ -154,5 +164,6 @@ constructor(
         private val SUGGEST_CARD_DISMISSED_DAY = longPreferencesKey("suggest_card_dismissed_day")
         private val CHAT_DRAFT = stringPreferencesKey("chat_draft")
         private val REDUCE_MOTION = booleanPreferencesKey("accessibility_reduce_motion")
+        private val JOURNAL_BIOMETRIC_PROTECTED = booleanPreferencesKey("journal_biometric_protection")
     }
 }

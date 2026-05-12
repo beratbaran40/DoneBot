@@ -5,6 +5,7 @@ import com.todoapp.mobile.data.repository.AuthRepositoryImpl
 import com.todoapp.mobile.data.repository.ChatRepositoryImpl
 import com.todoapp.mobile.data.repository.GroupRepositoryImpl
 import com.todoapp.mobile.data.repository.InvitationRepositoryImpl
+import com.todoapp.mobile.data.repository.JournalRepositoryImpl
 import com.todoapp.mobile.data.repository.LanguageRepositoryImpl
 import com.todoapp.mobile.data.repository.NotificationRepositoryImpl
 import com.todoapp.mobile.data.repository.PomodoroRepositoryImpl
@@ -36,6 +37,7 @@ import com.todoapp.mobile.domain.repository.AuthRepository
 import com.todoapp.mobile.domain.repository.ChatRepository
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.InvitationRepository
+import com.todoapp.mobile.domain.repository.JournalRepository
 import com.todoapp.mobile.domain.repository.LanguageRepository
 import com.todoapp.mobile.domain.repository.NotificationRepository
 import com.todoapp.mobile.domain.repository.PomodoroRepository
@@ -166,4 +168,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindChatRepository(impl: ChatRepositoryImpl): ChatRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindJournalRepository(impl: JournalRepositoryImpl): JournalRepository
 }

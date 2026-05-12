@@ -12,16 +12,19 @@ import com.todoapp.mobile.data.auth.GoogleSignInManager
 import com.todoapp.mobile.data.repository.DailyPlanPreferencesImpl
 import com.todoapp.mobile.data.repository.DataStoreHelper
 import com.todoapp.mobile.data.repository.FCMTokenPreferencesImpl
+import com.todoapp.mobile.data.repository.JournalBiometricPreferencesImpl
 import com.todoapp.mobile.data.repository.SecretPreferencesImpl
 import com.todoapp.mobile.data.source.local.AppDatabase
 import com.todoapp.mobile.data.source.local.GroupActivityDao
 import com.todoapp.mobile.data.source.local.GroupMemberDao
 import com.todoapp.mobile.data.source.local.GroupTaskDao
+import com.todoapp.mobile.data.source.local.JournalEntryDao
 import com.todoapp.mobile.data.source.local.PomodoroDao
 import com.todoapp.mobile.data.source.local.TaskDao
 import com.todoapp.mobile.data.source.local.datasource.GroupDao
 import com.todoapp.mobile.domain.repository.DailyPlanPreferences
 import com.todoapp.mobile.domain.repository.FCMTokenPreferences
+import com.todoapp.mobile.domain.repository.JournalBiometricPreferences
 import com.todoapp.mobile.domain.repository.SecretPreferences
 import dagger.Binds
 import dagger.Module
@@ -176,6 +179,10 @@ object LocalStorageModule {
 
     @Provides
     @Singleton
+    fun provideJournalEntryDao(database: AppDatabase): JournalEntryDao = database.journalEntryDao()
+
+    @Provides
+    @Singleton
     fun provideGoogleSignInManager(): GoogleSignInManager = GoogleSignInManager
 
     @Provides
@@ -201,4 +208,10 @@ abstract class LocalStorageModuleForBindings {
     @Binds
     @Singleton
     abstract fun bindFcmTokenPreferences(impl: FCMTokenPreferencesImpl): FCMTokenPreferences
+
+    @Binds
+    @Singleton
+    abstract fun bindJournalBiometricPreferences(
+        impl: JournalBiometricPreferencesImpl,
+    ): JournalBiometricPreferences
 }

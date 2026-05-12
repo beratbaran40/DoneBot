@@ -75,6 +75,10 @@ import com.todoapp.mobile.ui.groups.transferownership.TransferOwnershipScreen
 import com.todoapp.mobile.ui.groups.transferownership.TransferOwnershipViewModel
 import com.todoapp.mobile.ui.home.HomeScreen
 import com.todoapp.mobile.ui.home.HomeViewModel
+import com.todoapp.mobile.ui.journal.JournalScreen
+import com.todoapp.mobile.ui.journal.JournalViewModel
+import com.todoapp.mobile.ui.journal.entry.JournalEntryScreen
+import com.todoapp.mobile.ui.journal.entry.JournalEntryViewModel
 import com.todoapp.mobile.ui.login.LoginScreen
 import com.todoapp.mobile.ui.login.LoginViewModel
 import com.todoapp.mobile.ui.onboarding.OnboardingScreen
@@ -713,6 +717,40 @@ fun NavGraph(
                     com.todoapp.mobile.R.string.transfer_ownership_info_bullet_2,
                 ),
             )
+        }
+
+        composable<Screen.Journal> {
+            val viewModel: JournalViewModel = hiltViewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            NavigationEffectController(viewModel.navEffect)
+            JournalScreen(
+                uiState = uiState,
+                uiEffect = viewModel.uiEffect,
+                onAction = viewModel::onAction,
+            )
+            ScreenInfoDialog(
+                infoClicks = topBarViewModel.infoClicks,
+                titleRes = com.todoapp.mobile.R.string.journal_info_title,
+                descriptionRes = com.todoapp.mobile.R.string.journal_info_description,
+                bulletPointRes = listOf(
+                    com.todoapp.mobile.R.string.journal_info_bullet_1,
+                    com.todoapp.mobile.R.string.journal_info_bullet_2,
+                    com.todoapp.mobile.R.string.journal_info_bullet_3,
+                    com.todoapp.mobile.R.string.journal_info_bullet_4,
+                ),
+            )
+        }
+
+        composable<Screen.JournalEntry> {
+            val viewModel: JournalEntryViewModel = hiltViewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            NavigationEffectController(viewModel.navEffect)
+            JournalEntryScreen(
+                uiState = uiState,
+                uiEffect = viewModel.uiEffect,
+                onAction = viewModel::onAction,
+            )
+            // Info dialog rendered inside JournalEntryScreen — topbar is hidden for this route.
         }
     }
 }

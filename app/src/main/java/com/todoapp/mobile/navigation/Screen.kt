@@ -140,4 +140,12 @@ interface Screen {
     data class TransferOwnership(
         val groupId: Long,
     ) : Screen
+
+    @Serializable
+    data object Journal : Screen
+
+    @Serializable
+    data class JournalEntry(
+        val entryId: Long = 0L,
+    ) : Screen
 }
