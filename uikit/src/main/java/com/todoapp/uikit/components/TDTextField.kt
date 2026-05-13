@@ -2,7 +2,6 @@
 
 package com.todoapp.uikit.components
 
-import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -45,7 +44,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
@@ -355,10 +353,9 @@ fun TDCompactOutlinedTextField(
     }
 }
 
-@Preview(showBackground = true, name = "Light Mode")
-@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Dark Mode")
+@TDPreviewForm
 @Composable
-private fun TextFieldPreview() {
+private fun TDTextFieldCompositePreview() {
     var passwordVisible by remember { mutableStateOf(false) }
 
     TDTheme {

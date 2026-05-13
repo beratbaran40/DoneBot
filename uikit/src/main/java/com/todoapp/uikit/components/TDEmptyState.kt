@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.uikit.R
+import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -65,5 +67,54 @@ fun TDEmptyState(
                 size = TDButtonSize.SMALL,
             )
         }
+    }
+}
+
+@TDPreview
+@Composable
+private fun TdEmptyStateFullPreview() {
+    TDTheme {
+        TDEmptyState(
+            title = "No tasks yet",
+            subtitle = "Add your first task and start ticking things off.",
+            iconRes = R.drawable.ic_tasks_done,
+            actionText = "Add task",
+            onActionClick = {},
+        )
+    }
+}
+
+@TDPreview
+@Composable
+private fun TdEmptyStateIconTitleSubtitlePreview() {
+    TDTheme {
+        TDEmptyState(
+            title = "Nothing here",
+            subtitle = "Once you create entries they'll show up in this list.",
+            iconRes = R.drawable.ic_tasks_done,
+        )
+    }
+}
+
+@TDPreview
+@Composable
+private fun TdEmptyStateTitleOnlyPreview() {
+    TDTheme {
+        TDEmptyState(
+            title = "No results",
+        )
+    }
+}
+
+@TDPreview
+@Composable
+private fun TdEmptyStateNoIconWithActionPreview() {
+    TDTheme {
+        TDEmptyState(
+            title = "Inbox is clear",
+            subtitle = "Take a break or plan tomorrow's tasks.",
+            actionText = "Plan tomorrow",
+            onActionClick = {},
+        )
     }
 }

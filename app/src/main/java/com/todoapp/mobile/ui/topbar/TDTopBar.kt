@@ -1,3 +1,7 @@
+// Detekt mis-flags ShowTopBar()'s entire body as unreachable due to the `appDestinationFromRoute(...) ?: return`
+// early-guard at the top — it can't follow the control flow past the elvis operator.
+@file:Suppress("UnreachableCode")
+
 package com.todoapp.mobile.ui.topbar
 
 import androidx.annotation.DrawableRes
@@ -23,8 +27,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.AndroidUiModes
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
@@ -54,14 +56,12 @@ fun TDTopBar(
             )
         },
         navigationIcon = {
-            state.navigationIcon.let {
-                IconButton(onClick = state.onNavigationClick!!) {
-                    Icon(
-                        painterResource(it),
-                        tint = TDTheme.colors.onBackground,
-                        contentDescription = stringResource(state.navigationContentDescription),
-                    )
-                }
+            IconButton(onClick = state.onNavigationClick) {
+                Icon(
+                    painterResource(state.navigationIcon),
+                    tint = TDTheme.colors.onBackground,
+                    contentDescription = stringResource(state.navigationContentDescription),
+                )
             }
         },
         actions = {
@@ -201,7 +201,7 @@ data class TDTopBarState(
     val title: String,
     @DrawableRes val navigationIcon: Int,
     @StringRes val navigationContentDescription: Int,
-    val onNavigationClick: (() -> Unit)? = null,
+    val onNavigationClick: () -> Unit = {},
     val actions: List<TDTopBarAction> = emptyList(),
     val profileChip: TDProfileChip? = null,
 )
@@ -271,7 +271,7 @@ private fun initialsFrom(name: String): String = name
 
 private fun normalizeRoute(route: String?): String? = route?.substringBefore("/")?.substringBefore("?")
 
-@Preview(showBackground = true, uiMode = AndroidUiModes.UI_MODE_NIGHT_YES, widthDp = 360)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun TDTopBarPreview_Home() {
     TDTheme {
@@ -301,7 +301,7 @@ private fun TDTopBarPreview_Home() {
     }
 }
 
-@Preview(showBackground = true, uiMode = AndroidUiModes.UI_MODE_NIGHT_NO, widthDp = 360)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun TDTopBarPreview_Calendar() {
     TDTheme {

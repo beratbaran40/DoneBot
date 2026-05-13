@@ -130,7 +130,9 @@ constructor(
 
     private fun initializeEngineIfNeeded() {
         viewModelScope.launch {
-            val pomodoro = pomodoroRepository.getSavedPomodoroSettings()!!
+            val pomodoro = requireNotNull(pomodoroRepository.getSavedPomodoroSettings()) {
+                "Pomodoro settings should be seeded at first launch"
+            }
             if (!engine.state.value.isRunning) {
                 val queue = buildSessionQueue(pomodoro)
                 sessionQueue = queue.toList()
@@ -195,6 +197,7 @@ constructor(
      * Called only when the countdown reaches 0 naturally (engine enters overtime).
      * Manual skips are handled in [onSkipSession] and do NOT reach here.
      */
+    @Suppress("RedundantSuspendModifier") // Detekt false positive: invokes suspend Channel.send
     private suspend fun onSessionFinished() {
         sessionQueue.getOrNull(currentSessionIndex)?.let { finished ->
             when (finished.mode) {

@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.uikit.R
+import com.todoapp.uikit.previews.TDPreviewDialog
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -99,5 +100,36 @@ fun TDFeatureExplainer(
                 )
             }
         }
+    }
+}
+
+@TDPreviewDialog
+@Composable
+private fun TdFeatureExplainerWithBulletsPreview() {
+    TDTheme {
+        TDFeatureExplainer(
+            title = "Smart reminders",
+            description = "We'll nudge you a few minutes before your task to help you stay on track.",
+            buttonText = "Got it",
+            bulletPoints = listOf(
+                "Tap a task to choose the reminder offset",
+                "Disable reminders in Settings anytime",
+                "Group tasks share their reminder with members",
+            ),
+            onDismiss = {},
+        )
+    }
+}
+
+@TDPreviewDialog
+@Composable
+private fun TdFeatureExplainerWithoutBulletsPreview() {
+    TDTheme {
+        TDFeatureExplainer(
+            title = "Welcome to Pomodoro",
+            description = "Focus for 25 minutes, then take a short break. Tap start when you're ready.",
+            buttonText = "Start",
+            onDismiss = {},
+        )
     }
 }

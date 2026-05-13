@@ -36,7 +36,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
@@ -438,6 +437,7 @@ private fun PomodoroLandscapeContent(
 
 @Composable
 private fun ProgressRing(
+    modifier: Modifier = Modifier,
     min: Int,
     second: Int,
     animatedProgress: Float,
@@ -445,7 +445,6 @@ private fun ProgressRing(
     trackColor: androidx.compose.ui.graphics.Color,
     textColor: androidx.compose.ui.graphics.Color,
     size: Dp = 320.dp,
-    modifier: Modifier = Modifier,
 ) {
     Box(
         modifier = modifier.size(size),
@@ -533,7 +532,7 @@ private const val PROGRESS_ANIM_MS = 900
 
 // ── Previews ──────────────────────────────────────────────────────────────────
 
-@Preview(name = "Focus - Light", showBackground = true, backgroundColor = 0xFFF0FFF4)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun Preview_Focus() {
     TDTheme {
@@ -553,7 +552,7 @@ private fun Preview_Focus() {
     }
 }
 
-@Preview(name = "Short Break - Light", showBackground = true, backgroundColor = 0xFFFFF5F0)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun Preview_ShortBreak() {
     TDTheme {
@@ -572,7 +571,7 @@ private fun Preview_ShortBreak() {
     }
 }
 
-@Preview(name = "Long Break - Light", showBackground = true, backgroundColor = 0xFFEBF8FF)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun Preview_LongBreak() {
     TDTheme {

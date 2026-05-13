@@ -68,7 +68,8 @@ fun TDLocationPicker(
         )
     }
 
-    val isFilled = !name.isNullOrBlank()
+    val filledName = name?.takeIf { it.isNotBlank() }
+    val isFilled = filledName != null
 
     Row(
         modifier = modifier
@@ -89,15 +90,15 @@ fun TDLocationPicker(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            if (isFilled) {
+            if (filledName != null) {
                 TDText(
-                    text = name!!,
+                    text = filledName,
                     style = TDTheme.typography.subheading2,
                     color = TDTheme.colors.onBackground,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                if (!address.isNullOrBlank() && address != name) {
+                if (!address.isNullOrBlank() && address != filledName) {
                     TDText(
                         text = address,
                         style = TDTheme.typography.regularTextStyle.copy(color = TDTheme.colors.gray),

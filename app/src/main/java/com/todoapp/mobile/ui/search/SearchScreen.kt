@@ -1,6 +1,5 @@
 package com.todoapp.mobile.ui.search
 
-import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
@@ -40,7 +39,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import com.todoapp.mobile.R
@@ -348,7 +346,7 @@ private fun SearchError(message: String) {
     }
 }
 
-@Preview(showBackground = true)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun SearchScreenIdlePreview() {
     TDTheme {
@@ -360,7 +358,7 @@ private fun SearchScreenIdlePreview() {
     }
 }
 
-@Preview(showBackground = true)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun SearchScreenLoadingPreview() {
     TDTheme {
@@ -372,7 +370,7 @@ private fun SearchScreenLoadingPreview() {
     }
 }
 
-@Preview(showBackground = true)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun SearchScreenSuccessPreview() {
     TDTheme {
@@ -395,7 +393,7 @@ private fun SearchScreenSuccessPreview() {
                         ),
                     ),
                 ),
-                filters = com.todoapp.mobile.ui.search.SearchContract.SearchFilters(),
+                filters = SearchContract.SearchFilters(),
             ),
             uiEffect = emptyFlow(),
             onAction = {},
@@ -403,7 +401,7 @@ private fun SearchScreenSuccessPreview() {
     }
 }
 
-@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun SearchScreenSuccessDarkPreview() {
     TDTheme {
@@ -426,7 +424,7 @@ private fun SearchScreenSuccessDarkPreview() {
                         ),
                     ),
                 ),
-                filters = com.todoapp.mobile.ui.search.SearchContract.SearchFilters(),
+                filters = SearchContract.SearchFilters(),
             ),
             uiEffect = emptyFlow(),
             onAction = {},

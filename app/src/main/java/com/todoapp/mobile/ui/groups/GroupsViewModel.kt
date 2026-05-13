@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.todoapp.mobile.data.model.network.data.GroupSummaryData
+import com.todoapp.mobile.di.IoDispatcher
 import com.todoapp.mobile.domain.model.Group
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.SessionPreferences
@@ -14,8 +15,8 @@ import com.todoapp.mobile.navigation.Screen
 import com.todoapp.mobile.ui.groups.GroupsContract.UiAction
 import com.todoapp.mobile.ui.groups.GroupsContract.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
@@ -37,6 +38,7 @@ constructor(
     private val groupRepository: GroupRepository,
     private val sessionPreferences: SessionPreferences,
     savedStateHandle: SavedStateHandle,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
     private val pendingDeleteGroupId = savedStateHandle.toRoute<Screen.Groups>().pendingDeleteGroupId
     private var pendingDeleteHandled = false
@@ -247,7 +249,7 @@ constructor(
         mutable.add(action.to, item)
         _uiState.value = current.copy(groups = mutable)
 
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             groupRepository
                 .reorderGroups(
                     fromIndex = action.from,

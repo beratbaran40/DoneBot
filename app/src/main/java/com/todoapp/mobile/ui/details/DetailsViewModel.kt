@@ -51,8 +51,11 @@ constructor(
     private var currentTaskId: Long? = null
 
     init {
-        currentTaskId = savedStateHandle["taskId"]
-        loadTask(currentTaskId!!)
+        val taskId = requireNotNull(savedStateHandle.get<Long>("taskId")) {
+            "DetailsScreen route must provide a taskId argument"
+        }
+        currentTaskId = taskId
+        loadTask(taskId)
     }
 
     fun loadTask(taskId: Long) {
@@ -317,6 +320,7 @@ constructor(
      * has no remoteId yet (offline-created), uploads are buffered via [pendingPhotoRepository]
      * and the local UI list is used as-is.
      */
+    @Suppress("RedundantSuspendModifier") // Detekt false positive: invokes suspend taskRepository.deleteTaskPhoto/uploadTaskPhoto
     private suspend fun drainStagedPhotoChanges(state: UiState.Success): List<String> {
         if (state.taskId > 0) {
             for (photoId in state.pendingPhotoDeleteIds) {
@@ -384,6 +388,7 @@ constructor(
         _uiEffect.trySend(UiEffect.ShowToast(R.string.changes_cancelled))
     }
 
+    @Suppress("RedundantSuspendModifier") // Detekt false positive: invokes suspend Channel.send
     private suspend fun onSaveSuccess(updatedTask: Task) {
         originalTask = updatedTask
         updateSuccessState { it.copy(isDirty = false) }
@@ -391,6 +396,7 @@ constructor(
         navigateBack()
     }
 
+    @Suppress("RedundantSuspendModifier") // Detekt false positive: invokes suspend Channel.send
     private suspend fun onSaveFailure() {
         _uiEffect.send(UiEffect.ShowToast(R.string.changes_not_saved))
     }

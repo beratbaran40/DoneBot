@@ -3,13 +3,14 @@ package com.todoapp.mobile.data.engine
 import com.todoapp.mobile.common.pollFirst
 import com.todoapp.mobile.data.notification.PomodoroServiceController
 import com.todoapp.mobile.data.notification.PomodoroSessionAlarmScheduler
+import com.todoapp.mobile.di.DefaultDispatcher
 import com.todoapp.mobile.domain.engine.PomodoroEngine
 import com.todoapp.mobile.domain.engine.PomodoroEngineState
 import com.todoapp.mobile.domain.engine.PomodoroEvent
 import com.todoapp.mobile.domain.engine.PomodoroMode
 import com.todoapp.mobile.domain.engine.Session
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -32,8 +33,9 @@ class PomodoroEngineImpl
 constructor(
     private val serviceController: PomodoroServiceController,
     private val alarmScheduler: PomodoroSessionAlarmScheduler,
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) : PomodoroEngine {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val scope = CoroutineScope(SupervisorJob() + defaultDispatcher)
 
     private val _state = MutableStateFlow(PomodoroEngineState())
     override val state = _state.asStateFlow()

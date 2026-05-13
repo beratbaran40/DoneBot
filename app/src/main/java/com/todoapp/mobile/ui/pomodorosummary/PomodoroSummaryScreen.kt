@@ -23,7 +23,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
@@ -199,7 +198,7 @@ private fun PomodoroStatCard(
     }
 }
 
-@Preview(showBackground = true)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun PomodoroSummaryPreview() {
     TDTheme {
@@ -210,6 +209,40 @@ private fun PomodoroSummaryPreview() {
                 totalFocusMinutes = 100,
                 totalBreakMinutes = 30,
                 completedAt = "Thu, Apr 3 · 14:25",
+            ),
+            onAction = {},
+        )
+    }
+}
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun PomodoroSummaryShortPreview() {
+    TDTheme {
+        PomodoroSummaryScreen(
+            uiState =
+            UiState(
+                focusSessions = 1,
+                totalFocusMinutes = 25,
+                totalBreakMinutes = 5,
+                completedAt = "Mon, May 13 · 09:15",
+            ),
+            onAction = {},
+        )
+    }
+}
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun PomodoroSummaryLongPreview() {
+    TDTheme {
+        PomodoroSummaryScreen(
+            uiState =
+            UiState(
+                focusSessions = 8,
+                totalFocusMinutes = 200,
+                totalBreakMinutes = 60,
+                completedAt = "Wed, May 13 · 18:42",
             ),
             onAction = {},
         )

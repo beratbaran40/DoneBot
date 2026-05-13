@@ -7,7 +7,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import com.todoapp.mobile.R
 import com.todoapp.mobile.common.RingtoneHolder
 import com.todoapp.mobile.domain.engine.PomodoroMode
@@ -90,7 +89,7 @@ private fun PomodoroMode.toIconRes(): Int = when (this) {
     PomodoroMode.OverTime -> R.drawable.ic_overtime
 }
 
-@Preview(showBackground = true)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun BannerContentPreview() {
     TDTheme {

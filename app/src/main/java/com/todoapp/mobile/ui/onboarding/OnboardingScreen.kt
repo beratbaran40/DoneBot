@@ -33,7 +33,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
@@ -236,11 +235,7 @@ private fun OnboardingActions(
     }
 }
 
-@Preview(
-    showBackground = true,
-    widthDp = 830,
-    heightDp = 400,
-)
+@com.todoapp.uikit.previews.TDPreviewWide
 @Composable
 fun OnboardingScreenLandScapePreview(
     @PreviewParameter(OnboardingScreenPreviewProvider::class) uiState: UiState,
@@ -253,7 +248,7 @@ fun OnboardingScreenLandScapePreview(
     }
 }
 
-@Preview(showBackground = true)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 fun OnboardingScreenPreview(
     @PreviewParameter(OnboardingScreenPreviewProvider::class) uiState: UiState,

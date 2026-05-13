@@ -1,6 +1,7 @@
 // Detekt without type resolution mis-flags the private `.toUiItem` extension fns at the
 // bottom of this file as unused, even though they're called from `loadGroupDetail`.
-@file:Suppress("UnusedPrivateMember")
+// It also flags trailing code after `?: return@mapNotNull null` guards as unreachable.
+@file:Suppress("UnusedPrivateMember", "UnreachableCode")
 
 package com.todoapp.mobile.ui.groups.groupdetail
 

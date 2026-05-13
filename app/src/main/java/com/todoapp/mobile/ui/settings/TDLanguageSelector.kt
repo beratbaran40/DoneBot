@@ -19,8 +19,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.AndroidUiModes
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
 import com.todoapp.mobile.domain.model.LanguagePreference
@@ -99,7 +97,7 @@ private fun LanguageItem(
     }
 }
 
-@Preview(showBackground = true, uiMode = AndroidUiModes.UI_MODE_NIGHT_NO)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun LanguageSelectorPreview_Light() {
     TDTheme {
@@ -113,7 +111,7 @@ private fun LanguageSelectorPreview_Light() {
     }
 }
 
-@Preview(showBackground = true, uiMode = AndroidUiModes.UI_MODE_NIGHT_YES)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun LanguageSelectorPreview_Dark() {
     TDTheme {

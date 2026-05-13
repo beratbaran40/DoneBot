@@ -229,9 +229,15 @@ constructor(
                 Task(
                     title = form.taskTitle,
                     description = form.taskDescription,
-                    date = form.dialogSelectedDate!!,
-                    timeStart = form.taskTimeStart!!,
-                    timeEnd = form.taskTimeEnd!!,
+                    date = requireNotNull(form.dialogSelectedDate) {
+                        "validateTaskForm should have ensured dialogSelectedDate is non-null"
+                    },
+                    timeStart = requireNotNull(form.taskTimeStart) {
+                        "validateTaskForm should have ensured taskTimeStart is non-null"
+                    },
+                    timeEnd = requireNotNull(form.taskTimeEnd) {
+                        "validateTaskForm should have ensured taskTimeEnd is non-null"
+                    },
                     isCompleted = false,
                     isSecret = form.isTaskSecret,
                 )

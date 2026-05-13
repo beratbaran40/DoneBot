@@ -1,6 +1,5 @@
 package com.todoapp.uikit.components
 
-import android.content.res.Configuration
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
@@ -13,8 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.uikit.R
+import com.todoapp.uikit.previews.TDPreviewWide
 import com.todoapp.uikit.theme.TDTheme
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -85,9 +84,9 @@ fun TDWeekNavigator(
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-@Preview(showBackground = true)
+@TDPreviewWide
 @Composable
-private fun WeekNavigatorPreview() {
+private fun TdWeekNavigatorCurrentPreview() {
     TDTheme {
         TDWeekNavigator(
             selectedDate = LocalDate.now(),
@@ -98,12 +97,12 @@ private fun WeekNavigatorPreview() {
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@TDPreviewWide
 @Composable
-private fun WeekNavigatorPreview_Dark() {
+private fun TdWeekNavigatorPastWeekPreview() {
     TDTheme {
         TDWeekNavigator(
-            selectedDate = LocalDate.now(),
+            selectedDate = LocalDate.now().minusWeeks(3),
             onPreviousWeek = {},
             onNextWeek = {},
         )

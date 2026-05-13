@@ -20,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
 import com.todoapp.mobile.ui.pomodorolaunch.PomodoroLaunchContract.UiAction
@@ -166,7 +165,7 @@ private fun LaunchStatCard(
     }
 }
 
-@Preview(showBackground = true)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun PomodoroLaunchScreenPreview() {
     TDTheme {
@@ -177,6 +176,42 @@ private fun PomodoroLaunchScreenPreview() {
                 focusTime = 25,
                 shortBreak = 5,
                 longBreak = 20,
+                isLoading = false,
+            ),
+            onAction = {},
+        )
+    }
+}
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun PomodoroLaunchScreenLoadingPreview() {
+    TDTheme {
+        PomodoroLaunchScreen(
+            uiState =
+            UiState(
+                sessionCount = 0,
+                focusTime = 25,
+                shortBreak = 5,
+                longBreak = 20,
+                isLoading = true,
+            ),
+            onAction = {},
+        )
+    }
+}
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun PomodoroLaunchScreenLongPreview() {
+    TDTheme {
+        PomodoroLaunchScreen(
+            uiState =
+            UiState(
+                sessionCount = 24,
+                focusTime = 50,
+                shortBreak = 10,
+                longBreak = 30,
                 isLoading = false,
             ),
             onAction = {},

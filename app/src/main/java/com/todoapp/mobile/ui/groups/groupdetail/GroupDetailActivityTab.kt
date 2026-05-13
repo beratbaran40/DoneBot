@@ -16,8 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.tooling.preview.AndroidUiModes
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract.GroupActivityUiItem
 import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract.UiState
@@ -43,8 +41,7 @@ fun GroupDetailActivityTab(uiState: UiState.Success) {
     }
 }
 
-@Preview(showBackground = true)
-@Preview(showBackground = true, uiMode = AndroidUiModes.UI_MODE_NIGHT_YES)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun GroupDetailActivityTabPreview() {
     TDTheme {
@@ -67,8 +64,7 @@ private fun GroupDetailActivityTabPreview() {
     }
 }
 
-@Preview(showBackground = true)
-@Preview(showBackground = true, uiMode = AndroidUiModes.UI_MODE_NIGHT_YES)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun GroupDetailActivityTabEmptyPreview() {
     TDTheme {

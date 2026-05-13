@@ -1,6 +1,5 @@
 package com.todoapp.mobile.ui.groups.managemembers
 
-import android.content.res.Configuration
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,7 +28,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -191,7 +189,7 @@ private fun ManageMemberRow(
     }
 }
 
-@Preview(showBackground = true)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun ManageMembersContentPreview() {
     TDTheme {
@@ -223,7 +221,7 @@ private fun ManageMembersContentPreview() {
     }
 }
 
-@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun ManageMembersContentDarkPreview() {
     TDTheme {

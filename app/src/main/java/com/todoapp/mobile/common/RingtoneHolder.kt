@@ -72,8 +72,9 @@ class RingtoneHolder {
             }
             play()
             // Auto-stop after a short duration (some devices loop indefinitely).
-            stopRunnable = Runnable { stop() }
-            mainHandler.postDelayed(stopRunnable!!, autoStopMillis)
+            val autoStop = Runnable { stop() }
+            stopRunnable = autoStop
+            mainHandler.postDelayed(autoStop, autoStopMillis)
         } ?: run {
             // Fallback tone if ringtone couldn't be created.
             ToneGenerator(AudioManager.STREAM_ALARM, TONE_VOLUME)

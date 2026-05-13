@@ -29,6 +29,8 @@ import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.todoapp.mobile.MainActivity
 import com.todoapp.mobile.R
+import com.todoapp.mobile.di.IoDispatcher
+import com.todoapp.mobile.di.MainDispatcher
 import com.todoapp.mobile.domain.alarm.AlarmScheduler
 import com.todoapp.mobile.domain.alarm.AlarmType
 import com.todoapp.mobile.domain.alarm.buildDailyPlanAlarmItem
@@ -41,8 +43,8 @@ import com.todoapp.uikit.components.TDOverlayDailyPlanNotificationCard
 import com.todoapp.uikit.components.TDOverlayNotificationCard
 import com.todoapp.uikit.theme.TDTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -68,11 +70,19 @@ class OverlayService :
     @Inject
     lateinit var alarmSoundPreferences: com.todoapp.mobile.domain.repository.AlarmSoundPreferences
 
+    @Inject
+    @IoDispatcher
+    lateinit var ioDispatcher: CoroutineDispatcher
+
+    @Inject
+    @MainDispatcher
+    lateinit var mainDispatcher: CoroutineDispatcher
+
     private lateinit var windowManager: WindowManager
     private val ringtone = com.todoapp.mobile.common.RingtoneHolder()
-    private val ringtoneScope = kotlinx.coroutines.CoroutineScope(
-        kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO,
-    )
+    private val ringtoneScope by lazy {
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + ioDispatcher)
+    }
 
     @Suppress("ktlint:standard:backing-property-naming")
     private val _lifecycleRegistry = LifecycleRegistry(this)
@@ -138,9 +148,9 @@ class OverlayService :
         val layoutParams = getLayoutParams(overlayType)
 
         if (overlayType == OVERLAY_TYPE_DAILY_PLAN) {
-            CoroutineScope(Dispatchers.IO).launch {
+            CoroutineScope(ioDispatcher).launch {
                 val saved = dailyPlanPreferences.observeCardPosition().first()
-                withContext(Dispatchers.Main) {
+                withContext(mainDispatcher) {
                     layoutParams.x = saved.cardPositionX.toInt()
                     layoutParams.y = saved.cardPositionY.toInt()
                     dailyPlanOverlayView?.let {
@@ -187,7 +197,7 @@ class OverlayService :
                                         windowManager.updateViewLayout(this@apply, layoutParams)
                                     },
                                     onDragEnd = {
-                                        CoroutineScope(Dispatchers.IO).launch {
+                                        CoroutineScope(ioDispatcher).launch {
                                             dailyPlanPreferences.saveCardPosition(
                                                 DailyCardPosition(
                                                     layoutParams.x.toFloat(),
@@ -227,7 +237,7 @@ class OverlayService :
     }
 
     private fun rescheduleNextDailyPlan() {
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(ioDispatcher).launch {
             val time =
                 dailyPlanPreferences.observePlanTime().first()
                     ?: DailyPlanDefaults.DEFAULT_PLAN_TIME

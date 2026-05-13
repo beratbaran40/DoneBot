@@ -16,6 +16,7 @@ constructor(
     private val dao: JournalEntryDao,
     private val photoStorage: JournalPhotoStorage,
 ) : JournalRepository {
+    @Suppress("IgnoredReturnValue") // Detekt false positive: inner `rows.map { ... }` value is the lambda result.
     override fun observeEntries(): Flow<List<JournalEntry>> = dao.observeAll().map { rows -> rows.map { it.toDomain() } }
 
     override suspend fun getEntry(id: Long): JournalEntry? = dao.getById(id)?.toDomain()

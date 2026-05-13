@@ -1,3 +1,7 @@
+// Detekt false-positives the trailing Icon() block as unreachable due to the `?: return@NavigationRailItem`
+// guard above it — the early-return only fires when icon is null.
+@file:Suppress("UnreachableCode")
+
 package com.todoapp.mobile.navigation
 
 import androidx.compose.material3.Icon
@@ -53,9 +57,10 @@ fun TDNavigationRail() {
                     }
                 },
                 icon = {
-                    val iconId = if (selected) screen.selectedIcon else screen.icon
+                    val iconId = (if (selected) screen.selectedIcon else screen.icon)
+                        ?: return@NavigationRailItem
                     Icon(
-                        painter = painterResource(id = iconId!!),
+                        painter = painterResource(id = iconId),
                         contentDescription = stringResource(screen.title),
                         tint = Color.Unspecified,
                     )

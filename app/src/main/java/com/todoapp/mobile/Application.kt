@@ -14,13 +14,14 @@ import com.google.android.libraries.places.api.Places
 import com.todoapp.mobile.data.network.NetworkMonitor
 import com.todoapp.mobile.data.notification.NotificationService
 import com.todoapp.mobile.data.notification.PomodoroNotificationChannels
+import com.todoapp.mobile.di.IoDispatcher
 import com.todoapp.mobile.domain.alarm.RescheduleAllAlarmsUseCase
 import com.todoapp.mobile.domain.engine.PomodoroEngine
 import com.todoapp.mobile.domain.repository.SecretPreferences
 import com.todoapp.mobile.domain.security.SecretModeEndEvent
 import com.todoapp.mobile.domain.usecase.security.OnSecretModeEventUseCase
 import dagger.hilt.android.HiltAndroidApp
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -49,6 +50,10 @@ class Application :
     @Inject
     lateinit var networkMonitor: NetworkMonitor
 
+    @Inject
+    @IoDispatcher
+    lateinit var ioDispatcher: CoroutineDispatcher
+
     override val workManagerConfiguration: Configuration
         get() =
             Configuration
@@ -66,7 +71,7 @@ class Application :
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
         createNotificationChannel()
         PomodoroNotificationChannels.ensurePomodoroChannel(this)
-        ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
+        ProcessLifecycleOwner.get().lifecycleScope.launch(ioDispatcher) {
             runCatching { rescheduleAllAlarmsUseCase() }
                 .onFailure { Timber.tag("RescheduleAllAlarms").w(it, "reschedule on app start failed") }
         }

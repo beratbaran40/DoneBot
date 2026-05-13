@@ -13,17 +13,10 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.theme.ToDoAppTheme
 
-/**
- * Circular countdown ring. Drains clockwise from full (progress=1f) to empty (progress=0f).
- *
- * The caller is responsible for animating [progress] with [animateFloatAsState] so the arc
- * flows smoothly between each 1-second tick.
- */
 @Composable
 fun PomodoroTimerRing(
     progress: Float,
@@ -72,7 +65,7 @@ fun PomodoroTimerRing(
     }
 }
 
-@Preview(showBackground = true)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun PomodoroTimerRingPreview() {
     ToDoAppTheme {
@@ -87,7 +80,7 @@ private fun PomodoroTimerRingPreview() {
     }
 }
 
-@Preview(showBackground = true)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun PomodoroTimerRingEmptyPreview() {
     ToDoAppTheme {
@@ -102,7 +95,7 @@ private fun PomodoroTimerRingEmptyPreview() {
     }
 }
 
-@Preview(showBackground = true)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun PomodoroTimerRingFullPreview() {
     ToDoAppTheme {
@@ -117,7 +110,7 @@ private fun PomodoroTimerRingFullPreview() {
     }
 }
 
-@Preview(showBackground = true)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun PomodoroTimerRingShortBreakPreview() {
     ToDoAppTheme {
@@ -132,7 +125,7 @@ private fun PomodoroTimerRingShortBreakPreview() {
     }
 }
 
-@Preview(showBackground = true)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun PomodoroTimerRingOverTimePreview() {
     ToDoAppTheme {

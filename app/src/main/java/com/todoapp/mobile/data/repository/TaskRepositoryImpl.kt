@@ -1,7 +1,9 @@
 // Detekt's IgnoredReturnValue rule mis-flags `Flow<T> = source.map { it.toDomain() }` patterns
 // as ignored when in fact the result is the function's return value. Suppress at the file level
 // rather than per-call-site since the same pattern recurs throughout this repository.
-@file:Suppress("IgnoredReturnValue")
+// Detekt without type resolution also mis-flags trailing code after `?: return@mapNotNull null`
+// guards (e.g. inside syncDailyCompletions) as unreachable; suppress the rule file-wide.
+@file:Suppress("IgnoredReturnValue", "UnreachableCode")
 
 package com.todoapp.mobile.data.repository
 
@@ -16,6 +18,7 @@ import com.todoapp.mobile.data.source.local.TaskDailyCompletionDao
 import com.todoapp.mobile.data.source.local.datasource.GroupTaskLocalDataSource
 import com.todoapp.mobile.data.source.local.datasource.TaskLocalDataSource
 import com.todoapp.mobile.data.source.remote.datasource.TaskRemoteDataSource
+import com.todoapp.mobile.di.IoDispatcher
 import com.todoapp.mobile.domain.alarm.AlarmScheduler
 import com.todoapp.mobile.domain.alarm.AlarmType
 import com.todoapp.mobile.domain.constants.DailyPlanDefaults
@@ -29,7 +32,7 @@ import com.todoapp.mobile.domain.repository.DailyBucket
 import com.todoapp.mobile.domain.repository.DailyPlanPreferences
 import com.todoapp.mobile.domain.repository.MonthlyWeekBucket
 import com.todoapp.mobile.domain.repository.TaskRepository
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -55,6 +58,7 @@ constructor(
     private val dailyCompletionDao: TaskDailyCompletionDao,
     private val alarmScheduler: AlarmScheduler,
     private val dailyPlanPreferences: DailyPlanPreferences,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : TaskRepository {
     private val taskPhotoUrls = kotlinx.coroutines.flow.MutableStateFlow<Map<Long, List<String>>>(emptyMap())
 
@@ -115,7 +119,7 @@ constructor(
         list.map { it.toDomain() }
     }
 
-    override suspend fun deferTasksToTomorrow(taskIds: List<Long>) = withContext(Dispatchers.IO) {
+    override suspend fun deferTasksToTomorrow(taskIds: List<Long>) = withContext(ioDispatcher) {
         if (taskIds.isNotEmpty()) {
             localDataSource.shiftDatesByOneDay(taskIds)
         }
@@ -125,7 +129,7 @@ constructor(
         taskId: Long,
         date: LocalDate,
         completed: Boolean,
-    ) = withContext(Dispatchers.IO) {
+    ) = withContext(ioDispatcher) {
         val epochDay = date.toEpochDay()
         if (completed) {
             dailyCompletionDao.upsert(
@@ -378,8 +382,11 @@ constructor(
             localDataSource.delete(entity)
             return
         }
+        val remoteId = checkNotNull(entity.remoteId) {
+            "SYNCED task ${entity.id} is missing remoteId"
+        }
         remoteDataSource
-            .deleteTask(entity.remoteId!!)
+            .deleteTask(remoteId)
             .onSuccess {
                 localDataSource.delete(entity)
             }.onFailure {
@@ -390,7 +397,7 @@ constructor(
     override suspend fun updateTaskCompletion(
         id: Long,
         isCompleted: Boolean,
-    ) = withContext(Dispatchers.IO) {
+    ) = withContext(ioDispatcher) {
         val current = localDataSource.getTaskById(id) ?: return@withContext
         if (current.isCompleted == isCompleted) return@withContext
         // SYNCED rows must flip to PENDING_UPDATE so SyncWorker pushes the change; otherwise
@@ -405,7 +412,7 @@ constructor(
         localDataSource.update(current.copy(isCompleted = isCompleted, syncStatus = nextSyncStatus))
     }
 
-    override suspend fun getTaskById(id: Long): Task? = withContext(Dispatchers.IO) {
+    override suspend fun getTaskById(id: Long): Task? = withContext(ioDispatcher) {
         localDataSource.getTaskById(id)?.toDomain()
     }
 
@@ -448,7 +455,7 @@ constructor(
             }
     }
 
-    override suspend fun update(task: Task) = withContext(Dispatchers.IO) {
+    override suspend fun update(task: Task) = withContext(ioDispatcher) {
         val taskEntity = localDataSource.getTaskById(task.id)
 
         // Re-arm or cancel the recurring alarm based on the new recurrence. Always cancel first
@@ -471,8 +478,11 @@ constructor(
             return@withContext
         }
 
+        val remoteIdForUpdate = checkNotNull(taskEntity.remoteId) {
+            "SYNCED task ${taskEntity.id} is missing remoteId"
+        }
         remoteDataSource
-            .updateTask(taskEntity.remoteId!!, task)
+            .updateTask(remoteIdForUpdate, task)
             .onSuccess { remoteTask ->
                 localDataSource.update(
                     task
@@ -586,10 +596,9 @@ constructor(
         val localTasks = localDataSource.observeAll().first()
         val remotePersonal = remoteTasks.tasks.filter { it.familyGroupId == null }
         val remoteIds = remotePersonal.map { it.id }.toSet()
-        val localByRemoteId =
-            localTasks
-                .filter { it.remoteId != null }
-                .associateBy { it.remoteId!! }
+        val localByRemoteId = localTasks
+            .mapNotNull { entity -> entity.remoteId?.let { id -> id to entity } }
+            .toMap()
 
         // PENDING_CREATE rows have remoteId=null so they don't show up in localByRemoteId.
         // If a sync runs between insert()'s local row commit and addTask returning, we'd
@@ -735,7 +744,7 @@ constructor(
         isAllDay == other.isAllDay &&
         photoUrls == other.photoUrls
 
-    override suspend fun syncLocalTasksToServer(): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun syncLocalTasksToServer(): Result<Unit> = withContext(ioDispatcher) {
         val nonSyncedTasks = findNonSyncedTasks()
         nonSyncedTasks.forEach { taskEntity ->
             syncTask(taskEntity).onFailure {
@@ -753,7 +762,7 @@ constructor(
         SyncStatus.PENDING_DELETE -> syncDeletedTask(taskEntity)
     }
 
-    override suspend fun deleteAllTasks(): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun deleteAllTasks(): Result<Unit> = withContext(ioDispatcher) {
         try {
             localDataSource.deleteAll()
             Result.success(Unit)
@@ -762,7 +771,7 @@ constructor(
         }
     }
 
-    override suspend fun getAllTasks(): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun getAllTasks(): Result<Unit> = withContext(ioDispatcher) {
         remoteDataSource.getTasks().fold(
             onSuccess = { tasks ->
                 runCatching {
@@ -807,7 +816,10 @@ constructor(
     }
 
     private suspend fun syncDeletedTask(taskEntity: TaskEntity): Result<Unit> {
-        val remoteResult = remoteDataSource.deleteTask(taskEntity.remoteId!!)
+        val remoteId = checkNotNull(taskEntity.remoteId) {
+            "syncDeletedTask called with locally-only task ${taskEntity.id}"
+        }
+        val remoteResult = remoteDataSource.deleteTask(remoteId)
 
         return remoteResult.fold(
             onSuccess = {
@@ -820,7 +832,10 @@ constructor(
     }
 
     private suspend fun syncUpdatedTask(taskEntity: TaskEntity): Result<Unit> {
-        val remoteResult = remoteDataSource.updateTask(taskEntity.remoteId!!, taskEntity.toDomain())
+        val remoteId = checkNotNull(taskEntity.remoteId) {
+            "syncUpdatedTask called with locally-only task ${taskEntity.id}"
+        }
+        val remoteResult = remoteDataSource.updateTask(remoteId, taskEntity.toDomain())
 
         return remoteResult.fold(
             onSuccess = { remoteTask ->
@@ -913,7 +928,7 @@ constructor(
         date: LocalDate,
         fromIndex: Int,
         toIndex: Int,
-    ): Result<Unit> = withContext(Dispatchers.IO) {
+    ): Result<Unit> = withContext(ioDispatcher) {
         runCatching {
             if (fromIndex == toIndex) return@runCatching
 

@@ -44,7 +44,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -382,7 +381,7 @@ private fun TDGoodbyeDialogPreview_Processing() {
     }
 }
 
-@Preview(showBackground = true, widthDp = 360, heightDp = 720)
+@TDPreviewDialog
 @Composable
 private fun TDGoodbyeDialogPreview_ReducedMotion() {
     TDTheme {

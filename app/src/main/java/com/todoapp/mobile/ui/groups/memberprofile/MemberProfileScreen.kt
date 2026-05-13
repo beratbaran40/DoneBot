@@ -1,6 +1,5 @@
 package com.todoapp.mobile.ui.groups.memberprofile
 
-import android.content.res.Configuration
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -34,7 +33,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -260,7 +258,7 @@ private fun InfoRow(
     }
 }
 
-@Preview(showBackground = true)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun MemberProfileContentPreview() {
     TDTheme {
@@ -285,7 +283,7 @@ private fun MemberProfileContentPreview() {
     }
 }
 
-@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun MemberProfileContentDarkPreview() {
     TDTheme {

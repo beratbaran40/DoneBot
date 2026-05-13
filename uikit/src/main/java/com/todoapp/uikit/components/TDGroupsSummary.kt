@@ -1,6 +1,5 @@
 package com.todoapp.uikit.components
 
-import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
@@ -36,10 +35,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
 import com.todoapp.uikit.modifier.neumorphicShadow
+import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -313,9 +312,9 @@ private fun StatBox(
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFFF0F0F5)
+@TDPreview
 @Composable
-private fun FamilyGroupCardPreview() {
+private fun TdFamilyGroupCardAdminPreview() {
     TDTheme {
         TDFamilyGroupCard(
             name = "The Smith Family",
@@ -331,9 +330,9 @@ private fun FamilyGroupCardPreview() {
     }
 }
 
-@Preview(showBackground = true, uiMode = UI_MODE_NIGHT_YES)
+@TDPreview
 @Composable
-private fun FamilyGroupCardDarkPreview() {
+private fun TdFamilyGroupCardMemberPreview() {
     TDTheme {
         TDFamilyGroupCard(
             name = "Extended Cousins",
@@ -349,9 +348,28 @@ private fun FamilyGroupCardDarkPreview() {
     }
 }
 
-@Preview(showBackground = true)
+@TDPreview
 @Composable
-private fun FamilyGroupCardNoTasksPreview() {
+private fun TdFamilyGroupCardWithAvatarPreview() {
+    TDTheme {
+        TDFamilyGroupCard(
+            name = "Design Crew",
+            role = "Admin",
+            description = "Sprint cadence, design reviews, and weekly sync notes.",
+            memberCount = 7,
+            pendingTaskCount = 4,
+            createdDate = "May 10, 2026",
+            membersIcon = R.drawable.ic_members,
+            tasksIcon = R.drawable.ic_tasks_done,
+            avatarUrl = "https://example.com/avatar.png",
+            modifier = Modifier.padding(16.dp),
+        )
+    }
+}
+
+@TDPreview
+@Composable
+private fun TdFamilyGroupCardNoTasksPreview() {
     TDTheme {
         TDFamilyGroupCard(
             name = "Roommates",
@@ -367,9 +385,9 @@ private fun FamilyGroupCardNoTasksPreview() {
     }
 }
 
-@Preview(showBackground = true)
+@TDPreview
 @Composable
-private fun FamilyGroupCardDraggingPreview() {
+private fun TdFamilyGroupCardDraggingPreview() {
     TDTheme {
         TDFamilyGroupCard(
             name = "Work Squad",
@@ -386,9 +404,9 @@ private fun FamilyGroupCardDraggingPreview() {
     }
 }
 
-@Preview(showBackground = true)
+@TDPreview
 @Composable
-private fun FamilyGroupCardDimmedPreview() {
+private fun TdFamilyGroupCardDimmedPreview() {
     TDTheme {
         TDFamilyGroupCard(
             name = "Book Club",

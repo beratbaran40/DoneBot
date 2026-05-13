@@ -1,6 +1,5 @@
 package com.todoapp.mobile.ui.home
 
-import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -45,7 +44,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
 import com.todoapp.mobile.common.move
@@ -620,7 +618,7 @@ private fun HomeHintCard(
     }
 }
 
-@Preview(showBackground = true)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun HomeContentPreview() {
     TDTheme {
@@ -637,7 +635,7 @@ private fun HomeContentPreview() {
     }
 }
 
-@Preview(showBackground = true)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun HomeContentPreview_no_task() {
     TDTheme {
@@ -654,7 +652,7 @@ private fun HomeContentPreview_no_task() {
     }
 }
 
-@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun HomeContentPreview_no_task_dark() {
     TDTheme {
@@ -671,7 +669,7 @@ private fun HomeContentPreview_no_task_dark() {
     }
 }
 
-@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun HomeContentPreview_Dark() {
     TDTheme(darkTheme = true) {

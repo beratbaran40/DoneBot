@@ -3,10 +3,11 @@ package com.todoapp.mobile.data.repository
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.todoapp.mobile.data.security.SecretModeEndCondition
+import com.todoapp.mobile.di.IoDispatcher
 import com.todoapp.mobile.domain.repository.SecretPreferences
 import com.todoapp.mobile.domain.security.SecretModeEndEvent
 import com.todoapp.mobile.domain.security.SecretModeReopenOptionId
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -18,9 +19,10 @@ class SecretPreferencesImpl
 @Inject
 constructor(
     private val sharedPreferences: SharedPreferences,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : SecretPreferences {
     override suspend fun saveCondition(condition: SecretModeEndCondition) {
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             sharedPreferences.edit {
                 when (condition) {
                     is SecretModeEndCondition.UntilTime -> {
@@ -43,7 +45,7 @@ constructor(
         }
     }
 
-    override suspend fun getCondition(): SecretModeEndCondition = withContext(Dispatchers.IO) {
+    override suspend fun getCondition(): SecretModeEndCondition = withContext(ioDispatcher) {
         val conditionType =
             sharedPreferences
                 .getString(KEY_CONDITION_TYPE, ConditionType.DISABLED.name)
@@ -103,12 +105,12 @@ constructor(
     }
 
     override suspend fun setLastSelectedOptionId(id: SecretModeReopenOptionId) {
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             sharedPreferences.edit { putString(KEY_LAST_SELECTED_OPTION_ID, id.name) }
         }
     }
 
-    override suspend fun getLastSelectedOptionId(): SecretModeReopenOptionId = withContext(Dispatchers.IO) {
+    override suspend fun getLastSelectedOptionId(): SecretModeReopenOptionId = withContext(ioDispatcher) {
         val raw = sharedPreferences.getString(KEY_LAST_SELECTED_OPTION_ID, null)
         raw
             ?.let { SecretModeReopenOptionId.valueOf(it) }

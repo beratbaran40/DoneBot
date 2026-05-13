@@ -1,3 +1,6 @@
+// Detekt mis-flags trailing code after `?: return@rememberLauncherForActivityResult` as unreachable.
+@file:Suppress("UnreachableCode")
+
 package com.todoapp.mobile.ui.groups.grouptaskdetail
 
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -118,9 +121,10 @@ fun TaskPhotosSection(
         }
     }
 
-    if (viewerUrl != null) {
+    val currentViewerUrl = viewerUrl
+    if (currentViewerUrl != null) {
         PhotoViewerDialog(
-            url = viewerUrl!!,
+            url = currentViewerUrl,
             onDismiss = {
                 viewerUrl = null
                 viewerPhotoId = null

@@ -12,11 +12,12 @@ import androidx.core.app.NotificationCompat
 import com.example.uikit.R
 import com.todoapp.mobile.MainActivity
 import com.todoapp.mobile.common.RingtoneHolder
+import com.todoapp.mobile.di.IoDispatcher
 import com.todoapp.mobile.domain.repository.AlarmSoundPreferences
 import com.todoapp.mobile.ui.overlay.OverlayServiceChannel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -26,11 +27,14 @@ import javax.inject.Inject
 class NotificationService : Service() {
     @Inject lateinit var alarmSoundPreferences: AlarmSoundPreferences
 
+    @Inject @IoDispatcher
+    lateinit var ioDispatcher: CoroutineDispatcher
+
     private val notificationManager by lazy {
         getSystemService(NOTIFICATION_SERVICE) as NotificationManager
     }
     private val ringtone = RingtoneHolder()
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val scope by lazy { CoroutineScope(SupervisorJob() + ioDispatcher) }
 
     fun sendNotification(
         contentText: String,
@@ -42,7 +46,7 @@ class NotificationService : Service() {
                 this,
                 NOTIFICATION_ID,
                 activityIntent,
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0,
+                PendingIntent.FLAG_IMMUTABLE,
             )
         val notification =
             NotificationCompat
@@ -58,8 +62,6 @@ class NotificationService : Service() {
             NOTIFICATION_ID,
             notification,
         )
-        // Play the user's chosen alarm sound directly. Channel sounds are immutable after
-        // creation, so this is the only way to honour a runtime-changeable sound preference.
         scope.launch {
             val uri = runCatching { alarmSoundPreferences.currentAlarmSoundUri() }.getOrNull()
             ringtone.play(context = this@NotificationService, explicitUri = uri)
@@ -82,13 +84,8 @@ class NotificationService : Service() {
         if (!message.isNullOrBlank()) {
             sendNotification(message, time.toInt())
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            // Detach so the user-visible task reminder persists after the FG placeholder is gone.
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        } else {
-            @Suppress("DEPRECATION")
-            stopForeground(true)
-        }
+        // Detach so the user-visible task reminder persists after the FG placeholder is gone.
+        stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf(startId)
         return START_NOT_STICKY
     }

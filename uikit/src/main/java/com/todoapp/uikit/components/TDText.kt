@@ -11,7 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
+import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -74,9 +74,9 @@ fun TDSpannableText(
     )
 }
 
-@Preview(showBackground = true)
+@TDPreview
 @Composable
-private fun TDTextExample() {
+private fun TdTextDefaultPreview() {
     TDTheme {
         TDText(
             text = "This is a text.",
@@ -84,9 +84,31 @@ private fun TDTextExample() {
     }
 }
 
-@Preview(showBackground = true)
+@TDPreview
 @Composable
-private fun TDAnnotatedTextExample() {
+private fun TdTextLongPreview() {
+    TDTheme {
+        TDText(
+            text =
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
+                "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@TDPreview
+@Composable
+private fun TdTextNullPreview() {
+    TDTheme {
+        TDText(text = null)
+    }
+}
+
+@TDPreview
+@Composable
+private fun TdSpannableTextPreview() {
     TDTheme {
         TDSpannableText(
             fullText = "This should be a text.",

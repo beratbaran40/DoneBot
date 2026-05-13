@@ -1,7 +1,16 @@
 package com.todoapp.mobile.navigation
 
 import com.todoapp.mobile.R
-import com.todoapp.mobile.navigation.AppDestination.SecretMode
+import kotlin.reflect.KClass
+
+/**
+ * Resolves the route key for a [Screen] subtype. Reflection's [KClass.qualifiedName] returns
+ * `null` only for anonymous / local classes (never the case for serializable navigation
+ * destinations); fail loudly if a misconfigured target sneaks in.
+ */
+private fun KClass<out Screen>.requiredRoute(): String = requireNotNull(qualifiedName) {
+    "$simpleName must have a qualifiedName to be used as a navigation route"
+}
 
 sealed class AppDestination(
     val title: Int,
@@ -12,14 +21,14 @@ sealed class AppDestination(
 ) {
     data object Home : AppDestination(
         title = R.string.navbar_home_screen_page_name,
-        route = Screen.Home::class.qualifiedName!!,
+        route = Screen.Home::class.requiredRoute(),
         icon = R.drawable.ic_home,
         selectedIcon = R.drawable.ic_selected_home,
     )
 
     data object Calendar : AppDestination(
         title = R.string.navbar_calendar_screen_page_name,
-        route = Screen.Calendar::class.qualifiedName!!,
+        route = Screen.Calendar::class.requiredRoute(),
         icon = R.drawable.ic_calendar,
         selectedIcon = R.drawable.ic_selected_calendar,
         hasInfoDialog = true,
@@ -27,7 +36,7 @@ sealed class AppDestination(
 
     data object Activity : AppDestination(
         title = R.string.navbar_statistic_screen_page_name,
-        route = Screen.Activity::class.qualifiedName!!,
+        route = Screen.Activity::class.requiredRoute(),
         icon = R.drawable.ic_statistic,
         selectedIcon = R.drawable.ic_selected_statistic,
         hasInfoDialog = true,
@@ -35,7 +44,7 @@ sealed class AppDestination(
 
     data object Chat : AppDestination(
         title = R.string.navbar_chat_screen_page_name,
-        route = Screen.Chat::class.qualifiedName!!,
+        route = Screen.Chat::class.requiredRoute(),
         icon = R.drawable.ic_chat,
         selectedIcon = R.drawable.ic_selected_chat,
         hasInfoDialog = true,
@@ -43,7 +52,7 @@ sealed class AppDestination(
 
     data object Settings : AppDestination(
         title = R.string.settings,
-        route = Screen.Settings::class.qualifiedName!!,
+        route = Screen.Settings::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -51,7 +60,7 @@ sealed class AppDestination(
 
     data object PomodoroAddTimer : AppDestination(
         title = R.string.add_timer,
-        route = Screen.AddPomodoroTimer::class.qualifiedName!!,
+        route = Screen.AddPomodoroTimer::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -59,7 +68,7 @@ sealed class AppDestination(
 
     data object Task : AppDestination(
         title = R.string.task_details,
-        route = Screen.Task::class.qualifiedName!!,
+        route = Screen.Task::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -67,7 +76,7 @@ sealed class AppDestination(
 
     data object SecretMode : AppDestination(
         title = R.string.secret_mode_settings,
-        route = Screen.SecretMode::class.qualifiedName!!,
+        route = Screen.SecretMode::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -75,7 +84,7 @@ sealed class AppDestination(
 
     data object PlanYourDay : AppDestination(
         title = R.string.plan_your_day,
-        route = Screen.PlanYourDay::class.qualifiedName!!,
+        route = Screen.PlanYourDay::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -83,7 +92,7 @@ sealed class AppDestination(
 
     data object Groups : AppDestination(
         title = R.string.groups,
-        route = Screen.Groups::class.qualifiedName!!,
+        route = Screen.Groups::class.requiredRoute(),
         icon = R.drawable.ic_groups,
         selectedIcon = R.drawable.ic_selected_groups,
         hasInfoDialog = true,
@@ -91,7 +100,7 @@ sealed class AppDestination(
 
     data object CreateNewGroup : AppDestination(
         title = R.string.new_group,
-        route = Screen.CreateNewGroup::class.qualifiedName!!,
+        route = Screen.CreateNewGroup::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -99,7 +108,7 @@ sealed class AppDestination(
 
     data object FilteredTasks : AppDestination(
         title = R.string.filtered_tasks_title,
-        route = Screen.FilteredTasks::class.qualifiedName!!,
+        route = Screen.FilteredTasks::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -107,7 +116,7 @@ sealed class AppDestination(
 
     data object Search : AppDestination(
         title = R.string.search,
-        route = Screen.Search::class.qualifiedName!!,
+        route = Screen.Search::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -115,7 +124,7 @@ sealed class AppDestination(
 
     data object PomodoroLaunch : AppDestination(
         title = R.string.add_timer,
-        route = Screen.PomodoroLaunch::class.qualifiedName!!,
+        route = Screen.PomodoroLaunch::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -123,7 +132,7 @@ sealed class AppDestination(
 
     data object PomodoroSummary : AppDestination(
         title = R.string.pomodoro_summary,
-        route = Screen.PomodoroSummary::class.qualifiedName!!,
+        route = Screen.PomodoroSummary::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -131,7 +140,7 @@ sealed class AppDestination(
 
     data object GroupDetail : AppDestination(
         title = R.string.group_detail,
-        route = Screen.GroupDetail::class.qualifiedName!!,
+        route = Screen.GroupDetail::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -139,7 +148,7 @@ sealed class AppDestination(
 
     data object GroupSettings : AppDestination(
         title = R.string.group_settings,
-        route = Screen.GroupSettings::class.qualifiedName!!,
+        route = Screen.GroupSettings::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -147,7 +156,7 @@ sealed class AppDestination(
 
     data object InviteMember : AppDestination(
         title = R.string.invite_member,
-        route = Screen.InviteMember::class.qualifiedName!!,
+        route = Screen.InviteMember::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -155,7 +164,7 @@ sealed class AppDestination(
 
     data object ManageMembers : AppDestination(
         title = R.string.manage_members,
-        route = Screen.ManageMembers::class.qualifiedName!!,
+        route = Screen.ManageMembers::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -163,7 +172,7 @@ sealed class AppDestination(
 
     data object GroupTaskDetail : AppDestination(
         title = R.string.group_task_detail,
-        route = Screen.GroupTaskDetail::class.qualifiedName!!,
+        route = Screen.GroupTaskDetail::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -171,7 +180,7 @@ sealed class AppDestination(
 
     data object MemberProfile : AppDestination(
         title = R.string.member_profile,
-        route = Screen.MemberProfile::class.qualifiedName!!,
+        route = Screen.MemberProfile::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -179,7 +188,7 @@ sealed class AppDestination(
 
     data object TransferOwnership : AppDestination(
         title = R.string.transfer_ownership,
-        route = Screen.TransferOwnership::class.qualifiedName!!,
+        route = Screen.TransferOwnership::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -187,7 +196,7 @@ sealed class AppDestination(
 
     data object Profile : AppDestination(
         title = R.string.profile,
-        route = Screen.Profile::class.qualifiedName!!,
+        route = Screen.Profile::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -195,21 +204,21 @@ sealed class AppDestination(
 
     data object ChangePassword : AppDestination(
         title = R.string.change_password,
-        route = Screen.ChangePassword::class.qualifiedName!!,
+        route = Screen.ChangePassword::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
     )
 
     data object ResetPassword : AppDestination(
         title = R.string.reset_password,
-        route = Screen.ResetPassword::class.qualifiedName!!,
+        route = Screen.ResetPassword::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
     )
 
     data object Notifications : AppDestination(
         title = R.string.notifications_title,
-        route = Screen.Notifications::class.qualifiedName!!,
+        route = Screen.Notifications::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -217,7 +226,7 @@ sealed class AppDestination(
 
     data object Invitations : AppDestination(
         title = R.string.invitations_title,
-        route = Screen.Invitations::class.qualifiedName!!,
+        route = Screen.Invitations::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -225,7 +234,7 @@ sealed class AppDestination(
 
     data object AlarmSounds : AppDestination(
         title = R.string.alarm_sounds,
-        route = Screen.AlarmSounds::class.qualifiedName!!,
+        route = Screen.AlarmSounds::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -233,7 +242,7 @@ sealed class AppDestination(
 
     data object Journal : AppDestination(
         title = R.string.nav_journal_title,
-        route = Screen.Journal::class.qualifiedName!!,
+        route = Screen.Journal::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,
@@ -241,7 +250,7 @@ sealed class AppDestination(
 
     data object JournalEntry : AppDestination(
         title = R.string.journal_entry_screen_title,
-        route = Screen.JournalEntry::class.qualifiedName!!,
+        route = Screen.JournalEntry::class.requiredRoute(),
         icon = null,
         selectedIcon = null,
         hasInfoDialog = true,

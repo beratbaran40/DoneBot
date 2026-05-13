@@ -30,7 +30,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
 import com.todoapp.mobile.ui.forgotpassword.ForgotPasswordContract.UiAction
@@ -250,18 +249,6 @@ private fun ForgotPasswordLandscapeContent(
             ForgotPasswordFormPanel(uiState = uiState, onAction = onAction)
         }
     }
-}
-
-@Preview(
-    name = "Forgot Password – Empty",
-    showBackground = true,
-)
-@Composable
-private fun ForgotPasswordContentPreview() {
-    ForgotPasswordContent(
-        uiState = UiState(email = ""),
-        onAction = {},
-    )
 }
 
 @TDPreview

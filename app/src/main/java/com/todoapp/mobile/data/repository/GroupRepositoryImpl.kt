@@ -26,13 +26,14 @@ import com.todoapp.mobile.data.source.local.datasource.GroupTaskLocalDataSource
 import com.todoapp.mobile.data.source.local.datasource.TaskLocalDataSource
 import com.todoapp.mobile.data.source.remote.datasource.GroupRemoteDataSource
 import com.todoapp.mobile.data.source.remote.datasource.TaskRemoteDataSource
+import com.todoapp.mobile.di.IoDispatcher
 import com.todoapp.mobile.domain.model.Group
 import com.todoapp.mobile.domain.model.GroupActivity
 import com.todoapp.mobile.domain.model.GroupMember
 import com.todoapp.mobile.domain.model.GroupTask
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.domain.repository.GroupRepository
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -53,6 +54,7 @@ constructor(
     private val taskRemoteDataSource: TaskRemoteDataSource,
     private val taskLocalDataSource: TaskLocalDataSource,
     private val todoApi: com.todoapp.mobile.data.source.remote.api.ToDoApi,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : GroupRepository {
     @Volatile private var cachedGroups: GroupSummaryDataList? = null
 
@@ -112,7 +114,9 @@ constructor(
     override suspend fun deleteGroup(id: Long): Result<Unit> {
         val localEntity =
             groupLocalDataSource.getGroupById(id) ?: return Result.failure(Exception("Group not found"))
-        val remoteId = localEntity.remoteId!!
+        val remoteId = checkNotNull(localEntity.remoteId) {
+            "Synced group ${localEntity.id} is missing remoteId"
+        }
         return groupRemoteDataSource
             .deleteGroup(remoteId)
             .onSuccess {
@@ -134,7 +138,7 @@ constructor(
             invalidateGroupsCache()
         }
 
-    override suspend fun deleteAllLocalGroups(): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun deleteAllLocalGroups(): Result<Unit> = withContext(ioDispatcher) {
         runCatching {
             groupTaskLocalDataSource.deleteAll()
             groupMemberLocalDataSource.deleteAll()
@@ -152,7 +156,7 @@ constructor(
     override suspend fun reorderGroups(
         fromIndex: Int,
         toIndex: Int,
-    ): Result<Unit> = withContext(Dispatchers.IO) {
+    ): Result<Unit> = withContext(ioDispatcher) {
         runCatching {
             if (fromIndex == toIndex) return@runCatching
 
@@ -466,7 +470,7 @@ constructor(
     }
 
     override suspend fun searchGroupTasksAcrossGroups(query: String): Result<List<Pair<Group, List<GroupTask>>>> = withContext(
-        Dispatchers.IO
+        ioDispatcher
     ) {
         runCatching {
             val groups = groupLocalDataSource.getAllGroupsOrdered().first()
@@ -636,7 +640,7 @@ constructor(
     override suspend fun syncGroupTasks(
         remoteGroupId: Long,
         force: Boolean,
-    ): Result<Unit> = withContext(Dispatchers.IO) {
+    ): Result<Unit> = withContext(ioDispatcher) {
         val lastSync = groupTasksSyncedAt[remoteGroupId] ?: 0L
         if (!force && System.currentTimeMillis() - lastSync < GROUP_TASKS_TTL_MS) {
             return@withContext Result.success(Unit)

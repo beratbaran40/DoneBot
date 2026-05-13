@@ -1,3 +1,7 @@
+// Detekt false-positives the trailing Icon() block as unreachable due to the `?: return@NavigationBarItem`
+// guard above it — the early-return only fires when icon is null.
+@file:Suppress("UnreachableCode")
+
 package com.todoapp.mobile.navigation
 
 import androidx.compose.foundation.Image
@@ -93,9 +97,10 @@ fun TDBottomBar() {
                             )
                         }
                     } else {
-                        val iconId = if (selected) screen.selectedIcon else screen.icon
+                        val iconId = (if (selected) screen.selectedIcon else screen.icon)
+                            ?: return@NavigationBarItem
                         Icon(
-                            painter = painterResource(id = iconId!!),
+                            painter = painterResource(id = iconId),
                             contentDescription = stringResource(screen.title),
                             tint = Color.Unspecified,
                         )

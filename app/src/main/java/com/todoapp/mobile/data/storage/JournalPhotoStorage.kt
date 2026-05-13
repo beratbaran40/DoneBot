@@ -2,8 +2,9 @@ package com.todoapp.mobile.data.storage
 
 import android.content.Context
 import android.net.Uri
+import com.todoapp.mobile.di.IoDispatcher
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.File
@@ -14,6 +15,7 @@ import javax.inject.Singleton
 @Singleton
 class JournalPhotoStorage @Inject constructor(
     @ApplicationContext private val context: Context,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) {
     private val photosDir: File by lazy {
         File(context.filesDir, DIR_NAME).apply {
@@ -28,7 +30,7 @@ class JournalPhotoStorage @Inject constructor(
      *
      * Returns `null` on failure (unreadable source, IO error).
      */
-    suspend fun savePhoto(uri: Uri): String? = withContext(Dispatchers.IO) {
+    suspend fun savePhoto(uri: Uri): String? = withContext(ioDispatcher) {
         runCatching {
             val target = File(photosDir, "${UUID.randomUUID()}.jpg")
             context.contentResolver.openInputStream(uri)?.use { input ->
@@ -41,7 +43,7 @@ class JournalPhotoStorage @Inject constructor(
     }
 
     suspend fun deletePhoto(path: String) {
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             runCatching { File(path).delete() }
                 .onFailure { Timber.tag(TAG).w(it, "Failed to delete journal photo %s", path) }
         }

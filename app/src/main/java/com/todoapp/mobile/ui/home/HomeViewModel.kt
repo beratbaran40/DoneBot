@@ -10,6 +10,7 @@ import com.todoapp.mobile.common.move
 import com.todoapp.mobile.common.needsOverlayPermission
 import com.todoapp.mobile.common.needsPostNotificationsPermission
 import com.todoapp.mobile.data.repository.DataStoreHelper
+import com.todoapp.mobile.di.IoDispatcher
 import com.todoapp.mobile.domain.alarm.AlarmScheduler
 import com.todoapp.mobile.domain.alarm.AlarmType
 import com.todoapp.mobile.domain.engine.PomodoroEngine
@@ -29,8 +30,8 @@ import com.todoapp.mobile.ui.home.HomeContract.UiState
 import com.todoapp.mobile.ui.settings.PermissionType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
@@ -67,6 +68,7 @@ constructor(
     private val dataStoreHelper: DataStoreHelper,
     private val clock: java.time.Clock,
     @ApplicationContext private val appContext: Context,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
     private data class DailyData(
         val tasks: List<Task>,
@@ -428,13 +430,24 @@ constructor(
 
         viewModelScope.launch {
             val form = currentState.taskFormState
+            val selectedDate = requireNotNull(form.dialogSelectedDate) {
+                "validateTaskForm should have ensured dialogSelectedDate is non-null"
+            }
             val task =
                 Task(
                     title = form.taskTitle,
                     description = form.taskDescription.ifBlank { null },
-                    date = form.dialogSelectedDate!!,
-                    timeStart = if (form.isAllDay) java.time.LocalTime.MIDNIGHT else form.taskTimeStart!!,
-                    timeEnd = if (form.isAllDay) java.time.LocalTime.of(23, 59) else form.taskTimeEnd!!,
+                    date = selectedDate,
+                    timeStart = if (form.isAllDay) {
+                        java.time.LocalTime.MIDNIGHT
+                    } else {
+                        requireNotNull(form.taskTimeStart) { "validateTaskForm should have ensured taskTimeStart is non-null" }
+                    },
+                    timeEnd = if (form.isAllDay) {
+                        java.time.LocalTime.of(23, 59)
+                    } else {
+                        requireNotNull(form.taskTimeEnd) { "validateTaskForm should have ensured taskTimeEnd is non-null" }
+                    },
                     isCompleted = false,
                     isSecret = form.isTaskSecret,
                     reminderOffsetMinutes = form.reminderOffsetMinutes,
@@ -469,7 +482,7 @@ constructor(
     }
 
     private fun checkTask(uiAction: UiAction.OnTaskCheck) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             val task = uiAction.task
             if (task.recurrence != com.todoapp.mobile.domain.model.Recurrence.NONE) {
                 val state = _uiState.value as? UiState.Success
@@ -524,7 +537,7 @@ constructor(
             state.copy(tasks = list)
         }
 
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             taskRepository
                 .reorderTasksForDate(
                     date = currentState.selectedDate,
@@ -874,7 +887,10 @@ constructor(
                 false
             }
 
-            !form.isAllDay && !form.taskTimeEnd!!.isAfter(form.taskTimeStart!!) -> {
+            !form.isAllDay &&
+                form.taskTimeStart != null &&
+                form.taskTimeEnd != null &&
+                !form.taskTimeEnd.isAfter(form.taskTimeStart) -> {
                 showTransientError(R.string.error_task_end_before_start) { s, v ->
                     s.copy(taskFormState = s.taskFormState.copy(timeErrorRes = v))
                 }
@@ -890,7 +906,7 @@ constructor(
         // and self-rescheduled in AlarmFireReceiver — skip the one-shot path here.
         if (task.recurrence != com.todoapp.mobile.domain.model.Recurrence.NONE) return
         val offset = task.reminderOffsetMinutes ?: return // null = user opted out
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             alarmScheduler.schedule(
                 task.toAlarmItem(remindBeforeMinutes = offset),
                 type = AlarmType.TASK,

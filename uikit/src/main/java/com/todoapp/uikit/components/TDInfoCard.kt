@@ -11,9 +11,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -38,29 +38,31 @@ fun TDInfoCard(
     }
 }
 
-@Preview(showBackground = true)
+@TDPreview
 @Composable
-private fun TDInfoCardPreview() {
-    TDInfoCard(
-        text =
-        "You'll be able to invite your family members and " +
-            "assign tasks to them immediately after creating " +
-            "the group.",
-        modifier = Modifier,
-    )
+private fun TdInfoCardDefaultPreview() {
+    TDTheme {
+        TDInfoCard(
+            text =
+            "You'll be able to invite your family members and " +
+                "assign tasks to them immediately after creating " +
+                "the group.",
+            modifier = Modifier.padding(16.dp),
+        )
+    }
 }
 
-@Preview(showBackground = true)
+@TDPreview
 @Composable
-private fun TDInfoCardShortPreview() {
+private fun TdInfoCardShortPreview() {
     TDTheme {
         TDInfoCard(text = "Tap a task to edit it.", modifier = Modifier.padding(16.dp))
     }
 }
 
-@Preview(showBackground = true)
+@TDPreview
 @Composable
-private fun TDInfoCardLongPreview() {
+private fun TdInfoCardLongPreview() {
     TDTheme {
         TDInfoCard(
             text =

@@ -14,6 +14,7 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.todoapp.mobile.MainActivity
 import com.todoapp.mobile.data.notification.NotificationService
+import com.todoapp.mobile.di.IoDispatcher
 import com.todoapp.mobile.domain.repository.FCMTokenPreferences
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.NotificationRepository
@@ -22,8 +23,8 @@ import com.todoapp.mobile.navigation.CurrentRouteTracker
 import com.todoapp.mobile.navigation.RouteArgs
 import com.todoapp.mobile.navigation.Screen
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -43,7 +44,10 @@ class TDFireBaseMessagingService : FirebaseMessagingService() {
 
     @Inject lateinit var currentRouteTracker: CurrentRouteTracker
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    @Inject @IoDispatcher
+    lateinit var ioDispatcher: CoroutineDispatcher
+
+    private val scope by lazy { CoroutineScope(SupervisorJob() + ioDispatcher) }
 
     override fun onDestroy() {
         scope.cancel()

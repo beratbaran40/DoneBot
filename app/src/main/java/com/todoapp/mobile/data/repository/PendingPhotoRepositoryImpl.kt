@@ -1,11 +1,15 @@
+// Detekt mis-flags code after `?: return false` guards as unreachable (false positive).
+@file:Suppress("UnreachableCode")
+
 package com.todoapp.mobile.data.repository
 
 import android.content.Context
 import com.todoapp.mobile.data.model.entity.PendingPhotoEntity
 import com.todoapp.mobile.data.source.local.PendingPhotoDao
+import com.todoapp.mobile.di.IoDispatcher
 import com.todoapp.mobile.domain.repository.PendingPhotoRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.File
@@ -19,12 +23,13 @@ class PendingPhotoRepositoryImpl
 constructor(
     @ApplicationContext private val context: Context,
     private val dao: PendingPhotoDao,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : PendingPhotoRepository {
     private val baseDir: File by lazy {
         File(context.filesDir, "pending_photos").also { if (!it.exists()) it.mkdirs() }
     }
 
-    override suspend fun queue(localTaskId: Long, bytes: ByteArray, mimeType: String): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun queue(localTaskId: Long, bytes: ByteArray, mimeType: String): Result<Unit> = withContext(ioDispatcher) {
         runCatching {
             val file = File(baseDir, "${UUID.randomUUID()}.bin")
             file.writeBytes(bytes)
@@ -43,7 +48,7 @@ constructor(
         localTaskId: Long,
         remoteTaskId: Long,
         upload: suspend (ByteArray, String) -> Result<Unit>,
-    ): Int = withContext(Dispatchers.IO) {
+    ): Int = withContext(ioDispatcher) {
         val pending = dao.getByLocalTaskId(localTaskId)
         Timber.tag("PendingPhoto").d("drain localTaskId=$localTaskId -> remoteId=$remoteTaskId pending=${pending.size}")
         var uploaded = 0
@@ -74,7 +79,7 @@ constructor(
         return true
     }
 
-    override suspend fun clearAll() = withContext(Dispatchers.IO) {
+    override suspend fun clearAll() = withContext(ioDispatcher) {
         runCatching {
             dao.deleteAll()
             baseDir.listFiles()?.forEach { it.delete() }

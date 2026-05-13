@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.todoapp.mobile.di.DefaultDispatcher
+import com.todoapp.mobile.di.IoDispatcher
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.domain.repository.SecretPreferences
 import com.todoapp.mobile.domain.repository.TaskRepository
@@ -17,8 +19,8 @@ import com.todoapp.mobile.ui.filteredtasks.FilteredTasksContract.UiAction
 import com.todoapp.mobile.ui.filteredtasks.FilteredTasksContract.UiEffect
 import com.todoapp.mobile.ui.filteredtasks.FilteredTasksContract.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
@@ -40,6 +42,8 @@ constructor(
     private val taskRepository: TaskRepository,
     private val secretModePreferences: SecretPreferences,
     savedStateHandle: SavedStateHandle,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState = _uiState.asStateFlow()
@@ -108,7 +112,7 @@ constructor(
                         isCompleted = tab == TaskTab.DONE,
                     ).collect { tasks ->
                         val order = (_uiState.value as? UiState.Success)?.sortOrder ?: SortOrder.ASC
-                        val sorted = kotlinx.coroutines.withContext(Dispatchers.Default) { tasks.applySortOrder(order) }
+                        val sorted = kotlinx.coroutines.withContext(defaultDispatcher) { tasks.applySortOrder(order) }
                         _uiState.update { current ->
                             when (current) {
                                 is UiState.Success -> current.copy(tasks = sorted)
@@ -139,7 +143,7 @@ constructor(
     }
 
     private fun checkTask(task: Task) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             taskRepository.updateTaskCompletion(task.id, isCompleted = !task.isCompleted)
         }
     }

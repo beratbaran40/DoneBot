@@ -167,11 +167,12 @@ fun TDTaskCardWithCheckbox(
                         ),
                     )
                 }
-                val showOverdueChip = isOverdue && !isChecked && !overdueLabel.isNullOrBlank()
-                if (showOverdueChip || !categoryLabel.isNullOrBlank() || !locationLabel.isNullOrBlank()) {
+                val resolvedOverdueLabel =
+                    overdueLabel?.takeIf { isOverdue && !isChecked && it.isNotBlank() }
+                if (resolvedOverdueLabel != null || !categoryLabel.isNullOrBlank() || !locationLabel.isNullOrBlank()) {
                     Spacer(Modifier.height(6.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (showOverdueChip) {
+                        if (resolvedOverdueLabel != null) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
@@ -189,7 +190,7 @@ fun TDTaskCardWithCheckbox(
                                 )
                                 Spacer(Modifier.width(4.dp))
                                 TDText(
-                                    text = overdueLabel!!,
+                                    text = resolvedOverdueLabel,
                                     color = TDTheme.colors.background,
                                     style = TDTheme.typography.subheading2,
                                 )

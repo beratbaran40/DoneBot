@@ -2,7 +2,6 @@ package com.todoapp.mobile.ui.settings
 
 import android.app.AlarmManager
 import android.content.Intent
-import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -42,7 +41,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -141,11 +139,11 @@ private fun SettingsContent(
 
     Column(
         modifier =
-            modifier
-                .fillMaxSize()
-                .background(TDTheme.colors.background)
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState()),
+        modifier
+            .fillMaxSize()
+            .background(TDTheme.colors.background)
+            .padding(horizontal = 16.dp)
+            .verticalScroll(rememberScrollState()),
     ) {
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -643,11 +641,11 @@ private fun ExactAlarmsRow() {
             )
             TDText(
                 text =
-                    if (canScheduleExact) {
-                        stringResource(R.string.settings_exact_alarms_status_enabled)
-                    } else {
-                        stringResource(R.string.settings_exact_alarms_description)
-                    },
+                if (canScheduleExact) {
+                    stringResource(R.string.settings_exact_alarms_status_enabled)
+                } else {
+                    stringResource(R.string.settings_exact_alarms_description)
+                },
                 style = TDTheme.typography.subheading3,
                 color = TDTheme.colors.gray,
             )
@@ -702,18 +700,18 @@ private fun PermissionPager(
                 repeat(permissions.size) { index ->
                     Box(
                         modifier =
-                            Modifier
-                                .padding(horizontal = 4.dp)
-                                .size(8.dp)
-                                .background(
-                                    color =
-                                        if (pagerState.currentPage == index) {
-                                            TDTheme.colors.pendingGray
-                                        } else {
-                                            TDTheme.colors.onBackground.copy(alpha = 0.3f)
-                                        },
-                                    shape = CircleShape,
-                                ),
+                        Modifier
+                            .padding(horizontal = 4.dp)
+                            .size(8.dp)
+                            .background(
+                                color =
+                                if (pagerState.currentPage == index) {
+                                    TDTheme.colors.pendingGray
+                                } else {
+                                    TDTheme.colors.onBackground.copy(alpha = 0.3f)
+                                },
+                                shape = CircleShape,
+                            ),
                     )
                 }
             }
@@ -744,20 +742,20 @@ private fun DeleteAccountDialog(
 }
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-@Preview(showBackground = true)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun SettingsScreenPreview() {
     TDTheme {
         SettingsScreen(
             uiState =
-                UiState(
-                    currentTheme = ThemePreference.SYSTEM_DEFAULT,
-                    selectedSecretMode = SecretModeReopenOptions.Immediate,
-                    remainedSecretModeTime = "",
-                    isSecretModeActive = true,
-                    dailyPlanTime = LocalTime.of(9, 0),
-                    visiblePermissions = listOf(PermissionType.OVERLAY, PermissionType.NOTIFICATION),
-                ),
+            UiState(
+                currentTheme = ThemePreference.SYSTEM_DEFAULT,
+                selectedSecretMode = SecretModeReopenOptions.Immediate,
+                remainedSecretModeTime = "",
+                isSecretModeActive = true,
+                dailyPlanTime = LocalTime.of(9, 0),
+                visiblePermissions = listOf(PermissionType.OVERLAY, PermissionType.NOTIFICATION),
+            ),
             onAction = {},
             onCheckPermissions = {},
             onDismissPermission = {},
@@ -766,20 +764,20 @@ private fun SettingsScreenPreview() {
 }
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-@Preview(showBackground = true, uiMode = UI_MODE_NIGHT_YES)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun SettingsScreenPreview_Dark() {
     TDTheme {
         SettingsScreen(
             uiState =
-                UiState(
-                    currentTheme = ThemePreference.SYSTEM_DEFAULT,
-                    selectedSecretMode = SecretModeReopenOptions.Immediate,
-                    remainedSecretModeTime = "",
-                    isSecretModeActive = true,
-                    dailyPlanTime = LocalTime.of(9, 0),
-                    visiblePermissions = listOf(PermissionType.OVERLAY, PermissionType.NOTIFICATION),
-                ),
+            UiState(
+                currentTheme = ThemePreference.SYSTEM_DEFAULT,
+                selectedSecretMode = SecretModeReopenOptions.Immediate,
+                remainedSecretModeTime = "",
+                isSecretModeActive = true,
+                dailyPlanTime = LocalTime.of(9, 0),
+                visiblePermissions = listOf(PermissionType.OVERLAY, PermissionType.NOTIFICATION),
+            ),
             onAction = {},
             onCheckPermissions = {},
             onDismissPermission = {},

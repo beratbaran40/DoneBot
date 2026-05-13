@@ -1,6 +1,5 @@
 package com.todoapp.mobile.ui.home
 
-import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,7 +13,6 @@ import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
 import com.todoapp.uikit.components.TDText
@@ -79,7 +77,7 @@ internal fun HomeSectionTabRow(
     }
 }
 
-@Preview(showBackground = true, widthDp = 360)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun HomeSectionTabRowTodayPreview() {
     TDTheme {
@@ -92,7 +90,7 @@ private fun HomeSectionTabRowTodayPreview() {
     }
 }
 
-@Preview(showBackground = true, widthDp = 360)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun HomeSectionTabRowRecurringPreview() {
     TDTheme {
@@ -105,7 +103,7 @@ private fun HomeSectionTabRowRecurringPreview() {
     }
 }
 
-@Preview(showBackground = true, widthDp = 360, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun HomeSectionTabRowDarkPreview() {
     TDTheme(darkTheme = true) {

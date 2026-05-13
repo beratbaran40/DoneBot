@@ -1,3 +1,6 @@
+// Detekt mis-flags trailing code after `?: return@rememberLauncherForActivityResult` as unreachable.
+@file:Suppress("UnreachableCode")
+
 package com.todoapp.mobile.ui.profile
 
 import android.widget.Toast

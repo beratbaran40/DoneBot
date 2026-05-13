@@ -37,9 +37,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.uikit.previews.TDPreviewWide
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -183,9 +183,9 @@ private fun AnimatedDigit(
     }
 }
 
-@Preview(showBackground = true, widthDp = 420)
+@TDPreviewWide
 @Composable
-fun TDPomodoroBannerPreview_Focus() {
+private fun TdPomodoroBannerFocusPreview() {
     TDTheme {
         TDPomodoroBanner(
             isBannerActivated = true,
@@ -201,9 +201,9 @@ fun TDPomodoroBannerPreview_Focus() {
     }
 }
 
-@Preview(showBackground = true, widthDp = 420)
+@TDPreviewWide
 @Composable
-fun TDPomodoroBannerPreview_OverTime() {
+private fun TdPomodoroBannerOverTimePreview() {
     TDTheme {
         TDPomodoroBanner(
             isBannerActivated = true,
@@ -219,9 +219,9 @@ fun TDPomodoroBannerPreview_OverTime() {
     }
 }
 
-@Preview(showBackground = true, widthDp = 420)
+@TDPreviewWide
 @Composable
-private fun TDPomodoroBannerPreview_ShortBreak() {
+private fun TdPomodoroBannerShortBreakPreview() {
     TDTheme {
         TDPomodoroBanner(
             isBannerActivated = true,
@@ -237,9 +237,9 @@ private fun TDPomodoroBannerPreview_ShortBreak() {
     }
 }
 
-@Preview(showBackground = true, widthDp = 420)
+@TDPreviewWide
 @Composable
-private fun TDPomodoroBannerPreview_LongBreak() {
+private fun TdPomodoroBannerLongBreakPreview() {
     TDTheme {
         TDPomodoroBanner(
             isBannerActivated = true,
