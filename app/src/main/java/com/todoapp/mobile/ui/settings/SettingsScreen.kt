@@ -139,11 +139,11 @@ private fun SettingsContent(
 
     Column(
         modifier =
-        modifier
-            .fillMaxSize()
-            .background(TDTheme.colors.background)
-            .padding(horizontal = 16.dp)
-            .verticalScroll(rememberScrollState()),
+            modifier
+                .fillMaxSize()
+                .background(TDTheme.colors.background)
+                .padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState()),
     ) {
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -645,11 +645,11 @@ private fun ExactAlarmsRow() {
             )
             TDText(
                 text =
-                if (canScheduleExact) {
-                    stringResource(R.string.settings_exact_alarms_status_enabled)
-                } else {
-                    stringResource(R.string.settings_exact_alarms_description)
-                },
+                    if (canScheduleExact) {
+                        stringResource(R.string.settings_exact_alarms_status_enabled)
+                    } else {
+                        stringResource(R.string.settings_exact_alarms_description)
+                    },
                 style = TDTheme.typography.subheading3,
                 color = TDTheme.colors.gray,
             )
@@ -704,18 +704,18 @@ private fun PermissionPager(
                 repeat(permissions.size) { index ->
                     Box(
                         modifier =
-                        Modifier
-                            .padding(horizontal = 4.dp)
-                            .size(8.dp)
-                            .background(
-                                color =
-                                if (pagerState.currentPage == index) {
-                                    TDTheme.colors.pendingGray
-                                } else {
-                                    TDTheme.colors.onBackground.copy(alpha = 0.3f)
-                                },
-                                shape = CircleShape,
-                            ),
+                            Modifier
+                                .padding(horizontal = 4.dp)
+                                .size(8.dp)
+                                .background(
+                                    color =
+                                        if (pagerState.currentPage == index) {
+                                            TDTheme.colors.pendingGray
+                                        } else {
+                                            TDTheme.colors.onBackground.copy(alpha = 0.3f)
+                                        },
+                                    shape = CircleShape,
+                                ),
                     )
                 }
             }
@@ -752,14 +752,14 @@ private fun SettingsScreenPreview() {
     TDTheme {
         SettingsScreen(
             uiState =
-            UiState(
-                currentTheme = ThemePreference.SYSTEM_DEFAULT,
-                selectedSecretMode = SecretModeReopenOptions.Immediate,
-                remainedSecretModeTime = "",
-                isSecretModeActive = true,
-                dailyPlanTime = LocalTime.of(9, 0),
-                visiblePermissions = listOf(PermissionType.OVERLAY, PermissionType.NOTIFICATION),
-            ),
+                UiState(
+                    currentTheme = ThemePreference.SYSTEM_DEFAULT,
+                    selectedSecretMode = SecretModeReopenOptions.Immediate,
+                    remainedSecretModeTime = "",
+                    isSecretModeActive = true,
+                    dailyPlanTime = LocalTime.of(9, 0),
+                    visiblePermissions = listOf(PermissionType.OVERLAY, PermissionType.NOTIFICATION),
+                ),
             onAction = {},
             onCheckPermissions = {},
             onDismissPermission = {},
