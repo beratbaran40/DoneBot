@@ -130,6 +130,8 @@ constructor(
                         query = query,
                         mood = mood,
                     ).copy(
+                        searchQuery = preserved?.searchQuery ?: query,
+                        activeMoodFilter = preserved?.activeMoodFilter ?: mood,
                         actionSheetEntry = preserved?.actionSheetEntry,
                         pendingDeleteEntry = preserved?.pendingDeleteEntry,
                     )

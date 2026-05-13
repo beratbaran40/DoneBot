@@ -195,7 +195,9 @@ private fun SettingsContent(
             },
         )
 
+        Spacer(modifier = Modifier.height(16.dp))
         HorizontalDivider(color = TDTheme.colors.onBackground.copy(alpha = 0.1f))
+        Spacer(modifier = Modifier.height(16.dp))
 
         LanguageSelector(
             currentLanguage = uiState.currentLanguage,
@@ -203,8 +205,6 @@ private fun SettingsContent(
                 onAction(UiAction.OnLanguageChange(language))
             },
         )
-
-        HorizontalDivider(color = TDTheme.colors.onBackground.copy(alpha = 0.1f))
 
         SectionHeader(R.string.settings_section_notifications)
 
@@ -234,12 +234,10 @@ private fun SettingsContent(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            ExactAlarmsRow()
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = TDTheme.colors.onBackground.copy(alpha = 0.1f))
-            Spacer(modifier = Modifier.height(16.dp))
-        }
+        ExactAlarmsRow()
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = TDTheme.colors.onBackground.copy(alpha = 0.1f))
+        Spacer(modifier = Modifier.height(16.dp))
 
         Row(
             Modifier
@@ -301,8 +299,6 @@ private fun SettingsContent(
             )
         }
 
-        HorizontalDivider(color = TDTheme.colors.onBackground.copy(alpha = 0.1f))
-
         SectionHeader(R.string.settings_section_privacy_security)
 
         Row(
@@ -323,6 +319,8 @@ private fun SettingsContent(
             )
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = TDTheme.colors.onBackground.copy(alpha = 0.1f))
         Spacer(modifier = Modifier.height(16.dp))
 
         Row(

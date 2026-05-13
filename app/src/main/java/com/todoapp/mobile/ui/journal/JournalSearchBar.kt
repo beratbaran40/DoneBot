@@ -32,8 +32,8 @@ internal fun JournalSearchBar(
                 tint = TDTheme.colors.gray,
             )
         },
-        trailingIcon = if (query.isNotEmpty()) {
-            {
+        trailingIcon = {
+            if (query.isNotEmpty()) {
                 IconButton(onClick = { onQueryChange("") }) {
                     Icon(
                         painter = painterResource(R.drawable.ic_close),
@@ -42,8 +42,6 @@ internal fun JournalSearchBar(
                     )
                 }
             }
-        } else {
-            null
         },
     )
 }

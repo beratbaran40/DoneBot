@@ -32,7 +32,7 @@ fun LanguageSelector(
     onLanguageChange: (LanguagePreference) -> Unit,
 ) {
     Row(
-        modifier = modifier.padding(vertical = 8.dp),
+        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         TDText(
