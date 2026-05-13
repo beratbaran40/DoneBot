@@ -51,12 +51,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -213,7 +213,8 @@ private fun MessageActionsSheet(
     onTryAgain: (String) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState()
-    val clipboard = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val clipboardScope = rememberCoroutineScope()
     val context = LocalContext.current
     val previousUserPrompt = remember(messages, target) {
         val idx = messages.indexOfFirst { it.id == target.id }
@@ -234,7 +235,11 @@ private fun MessageActionsSheet(
                 icon = Icons.Filled.ContentCopy,
                 label = stringResource(R.string.chat_action_copy),
                 onClick = {
-                    clipboard.setText(AnnotatedString(target.content))
+                    clipboardScope.launch {
+                        clipboard.setClipEntry(
+                            ClipEntry(android.content.ClipData.newPlainText("chat_message", target.content)),
+                        )
+                    }
                     Toast.makeText(context, copiedText, Toast.LENGTH_SHORT).show()
                     onDismiss()
                 },

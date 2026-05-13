@@ -9,7 +9,7 @@ enum class LanguagePreference {
 
     fun toLocale(): Locale = when (this) {
         ENGLISH -> Locale.ENGLISH
-        TURKISH -> Locale("tr")
+        TURKISH -> Locale.forLanguageTag("tr")
     }
 
     companion object {

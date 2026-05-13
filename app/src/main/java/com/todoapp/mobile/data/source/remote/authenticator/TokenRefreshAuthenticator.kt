@@ -28,7 +28,7 @@ constructor(
         route: Route?,
         response: Response,
     ): Request? {
-        val tid = Thread.currentThread().id
+        val tid = Thread.currentThread().threadId()
         val urlPath = response.request.url.encodedPath
         val rc = responseCount(response)
         if (rc >= 2) {

@@ -182,6 +182,10 @@ private fun SettingsContent(
             }
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        HorizontalDivider(color = TDTheme.colors.onBackground.copy(alpha = 0.1f))
+
         SectionHeader(R.string.settings_section_personalization)
 
         ThemeSelector(
@@ -199,6 +203,8 @@ private fun SettingsContent(
                 onAction(UiAction.OnLanguageChange(language))
             },
         )
+
+        HorizontalDivider(color = TDTheme.colors.onBackground.copy(alpha = 0.1f))
 
         SectionHeader(R.string.settings_section_notifications)
 
@@ -295,6 +301,8 @@ private fun SettingsContent(
             )
         }
 
+        HorizontalDivider(color = TDTheme.colors.onBackground.copy(alpha = 0.1f))
+
         SectionHeader(R.string.settings_section_privacy_security)
 
         Row(
@@ -315,8 +323,6 @@ private fun SettingsContent(
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider(color = TDTheme.colors.onBackground.copy(alpha = 0.1f))
         Spacer(modifier = Modifier.height(16.dp))
 
         Row(
@@ -745,28 +751,6 @@ private fun DeleteAccountDialog(
 @com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun SettingsScreenPreview() {
-    TDTheme {
-        SettingsScreen(
-            uiState =
-            UiState(
-                currentTheme = ThemePreference.SYSTEM_DEFAULT,
-                selectedSecretMode = SecretModeReopenOptions.Immediate,
-                remainedSecretModeTime = "",
-                isSecretModeActive = true,
-                dailyPlanTime = LocalTime.of(9, 0),
-                visiblePermissions = listOf(PermissionType.OVERLAY, PermissionType.NOTIFICATION),
-            ),
-            onAction = {},
-            onCheckPermissions = {},
-            onDismissPermission = {},
-        )
-    }
-}
-
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
-@com.todoapp.uikit.previews.TDPreview
-@Composable
-private fun SettingsScreenPreview_Dark() {
     TDTheme {
         SettingsScreen(
             uiState =

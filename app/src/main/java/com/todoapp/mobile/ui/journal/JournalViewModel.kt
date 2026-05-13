@@ -76,11 +76,18 @@ constructor(
             UiAction.OnConfirmDelete -> handleConfirmDelete()
             UiAction.OnDismissDelete -> updateSuccess { it.copy(pendingDeleteEntry = null) }
 
-            is UiAction.OnSearchQueryChange -> searchQueryFlow.value = action.query
-            is UiAction.OnMoodFilterChange -> moodFilterFlow.value = action.mood
+            is UiAction.OnSearchQueryChange -> {
+                searchQueryFlow.value = action.query
+                updateSuccess { it.copy(searchQuery = action.query) }
+            }
+            is UiAction.OnMoodFilterChange -> {
+                moodFilterFlow.value = action.mood
+                updateSuccess { it.copy(activeMoodFilter = action.mood) }
+            }
             UiAction.OnClearFilters -> {
                 searchQueryFlow.value = ""
                 moodFilterFlow.value = null
+                updateSuccess { it.copy(searchQuery = "", activeMoodFilter = null) }
             }
 
             UiAction.OnBiometricSuccess -> {

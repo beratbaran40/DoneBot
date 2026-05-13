@@ -7,9 +7,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -36,15 +35,15 @@ internal fun HomeSectionTabRow(
             stringResource(R.string.home_section_tab_today) to onSelectToday,
             stringResource(R.string.home_section_tab_recurring) to onSelectRecurring,
         )
-    TabRow(
+    SecondaryTabRow(
         selectedTabIndex = selectedIndex,
         modifier = modifier.fillMaxWidth(),
         containerColor = TDTheme.colors.background,
         contentColor = TDTheme.colors.pendingGray,
-        indicator = { tabPositions ->
+        indicator = {
             Box(
                 modifier = Modifier
-                    .tabIndicatorOffset(tabPositions[selectedIndex])
+                    .tabIndicatorOffset(selectedIndex)
                     .fillMaxWidth()
                     .padding(horizontal = 32.dp)
                     .height(4.dp)
