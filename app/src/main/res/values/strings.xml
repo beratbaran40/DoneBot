@@ -756,7 +756,7 @@
     <string name="chat_send_button">Send</string>
     <string name="chat_clear_history">Clear history</string>
     <string name="chat_empty_title">Hi, I\'m DoneBot</string>
-    <string name="chat_empty_subtitle">Ask me what\'s on your plate, what\'s overdue, or how your week is going.</string>
+    <string name="chat_empty_subtitle">I\'m here to help you track tasks, catch up on overdue ones, and own your week. Tap a suggestion below or type what\'s on your mind.</string>
     <string name="chat_thinking">DoneBot is thinking…</string>
     <string name="chat_error_generic">Something went wrong. Please try again.</string>
     <string name="chat_error_blocked">That response was blocked. Try rephrasing.</string>
@@ -773,9 +773,10 @@
     <string name="chat_action_copied_toast">Copied</string>
     <string name="chat_persona_subtitle">Productivity assistant</string>
     <string name="chat_suggested_today">What\'s due today?</string>
+    <string name="chat_suggested_tomorrow">What\'s on tomorrow?</string>
     <string name="chat_suggested_overdue">Anything overdue?</string>
     <string name="chat_suggested_progress">How am I doing this week?</string>
-    <string name="chat_suggested_planday">Plan my day</string>
+    <string name="chat_suggested_week_remaining">What\'s left this week?</string>
     <string name="chat_clear_confirm_title">Clear conversation?</string>
     <string name="chat_clear_confirm_message">This deletes your chat history with DoneBot but does not affect your tasks.</string>
     <string name="chat_clear_confirm_button">Clear</string>
@@ -798,9 +799,13 @@
     <string name="cd_expand_chart">Expand chart</string>
     <string name="chat_local_today_count_format">You have %1$d task(s) today.</string>
     <string name="chat_local_today_empty">You have no tasks today. Want to add one?</string>
+    <string name="chat_local_tomorrow_count_format">You have %1$d task(s) tomorrow.</string>
+    <string name="chat_local_tomorrow_empty">No tasks tomorrow — clear day.</string>
     <string name="chat_local_overdue_count_format">You have %1$d overdue task(s).</string>
     <string name="chat_local_overdue_empty">Nothing overdue — nice work!</string>
     <string name="chat_local_week_count_format">You\'ve completed %1$d task(s) this week.</string>
+    <string name="chat_local_week_remaining_format">You have %1$d pending task(s) this week.</string>
+    <string name="chat_local_week_remaining_empty">All caught up for this week — nice.</string>
     <string name="chat_local_greeting">Hi! What\'s on your mind today?</string>
     <string name="chat_local_pomodoro_started_format">%1$d-minute pomodoro started — focus mode on. Good luck!</string>
     <string name="chat_local_pomodoro_already_running_format">A pomodoro is already running, %1$d minute(s) left. Manage it from the Pomodoro tab.</string>

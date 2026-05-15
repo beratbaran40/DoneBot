@@ -91,9 +91,10 @@ internal fun ChatMessageList(
 @Composable
 private fun QuickReplyChipRow(onClick: (String) -> Unit) {
     val chips = listOf(
+        stringResource(R.string.chat_suggested_tomorrow),
         stringResource(R.string.chat_suggested_overdue),
         stringResource(R.string.chat_suggested_progress),
-        stringResource(R.string.chat_suggested_planday),
+        stringResource(R.string.chat_suggested_week_remaining),
     )
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),

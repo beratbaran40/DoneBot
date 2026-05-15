@@ -22,8 +22,10 @@ class LocalIntentClassifier @Inject constructor(
 ) {
     enum class Intent {
         TODAY_TASKS,
+        TOMORROW_TASKS,
         OVERDUE_TASKS,
         WEEKLY_PROGRESS,
+        WEEKLY_REMAINING,
         GREETING,
         POMODORO_START,
         POMODORO_STOP,
@@ -57,9 +59,17 @@ class LocalIntentClassifier @Inject constructor(
                 Intent.TODAY_TASKS,
                 buildTodayResponse(),
             )
+            matchesTomorrow(normalized) -> Match(
+                Intent.TOMORROW_TASKS,
+                buildTomorrowResponse(),
+            )
             matchesOverdue(normalized) -> Match(
                 Intent.OVERDUE_TASKS,
                 buildOverdueResponse(),
+            )
+            matchesWeeklyRemaining(normalized) -> Match(
+                Intent.WEEKLY_REMAINING,
+                buildWeeklyRemainingResponse(),
             )
             matchesWeekly(normalized) -> Match(
                 Intent.WEEKLY_PROGRESS,
@@ -147,9 +157,13 @@ class LocalIntentClassifier @Inject constructor(
 
     private fun matchesToday(text: String): Boolean = TODAY_TR_ANCHOR.containsMatchIn(text) || TODAY_EN_ANCHOR.containsMatchIn(text)
 
+    private fun matchesTomorrow(text: String): Boolean = TOMORROW_TR_ANCHOR.containsMatchIn(text) || TOMORROW_EN_ANCHOR.containsMatchIn(text)
+
     private fun matchesOverdue(text: String): Boolean = OVERDUE_KEYWORDS.containsMatchIn(text)
 
     private fun matchesWeekly(text: String): Boolean = WEEKLY_TR_ANCHOR.containsMatchIn(text) || WEEKLY_EN_ANCHOR.containsMatchIn(text)
+
+    private fun matchesWeeklyRemaining(text: String): Boolean = WEEKLY_REMAINING_TR.containsMatchIn(text) || WEEKLY_REMAINING_EN.containsMatchIn(text)
 
     private suspend fun buildTodayResponse(): String {
         val today = LocalDate.now(clock)
@@ -158,6 +172,16 @@ class LocalIntentClassifier @Inject constructor(
             context.getString(R.string.chat_local_today_empty)
         } else {
             context.getString(R.string.chat_local_today_count_format, count)
+        }
+    }
+
+    private suspend fun buildTomorrowResponse(): String {
+        val tomorrow = LocalDate.now(clock).plusDays(1)
+        val count = taskRepository.observeTasksByDate(tomorrow, includeRecurringInstances = true).first().size
+        return if (count == 0) {
+            context.getString(R.string.chat_local_tomorrow_empty)
+        } else {
+            context.getString(R.string.chat_local_tomorrow_count_format, count)
         }
     }
 
@@ -175,6 +199,16 @@ class LocalIntentClassifier @Inject constructor(
         val today = LocalDate.now(clock)
         val count = taskRepository.countCompletedTasksInAWeek(today, includeRecurring = true).first()
         return context.getString(R.string.chat_local_week_count_format, count)
+    }
+
+    private suspend fun buildWeeklyRemainingResponse(): String {
+        val today = LocalDate.now(clock)
+        val count = taskRepository.observePendingTasksInAWeek(today, includeRecurring = true).first()
+        return if (count == 0) {
+            context.getString(R.string.chat_local_week_remaining_empty)
+        } else {
+            context.getString(R.string.chat_local_week_remaining_format, count)
+        }
     }
 
     private fun containsMutationVerb(text: String): Boolean = MUTATION_VERBS.containsMatchIn(text)
@@ -201,6 +235,12 @@ class LocalIntentClassifier @Inject constructor(
         private val TODAY_EN_ANCHOR = Regex(
             "(what'?s\\s+(due|on)\\s+today|today'?s?\\s+tasks?|(any|my)\\s+tasks?\\s+today)",
         )
+        private val TOMORROW_TR_ANCHOR = Regex(
+            "\\byarın(ki)?\\b.*\\b(ne|neler|görev(ler|im|in)?|iş(ler|im|in)?|var)\\b",
+        )
+        private val TOMORROW_EN_ANCHOR = Regex(
+            "(what'?s\\s+(due|on)\\s+tomorrow|tomorrow'?s?\\s+tasks?|(any|my)\\s+tasks?\\s+tomorrow)",
+        )
         private val OVERDUE_KEYWORDS = Regex(
             "\\b(gecikmiş|geciken|overdue|past\\s+due)\\b",
         )
@@ -210,6 +250,12 @@ class LocalIntentClassifier @Inject constructor(
         )
         private val WEEKLY_EN_ANCHOR = Regex(
             "(how\\s+am\\s+i\\s+doing\\s+this\\s+week|this\\s+week'?s?\\s+progress|weekly\\s+progress)",
+        )
+        private val WEEKLY_REMAINING_TR = Regex(
+            "\\bbu\\s+hafta\\b.*\\b(kalan|kaldı|bekleyen)\\b",
+        )
+        private val WEEKLY_REMAINING_EN = Regex(
+            "(what'?s\\s+left\\s+this\\s+week|how\\s+many\\s+.*\\s+left\\s+this\\s+week|pending\\s+this\\s+week)",
         )
         private val MUTATION_VERBS = Regex(
             "\\b(ekle|sil|güncelle|oluştur|tamamla|değiştir|kaldır|" +

@@ -757,7 +757,7 @@
     <string name="chat_send_button">Gönder</string>
     <string name="chat_clear_history">Geçmişi temizle</string>
     <string name="chat_empty_title">Merhaba, ben DoneBot</string>
-    <string name="chat_empty_subtitle">Bugün neler var, hangileri süresi geçti ya da haftan nasıl gidiyor diye sorabilirsin.</string>
+    <string name="chat_empty_subtitle">Görevlerini takip etmen, geciken işleri yakalaman ve haftana hakim olman için buradayım. Aşağıdaki sorulardan birine dokun ya da aklındakini yaz.</string>
     <string name="chat_thinking">DoneBot düşünüyor…</string>
     <string name="chat_error_generic">Bir şeyler ters gitti. Lütfen tekrar deneyin.</string>
     <string name="chat_error_blocked">Bu yanıt engellendi. Farklı bir şekilde sormayı deneyin.</string>
@@ -774,9 +774,10 @@
     <string name="chat_action_copied_toast">Kopyalandı</string>
     <string name="chat_persona_subtitle">Verimlilik asistanı</string>
     <string name="chat_suggested_today">Bugün neler var?</string>
+    <string name="chat_suggested_tomorrow">Yarın ne var?</string>
     <string name="chat_suggested_overdue">Geciken iş var mı?</string>
     <string name="chat_suggested_progress">Bu hafta nasıl gidiyorum?</string>
-    <string name="chat_suggested_planday">Günümü planla</string>
+    <string name="chat_suggested_week_remaining">Bu hafta kaç işim kaldı?</string>
     <string name="chat_clear_confirm_title">Sohbet temizlensin mi?</string>
     <string name="chat_clear_confirm_message">Bu, DoneBot ile sohbet geçmişini siler ama görevlerini etkilemez.</string>
     <string name="chat_clear_confirm_button">Temizle</string>
@@ -799,9 +800,13 @@
     <string name="cd_expand_chart">Grafiği genişlet</string>
     <string name="chat_local_today_count_format">Bugün %1$d görevin var.</string>
     <string name="chat_local_today_empty">Bugün hiç görevin yok. Bir tane eklemek ister misin?</string>
+    <string name="chat_local_tomorrow_count_format">Yarın %1$d görevin var.</string>
+    <string name="chat_local_tomorrow_empty">Yarın planlı görev yok — gün serbest.</string>
     <string name="chat_local_overdue_count_format">%1$d gecikmiş görevin var.</string>
     <string name="chat_local_overdue_empty">Gecikmiş hiç bir şey yok — harikasın!</string>
     <string name="chat_local_week_count_format">Bu hafta %1$d görev tamamladın.</string>
+    <string name="chat_local_week_remaining_format">Bu hafta %1$d bekleyen işin var.</string>
+    <string name="chat_local_week_remaining_empty">Bu haftanın hepsi tamam — süpersin.</string>
     <string name="chat_local_greeting">Selam! Bugün aklında ne var?</string>
     <string name="chat_local_pomodoro_started_format">%1$d dakikalık pomodoro başladı — odak modu açık. Kolay gelsin!</string>
     <string name="chat_local_pomodoro_already_running_format">Zaten bir pomodoro çalışıyor, %1$d dakika kaldı. Pomodoro sekmesinden yönet.</string>

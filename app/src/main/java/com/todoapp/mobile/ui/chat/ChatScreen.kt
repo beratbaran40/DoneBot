@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -326,18 +327,30 @@ private fun ChatPersonaHeader(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(TDTheme.colors.pendingGray),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.img_splash),
-                contentDescription = null,
-                tint = Color.Unspecified,
-                modifier = Modifier.size(48.dp),
+        Box(modifier = Modifier.size(55.dp)) {
+            Box(
+                modifier = Modifier
+                    .size(55.dp)
+                    .clip(CircleShape)
+                    .background(TDTheme.colors.pendingGray),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.img_splash),
+                    contentDescription = null,
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(55.dp),
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .size(16.dp)
+                    .align(Alignment.BottomEnd)
+                    .clip(CircleShape)
+                    .background(TDTheme.colors.background)
+                    .padding(2.dp)
+                    .clip(CircleShape)
+                    .background(TDTheme.colors.green),
             )
         }
         Spacer(Modifier.width(12.dp))
@@ -376,6 +389,20 @@ private fun ChatEmptyState(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        Box(
+            modifier = Modifier
+                .size(88.dp)
+                .clip(CircleShape)
+                .background(TDTheme.colors.pendingGray),
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(
+                painter = painterResource(R.drawable.img_splash),
+                contentDescription = null,
+                modifier = Modifier.size(88.dp),
+            )
+        }
+        Spacer(Modifier.height(16.dp))
         TDText(
             text = stringResource(R.string.chat_empty_title),
             style = TDTheme.typography.heading4,
@@ -392,9 +419,10 @@ private fun ChatEmptyState(
 
         val suggestions = listOf(
             stringResource(R.string.chat_suggested_today),
+            stringResource(R.string.chat_suggested_tomorrow),
             stringResource(R.string.chat_suggested_overdue),
             stringResource(R.string.chat_suggested_progress),
-            stringResource(R.string.chat_suggested_planday),
+            stringResource(R.string.chat_suggested_week_remaining),
         )
         suggestions.forEach { prompt ->
             SuggestedPromptChip(prompt = prompt, onClick = { onSuggestedPromptClick(prompt) })
