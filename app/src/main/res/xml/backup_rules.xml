@@ -6,8 +6,7 @@
    See https://developer.android.com/about/versions/12/backup-restore
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <!-- Encrypted prefs are sealed by a device-bound Keystore master key that Auto Backup cannot copy,
+         so restoring this file onto another device fails to decrypt (AEADBadTagException). -->
+    <exclude domain="sharedpref" path="todo_prefs.xml" />
 </full-backup-content>

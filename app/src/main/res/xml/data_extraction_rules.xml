@@ -5,15 +5,11 @@
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <!-- Encrypted prefs are sealed by an Android Keystore master key that cannot leave the device,
+             so restoring this file onto another device/install fails to decrypt (AEADBadTagException). -->
+        <exclude domain="sharedpref" path="todo_prefs.xml" />
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <exclude domain="sharedpref" path="todo_prefs.xml" />
     </device-transfer>
-    -->
 </data-extraction-rules>

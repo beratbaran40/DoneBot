@@ -34,7 +34,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import timber.log.Timber
 import java.io.File
-import java.security.GeneralSecurityException
 import java.time.Clock
 import javax.inject.Singleton
 
@@ -73,17 +72,31 @@ object LocalStorageModule {
     @Singleton
     fun provideSharedPreferences(
         @ApplicationContext context: Context,
-    ): SharedPreferences = try {
-        createEncryptedSharedPreferences(context, PREFS_NAME, buildMasterKey(context))
-    } catch (e: GeneralSecurityException) {
-        // Keystore master key got out of sync with Tink keyset (common after
-        // device-level keystore rotation, biometric re-enroll, or the OS
-        // killing our process while AFK). Auth tokens live in DataStore, not
-        // here, so this wipe no longer logs the user out.
-        Timber.tag("PrefsWipe").w(e, "Rebuilding encrypted prefs after keystore/Tink mismatch")
+    ): SharedPreferences = runCatching { createEncryptedSharedPreferences(context, PREFS_NAME, buildMasterKey(context)) }
+        .getOrElse { first ->
+            if (first is Error) throw first
+            // Keystore master key fell out of sync with the Tink keyset (reinstall, backup/restore,
+            // device transfer, keystore rotation, biometric re-enroll). Auth tokens live in DataStore,
+            // not here, so wiping this only resets secret-mode timing — it does NOT log the user out.
+            Timber.tag("PrefsWipe").w(first, "Encrypted prefs unreadable; wiping keyset+masterkey, rebuilding")
+            wipeEncryptedPrefs(context)
+            runCatching { createEncryptedSharedPreferences(context, PREFS_NAME, buildMasterKey(context)) }
+                .getOrElse { second ->
+                    if (second is Error) throw second
+                    // Catastrophic edge (broken keystore): never crash startup. Plain prefs let the app
+                    // boot; only low-sensitivity secret-mode timing lives here, never auth tokens.
+                    Timber.tag("PrefsWipe").e(second, "Rebuild failed; falling back to plain SharedPreferences")
+                    context.getSharedPreferences("${PREFS_NAME}_fallback", Context.MODE_PRIVATE)
+                }
+        }
+
+    // Fully removes the encrypted prefs so the rebuild starts clean. deleteSharedPreferences ALSO evicts
+    // the in-memory ContextImpl cache (a raw file delete does not) — without that, the retry re-reads the
+    // stale cached keyset and fails again with AEADBadTagException, which is what used to crash startup.
+    private fun wipeEncryptedPrefs(context: Context) {
+        runCatching { context.deleteSharedPreferences(PREFS_NAME) }
         deleteSharedPreferencesFile(context, PREFS_NAME)
         deleteMasterKeyEntry()
-        createEncryptedSharedPreferences(context, PREFS_NAME, buildMasterKey(context))
     }
 
     private fun buildMasterKey(context: Context): MasterKey = MasterKey
