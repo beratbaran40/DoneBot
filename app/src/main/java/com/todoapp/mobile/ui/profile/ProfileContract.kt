@@ -24,9 +24,14 @@ object ProfileContract {
 
         data object OnSaveName : UiAction
 
+        /** A photo was picked; routes to the crop screen with the picked [uri]. */
         data class OnAvatarPicked(
-            val bytes: ByteArray,
-            val mimeType: String,
+            val uri: String,
+        ) : UiAction
+
+        /** The crop screen returned a cropped JPEG at [path]; upload it. */
+        data class OnAvatarCropped(
+            val path: String,
         ) : UiAction
 
         data object OnBack : UiAction

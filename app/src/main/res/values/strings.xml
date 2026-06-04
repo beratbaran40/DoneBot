@@ -920,4 +920,9 @@
     <string name="journal_mood_changed_toast">Mood updated</string>
     <!-- Journal Round 3: single field placeholder -->
     <string name="journal_entry_placeholder">Bugün ne yaşadın? İlk satır başlık olur…</string>
+
+    <!-- Avatar crop -->
+    <string name="avatar_crop_screen_title">Crop photo</string>
+    <string name="avatar_crop_done">Done</string>
+    <string name="avatar_crop_save_error">Couldn\'t process photo</string>
 </resources>

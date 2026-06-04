@@ -159,6 +159,7 @@ private fun SettingsContent(
                 displayName = uiState.displayName,
                 email = uiState.email,
                 avatarUrl = uiState.avatarUrl,
+                avatarVersion = uiState.avatarVersion,
                 onClick = { onAction(UiAction.OnNavigateToProfile) },
             )
         } else {
@@ -548,6 +549,7 @@ private fun ProfileRow(
     displayName: String,
     email: String,
     avatarUrl: String?,
+    avatarVersion: Long,
     onClick: () -> Unit,
 ) {
     val initials = remember(displayName, email) {
@@ -576,6 +578,7 @@ private fun ProfileRow(
             initials = initials,
             size = 48,
             avatarUrl = avatarUrl,
+            avatarVersion = avatarVersion,
         )
         Spacer(modifier = Modifier.size(12.dp))
         Column(modifier = Modifier.weight(1f)) {

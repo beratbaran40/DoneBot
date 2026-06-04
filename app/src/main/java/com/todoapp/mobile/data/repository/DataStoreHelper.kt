@@ -64,6 +64,23 @@ constructor(
         }
     }
 
+    /**
+     * Monotonic cache-bust token for the current user's avatar. Bumped exactly once on a successful
+     * avatar upload so every surface (top bar, profile, settings) can append `?v=<token>` and force
+     * Coil to refetch. Kept separate from [UserData] so unrelated user writes (token rotation, name
+     * change) don't trigger a wasteful avatar refetch, and so the write always re-emits to live
+     * collectors even when the backend returns an unchanged avatar path.
+     */
+    fun observeAvatarVersion(): Flow<Long> = dataStore.data.map { preferences ->
+        preferences[AVATAR_VERSION] ?: 0L
+    }
+
+    suspend fun bumpAvatarVersion() {
+        dataStore.edit { preferences ->
+            preferences[AVATAR_VERSION] = System.currentTimeMillis()
+        }
+    }
+
     val isLoggedIn: Flow<Boolean> =
         dataStore.data.map { preferences ->
             preferences[IS_LOGGED_IN] ?: false
@@ -157,6 +174,7 @@ constructor(
                 explicitNulls = false
             }
         private val USER_KEY = stringPreferencesKey("user")
+        private val AVATAR_VERSION = longPreferencesKey("avatar_version")
         private val IS_LOGGED_IN = booleanPreferencesKey("is_logged_in")
         private val FIRST_LOGIN_PERMISSION_PROMPT_PENDING =
             booleanPreferencesKey("first_login_permission_prompt_pending")

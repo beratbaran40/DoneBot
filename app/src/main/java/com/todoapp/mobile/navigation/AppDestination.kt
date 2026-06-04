@@ -256,6 +256,13 @@ sealed class AppDestination(
         hasInfoDialog = true,
     )
 
+    data object AvatarCrop : AppDestination(
+        title = R.string.avatar_crop_screen_title,
+        route = Screen.AvatarCrop::class.requiredRoute(),
+        icon = null,
+        selectedIcon = null,
+    )
+
     companion object {
         val bottomBarItems = listOf(Home, Groups, Chat, Calendar, Activity)
         val topBarItems =
@@ -289,10 +296,10 @@ sealed class AppDestination(
                 Invitations,
                 AlarmSounds,
                 Journal,
-                // JournalEntry intentionally NOT listed — Round 3 hides the topbar for the
-                // editor screen so it can render its own floating back/info buttons over the
-                // paper background. Keeping the AppDestination object in case future
-                // surfaces need its title resource.
+                // JournalEntry and AvatarCrop intentionally NOT listed — they hide the topbar so
+                // they can render their own floating chrome over a full-bleed surface (paper
+                // background / crop surface). Keeping the AppDestination objects in case future
+                // surfaces need their title resources.
             )
     }
 }

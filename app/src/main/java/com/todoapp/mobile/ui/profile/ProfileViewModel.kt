@@ -3,6 +3,7 @@ package com.todoapp.mobile.ui.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.todoapp.mobile.data.repository.DataStoreHelper
+import com.todoapp.mobile.data.storage.AvatarPhotoStorage
 import com.todoapp.mobile.domain.repository.UserRepository
 import com.todoapp.mobile.navigation.NavigationEffect
 import com.todoapp.mobile.navigation.Screen
@@ -25,6 +26,7 @@ class ProfileViewModel
 constructor(
     private val userRepository: UserRepository,
     private val dataStoreHelper: DataStoreHelper,
+    private val avatarPhotoStorage: AvatarPhotoStorage,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(UiState())
     val uiState = _uiState.asStateFlow()
@@ -46,7 +48,9 @@ constructor(
                     it.copy(editedDisplayName = action.value)
                 }
             UiAction.OnSaveName -> saveName()
-            is UiAction.OnAvatarPicked -> uploadAvatar(action.bytes, action.mimeType)
+            is UiAction.OnAvatarPicked ->
+                _navEffect.trySend(NavigationEffect.Navigate(Screen.AvatarCrop(action.uri)))
+            is UiAction.OnAvatarCropped -> uploadCroppedAvatar(action.path)
             UiAction.OnBack -> _navEffect.trySend(NavigationEffect.Back)
             UiAction.OnChangePasswordTap ->
                 _navEffect.trySend(NavigationEffect.Navigate(Screen.ChangePassword))
@@ -55,6 +59,7 @@ constructor(
 
     private fun load() {
         viewModelScope.launch {
+            val avatarVersion = dataStoreHelper.observeAvatarVersion().first()
             dataStoreHelper.observeUser().first()?.let { cached ->
                 _uiState.value =
                     UiState(
@@ -64,7 +69,7 @@ constructor(
                         displayName = cached.displayName,
                         editedDisplayName = cached.displayName,
                         avatarUrl = cached.avatarUrl,
-                        avatarVersion = System.currentTimeMillis(),
+                        avatarVersion = avatarVersion,
                     )
             }
             userRepository
@@ -78,7 +83,7 @@ constructor(
                             displayName = user.displayName,
                             editedDisplayName = user.displayName,
                             avatarUrl = user.avatarUrl,
-                            avatarVersion = System.currentTimeMillis(),
+                            avatarVersion = avatarVersion,
                         )
                 }.onFailure { t ->
                     _uiState.update { it.copy(isLoading = false, errorMessage = it.errorMessage ?: t.message) }
@@ -110,20 +115,26 @@ constructor(
         }
     }
 
-    private fun uploadAvatar(
-        bytes: ByteArray,
-        mimeType: String,
-    ) {
+    private fun uploadCroppedAvatar(path: String) {
         _uiState.update { it.copy(isUploading = true) }
         viewModelScope.launch {
+            val bytes = avatarPhotoStorage.readPhotoBytes(path)
+            if (bytes == null) {
+                _uiState.update { it.copy(isUploading = false) }
+                _uiEffect.trySend(UiEffect.ShowToast("Failed to upload photo"))
+                return@launch
+            }
             userRepository
-                .uploadAvatar(bytes, mimeType)
+                .uploadAvatar(bytes, "image/jpeg")
                 .onSuccess { user ->
+                    // The repository bumped the persisted token; read it so Profile and the top bar
+                    // render the identical `?v=` and share one Coil cache entry.
+                    val avatarVersion = dataStoreHelper.observeAvatarVersion().first()
                     _uiState.update {
                         it.copy(
                             isUploading = false,
                             avatarUrl = user.avatarUrl,
-                            avatarVersion = System.currentTimeMillis(),
+                            avatarVersion = avatarVersion,
                         )
                     }
                     _uiEffect.trySend(UiEffect.ShowToast("Photo updated"))
@@ -131,6 +142,8 @@ constructor(
                     _uiState.update { it.copy(isUploading = false) }
                     _uiEffect.trySend(UiEffect.ShowToast(t.message ?: "Failed to upload photo"))
                 }
+            // One-shot temp file — clean up regardless of upload outcome.
+            avatarPhotoStorage.deletePhoto(path)
         }
     }
 }

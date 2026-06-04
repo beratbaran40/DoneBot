@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.todoapp.mobile.data.storage.AvatarPhotoStorage
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.UserRepository
 import com.todoapp.mobile.navigation.NavigationEffect
@@ -26,6 +27,7 @@ class GroupSettingsViewModel
 constructor(
     private val groupRepository: GroupRepository,
     private val userRepository: UserRepository,
+    private val avatarPhotoStorage: AvatarPhotoStorage,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     private val groupId = savedStateHandle.toRoute<Screen.GroupSettings>().groupId
@@ -56,23 +58,29 @@ constructor(
                 _navEffect.trySend(
                     NavigationEffect.Navigate(Screen.TransferOwnership(groupId)),
                 )
-            is UiAction.OnAvatarPicked -> uploadAvatar(action.bytes, action.mimeType)
+            is UiAction.OnAvatarPicked ->
+                _navEffect.trySend(NavigationEffect.Navigate(Screen.AvatarCrop(action.uri)))
+            is UiAction.OnAvatarCropped -> uploadCroppedAvatar(action.path)
         }
     }
 
-    private fun uploadAvatar(
-        bytes: ByteArray,
-        mimeType: String,
-    ) {
+    private fun uploadCroppedAvatar(path: String) {
         viewModelScope.launch {
+            val bytes = avatarPhotoStorage.readPhotoBytes(path)
+            if (bytes == null) {
+                _uiEffect.trySend(UiEffect.ShowToast("Failed to upload avatar"))
+                return@launch
+            }
             groupRepository
-                .uploadGroupAvatar(groupId, bytes, mimeType)
+                .uploadGroupAvatar(groupId, bytes, "image/jpeg")
                 .onSuccess {
                     _uiState.update { it.copy(avatarVersion = System.currentTimeMillis()) }
                     loadGroupDetail()
                 }.onFailure {
                     _uiEffect.trySend(UiEffect.ShowToast(it.message ?: "Failed to upload avatar"))
                 }
+            // One-shot temp file — clean up regardless of upload outcome.
+            avatarPhotoStorage.deletePhoto(path)
         }
     }
 

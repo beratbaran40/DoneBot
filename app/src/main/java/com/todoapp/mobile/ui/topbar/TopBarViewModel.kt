@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -95,18 +96,22 @@ constructor(
         // side-effects (refreshUserProfile, fetchUnreadCount) when the user IDENTITY changes.
         // Token rotations re-emit the same user — we don't want to API-storm on those.
         viewModelScope.launch {
-            dataStoreHelper.observeUser().collect { user ->
-                updateAuthenticationState(isAuthenticated = user != null)
-                if (user != null) {
-                    _uiState.update {
-                        it.copy(
-                            avatarUrl = user.avatarUrl,
-                            displayName = user.displayName,
-                            avatarVersion = System.currentTimeMillis(),
-                        )
+            combine(
+                dataStoreHelper.observeUser(),
+                dataStoreHelper.observeAvatarVersion(),
+            ) { user, avatarVersion -> user to avatarVersion }
+                .collect { (user, avatarVersion) ->
+                    updateAuthenticationState(isAuthenticated = user != null)
+                    if (user != null) {
+                        _uiState.update {
+                            it.copy(
+                                avatarUrl = user.avatarUrl,
+                                displayName = user.displayName,
+                                avatarVersion = avatarVersion,
+                            )
+                        }
                     }
                 }
-            }
         }
         viewModelScope.launch {
             dataStoreHelper
@@ -125,11 +130,12 @@ constructor(
     private fun refreshUserProfile() {
         viewModelScope.launch {
             userRepository.getUserInfo().onSuccess { u ->
+                // avatarVersion is owned solely by the persisted token (see startObservingUserAuthState);
+                // a profile refresh must not bump it or it would refetch an unchanged avatar.
                 _uiState.update {
                     it.copy(
                         avatarUrl = u.avatarUrl,
                         displayName = u.displayName,
-                        avatarVersion = System.currentTimeMillis(),
                     )
                 }
             }

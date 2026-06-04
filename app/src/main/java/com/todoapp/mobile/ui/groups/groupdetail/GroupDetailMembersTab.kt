@@ -250,9 +250,10 @@ fun MemberAvatar(
     modifier: Modifier = Modifier,
     size: Int = 44,
     avatarUrl: String? = null,
+    avatarVersion: Long = 0L,
 ) {
     val absoluteUrl =
-        remember(avatarUrl) {
+        remember(avatarUrl, avatarVersion) {
             if (avatarUrl.isNullOrBlank()) {
                 null
             } else {
@@ -260,7 +261,9 @@ fun MemberAvatar(
                     BuildConfig.BASE_URL
                         .trimEnd('/')
                 val rel = avatarUrl.trimStart('/')
-                "$base/$rel"
+                // avatarVersion == 0L → no cache-buster (other-member avatars never change mid-session);
+                // the current user's own avatar passes a bumped token to force a refetch after upload.
+                if (avatarVersion != 0L) "$base/$rel?v=$avatarVersion" else "$base/$rel"
             }
         }
     Box(

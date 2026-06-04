@@ -153,6 +153,9 @@ constructor(
             .onSuccess {
                 dataStoreHelper.setUser(it)
                 rememberUser(it)
+                // Bump the avatar cache-bust token so the singleton top bar (and any other live
+                // observer) refetches even when the backend returns the same avatar path.
+                dataStoreHelper.bumpAvatarVersion()
             }
     }
 

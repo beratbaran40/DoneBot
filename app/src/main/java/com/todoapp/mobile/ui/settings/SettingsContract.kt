@@ -31,6 +31,7 @@ object SettingsContract {
         val displayName: String = "",
         val email: String = "",
         val avatarUrl: String? = null,
+        val avatarVersion: Long = 0L,
     )
 
     sealed interface UiAction {

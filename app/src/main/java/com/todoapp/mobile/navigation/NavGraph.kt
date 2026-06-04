@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +35,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import com.todoapp.mobile.LocalNavController
 import com.todoapp.mobile.MainActivity
 import com.todoapp.mobile.MainViewModel
@@ -91,6 +93,9 @@ import com.todoapp.mobile.ui.pomodorolaunch.PomodoroLaunchScreen
 import com.todoapp.mobile.ui.pomodorolaunch.PomodoroLaunchViewModel
 import com.todoapp.mobile.ui.pomodorosummary.PomodoroSummaryScreen
 import com.todoapp.mobile.ui.pomodorosummary.PomodoroSummaryViewModel
+import com.todoapp.mobile.ui.profile.avatarcrop.AVATAR_CROP_RESULT_KEY
+import com.todoapp.mobile.ui.profile.avatarcrop.AvatarCropScreen
+import com.todoapp.mobile.ui.profile.avatarcrop.AvatarCropViewModel
 import com.todoapp.mobile.ui.register.RegisterScreen
 import com.todoapp.mobile.ui.register.RegisterViewModel
 import com.todoapp.mobile.ui.resetpassword.ResetPasswordScreen
@@ -522,6 +527,18 @@ fun NavGraph(
         composable<Screen.Profile> {
             val viewModel: com.todoapp.mobile.ui.profile.ProfileViewModel = hiltViewModel()
             NavigationEffectController(viewModel.navEffect)
+            // Cropped avatar path is handed back via savedStateHandle by the crop screen.
+            LaunchedEffect(it) {
+                it.savedStateHandle.getStateFlow<String?>(AVATAR_CROP_RESULT_KEY, null)
+                    .collect { path ->
+                        if (path != null) {
+                            viewModel.onAction(
+                                com.todoapp.mobile.ui.profile.ProfileContract.UiAction.OnAvatarCropped(path),
+                            )
+                            it.savedStateHandle[AVATAR_CROP_RESULT_KEY] = null
+                        }
+                    }
+            }
             com.todoapp.mobile.ui.profile
                 .ProfileScreen(viewModel = viewModel)
             ScreenInfoDialog(
@@ -635,6 +652,19 @@ fun NavGraph(
         composable<Screen.GroupSettings> {
             val viewModel: GroupSettingsViewModel = hiltViewModel()
             NavigationEffectController(viewModel.navEffect)
+            // Cropped group-avatar path is handed back via savedStateHandle by the crop screen.
+            LaunchedEffect(it) {
+                it.savedStateHandle.getStateFlow<String?>(AVATAR_CROP_RESULT_KEY, null)
+                    .collect { path ->
+                        if (path != null) {
+                            viewModel.onAction(
+                                com.todoapp.mobile.ui.groups.groupsettings
+                                    .GroupSettingsContract.UiAction.OnAvatarCropped(path),
+                            )
+                            it.savedStateHandle[AVATAR_CROP_RESULT_KEY] = null
+                        }
+                    }
+            }
             GroupSettingsScreen(viewModel = viewModel)
             ScreenInfoDialog(
                 infoClicks = topBarViewModel.infoClicks,
@@ -753,6 +783,21 @@ fun NavGraph(
                 onAction = viewModel::onAction,
             )
             // Info dialog rendered inside JournalEntryScreen — topbar is hidden for this route.
+        }
+
+        composable<Screen.AvatarCrop> {
+            val viewModel: AvatarCropViewModel = hiltViewModel()
+            AvatarCropScreen(
+                source = it.toRoute<Screen.AvatarCrop>().source,
+                uiEffect = viewModel.uiEffect,
+                onAction = viewModel::onAction,
+                onCropped = { path ->
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle?.set(AVATAR_CROP_RESULT_KEY, path)
+                    navController.popBackStack()
+                },
+                onBack = { navController.popBackStack() },
+            )
         }
     }
 }

@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
@@ -164,16 +165,21 @@ constructor(
 
     private fun observeAuthState() {
         viewModelScope.launch {
-            dataStoreHelper.observeUser().collect { user ->
-                _uiState.update {
-                    it.copy(
-                        isUserAuthenticated = user != null,
-                        displayName = user?.displayName.orEmpty(),
-                        email = user?.email.orEmpty(),
-                        avatarUrl = user?.avatarUrl,
-                    )
+            combine(
+                dataStoreHelper.observeUser(),
+                dataStoreHelper.observeAvatarVersion(),
+            ) { user, avatarVersion -> user to avatarVersion }
+                .collect { (user, avatarVersion) ->
+                    _uiState.update {
+                        it.copy(
+                            isUserAuthenticated = user != null,
+                            displayName = user?.displayName.orEmpty(),
+                            email = user?.email.orEmpty(),
+                            avatarUrl = user?.avatarUrl,
+                            avatarVersion = avatarVersion,
+                        )
+                    }
                 }
-            }
         }
     }
 

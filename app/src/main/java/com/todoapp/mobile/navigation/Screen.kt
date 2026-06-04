@@ -148,4 +148,9 @@ interface Screen {
     data class JournalEntry(
         val entryId: Long = 0L,
     ) : Screen
+
+    @Serializable
+    data class AvatarCrop(
+        val source: String,
+    ) : Screen
 }

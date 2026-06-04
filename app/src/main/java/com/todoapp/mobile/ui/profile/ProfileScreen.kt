@@ -64,12 +64,8 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
             contract = ActivityResultContracts.PickVisualMedia(),
         ) { uri ->
             uri ?: return@rememberLauncherForActivityResult
-            val cr = context.contentResolver
-            val mime = cr.getType(uri) ?: "image/jpeg"
-            val bytes =
-                runCatching { cr.openInputStream(uri)?.use { it.readBytes() } }
-                    .getOrNull() ?: return@rememberLauncherForActivityResult
-            viewModel.onAction(UiAction.OnAvatarPicked(bytes, mime))
+            // Route the picked image through the crop screen; upload happens once it returns.
+            viewModel.onAction(UiAction.OnAvatarPicked(uri.toString()))
         }
 
     ProfileContent(

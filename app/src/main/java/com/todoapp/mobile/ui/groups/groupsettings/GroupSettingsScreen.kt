@@ -1,6 +1,9 @@
 package com.todoapp.mobile.ui.groups.groupsettings
 
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -81,12 +84,24 @@ private fun GroupSettingsContent(
 
         val isAdmin = uiState.currentUserRole == "ADMIN"
 
+        val avatarPicker =
+            rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.PickVisualMedia(),
+            ) { uri ->
+                // Route the picked image through the crop screen; upload happens once it returns.
+                if (uri != null) onAction(UiAction.OnAvatarPicked(uri.toString()))
+            }
+
         GroupAvatar(
             avatarUrl = uiState.avatarUrl,
             avatarVersion = uiState.avatarVersion,
             name = uiState.name,
             isAdmin = isAdmin,
-            onAvatarPicked = { bytes, mime -> onAction(UiAction.OnAvatarPicked(bytes, mime)) },
+            onPickAvatar = {
+                avatarPicker.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                )
+            },
             modifier = Modifier.align(Alignment.CenterHorizontally),
         )
         Spacer(modifier = Modifier.height(24.dp))
