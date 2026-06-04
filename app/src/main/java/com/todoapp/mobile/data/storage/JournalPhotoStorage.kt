@@ -1,6 +1,7 @@
 package com.todoapp.mobile.data.storage
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
 import com.todoapp.mobile.di.IoDispatcher
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -42,6 +43,25 @@ class JournalPhotoStorage @Inject constructor(
         }.getOrNull()
     }
 
+    /**
+     * Compresses an in-memory [Bitmap] (a Polaroid capture) straight to a JPEG in app-private
+     * storage and returns its absolute path. Uses the same directory and naming as [savePhoto],
+     * so the existing [deletePhotos] cleanup on entry deletion covers these files too.
+     *
+     * Does NOT recycle [bitmap] — the caller owns its lifecycle. Returns `null` on IO failure.
+     */
+    suspend fun savePhotoFromBitmap(bitmap: Bitmap): String? = withContext(ioDispatcher) {
+        runCatching {
+            val target = File(photosDir, "${UUID.randomUUID()}.jpg")
+            target.outputStream().use { output ->
+                bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, output)
+            }
+            target.absolutePath
+        }.onFailure {
+            Timber.tag(TAG).w(it, "Failed to save journal photo from bitmap")
+        }.getOrNull()
+    }
+
     suspend fun deletePhoto(path: String) {
         withContext(ioDispatcher) {
             runCatching { File(path).delete() }
@@ -56,5 +76,6 @@ class JournalPhotoStorage @Inject constructor(
     private companion object {
         const val DIR_NAME = "journal_photos"
         const val TAG = "JournalPhotoStorage"
+        const val JPEG_QUALITY = 92
     }
 }

@@ -37,6 +37,10 @@ object JournalEntryContract {
 
         data class OnPhotoPicked(val uri: Uri) : UiAction
 
+        data object OnPolaroidCameraClicked : UiAction
+
+        data class OnPhotoCapturedFromCamera(val path: String) : UiAction
+
         data class OnPhotoRemove(val path: String) : UiAction
 
         data class OnPhotoTap(val path: String) : UiAction

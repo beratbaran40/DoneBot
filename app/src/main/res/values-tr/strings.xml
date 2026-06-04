@@ -893,6 +893,23 @@
     <string name="journal_entry_deleted">Silindi</string>
     <string name="journal_entry_save_error">Kaydedilemedi</string>
     <string name="journal_entry_load_error">Yüklenemedi</string>
+
+    <!-- Polaroid camera (Journal) -->
+    <string name="polaroid_camera_screen_title">Polaroid kamera</string>
+    <string name="journal_polaroid_fab_content_description">Polaroid fotoğraf çek</string>
+    <string name="polaroid_camera_flip_content_description">Kamerayı değiştir</string>
+    <string name="polaroid_retake">Tekrar çek</string>
+    <string name="polaroid_save_to_journal">Günlüğe ekle</string>
+    <string name="polaroid_permission_denied">Fotoğraf çekmek için kamera izni gerekli</string>
+    <string name="polaroid_camera_unavailable">Bu cihazda kamera yok</string>
+    <string name="polaroid_save_error">Fotoğraf kaydedilemedi</string>
+
+    <!-- Avatar crop -->
+    <string name="avatar_crop_screen_title">Fotoğrafı kırp</string>
+    <string name="avatar_crop_done">Tamam</string>
+    <string name="avatar_crop_save_error">Fotoğraf işlenemedi</string>
+    <string name="settings_camera_permission_title">Kamera</string>
+    <string name="settings_camera_permission_description">Günlüğün için Polaroid tarzı fotoğraflar çek</string>
     <string name="journal_entry_delete_confirm_title">Bu kaydı sil?</string>
     <string name="journal_entry_delete_confirm_message">Bu kayda ekli fotoğraflar da silinecek. Geri alınamaz.</string>
     <string name="journal_entry_discard_confirm_title">Değişiklikleri sil?</string>
@@ -921,9 +938,4 @@
     <string name="journal_mood_changed_toast">Ruh hali güncellendi</string>
     <!-- Günlük Round 3: tek alan placeholder'ı -->
     <string name="journal_entry_placeholder">Bugün ne yaşadın? İlk satır başlık olur…</string>
-
-    <!-- Avatar crop -->
-    <string name="avatar_crop_screen_title">Fotoğrafı kırp</string>
-    <string name="avatar_crop_done">Tamam</string>
-    <string name="avatar_crop_save_error">Fotoğraf işlenemedi</string>
 </resources>

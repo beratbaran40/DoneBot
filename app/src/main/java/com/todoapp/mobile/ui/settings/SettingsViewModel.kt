@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.todoapp.mobile.R
+import com.todoapp.mobile.common.needsCameraPermission
 import com.todoapp.mobile.common.needsOverlayPermission
 import com.todoapp.mobile.common.needsPostNotificationsPermission
 import com.todoapp.mobile.data.repository.DataStoreHelper
@@ -154,7 +155,7 @@ constructor(
                 if (context.needsOverlayPermission()) add(PermissionType.OVERLAY)
                 if (context.needsPostNotificationsPermission()) add(PermissionType.NOTIFICATION)
             }
-        _uiState.update { it.copy(visiblePermissions = list) }
+        _uiState.update { it.copy(visiblePermissions = list, cameraGranted = !context.needsCameraPermission()) }
     }
 
     fun dismissPermission(type: PermissionType) {

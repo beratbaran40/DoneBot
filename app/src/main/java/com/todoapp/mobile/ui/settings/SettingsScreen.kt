@@ -1,10 +1,13 @@
 package com.todoapp.mobile.ui.settings
 
+import android.Manifest
 import android.app.AlarmManager
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
@@ -76,6 +79,7 @@ fun SettingsScreen(
     SettingsContent(
         uiState = uiState,
         onAction = onAction,
+        onCheckPermissions = onCheckPermissions,
         onDismissPermission = onDismissPermission,
     )
 }
@@ -86,6 +90,7 @@ private fun SettingsContent(
     modifier: Modifier = Modifier,
     uiState: UiState,
     onAction: (UiAction) -> Unit,
+    onCheckPermissions: () -> Unit,
     onDismissPermission: (PermissionType) -> Unit,
 ) {
     if (uiState.showDeleteAccountDialog) {
@@ -136,6 +141,9 @@ private fun SettingsContent(
     }
 
     val context = LocalContext.current
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { onCheckPermissions() }
 
     Column(
         modifier =
@@ -343,6 +351,50 @@ private fun SettingsContent(
             Switch(
                 checked = uiState.journalBiometricProtected,
                 onCheckedChange = { onAction(UiAction.OnJournalBiometricProtectionToggle(it)) },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = TDTheme.colors.white,
+                    checkedTrackColor = TDTheme.colors.pendingGray,
+                ),
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = TDTheme.colors.onBackground.copy(alpha = 0.1f))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                TDText(
+                    text = stringResource(R.string.settings_camera_permission_title),
+                    style = TDTheme.typography.heading6,
+                    color = TDTheme.colors.onBackground,
+                )
+                TDText(
+                    text = stringResource(R.string.settings_camera_permission_description),
+                    style = TDTheme.typography.subheading2,
+                    color = TDTheme.colors.gray,
+                )
+            }
+            Switch(
+                checked = uiState.cameraGranted,
+                onCheckedChange = {
+                    if (uiState.cameraGranted) {
+                        // Camera permission can't be revoked programmatically — send to App Settings.
+                        runCatching {
+                            context.startActivity(
+                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                    data = Uri.fromParts("package", context.packageName, null)
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                },
+                            )
+                        }
+                    } else {
+                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
+                },
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = TDTheme.colors.white,
                     checkedTrackColor = TDTheme.colors.pendingGray,

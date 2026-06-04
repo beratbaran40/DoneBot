@@ -79,6 +79,10 @@ import com.todoapp.mobile.ui.home.HomeScreen
 import com.todoapp.mobile.ui.home.HomeViewModel
 import com.todoapp.mobile.ui.journal.JournalScreen
 import com.todoapp.mobile.ui.journal.JournalViewModel
+import com.todoapp.mobile.ui.journal.camera.POLAROID_PHOTO_RESULT_KEY
+import com.todoapp.mobile.ui.journal.camera.PolaroidCameraScreen
+import com.todoapp.mobile.ui.journal.camera.PolaroidCameraViewModel
+import com.todoapp.mobile.ui.journal.entry.JournalEntryContract
 import com.todoapp.mobile.ui.journal.entry.JournalEntryScreen
 import com.todoapp.mobile.ui.journal.entry.JournalEntryViewModel
 import com.todoapp.mobile.ui.login.LoginScreen
@@ -777,12 +781,36 @@ fun NavGraph(
             val viewModel: JournalEntryViewModel = hiltViewModel()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             NavigationEffectController(viewModel.navEffect)
+            // Photo captured by the Polaroid camera is handed back via savedStateHandle.
+            LaunchedEffect(it) {
+                it.savedStateHandle.getStateFlow<String?>(POLAROID_PHOTO_RESULT_KEY, null)
+                    .collect { path ->
+                        if (path != null) {
+                            viewModel.onAction(JournalEntryContract.UiAction.OnPhotoCapturedFromCamera(path))
+                            it.savedStateHandle[POLAROID_PHOTO_RESULT_KEY] = null
+                        }
+                    }
+            }
             JournalEntryScreen(
                 uiState = uiState,
                 uiEffect = viewModel.uiEffect,
                 onAction = viewModel::onAction,
             )
             // Info dialog rendered inside JournalEntryScreen — topbar is hidden for this route.
+        }
+
+        composable<Screen.PolaroidCamera> {
+            val viewModel: PolaroidCameraViewModel = hiltViewModel()
+            PolaroidCameraScreen(
+                uiEffect = viewModel.uiEffect,
+                onAction = viewModel::onAction,
+                onPhotoSaved = { path ->
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle?.set(POLAROID_PHOTO_RESULT_KEY, path)
+                    navController.popBackStack()
+                },
+                onBack = { navController.popBackStack() },
+            )
         }
 
         composable<Screen.AvatarCrop> {

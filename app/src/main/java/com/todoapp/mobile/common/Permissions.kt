@@ -14,3 +14,8 @@ fun Context.needsPostNotificationsPermission(): Boolean = Build.VERSION.SDK_INT 
     ) != PackageManager.PERMISSION_GRANTED
 
 fun Context.needsOverlayPermission(): Boolean = !Settings.canDrawOverlays(this)
+
+fun Context.needsCameraPermission(): Boolean = ContextCompat.checkSelfPermission(
+    this,
+    Manifest.permission.CAMERA,
+) != PackageManager.PERMISSION_GRANTED

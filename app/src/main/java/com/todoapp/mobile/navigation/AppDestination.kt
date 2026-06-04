@@ -256,6 +256,13 @@ sealed class AppDestination(
         hasInfoDialog = true,
     )
 
+    data object PolaroidCamera : AppDestination(
+        title = R.string.polaroid_camera_screen_title,
+        route = Screen.PolaroidCamera::class.requiredRoute(),
+        icon = null,
+        selectedIcon = null,
+    )
+
     data object AvatarCrop : AppDestination(
         title = R.string.avatar_crop_screen_title,
         route = Screen.AvatarCrop::class.requiredRoute(),
@@ -296,10 +303,10 @@ sealed class AppDestination(
                 Invitations,
                 AlarmSounds,
                 Journal,
-                // JournalEntry and AvatarCrop intentionally NOT listed — they hide the topbar so
-                // they can render their own floating chrome over a full-bleed surface (paper
-                // background / crop surface). Keeping the AppDestination objects in case future
-                // surfaces need their title resources.
+                // JournalEntry, PolaroidCamera and AvatarCrop intentionally NOT listed — they hide
+                // the topbar so they can render their own floating chrome over a full-bleed surface
+                // (paper background / skeuomorphic camera body / crop surface). Keeping the
+                // AppDestination objects in case future surfaces need their title resources.
             )
     }
 }

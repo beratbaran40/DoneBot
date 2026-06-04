@@ -46,6 +46,7 @@ internal fun lightColors(
     white: Color = Color(0xFFFFFAF0),
     softPink: Color = Color(0xFFF5D3BB),
     lightGray: Color = Color(0xFFC0C0C0),
+    polaroid: PolaroidColors = polaroidColors(),
 ): TDColor = TDColor(
     infoCardBgColor = infoCardBgColor,
     groupMemberCardBgColor = groupMemberCardBgColor,
@@ -85,6 +86,7 @@ internal fun lightColors(
     softPink = softPink,
     lightGray = lightGray,
     lightPurple = lightPurple,
+    polaroid = polaroid,
 )
 
 internal fun darkColors(
@@ -126,6 +128,7 @@ internal fun darkColors(
     white: Color = Color(0xFFFFFAF0),
     softPink: Color = Color(0xFFF5D3BB),
     lightGray: Color = Color(0xFF444444),
+    polaroid: PolaroidColors = polaroidColors(),
 ): TDColor =
     TDColor(
         infoCardBgColor = infoCardBgColor,
@@ -166,6 +169,7 @@ internal fun darkColors(
         softPink = softPink,
         lightGray = lightGray,
         lightPurple = lightPurple,
+        polaroid = polaroid,
     )
 
 @Immutable
@@ -208,4 +212,5 @@ data class TDColor(
     val white: Color,
     val softPink: Color,
     val lightGray: Color,
+    val polaroid: PolaroidColors,
 )

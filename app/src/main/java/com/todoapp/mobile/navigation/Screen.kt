@@ -150,6 +150,9 @@ interface Screen {
     ) : Screen
 
     @Serializable
+    data object PolaroidCamera : Screen
+
+    @Serializable
     data class AvatarCrop(
         val source: String,
     ) : Screen

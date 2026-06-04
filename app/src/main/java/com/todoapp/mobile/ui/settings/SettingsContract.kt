@@ -20,6 +20,7 @@ object SettingsContract {
         val isSecretModeActive: Boolean = false,
         val dailyPlanTime: LocalTime = DEFAULT_PLAN_TIME,
         val visiblePermissions: List<PermissionType> = emptyList(),
+        val cameraGranted: Boolean = false,
         val showLogoutDialog: Boolean = false,
         val isUserAuthenticated: Boolean = false,
         val pushNotificationsEnabled: Boolean = true,

@@ -59,6 +59,8 @@ constructor(
             is UiAction.OnContentChange -> updateEditing { it.copy(content = action.value, isDirty = true) }
             is UiAction.OnMoodSelect -> updateEditing { it.copy(mood = action.mood, isDirty = true) }
             is UiAction.OnPhotoPicked -> handlePhotoPicked(action.uri)
+            UiAction.OnPolaroidCameraClicked -> _navEffect.trySend(NavigationEffect.Navigate(Screen.PolaroidCamera))
+            is UiAction.OnPhotoCapturedFromCamera -> handlePhotoFromCamera(action.path)
             is UiAction.OnPhotoRemove -> handlePhotoRemove(action.path)
             is UiAction.OnPhotoTap -> updateEditing { it.copy(fullscreenPath = action.path) }
             UiAction.OnDismissFullscreen -> updateEditing { it.copy(fullscreenPath = null) }
@@ -90,6 +92,15 @@ constructor(
             updateEditing { state ->
                 state.copy(photoPaths = state.photoPaths + savedPath, isDirty = true)
             }
+        }
+    }
+
+    private fun handlePhotoFromCamera(path: String) {
+        // The Polaroid camera already wrote the JPEG to journal storage; the path is final, so
+        // (unlike handlePhotoPicked) there is no copy step — just track and attach it.
+        sessionAddedPaths += path
+        updateEditing { state ->
+            state.copy(photoPaths = state.photoPaths + path, isDirty = true)
         }
     }
 

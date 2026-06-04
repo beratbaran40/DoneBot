@@ -892,6 +892,23 @@
     <string name="journal_entry_deleted">Entry deleted</string>
     <string name="journal_entry_save_error">Couldn\'t save entry</string>
     <string name="journal_entry_load_error">Couldn\'t load entry</string>
+
+    <!-- Polaroid camera (Journal) -->
+    <string name="polaroid_camera_screen_title">Polaroid camera</string>
+    <string name="journal_polaroid_fab_content_description">Take a Polaroid photo</string>
+    <string name="polaroid_camera_flip_content_description">Switch camera</string>
+    <string name="polaroid_retake">Retake</string>
+    <string name="polaroid_save_to_journal">Add to journal</string>
+    <string name="polaroid_permission_denied">Camera permission is needed to take photos</string>
+    <string name="polaroid_camera_unavailable">No camera available on this device</string>
+    <string name="polaroid_save_error">Couldn\'t save photo</string>
+
+    <!-- Avatar crop -->
+    <string name="avatar_crop_screen_title">Crop photo</string>
+    <string name="avatar_crop_done">Done</string>
+    <string name="avatar_crop_save_error">Couldn\'t process photo</string>
+    <string name="settings_camera_permission_title">Camera</string>
+    <string name="settings_camera_permission_description">Take Polaroid-style photos for your journal</string>
     <string name="journal_entry_delete_confirm_title">Delete this entry?</string>
     <string name="journal_entry_delete_confirm_message">Photos attached to this entry will also be removed. This can\'t be undone.</string>
     <string name="journal_entry_discard_confirm_title">Discard changes?</string>
@@ -920,9 +937,4 @@
     <string name="journal_mood_changed_toast">Mood updated</string>
     <!-- Journal Round 3: single field placeholder -->
     <string name="journal_entry_placeholder">Bugün ne yaşadın? İlk satır başlık olur…</string>
-
-    <!-- Avatar crop -->
-    <string name="avatar_crop_screen_title">Crop photo</string>
-    <string name="avatar_crop_done">Done</string>
-    <string name="avatar_crop_save_error">Couldn\'t process photo</string>
 </resources>

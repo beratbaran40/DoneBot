@@ -15,6 +15,10 @@
          degrades gracefully (manual search only) when these are denied. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- In-the-moment Polaroid capture for Journal entries. Camera is optional so the
+         install is not blocked on camera-less devices. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera.any" android:required="false" />
     <application
         android:name=".Application"
         android:allowBackup="true"

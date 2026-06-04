@@ -1,10 +1,13 @@
 package com.todoapp.mobile.ui.journal.entry
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -30,9 +34,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
 import com.todoapp.mobile.R.string
+import com.todoapp.mobile.common.needsCameraPermission
 import com.todoapp.mobile.ui.journal.ORDERED_MOODS
 import com.todoapp.mobile.ui.journal.entry.JournalEntryContract.UiAction
 import com.todoapp.mobile.ui.journal.entry.JournalEntryContract.UiEffect
@@ -61,6 +67,19 @@ fun JournalEntryScreen(
     onAction: (UiAction) -> Unit,
 ) {
     val context = LocalContext.current
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) {
+            onAction(UiAction.OnPolaroidCameraClicked)
+        } else {
+            Toast.makeText(
+                context,
+                context.getString(string.polaroid_permission_denied),
+                Toast.LENGTH_SHORT,
+            ).show()
+        }
+    }
     uiEffect.collectWithLifecycle { effect ->
         when (effect) {
             is UiEffect.ShowToast ->
@@ -108,6 +127,32 @@ fun JournalEntryScreen(
                     .padding(end = 8.dp, top = 12.dp),
                 onClick = { onAction(UiAction.OnInfoClick) },
             )
+            FloatingNotebookButton(
+                iconRes = com.todoapp.mobile.R.drawable.ic_polaroid,
+                tintIcon = false,
+                buttonSize = 56.dp,
+                iconSize = 44.dp,
+                contentDescription = stringResource(string.journal_polaroid_fab_content_description),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .navigationBarsPadding()
+                    .padding(end = 16.dp, bottom = 16.dp),
+                onClick = {
+                    when {
+                        !context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) ->
+                            Toast.makeText(
+                                context,
+                                context.getString(string.polaroid_camera_unavailable),
+                                Toast.LENGTH_SHORT,
+                            ).show()
+
+                        context.needsCameraPermission() ->
+                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+
+                        else -> onAction(UiAction.OnPolaroidCameraClicked)
+                    }
+                },
+            )
         }
     }
 
@@ -141,19 +186,32 @@ private fun FloatingNotebookButton(
     contentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    tintIcon: Boolean = true,
+    buttonSize: Dp = 40.dp,
+    iconSize: Dp = 22.dp,
 ) {
     IconButton(
         modifier = modifier
-            .size(40.dp)
+            .size(buttonSize)
             .background(TDTheme.colors.background.copy(alpha = 0.7f), CircleShape),
         onClick = onClick,
     ) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = contentDescription,
-            tint = TDTheme.colors.onBackground,
-            modifier = Modifier.size(22.dp),
-        )
+        if (tintIcon) {
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = contentDescription,
+                tint = TDTheme.colors.onBackground,
+                modifier = Modifier.size(iconSize),
+            )
+        } else {
+            // Multicolor artwork (the polaroid icon): render with Image so its colors survive —
+            // Icon would flatten everything to the tint color.
+            Image(
+                painter = painterResource(iconRes),
+                contentDescription = contentDescription,
+                modifier = Modifier.size(iconSize),
+            )
+        }
     }
 }
 
