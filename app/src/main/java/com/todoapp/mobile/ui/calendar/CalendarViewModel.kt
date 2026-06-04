@@ -159,6 +159,16 @@ constructor(
                 )
             is UiAction.OnJumpToEarliestOverdue -> jumpToEarliestOverdue()
             is UiAction.OnJournalTap -> _navEffect.trySend(NavigationEffect.Navigate(Screen.Journal))
+            is UiAction.OnRefresh -> refresh()
+        }
+    }
+
+    private fun refresh() {
+        updateSuccessState { it.copy(isRefreshing = true) }
+        taskSyncRepository.fetchTasks(force = true)
+        viewModelScope.launch {
+            delay(REFRESH_INDICATOR_MS)
+            updateSuccessState { it.copy(isRefreshing = false) }
         }
     }
 
@@ -530,5 +540,6 @@ constructor(
     companion object {
         private val DEFAULT_REMINDER_MINUTES = listOf(0L, 1L, 2L, 5L, 10L)
         private const val OVERDUE_TICK_MILLIS = 60_000L
+        private const val REFRESH_INDICATOR_MS = 800L
     }
 }

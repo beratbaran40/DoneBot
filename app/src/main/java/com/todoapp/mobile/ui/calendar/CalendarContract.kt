@@ -23,6 +23,7 @@ object CalendarContract {
             val overdueDates: Set<LocalDate> = emptySet(),
             val hasOverdueBeforeDisplayedMonth: Boolean = false,
             val overdueCount: Int = 0,
+            val isRefreshing: Boolean = false,
         ) : UiState
 
         data class Error(
@@ -100,6 +101,8 @@ object CalendarContract {
         data object OnJumpToEarliestOverdue : UiAction
 
         data object OnJournalTap : UiAction
+
+        data object OnRefresh : UiAction
     }
 
     @Immutable

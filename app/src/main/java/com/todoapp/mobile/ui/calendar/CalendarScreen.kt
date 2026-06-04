@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -86,6 +88,7 @@ fun CalendarScreen(
 }
 
 @Suppress("CyclomaticComplexMethod")
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CalendarSuccessContent(
     uiState: UiState.Success,
@@ -119,97 +122,103 @@ private fun CalendarSuccessContent(
         onDismissSheet = { onAction(UiAction.OnDismissBottomSheet) },
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            LazyColumn(
-                modifier =
-                Modifier
-                    .fillMaxSize()
-                    .background(color = TDTheme.colors.background),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+            PullToRefreshBox(
+                isRefreshing = uiState.isRefreshing,
+                onRefresh = { onAction(UiAction.OnRefresh) },
+                modifier = Modifier.fillMaxSize(),
             ) {
-                if (uiState.hasOverdueBeforeDisplayedMonth && uiState.overdueCount > 0) {
+                LazyColumn(
+                    modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(color = TDTheme.colors.background),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    if (uiState.hasOverdueBeforeDisplayedMonth && uiState.overdueCount > 0) {
+                        item {
+                            OverdueBanner(
+                                count = uiState.overdueCount,
+                                onView = { onAction(UiAction.OnJumpToEarliestOverdue) },
+                            )
+                        }
+                    }
                     item {
-                        OverdueBanner(
-                            count = uiState.overdueCount,
-                            onView = { onAction(UiAction.OnJumpToEarliestOverdue) },
+                        TDDatePicker(
+                            selectedDate = uiState.selectedDate,
+                            selectedMonth = uiState.selectedMonth,
+                            onMonthForward = { onAction(UiAction.OnMonthForward) },
+                            onMonthBack = { onAction(UiAction.OnMonthBack) },
+                            taskDates = uiState.taskDatesInMonth,
+                            overdueDates = uiState.overdueDates,
+                            hasOverdueBeforeDisplayedMonth = uiState.hasOverdueBeforeDisplayedMonth,
+                            onDaySelect = { onAction(UiAction.OnDateSelect(it)) },
+                            onDayDeselect = { onAction(UiAction.OnDateDeselect) },
                         )
                     }
-                }
-                item {
-                    TDDatePicker(
-                        selectedDate = uiState.selectedDate,
-                        selectedMonth = uiState.selectedMonth,
-                        onMonthForward = { onAction(UiAction.OnMonthForward) },
-                        onMonthBack = { onAction(UiAction.OnMonthBack) },
-                        taskDates = uiState.taskDatesInMonth,
-                        overdueDates = uiState.overdueDates,
-                        hasOverdueBeforeDisplayedMonth = uiState.hasOverdueBeforeDisplayedMonth,
-                        onDaySelect = { onAction(UiAction.OnDateSelect(it)) },
-                        onDayDeselect = { onAction(UiAction.OnDateDeselect) },
-                    )
-                }
-                val (recurringItems, oneOffPersonalItems) = uiState.personalTaskItems
-                    .partition { it.isRecurringInstance }
-                val hasOneOffPersonal = oneOffPersonalItems.isNotEmpty()
-                val hasRecurring = recurringItems.isNotEmpty()
-                val hasGroup = uiState.groupTaskItems.isNotEmpty()
-                val noResults = !hasOneOffPersonal && !hasRecurring && !hasGroup
-                if (uiState.selectedDate != null && noResults) {
-                    item { CalendarEmptyState() }
-                } else {
-                    if (hasOneOffPersonal) {
-                        item(key = "header-personal") {
-                            SectionHeader(
-                                text = stringResource(com.todoapp.mobile.R.string.calendar_section_my_tasks),
-                            )
+                    val (recurringItems, oneOffPersonalItems) = uiState.personalTaskItems
+                        .partition { it.isRecurringInstance }
+                    val hasOneOffPersonal = oneOffPersonalItems.isNotEmpty()
+                    val hasRecurring = recurringItems.isNotEmpty()
+                    val hasGroup = uiState.groupTaskItems.isNotEmpty()
+                    val noResults = !hasOneOffPersonal && !hasRecurring && !hasGroup
+                    if (uiState.selectedDate != null && noResults) {
+                        item { CalendarEmptyState() }
+                    } else {
+                        if (hasOneOffPersonal) {
+                            item(key = "header-personal") {
+                                SectionHeader(
+                                    text = stringResource(com.todoapp.mobile.R.string.calendar_section_my_tasks),
+                                )
+                            }
+                            items(
+                                items = oneOffPersonalItems,
+                                key = { "personal-${it.taskId}" },
+                            ) { personalItem ->
+                                PersonalTaskEntry(
+                                    item = personalItem,
+                                    onClick = { onAction(UiAction.OnTaskClick(it)) },
+                                    onPhotoClick = { onAction(UiAction.OnGroupTaskPhotoOpen(it)) },
+                                    modifier = Modifier.padding(horizontal = 24.dp),
+                                )
+                            }
                         }
-                        items(
-                            items = oneOffPersonalItems,
-                            key = { "personal-${it.taskId}" },
-                        ) { personalItem ->
-                            PersonalTaskEntry(
-                                item = personalItem,
-                                onClick = { onAction(UiAction.OnTaskClick(it)) },
-                                onPhotoClick = { onAction(UiAction.OnGroupTaskPhotoOpen(it)) },
-                                modifier = Modifier.padding(horizontal = 24.dp),
-                            )
+                        if (hasRecurring) {
+                            item(key = "header-recurring") {
+                                SectionHeader(
+                                    text = stringResource(com.todoapp.mobile.R.string.calendar_section_recurring_tasks),
+                                )
+                            }
+                            items(
+                                items = recurringItems,
+                                key = { "recurring-${it.taskId}" },
+                            ) { recurringItem ->
+                                PersonalTaskEntry(
+                                    item = recurringItem,
+                                    onClick = { onAction(UiAction.OnTaskClick(it)) },
+                                    onPhotoClick = { onAction(UiAction.OnGroupTaskPhotoOpen(it)) },
+                                    modifier = Modifier.padding(horizontal = 24.dp),
+                                )
+                            }
                         }
-                    }
-                    if (hasRecurring) {
-                        item(key = "header-recurring") {
-                            SectionHeader(
-                                text = stringResource(com.todoapp.mobile.R.string.calendar_section_recurring_tasks),
-                            )
-                        }
-                        items(
-                            items = recurringItems,
-                            key = { "recurring-${it.taskId}" },
-                        ) { recurringItem ->
-                            PersonalTaskEntry(
-                                item = recurringItem,
-                                onClick = { onAction(UiAction.OnTaskClick(it)) },
-                                onPhotoClick = { onAction(UiAction.OnGroupTaskPhotoOpen(it)) },
-                                modifier = Modifier.padding(horizontal = 24.dp),
-                            )
-                        }
-                    }
-                    if (hasGroup) {
-                        item(key = "header-group") {
-                            SectionHeader(
-                                text = stringResource(com.todoapp.mobile.R.string.calendar_section_group_deadlines),
-                            )
-                        }
-                        items(
-                            items = uiState.groupTaskItems,
-                            key = { "group-${it.taskId}" },
-                        ) { groupItem ->
-                            GroupTaskEntry(
-                                item = groupItem,
-                                onPhotoClick = { onAction(UiAction.OnGroupTaskPhotoOpen(it)) },
-                                onCardClick = { groupId, taskId ->
-                                    onAction(UiAction.OnGroupTaskClick(groupId, taskId))
-                                },
-                                modifier = Modifier.padding(horizontal = 24.dp),
-                            )
+                        if (hasGroup) {
+                            item(key = "header-group") {
+                                SectionHeader(
+                                    text = stringResource(com.todoapp.mobile.R.string.calendar_section_group_deadlines),
+                                )
+                            }
+                            items(
+                                items = uiState.groupTaskItems,
+                                key = { "group-${it.taskId}" },
+                            ) { groupItem ->
+                                GroupTaskEntry(
+                                    item = groupItem,
+                                    onPhotoClick = { onAction(UiAction.OnGroupTaskPhotoOpen(it)) },
+                                    onCardClick = { groupId, taskId ->
+                                        onAction(UiAction.OnGroupTaskClick(groupId, taskId))
+                                    },
+                                    modifier = Modifier.padding(horizontal = 24.dp),
+                                )
+                            }
                         }
                     }
                 }
