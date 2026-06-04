@@ -226,6 +226,22 @@ fun HomeContent(
             } else {
                 com.todoapp.mobile.R.string.no_recurring_description
             }
+            val isDark = TDTheme.isDark
+            val emptyImageRes: Int? = when (uiState.selectedFilter) {
+                HomeContract.HomeFilter.TODAY -> null
+                HomeContract.HomeFilter.DAILY ->
+                    if (isDark) R.drawable.img_donebot_recurring_daily_night
+                    else R.drawable.img_donebot_recurring_daily_day
+                HomeContract.HomeFilter.WEEKLY ->
+                    if (isDark) R.drawable.img_donebot_recurring_weekly_night
+                    else R.drawable.img_donebot_recurring_weekly_day
+                HomeContract.HomeFilter.MONTHLY ->
+                    if (isDark) R.drawable.img_donebot_recurring_monthly_night
+                    else R.drawable.img_donebot_recurring_monthly_day
+                HomeContract.HomeFilter.YEARLY ->
+                    if (isDark) R.drawable.img_donebot_recurring_yearly_night
+                    else R.drawable.img_donebot_recurring_yearly_day
+            }
             HomeTaskList(
                 tasks = localTasks.filter { it.id != uiState.pendingDeleteTask?.id },
                 lazyListState = lazyListState,
@@ -248,6 +264,7 @@ fun HomeContent(
                 modifier = Modifier.fillMaxSize(),
                 emptyTitleRes = emptyTitleRes,
                 emptyDescriptionRes = emptyDescriptionRes,
+                emptyImageRes = emptyImageRes,
                 headerContent = {
                     item {
                         HomeGreetingRow(

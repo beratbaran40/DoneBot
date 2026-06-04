@@ -72,6 +72,7 @@ fun HomeTaskList(
     modifier: Modifier = Modifier,
     emptyTitleRes: Int = com.todoapp.mobile.R.string.no_tasks_today,
     emptyDescriptionRes: Int = com.todoapp.mobile.R.string.no_tasks_today_description,
+    emptyImageRes: Int? = null,
     headerContent: LazyListScope.() -> Unit = {},
 ) {
     val isAnyDragging = reorderableLazyListState.isAnyItemDragging
@@ -90,15 +91,13 @@ fun HomeTaskList(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
+                    val defaultIdleImage = if (TDTheme.isDark) {
+                        com.todoapp.mobile.R.drawable.ic_idle_robot_dark
+                    } else {
+                        com.todoapp.mobile.R.drawable.ic_idle_robot_light
+                    }
                     Image(
-                        painter =
-                        painterResource(
-                            if (TDTheme.isDark) {
-                                com.todoapp.mobile.R.drawable.ic_idle_robot_dark
-                            } else {
-                                com.todoapp.mobile.R.drawable.ic_idle_robot_light
-                            },
-                        ),
+                        painter = painterResource(emptyImageRes ?: defaultIdleImage),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
@@ -125,7 +124,7 @@ fun HomeTaskList(
                     Spacer(Modifier.height(8.dp))
                     TDText(
                         text = stringResource(emptyDescriptionRes),
-                        modifier = Modifier.padding(horizontal = 48.dp),
+                        modifier = Modifier.padding(horizontal = 80.dp),
                         style = TDTheme.typography.heading6,
                         color = TDTheme.colors.onBackground.copy(alpha = 0.6f),
                         textAlign = TextAlign.Center,
@@ -166,11 +165,6 @@ fun HomeTaskList(
                             HomeSwipeDismissBackground(direction = dismissState.dismissDirection)
                         },
                     ) {
-                        // Card without onClick — using a plain Card and applying our own
-                        // gesture chain (long-press-drag first, then tap). Material3's
-                        // Card(onClick=...) installs its own internal long-press handler
-                        // that fights longPressDraggableHandle and crashes when the
-                        // reorderable lib mutates the list during the gesture.
                         Card(
                             modifier =
                             Modifier
