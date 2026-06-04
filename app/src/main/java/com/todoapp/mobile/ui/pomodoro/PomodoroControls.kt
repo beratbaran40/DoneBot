@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -89,7 +87,7 @@ fun PomodoroControls(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = Icons.Filled.SkipNext,
+                painter = painterResource(UiKitR.drawable.ic_skip_next),
                 contentDescription = stringResource(R.string.skip),
                 tint = contentColor.copy(alpha = 0.65f),
                 modifier = Modifier.size(28.dp),

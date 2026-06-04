@@ -29,9 +29,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -52,6 +49,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
@@ -233,7 +231,7 @@ private fun MessageActionsSheet(
     ) {
         Column(modifier = Modifier.padding(bottom = 16.dp)) {
             MessageActionItem(
-                icon = Icons.Filled.ContentCopy,
+                icon = painterResource(com.example.uikit.R.drawable.ic_content_copy),
                 label = stringResource(R.string.chat_action_copy),
                 onClick = {
                     clipboardScope.launch {
@@ -247,7 +245,7 @@ private fun MessageActionsSheet(
             )
             if (previousUserPrompt != null) {
                 MessageActionItem(
-                    icon = Icons.Filled.Refresh,
+                    icon = painterResource(com.example.uikit.R.drawable.ic_refresh),
                     label = stringResource(R.string.chat_action_try_again),
                     onClick = { onTryAgain(previousUserPrompt) },
                 )
@@ -258,7 +256,7 @@ private fun MessageActionsSheet(
 
 @Composable
 private fun MessageActionItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: Painter,
     label: String,
     onClick: () -> Unit,
 ) {
@@ -270,7 +268,7 @@ private fun MessageActionItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = icon,
+            painter = icon,
             contentDescription = null,
             tint = TDTheme.colors.darkPending,
             modifier = Modifier.size(24.dp),
