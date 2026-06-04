@@ -12,7 +12,6 @@ import android.view.View
 import android.view.WindowManager
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,6 +21,7 @@ import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
@@ -45,6 +45,8 @@ import com.todoapp.uikit.theme.TDTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -80,8 +82,13 @@ class OverlayService :
 
     private lateinit var windowManager: WindowManager
     private val ringtone = com.todoapp.mobile.common.RingtoneHolder()
-    private val ringtoneScope by lazy {
-        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + ioDispatcher)
+
+    // Service-scoped coroutine host for all background work (ringtone playback, card-position
+    // saves, alarm reschedule). Backed by a SupervisorJob that lives until onDestroy() cancels it,
+    // so a failing child does not tear down the others. `by lazy` because ioDispatcher is
+    // field-injected in onCreate and is not available at construction time.
+    private val serviceScope by lazy {
+        CoroutineScope(SupervisorJob() + ioDispatcher)
     }
 
     @Suppress("ktlint:standard:backing-property-naming")
@@ -119,7 +126,7 @@ class OverlayService :
             showOverlay(message.orEmpty(), minutesBefore, overlayType)
             // Honor user-selected alarm sound preference. Channel sounds are immutable post-creation
             // so we play the ringtone manually here.
-            ringtoneScope.launch {
+            serviceScope.launch {
                 val uri = runCatching { alarmSoundPreferences.currentAlarmSoundUri() }.getOrNull()
                 ringtone.play(context = this@OverlayService, explicitUri = uri)
             }
@@ -148,7 +155,7 @@ class OverlayService :
         val layoutParams = getLayoutParams(overlayType)
 
         if (overlayType == OVERLAY_TYPE_DAILY_PLAN) {
-            CoroutineScope(ioDispatcher).launch {
+            serviceScope.launch {
                 val saved = dailyPlanPreferences.observeCardPosition().first()
                 withContext(mainDispatcher) {
                     layoutParams.x = saved.cardPositionX.toInt()
@@ -166,7 +173,7 @@ class OverlayService :
                 setViewTreeSavedStateRegistryOwner(this@OverlayService)
                 setContent {
                     val themePreference by themeRepository.themeFlow
-                        .collectAsState(initial = ThemePreference.SYSTEM_DEFAULT)
+                        .collectAsStateWithLifecycle(initialValue = ThemePreference.SYSTEM_DEFAULT)
                     val isSystemDark = isSystemInDarkTheme()
                     val darkTheme =
                         when (themePreference) {
@@ -197,7 +204,7 @@ class OverlayService :
                                         windowManager.updateViewLayout(this@apply, layoutParams)
                                     },
                                     onDragEnd = {
-                                        CoroutineScope(ioDispatcher).launch {
+                                        serviceScope.launch {
                                             dailyPlanPreferences.saveCardPosition(
                                                 DailyCardPosition(
                                                     layoutParams.x.toFloat(),
@@ -237,7 +244,7 @@ class OverlayService :
     }
 
     private fun rescheduleNextDailyPlan() {
-        CoroutineScope(ioDispatcher).launch {
+        serviceScope.launch {
             val time =
                 dailyPlanPreferences.observePlanTime().first()
                     ?: DailyPlanDefaults.DEFAULT_PLAN_TIME
@@ -271,6 +278,15 @@ class OverlayService :
         }
         startedAsForeground = false
         stopSelf()
+    }
+
+    override fun onDestroy() {
+        // Cancel every coroutine started on serviceScope. The SupervisorJob never completes on
+        // its own, so without this the scope — and the OverlayService reference its children
+        // capture — would survive stopSelf() and leak the Service.
+        serviceScope.cancel()
+        ringtone.stop()
+        super.onDestroy()
     }
 
     private var startedAsForeground: Boolean = false

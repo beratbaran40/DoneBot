@@ -111,6 +111,19 @@ constructor(
         groupTasksSyncedAt.remove(groupId)
     }
 
+    // Wipes every per-group cache entry. invalidateGroupCache only evicts a single id, so on logout
+    // these maps would otherwise keep growing — and (since this is a @Singleton that survives a
+    // logout/login) the next user could read the previous user's cached group data.
+    private fun clearAllGroupCaches() {
+        cachedGroupDetail.clear()
+        groupDetailCachedAt.clear()
+        cachedGroupActivity.clear()
+        groupActivityCachedAt.clear()
+        cachedGroupTasks.clear()
+        groupTasksCachedAt.clear()
+        groupTasksSyncedAt.clear()
+    }
+
     override suspend fun deleteGroup(id: Long): Result<Unit> {
         val localEntity =
             groupLocalDataSource.getGroupById(id) ?: return Result.failure(Exception("Group not found"))
@@ -146,6 +159,7 @@ constructor(
             val all = groupLocalDataSource.getAllGroupsOrdered().first()
             all.forEach { groupLocalDataSource.delete(it) }
             invalidateGroupsCache()
+            clearAllGroupCaches()
         }
     }
 

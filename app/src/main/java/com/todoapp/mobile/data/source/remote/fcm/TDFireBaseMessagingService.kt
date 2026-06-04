@@ -3,6 +3,7 @@ package com.todoapp.mobile.data.source.remote.fcm
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Build
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.app.NotificationCompat
@@ -48,6 +49,15 @@ class TDFireBaseMessagingService : FirebaseMessagingService() {
     lateinit var ioDispatcher: CoroutineDispatcher
 
     private val scope by lazy { CoroutineScope(SupervisorJob() + ioDispatcher) }
+
+    // The notification large icon is the static app logo. Decode it once and reuse it: re-decoding
+    // on every push wastes native memory, and the copies accumulate while notifications stay posted.
+    // Never recycle it — the posted Notification keeps a reference, so recycling crashes the system UI.
+    private val largeIconBitmap: Bitmap? by lazy {
+        AppCompatResources
+            .getDrawable(this, com.todoapp.mobile.R.mipmap.ic_app_logo)
+            ?.toBitmap(width = 128, height = 128)
+    }
 
     override fun onDestroy() {
         scope.cancel()
@@ -230,9 +240,6 @@ class TDFireBaseMessagingService : FirebaseMessagingService() {
         val resolvedTitle = title ?: getString(com.todoapp.mobile.R.string.app_name)
         val resolvedBody = body.orEmpty()
         val accentColor = ContextCompat.getColor(this, com.todoapp.mobile.R.color.notification_accent)
-        val largeIcon = AppCompatResources
-            .getDrawable(this, com.todoapp.mobile.R.mipmap.ic_app_logo)
-            ?.toBitmap(width = 128, height = 128)
         val notification =
             NotificationCompat
                 .Builder(this, NotificationService.CHANNEL_ID)
@@ -240,7 +247,7 @@ class TDFireBaseMessagingService : FirebaseMessagingService() {
                 .setContentTitle(resolvedTitle)
                 .setContentText(resolvedBody)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(resolvedBody))
-                .also { builder -> largeIcon?.let { builder.setLargeIcon(it) } }
+                .also { builder -> largeIconBitmap?.let { builder.setLargeIcon(it) } }
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
                 .setColor(accentColor)
