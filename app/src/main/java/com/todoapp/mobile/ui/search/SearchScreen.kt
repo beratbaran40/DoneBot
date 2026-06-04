@@ -51,7 +51,6 @@ import com.todoapp.mobile.ui.search.SearchContract.UiEffect
 import com.todoapp.mobile.ui.search.SearchContract.UiState
 import com.todoapp.mobile.ui.security.biometric.BiometricAuthenticator
 import com.todoapp.uikit.components.TDEmptyState
-import com.todoapp.uikit.components.TDLoadingBar
 import com.todoapp.uikit.components.TDTaskCardWithCheckbox
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDTextField
@@ -150,7 +149,7 @@ fun SearchScreen(
 
         when (uiState) {
             is UiState.Idle -> SearchHint()
-            is UiState.Loading -> TDLoadingBar()
+            is UiState.Loading -> SearchSkeleton()
             is UiState.Error -> SearchError(uiState.message)
             is UiState.Success -> SearchResults(uiState, onAction)
         }

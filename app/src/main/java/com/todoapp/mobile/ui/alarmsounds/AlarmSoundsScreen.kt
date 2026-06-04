@@ -32,6 +32,7 @@ import com.todoapp.mobile.R
 import com.todoapp.mobile.domain.repository.AlarmSoundOption
 import com.todoapp.mobile.ui.alarmsounds.AlarmSoundsContract.UiAction
 import com.todoapp.mobile.ui.alarmsounds.AlarmSoundsContract.UiState
+import com.todoapp.uikit.components.TDErrorState
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.modifier.neumorphicShadow
 import com.todoapp.uikit.theme.TDTheme
@@ -48,7 +49,7 @@ fun AlarmSoundsScreen(
     ) {
         when (uiState) {
             is UiState.Loading -> Loading()
-            is UiState.Error -> ErrorBlock(uiState.message)
+            is UiState.Error -> TDErrorState(message = uiState.message)
             is UiState.Success -> if (uiState.items.isEmpty()) {
                 EmptyBlock()
             } else {
@@ -84,17 +85,6 @@ private fun EmptyBlock() {
             text = stringResource(R.string.alarm_sounds_empty),
             style = TDTheme.typography.subheading2,
             color = TDTheme.colors.gray,
-        )
-    }
-}
-
-@Composable
-private fun ErrorBlock(message: String) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        TDText(
-            text = message,
-            style = TDTheme.typography.subheading2,
-            color = TDTheme.colors.crossRed,
         )
     }
 }

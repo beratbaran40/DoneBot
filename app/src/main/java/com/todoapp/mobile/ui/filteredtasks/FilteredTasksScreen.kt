@@ -55,7 +55,7 @@ import com.todoapp.mobile.ui.filteredtasks.FilteredTasksContract.UiAction
 import com.todoapp.mobile.ui.filteredtasks.FilteredTasksContract.UiEffect
 import com.todoapp.mobile.ui.filteredtasks.FilteredTasksContract.UiState
 import com.todoapp.mobile.ui.security.biometric.BiometricAuthenticator
-import com.todoapp.uikit.components.TDLoadingBar
+import com.todoapp.uikit.components.TDErrorState
 import com.todoapp.uikit.components.TDTaskCardWithCheckbox
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDUndoSnackbar
@@ -94,38 +94,12 @@ fun FilteredTasksScreen(
     }
 
     when (uiState) {
-        is UiState.Loading -> TDLoadingBar()
-        is UiState.Error -> FilteredTasksErrorContent(uiState.message, onAction)
+        is UiState.Loading -> FilteredTasksSkeleton()
+        is UiState.Error -> TDErrorState(
+            modifier = Modifier.background(TDTheme.colors.background),
+            message = uiState.message,
+        )
         is UiState.Success -> FilteredTasksSuccessContent(uiState, onAction)
-    }
-}
-
-@Composable
-private fun FilteredTasksErrorContent(
-    message: String,
-    onAction: (UiAction) -> Unit,
-) {
-    Column(
-        modifier =
-        Modifier
-            .fillMaxSize()
-            .background(TDTheme.colors.background)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_error),
-            contentDescription = null,
-            tint = TDTheme.colors.crossRed,
-            modifier = Modifier.size(64.dp),
-        )
-        Spacer(Modifier.height(16.dp))
-        TDText(
-            text = message,
-            style = TDTheme.typography.heading3,
-            color = TDTheme.colors.onBackground,
-        )
     }
 }
 

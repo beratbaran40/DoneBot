@@ -52,7 +52,6 @@ import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDCategoryPicker
 import com.todoapp.uikit.components.TDCompactOutlinedTextField
 import com.todoapp.uikit.components.TDDatePickerDialog
-import com.todoapp.uikit.components.TDLoadingBar
 import com.todoapp.uikit.components.TDPickerField
 import com.todoapp.uikit.components.TDRecurrencePicker
 import com.todoapp.uikit.components.TDReminderOffsetPicker
@@ -87,17 +86,10 @@ fun DetailsScreen(
             .background(TDTheme.colors.background),
     ) {
         when (uiState) {
-            is UiState.Loading -> DetailsLoadingContent()
+            is UiState.Loading -> DetailsSkeleton()
             is UiState.Error -> DetailsErrorContent(uiState.message, onAction)
             is UiState.Success -> DetailsSuccessContent(uiState, onAction)
         }
-    }
-}
-
-@Composable
-private fun DetailsLoadingContent() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        TDLoadingBar()
     }
 }
 
@@ -458,12 +450,6 @@ private fun WheelTimePickerDialog(
             }
         }
     }
-}
-
-@com.todoapp.uikit.previews.TDPreview
-@Composable
-private fun DetailsLoadingPreview() {
-    TDTheme { DetailsLoadingContent() }
 }
 
 @com.todoapp.uikit.previews.TDPreview

@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,12 +40,10 @@ import com.todoapp.mobile.ui.home.AddTaskSheet
 import com.todoapp.mobile.ui.home.HomeFabMenu
 import com.todoapp.mobile.ui.home.TaskFormUiAction
 import com.todoapp.mobile.ui.security.biometric.BiometricAuthenticator
-import com.todoapp.uikit.components.TDButton
-import com.todoapp.uikit.components.TDButtonSize
 import com.todoapp.uikit.components.TDDatePicker
+import com.todoapp.uikit.components.TDErrorState
 import com.todoapp.uikit.components.TDFullscreenImageViewer
 import com.todoapp.uikit.components.TDGroupTaskCard
-import com.todoapp.uikit.components.TDLoadingBar
 import com.todoapp.uikit.components.TDScreenWithSheet
 import com.todoapp.uikit.components.TDStatusChipTone
 import com.todoapp.uikit.components.TDTaskCard
@@ -77,49 +74,14 @@ fun CalendarScreen(
     }
 
     when (uiState) {
-        is UiState.Loading -> CalendarLoadingContent()
-        is UiState.Error -> CalendarErrorContent(message = uiState.message, onAction = onAction)
+        is UiState.Loading -> CalendarSkeleton()
+        is UiState.Error -> TDErrorState(
+            modifier = Modifier.background(TDTheme.colors.background),
+            message = uiState.message,
+            actionText = stringResource(com.todoapp.mobile.R.string.retry),
+            onActionClick = { onAction(UiAction.OnRetry) },
+        )
         is UiState.Success -> CalendarSuccessContent(uiState = uiState, onAction = onAction)
-    }
-}
-
-@Composable
-private fun CalendarLoadingContent() {
-    TDLoadingBar()
-}
-
-@Composable
-private fun CalendarErrorContent(
-    message: String,
-    onAction: (UiAction) -> Unit,
-) {
-    Column(
-        modifier =
-        Modifier
-            .fillMaxSize()
-            .background(TDTheme.colors.background)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_error),
-            contentDescription = null,
-            tint = TDTheme.colors.crossRed,
-            modifier = Modifier.size(64.dp),
-        )
-        Spacer(Modifier.height(16.dp))
-        TDText(
-            text = message,
-            style = TDTheme.typography.heading3,
-            color = TDTheme.colors.onBackground,
-        )
-        Spacer(Modifier.height(24.dp))
-        TDButton(
-            text = stringResource(com.todoapp.mobile.R.string.retry),
-            onClick = { onAction(UiAction.OnRetry) },
-            size = TDButtonSize.SMALL,
-        )
     }
 }
 
@@ -415,19 +377,13 @@ private fun CalendarEmptyState() {
 
 @TDPreview
 @Composable
-private fun CalendarLoadingPreview() {
-    TDTheme {
-        CalendarLoadingContent()
-    }
-}
-
-@TDPreview
-@Composable
 private fun CalendarErrorPreview() {
     TDTheme {
-        CalendarErrorContent(
+        TDErrorState(
+            modifier = Modifier.background(TDTheme.colors.background),
             message = "Something went wrong",
-            onAction = {},
+            actionText = "Retry",
+            onActionClick = {},
         )
     }
 }

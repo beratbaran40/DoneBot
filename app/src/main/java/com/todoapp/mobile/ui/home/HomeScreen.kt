@@ -3,35 +3,22 @@ package com.todoapp.mobile.ui.home
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import com.example.uikit.R
 import com.todoapp.mobile.ui.home.HomeContract.UiAction
 import com.todoapp.mobile.ui.home.HomeContract.UiEffect
 import com.todoapp.mobile.ui.home.HomeContract.UiState
 import com.todoapp.mobile.ui.security.biometric.BiometricAuthenticator
-import com.todoapp.uikit.components.TDButton
-import com.todoapp.uikit.components.TDButtonSize
-import com.todoapp.uikit.components.TDLoadingBar
+import com.todoapp.uikit.components.TDErrorState
 import com.todoapp.uikit.components.TDScreenWithSheet
-import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.extensions.collectWithLifecycle
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.flow.Flow
@@ -74,49 +61,14 @@ fun HomeScreen(
     }
 
     when (uiState) {
-        is UiState.Loading -> HomeLoadingContent()
-        is UiState.Error -> HomeErrorContent(message = uiState.message, onAction = onAction)
+        is UiState.Loading -> HomeSkeleton()
+        is UiState.Error -> TDErrorState(
+            modifier = Modifier.background(TDTheme.colors.background),
+            message = uiState.message,
+            actionText = stringResource(com.todoapp.mobile.R.string.retry),
+            onActionClick = { onAction(UiAction.OnRetry) },
+        )
         is UiState.Success -> HomeSuccessContent(uiState = uiState, onAction = onAction)
-    }
-}
-
-@Composable
-private fun HomeLoadingContent() {
-    TDLoadingBar()
-}
-
-@Composable
-private fun HomeErrorContent(
-    message: String,
-    onAction: (UiAction) -> Unit,
-) {
-    Column(
-        modifier =
-        Modifier
-            .fillMaxSize()
-            .background(TDTheme.colors.background)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_error),
-            contentDescription = null,
-            tint = TDTheme.colors.crossRed,
-            modifier = Modifier.size(64.dp),
-        )
-        Spacer(Modifier.height(16.dp))
-        TDText(
-            text = message,
-            style = TDTheme.typography.heading3,
-            color = TDTheme.colors.onBackground,
-        )
-        Spacer(Modifier.height(24.dp))
-        TDButton(
-            text = stringResource(com.todoapp.mobile.R.string.retry),
-            onClick = { onAction(UiAction.OnRetry) },
-            size = TDButtonSize.SMALL,
-        )
     }
 }
 
@@ -222,19 +174,13 @@ private suspend fun handleBiometricAuthentication(
 
 @com.todoapp.uikit.previews.TDPreview
 @Composable
-private fun HomeLoadingPreview() {
-    TDTheme {
-        HomeLoadingContent()
-    }
-}
-
-@com.todoapp.uikit.previews.TDPreview
-@Composable
 private fun HomeErrorPreview() {
     TDTheme {
-        HomeErrorContent(
+        TDErrorState(
+            modifier = Modifier.background(TDTheme.colors.background),
             message = "Something went wrong",
-            onAction = {},
+            actionText = "Retry",
+            onActionClick = {},
         )
     }
 }
