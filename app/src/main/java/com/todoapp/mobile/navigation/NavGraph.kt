@@ -500,9 +500,11 @@ fun NavGraph(
         ) {
             val viewModel: SearchViewModel = hiltViewModel()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            val query by viewModel.query.collectAsStateWithLifecycle()
             NavigationEffectController(viewModel.navEffect)
             SearchScreen(
                 uiState = uiState,
+                query = query,
                 uiEffect = viewModel.uiEffect,
                 onAction = viewModel::onAction,
             )

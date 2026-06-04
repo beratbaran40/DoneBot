@@ -49,7 +49,8 @@ constructor(
     private val groupRepository: GroupRepository,
     private val secretPreferences: SecretPreferences,
 ) : ViewModel() {
-    private val queryFlow = MutableStateFlow("")
+    private val _query = MutableStateFlow("")
+    val query: kotlinx.coroutines.flow.StateFlow<String> = _query.asStateFlow()
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
     val uiState = _uiState.asStateFlow()
@@ -73,7 +74,7 @@ constructor(
 
     fun onAction(action: UiAction) {
         when (action) {
-            is UiAction.OnQueryChange -> queryFlow.update { action.query }
+            is UiAction.OnQueryChange -> _query.update { action.query }
             is UiAction.OnOpenFilterDialog -> setFilterDialogOpen(true)
             is UiAction.OnDismissFilterDialog -> setFilterDialogOpen(false)
             is UiAction.OnApplyFilters -> applyFilters(action.filters)
@@ -110,7 +111,7 @@ constructor(
 
     private fun observeSearchQuery() {
         viewModelScope.launch {
-            queryFlow
+            _query
                 .debounce(300L)
                 .distinctUntilChanged()
                 .flatMapLatest { raw ->

@@ -66,6 +66,7 @@ import com.example.uikit.R as UikitR
 @Composable
 fun SearchScreen(
     uiState: UiState,
+    query: String,
     uiEffect: Flow<UiEffect>,
     onAction: (UiAction) -> Unit,
 ) {
@@ -80,7 +81,6 @@ fun SearchScreen(
         }
     }
 
-    var queryText by remember { mutableStateOf("") }
     var textFieldVisible by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
 
@@ -109,11 +109,8 @@ fun SearchScreen(
                 Modifier
                     .fillMaxWidth()
                     .focusRequester(focusRequester),
-                value = queryText,
-                onValueChange = { new ->
-                    queryText = new
-                    onAction(UiAction.OnQueryChange(new))
-                },
+                value = query,
+                onValueChange = { new -> onAction(UiAction.OnQueryChange(new)) },
                 label = stringResource(R.string.search),
                 leadingIcon = {
                     Icon(
@@ -124,14 +121,11 @@ fun SearchScreen(
                 },
                 trailingIcon = {
                     AnimatedVisibility(
-                        visible = queryText.isNotEmpty(),
+                        visible = query.isNotEmpty(),
                         enter = fadeIn(),
                         exit = fadeOut(),
                     ) {
-                        IconButton(onClick = {
-                            queryText = ""
-                            onAction(UiAction.OnQueryChange(""))
-                        }) {
+                        IconButton(onClick = { onAction(UiAction.OnQueryChange("")) }) {
                             Icon(
                                 painter = painterResource(UikitR.drawable.ic_close),
                                 contentDescription = stringResource(R.string.cd_clear_search),
@@ -351,6 +345,7 @@ private fun SearchScreenIdlePreview() {
     TDTheme {
         SearchScreen(
             uiState = UiState.Idle,
+            query = "",
             uiEffect = emptyFlow(),
             onAction = {},
         )
@@ -363,6 +358,7 @@ private fun SearchScreenLoadingPreview() {
     TDTheme {
         SearchScreen(
             uiState = UiState.Loading,
+            query = "Buy",
             uiEffect = emptyFlow(),
             onAction = {},
         )
@@ -394,6 +390,7 @@ private fun SearchScreenSuccessPreview() {
                 ),
                 filters = SearchContract.SearchFilters(),
             ),
+            query = "Buy",
             uiEffect = emptyFlow(),
             onAction = {},
         )
@@ -425,6 +422,7 @@ private fun SearchScreenSuccessDarkPreview() {
                 ),
                 filters = SearchContract.SearchFilters(),
             ),
+            query = "Buy",
             uiEffect = emptyFlow(),
             onAction = {},
         )
