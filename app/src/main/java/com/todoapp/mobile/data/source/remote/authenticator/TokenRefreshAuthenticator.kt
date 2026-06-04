@@ -28,7 +28,8 @@ constructor(
         route: Route?,
         response: Response,
     ): Request? {
-        val tid = Thread.currentThread().threadId()
+        @Suppress("DEPRECATION")
+        val tid = Thread.currentThread().id
         val urlPath = response.request.url.encodedPath
         val rc = responseCount(response)
         if (rc >= 2) {
