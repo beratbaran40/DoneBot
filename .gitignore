@@ -26,6 +26,10 @@ NEON_COST_SESSION_2026-05-20.md
 .claude/commands/
 .claude/skills/
 .claude/scheduled_tasks.lock
+.claude/workflows/
+
+# Local Claude-generated plan docs (e.g. POLAROID_CAMERA_PLAN.md)
+*_PLAN.md
 
 # Screenshots & local docs (not part of source)
 docs/
@@ -34,3 +38,28 @@ todoapp-screnshots/
 .screenshots-review/
 /donebot prod/PRODUCTION_READINESS_RAPOR.md
 /donebot prod/Ekran Resmi 2026-05-15 10.34.39.png
+
+# Secrets, signing & environment (never commit)
+# Environment files
+.env
+.env.*
+*.env
+# Signing keystores & configs
+*.jks
+*.keystore
+keystore.properties
+signing.properties
+*.p12
+*.pfx
+# Certificates & private keys
+*.pem
+*.cer
+*.der
+*.key
+# Service-account / credential JSON & secret properties
+*-service-account*.json
+*service_account*.json
+*-credentials.json
+credentials.json
+secrets.properties
+secrets.xml
