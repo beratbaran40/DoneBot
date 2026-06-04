@@ -79,6 +79,10 @@ fun DetailsScreen(
         }
     }
 
+    androidx.activity.compose.BackHandler {
+        onAction(UiAction.OnBackClick)
+    }
+
     Box(
         modifier =
         Modifier
@@ -88,7 +92,43 @@ fun DetailsScreen(
         when (uiState) {
             is UiState.Loading -> DetailsSkeleton()
             is UiState.Error -> DetailsErrorContent(uiState.message, onAction)
-            is UiState.Success -> DetailsSuccessContent(uiState, onAction)
+            is UiState.Success -> {
+                DetailsSuccessContent(uiState, onAction)
+                if (uiState.showDiscardDialog) {
+                    androidx.compose.material3.AlertDialog(
+                        onDismissRequest = { onAction(UiAction.OnDismissDiscardDialog) },
+                        title = {
+                            TDText(
+                                text = stringResource(R.string.details_discard_title),
+                                style = TDTheme.typography.heading4,
+                            )
+                        },
+                        text = {
+                            TDText(
+                                text = stringResource(R.string.details_discard_message),
+                                style = TDTheme.typography.regularTextStyle,
+                            )
+                        },
+                        confirmButton = {
+                            TDButton(
+                                text = stringResource(R.string.details_discard_confirm),
+                                onClick = { onAction(UiAction.OnConfirmDiscard) },
+                                size = TDButtonSize.SMALL,
+                                type = TDButtonType.PRIMARY,
+                            )
+                        },
+                        dismissButton = {
+                            TDButton(
+                                text = stringResource(R.string.cancel),
+                                onClick = { onAction(UiAction.OnDismissDiscardDialog) },
+                                size = TDButtonSize.SMALL,
+                                type = TDButtonType.CANCEL,
+                            )
+                        },
+                        containerColor = TDTheme.colors.surface,
+                    )
+                }
+            }
         }
     }
 }

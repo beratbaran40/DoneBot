@@ -106,8 +106,10 @@ constructor(
 
     fun onAction(uiAction: UiAction) {
         when (uiAction) {
-            UiAction.OnBackClick -> navigateBack()
+            UiAction.OnBackClick -> requestBack()
             UiAction.OnCancelClick -> cancelChanges()
+            UiAction.OnConfirmDiscard -> confirmDiscard()
+            UiAction.OnDismissDiscardDialog -> updateSuccessState { it.copy(showDiscardDialog = false) }
             UiAction.OnSaveChanges -> saveChanges()
             is UiAction.OnTaskTitleEdit -> updateTitle(uiAction.title)
             is UiAction.OnTaskDescriptionEdit -> updateDescription(uiAction.description)
@@ -418,6 +420,20 @@ constructor(
 
     private fun navigateBack() {
         _navEffect.trySend(NavigationEffect.Back)
+    }
+
+    private fun requestBack() {
+        val current = _uiState.value as? UiState.Success
+        if (current?.isDirty == true) {
+            updateSuccessState { it.copy(showDiscardDialog = true) }
+        } else {
+            navigateBack()
+        }
+    }
+
+    private fun confirmDiscard() {
+        updateSuccessState { it.copy(showDiscardDialog = false) }
+        navigateBack()
     }
 
     private fun buildUpdatedTask(

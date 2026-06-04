@@ -195,6 +195,9 @@
     <string name="skip">Atla</string>
     <string name="advanced_settings">Gelişmiş Ayarlar</string>
     <string name="details_label">Detaylar</string>
+    <string name="details_discard_title">Değişiklikleri sil?</string>
+    <string name="details_discard_message">Kaydedilmemiş değişiklikleriniz kaybolacak.</string>
+    <string name="details_discard_confirm">Sil</string>
     <string name="retry">Tekrar Dene</string>
     <string name="secret_task">Gizli Görev</string>
     <string name="authentication_failed">Kimlik Doğrulama Başarısız</string>

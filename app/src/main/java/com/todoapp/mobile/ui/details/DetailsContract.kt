@@ -39,6 +39,7 @@ object DetailsContract {
             val pendingPhotoUploads: List<PendingPhoto> = emptyList(),
             // Existing photoIds that the user marked for deletion. Drained on Save.
             val pendingPhotoDeleteIds: Set<Long> = emptySet(),
+            val showDiscardDialog: Boolean = false,
         ) : UiState
 
         data class Error(
@@ -123,6 +124,10 @@ object DetailsContract {
         data class OnAllDayChange(
             val isAllDay: Boolean,
         ) : UiAction
+
+        data object OnConfirmDiscard : UiAction
+
+        data object OnDismissDiscardDialog : UiAction
     }
 
     sealed interface UiEffect {
