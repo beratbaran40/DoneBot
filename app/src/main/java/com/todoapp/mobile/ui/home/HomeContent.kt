@@ -8,6 +8,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,10 +31,12 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,7 +59,10 @@ import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDUndoSnackbar
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import java.time.LocalDate
+import java.time.YearMonth
 
 @Suppress("CyclomaticComplexMethod", "LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,6 +74,19 @@ fun HomeContent(
 ) {
     val hapticFeedback = LocalHapticFeedback.current
     val lazyListState = rememberLazyListState()
+    val dateStripListState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    val isTodayVisible by remember(uiState.displayedMonth) {
+        derivedStateOf {
+            val today = LocalDate.now()
+            if (uiState.displayedMonth != YearMonth.from(today)) {
+                false
+            } else {
+                val todayIndex = today.dayOfMonth - 1
+                dateStripListState.layoutInfo.visibleItemsInfo.any { it.index == todayIndex }
+            }
+        }
+    }
 
     var localTasks by remember { mutableStateOf(uiState.tasks) }
     var dragOriginalIndex by remember { mutableIntStateOf(-1) }
@@ -75,10 +94,6 @@ fun HomeContent(
 
     val reorderableLazyListState =
         rememberReorderableLazyListState(lazyListState) { from, to ->
-            // `from.index` / `to.index` are *absolute* LazyColumn item positions and include
-            // every item produced by `headerContent` — they are NOT indices into `localTasks`.
-            // Resolve via key (task.id) instead. Without this translation the move() call
-            // crashes with IndexOutOfBoundsException as soon as a header is present.
             val fromIndex = localTasks.indexOfFirst { it.id == from.key }
             val toIndex = localTasks.indexOfFirst { it.id == to.key }
             if (fromIndex < 0 || toIndex < 0) return@rememberReorderableLazyListState
@@ -280,10 +295,34 @@ fun HomeContent(
                             taskDates = uiState.taskDatesInMonth,
                             overdueDates = uiState.overdueDates,
                             hasOverdueBeforeDisplayedMonth = uiState.hasOverdueBeforeDisplayedMonth,
+                            listState = dateStripListState,
                             onDateSelect = { onAction(UiAction.OnDateSelect(it)) },
                             onPreviousMonth = { onAction(UiAction.OnPreviousMonth) },
                             onNextMonth = { onAction(UiAction.OnNextMonth) },
                         )
+                    }
+                    item {
+                        AnimatedVisibility(
+                            visible = !isTodayVisible,
+                            enter = fadeIn() + expandVertically(),
+                            exit = fadeOut() + shrinkVertically(),
+                        ) {
+                            HomeBackToTodayPill(
+                                onClick = {
+                                    val today = LocalDate.now()
+                                    val alreadyOnToday = uiState.selectedDate == today &&
+                                        uiState.displayedMonth == YearMonth.from(today)
+                                    onAction(UiAction.OnDateSelect(today))
+                                    if (alreadyOnToday) {
+                                        coroutineScope.launch {
+                                            dateStripListState.animateScrollToItem(
+                                                maxOf(0, today.dayOfMonth - 4),
+                                            )
+                                        }
+                                    }
+                                },
+                            )
+                        }
                     }
                     if (uiState.hasOverdueBeforeDisplayedMonth && uiState.overdueCount > 0) {
                         item {
@@ -618,6 +657,40 @@ private fun HomeHintCard(
     }
 }
 
+@Composable
+private fun HomeBackToTodayPill(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Row(
+            modifier = Modifier
+                .background(
+                    color = TDTheme.colors.bgColorPurple,
+                    shape = RoundedCornerShape(20.dp),
+                )
+                .clickable(onClick = onClick)
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                painter = painterResource(com.todoapp.mobile.R.drawable.ic_calendar),
+                contentDescription = null,
+                tint = TDTheme.colors.primary,
+                modifier = Modifier.size(16.dp),
+            )
+            Spacer(Modifier.width(6.dp))
+            TDText(
+                text = stringResource(com.todoapp.mobile.R.string.home_back_to_today),
+                style = TDTheme.typography.subheading4,
+                color = TDTheme.colors.primary,
+            )
+        }
+    }
+}
+
 @com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun HomeContentPreview() {
@@ -907,6 +980,25 @@ private fun HomeContentRecurringNoTasksPreview() {
                 completedTaskCountThisWeek = 0,
                 pendingTaskCountThisWeek = 0,
                 selectedFilter = HomeContract.HomeFilter.WEEKLY,
+            ),
+            onAction = {},
+            modifier = Modifier.padding(horizontal = 24.dp),
+        )
+    }
+}
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun HomeContentBackToTodayVisiblePreview() {
+    TDTheme {
+        HomeContent(
+            uiState =
+            HomePreviewData.successState(
+                tasks = HomePreviewData.sampleTasks,
+                completedTaskCountThisWeek = 5,
+                pendingTaskCountThisWeek = 8,
+                displayedMonth = YearMonth.now().plusMonths(1),
+                selectedDate = YearMonth.now().plusMonths(1).atDay(1),
             ),
             onAction = {},
             modifier = Modifier.padding(horizontal = 24.dp),

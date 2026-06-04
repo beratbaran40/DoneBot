@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -55,12 +56,12 @@ fun TDMonthlyDatePicker(
     taskDates: Set<LocalDate> = emptySet(),
     overdueDates: Set<LocalDate> = emptySet(),
     hasOverdueBeforeDisplayedMonth: Boolean = false,
+    listState: LazyListState = rememberLazyListState(),
     onDateSelect: (LocalDate) -> Unit,
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
 ) {
     val daysInMonth = displayedMonth.lengthOfMonth()
-    val listState = rememberLazyListState()
 
     LaunchedEffect(displayedMonth, selectedDate) {
         val scrollIndex =

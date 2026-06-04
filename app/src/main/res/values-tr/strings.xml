@@ -832,6 +832,8 @@
     <string name="home_section_tab_recurring">Rutinler</string>
     <string name="home_section_tab_selected_cd">seçili</string>
     <string name="home_section_tab_unselected_cd">seçili değil</string>
+    <!-- Home — back to today pill (shown below the date strip when today is off-screen) -->
+    <string name="home_back_to_today">Bugüne dön</string>
 <!-- Home — suggest card (kept) -->
     <string name="donebot_suggest_morning_title">Bugüne hazır mısın?</string>
     <string name="donebot_suggest_morning_body_format">Dün %1$d görev tamamladın. Bugüne plan kurmak ister misin?</string>

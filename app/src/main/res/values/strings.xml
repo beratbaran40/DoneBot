@@ -831,6 +831,8 @@
     <string name="home_section_tab_recurring">Recurring</string>
     <string name="home_section_tab_selected_cd">selected</string>
     <string name="home_section_tab_unselected_cd">not selected</string>
+    <!-- Home — back to today pill (shown below the date strip when today is off-screen) -->
+    <string name="home_back_to_today">Back to today</string>
     <!-- Home — suggest card (kept) -->
     <string name="donebot_suggest_morning_title">Ready for today?</string>
     <string name="donebot_suggest_morning_body_format">You finished %1$d tasks yesterday. Want to plan today together?</string>
