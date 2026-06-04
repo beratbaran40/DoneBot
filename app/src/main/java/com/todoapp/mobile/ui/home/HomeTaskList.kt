@@ -151,10 +151,12 @@ fun HomeTaskList(
                                 onTaskLongPress(task)
                                 dismissState.snapTo(SwipeToDismissBoxValue.Settled)
                             }
+
                             SwipeToDismissBoxValue.StartToEnd -> {
                                 onToggleTaskSecret(task)
                                 dismissState.snapTo(SwipeToDismissBoxValue.Settled)
                             }
+
                             SwipeToDismissBoxValue.Settled -> {}
                         }
                     }
@@ -217,7 +219,8 @@ fun HomeTaskList(
                                         .clip(
                                             androidx.compose.foundation.shape
                                                 .RoundedCornerShape(12.dp),
-                                        ).background(TDTheme.colors.lightPending),
+                                        )
+                                        .background(TDTheme.colors.lightPending),
                                 ) {
                                     SecretOrNormalPhotoBanner(
                                         url =
@@ -319,12 +322,14 @@ internal fun HomeSwipeDismissBackground(direction: SwipeToDismissBoxValue) {
                     contentDescription = null,
                     tint = Color.White,
                 )
+
             SwipeToDismissBoxValue.StartToEnd ->
                 Icon(
                     painter = painterResource(com.todoapp.mobile.R.drawable.ic_secret_mode),
                     contentDescription = null,
                     tint = Color.White,
                 )
+
             else -> {}
         }
     }

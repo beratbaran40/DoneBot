@@ -138,10 +138,12 @@ private fun ChatReadyContent(
         )
         Box(modifier = Modifier.weight(1f)) {
             if (state.messages.isEmpty() && !state.isThinking) {
-                ChatEmptyState(onSuggestedPromptClick = { prompt ->
-                    onAction(ChatContract.UiAction.OnDraftChanged(prompt))
-                    onAction(ChatContract.UiAction.OnSendClicked)
-                })
+                ChatEmptyState(
+                    onSuggestedPromptClick = { prompt ->
+                        onAction(ChatContract.UiAction.OnDraftChanged(prompt))
+                        onAction(ChatContract.UiAction.OnSendClicked)
+                    },
+                )
             } else {
                 ChatMessageList(
                     messages = state.messages,

@@ -232,12 +232,15 @@ fun HomeContent(
                 HomeContract.HomeFilter.DAILY ->
                     if (isDark) R.drawable.img_donebot_recurring_daily_night
                     else R.drawable.img_donebot_recurring_daily_day
+
                 HomeContract.HomeFilter.WEEKLY ->
                     if (isDark) R.drawable.img_donebot_recurring_weekly_night
                     else R.drawable.img_donebot_recurring_weekly_day
+
                 HomeContract.HomeFilter.MONTHLY ->
                     if (isDark) R.drawable.img_donebot_recurring_monthly_night
                     else R.drawable.img_donebot_recurring_monthly_day
+
                 HomeContract.HomeFilter.YEARLY ->
                     if (isDark) R.drawable.img_donebot_recurring_yearly_night
                     else R.drawable.img_donebot_recurring_yearly_day
