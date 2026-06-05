@@ -1,7 +1,6 @@
 package com.todoapp.mobile.ui.journal.entry
 
-import android.Manifest
-import android.content.pm.PackageManager
+import android.app.Activity
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -18,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
@@ -26,24 +24,26 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.uikit.R
+import androidx.core.view.WindowCompat
 import com.todoapp.mobile.R.string
-import com.todoapp.mobile.common.needsCameraPermission
 import com.todoapp.mobile.ui.journal.ORDERED_MOODS
 import com.todoapp.mobile.ui.journal.entry.JournalEntryContract.UiAction
 import com.todoapp.mobile.ui.journal.entry.JournalEntryContract.UiEffect
 import com.todoapp.mobile.ui.journal.entry.JournalEntryContract.UiState
 import com.todoapp.mobile.ui.journal.moodIndex
+import com.todoapp.mobile.ui.permissions.rememberCameraPermissionRequest
 import com.todoapp.uikit.components.TDFeatureExplainer
 import com.todoapp.uikit.components.TDLoadingBar
 import com.todoapp.uikit.components.TDMoodOption
@@ -67,19 +67,22 @@ fun JournalEntryScreen(
     onAction: (UiAction) -> Unit,
 ) {
     val context = LocalContext.current
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-    ) { granted ->
-        if (granted) {
-            onAction(UiAction.OnPolaroidCameraClicked)
-        } else {
-            Toast.makeText(
-                context,
-                context.getString(string.polaroid_permission_denied),
-                Toast.LENGTH_SHORT,
-            ).show()
+    val requestCamera = rememberCameraPermissionRequest(
+        onGranted = { onAction(UiAction.OnPolaroidCameraClicked) },
+    )
+
+    // The top bar matches the cream paper color in both themes, so keep the status-bar icons dark
+    // here (readable over the cream) regardless of theme, and restore the previous value on exit.
+    val view = LocalView.current
+    DisposableEffect(Unit) {
+        val controller = (view.context as? Activity)?.window?.let { WindowCompat.getInsetsController(it, view) }
+        val previous = controller?.isAppearanceLightStatusBars
+        controller?.isAppearanceLightStatusBars = true
+        onDispose {
+            if (previous != null) controller.isAppearanceLightStatusBars = previous
         }
     }
+
     uiEffect.collectWithLifecycle { effect ->
         when (effect) {
             is UiEffect.ShowToast ->
@@ -101,32 +104,27 @@ fun JournalEntryScreen(
                 marginX = 32.dp,
                 headerLineWidth = 2.5.dp,
                 headerLineColor = TDTheme.colors.crossRed.copy(alpha = 0.55f),
-            )
-            .statusBarsPadding(),
+            ),
     ) {
-        when (uiState) {
-            is UiState.Loading -> TDLoadingBar()
-            is UiState.Error -> ErrorContent(messageRes = uiState.messageRes)
-            is UiState.Editing -> EditingContent(state = uiState, onAction = onAction)
-        }
-
-        FloatingNotebookButton(
-            iconRes = R.drawable.ic_arrow_back,
-            contentDescription = stringResource(string.cd_navigate_back),
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(start = 8.dp, top = 12.dp),
-            onClick = { onAction(UiAction.OnBackPress) },
-        )
-        if (uiState is UiState.Editing) {
-            FloatingNotebookButton(
-                iconRes = R.drawable.ic_info,
-                contentDescription = stringResource(string.cd_top_bar_info),
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(end = 8.dp, top = 12.dp),
-                onClick = { onAction(UiAction.OnInfoClick) },
+        Column(modifier = Modifier.fillMaxSize()) {
+            JournalTopBar(
+                showInfo = uiState is UiState.Editing,
+                onBack = { onAction(UiAction.OnBackPress) },
+                onInfo = { onAction(UiAction.OnInfoClick) },
             )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            ) {
+                when (uiState) {
+                    is UiState.Loading -> TDLoadingBar()
+                    is UiState.Error -> ErrorContent(messageRes = uiState.messageRes)
+                    is UiState.Editing -> EditingContent(state = uiState, onAction = onAction)
+                }
+            }
+        }
+        if (uiState is UiState.Editing) {
             FloatingNotebookButton(
                 iconRes = com.todoapp.mobile.R.drawable.ic_polaroid,
                 tintIcon = false,
@@ -137,21 +135,7 @@ fun JournalEntryScreen(
                     .align(Alignment.BottomEnd)
                     .navigationBarsPadding()
                     .padding(end = 16.dp, bottom = 16.dp),
-                onClick = {
-                    when {
-                        !context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) ->
-                            Toast.makeText(
-                                context,
-                                context.getString(string.polaroid_camera_unavailable),
-                                Toast.LENGTH_SHORT,
-                            ).show()
-
-                        context.needsCameraPermission() ->
-                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-
-                        else -> onAction(UiAction.OnPolaroidCameraClicked)
-                    }
-                },
+                onClick = { requestCamera() },
             )
         }
     }
@@ -234,7 +218,7 @@ private fun EditingContent(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(start = 40.dp, end = 16.dp, top = 60.dp, bottom = 24.dp),
+            .padding(start = 40.dp, end = 16.dp, top = 16.dp, bottom = 24.dp),
     ) {
         DateBanner(createdAt = state.createdAt, isNew = state.isNew)
         Spacer(modifier = Modifier.height(8.dp))
@@ -254,13 +238,16 @@ private fun EditingContent(
                 TDText(
                     text = stringResource(string.journal_entry_placeholder),
                     style = handwriting,
-                    color = TDTheme.colors.gray,
+                    // Paper is cream in both themes, so use a muted dark ink (not the theme-adaptive gray).
+                    color = TDTheme.colors.black.copy(alpha = 0.4f),
                 )
             }
             BasicTextField(
                 value = state.content,
                 onValueChange = { onAction(UiAction.OnContentChange(it)) },
-                textStyle = handwriting,
+                // journalHandwritingStyle bakes onBackground (light in dark mode); the paper is always
+                // cream, so override to fixed dark ink so the writing stays readable in dark mode.
+                textStyle = handwriting.copy(color = TDTheme.colors.black),
                 cursorBrush = SolidColor(TDTheme.colors.crossRed),
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -309,7 +296,7 @@ private fun ErrorContent(messageRes: Int) {
         TDText(
             text = stringResource(messageRes),
             style = TDTheme.typography.subheading1,
-            color = TDTheme.colors.onBackground,
+            color = TDTheme.colors.black,
         )
     }
 }

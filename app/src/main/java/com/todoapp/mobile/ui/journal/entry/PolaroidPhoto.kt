@@ -67,15 +67,14 @@ internal fun PolaroidPhoto(
         }
 
         // Washi tape across the top, slightly tilted.
-        Box(
+        WashiTapeStrip(
+            width = TAPE_WIDTH.dp,
+            height = TAPE_HEIGHT.dp,
+            rotationDeg = tapeRotation,
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .offset(y = (-8).dp)
-                .rotate(tapeRotation)
-                .zIndex(1f)
-                .shadow(elevation = 1.dp)
-                .background(TAPE_COLOR.copy(alpha = TAPE_ALPHA))
-                .size(width = TAPE_WIDTH.dp, height = TAPE_HEIGHT.dp),
+                .zIndex(1f),
         )
 
         // Remove X button — kept from the prior strip so the user can still delete a photo
@@ -111,5 +110,3 @@ private const val TAPE_WIDTH = 56
 private const val TAPE_HEIGHT = 14
 private const val ROTATION_RANGE = 6
 private const val TAPE_ROTATION_RANGE = 4
-private const val TAPE_ALPHA = 0.85f
-private val TAPE_COLOR = Color(0xFFFFE082)
