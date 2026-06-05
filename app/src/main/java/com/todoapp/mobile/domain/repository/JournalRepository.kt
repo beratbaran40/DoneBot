@@ -21,4 +21,17 @@ interface JournalRepository {
      * Deletes the entry and all photos attached to it from disk.
      */
     suspend fun deleteEntry(id: Long)
+
+    /**
+     * One-time backfill for pre-v20 entries that have no owner yet: assigns every unclaimed
+     * entry to the currently logged-in user. Idempotent (guarded by a persisted flag) and a
+     * no-op when no user is logged in. Called once at app startup.
+     */
+    suspend fun claimOrphansForCurrentUser()
+
+    /**
+     * Deletes ALL journal entries (and their photos) belonging to the current user. Used only
+     * on account deletion; logout intentionally does NOT call this so the diary survives.
+     */
+    suspend fun deleteAllForCurrentUser()
 }

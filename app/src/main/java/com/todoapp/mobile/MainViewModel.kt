@@ -14,6 +14,7 @@ import com.todoapp.mobile.domain.engine.PomodoroEngine
 import com.todoapp.mobile.domain.repository.AuthEvent
 import com.todoapp.mobile.domain.repository.AuthRepository
 import com.todoapp.mobile.domain.repository.GroupRepository
+import com.todoapp.mobile.domain.repository.JournalRepository
 import com.todoapp.mobile.domain.repository.PendingPhotoRepository
 import com.todoapp.mobile.domain.repository.SessionPreferences
 import com.todoapp.mobile.domain.repository.TaskRepository
@@ -51,6 +52,7 @@ constructor(
     private val taskSyncRepository: TaskSyncRepository,
     private val currentRouteTracker: CurrentRouteTracker,
     private val pendingPhotoRepository: PendingPhotoRepository,
+    private val journalRepository: JournalRepository,
 ) : ViewModel() {
     private val _uiEffect = Channel<UiEffect>()
     val uiEffect = _uiEffect.receiveAsFlow()
@@ -103,6 +105,15 @@ constructor(
 
         viewModelScope.launch {
             refreshUserCache()
+        }
+
+        viewModelScope.launch {
+            // One-time backfill: claim pre-v20 (unscoped) journal entries for whoever is logged in when
+            // the updated app first launches — i.e. the owner. Self-guarded (no-ops if signed out or
+            // already claimed). Done at startup, not on journal open, so a later different user can never
+            // trigger the claim.
+            runCatching { journalRepository.claimOrphansForCurrentUser() }
+                .onFailure { Timber.tag("Journal").w(it, "claimOrphansForCurrentUser failed") }
         }
     }
 
@@ -198,6 +209,11 @@ constructor(
             .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: resetCooldown failed") }
         runCatching { pendingPhotoRepository.clearAll() }
             .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: pendingPhoto clearAll failed") }
+        // Journal entries are intentionally NOT wiped here. Unlike tasks/groups/chat (which re-sync or are
+        // stateless on the backend), the journal is local-only with no backend copy; a ForceLogout from a
+        // failed token refresh must never destroy the owner's diary. Per-user isolation is handled by
+        // owner_user_id scoping in JournalRepository, so a different account on this device sees only its
+        // own bucket. Account deletion (SettingsViewModel.deleteAccount) is the only journal purge path.
         Timber.tag("AuthLogout").w("clearLocalSession: done")
     }
 

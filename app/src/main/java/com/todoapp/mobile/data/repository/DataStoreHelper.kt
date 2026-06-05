@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.todoapp.mobile.data.model.network.data.UserData
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
@@ -166,6 +167,19 @@ constructor(
         }
     }
 
+    /**
+     * One-shot guard for the pre-v20 journal orphan claim. Set to true after the existing
+     * (unscoped) journal entries have been assigned to a logged-in owner exactly once, so the
+     * backfill never re-runs and a later different user can't re-claim them.
+     */
+    suspend fun isJournalOrphansClaimed(): Boolean = dataStore.data.map { it[JOURNAL_ORPHANS_CLAIMED] ?: false }.first()
+
+    suspend fun setJournalOrphansClaimed(value: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[JOURNAL_ORPHANS_CLAIMED] = value
+        }
+    }
+
     companion object {
         private val json =
             Json {
@@ -183,5 +197,6 @@ constructor(
         private val CHAT_DRAFT = stringPreferencesKey("chat_draft")
         private val REDUCE_MOTION = booleanPreferencesKey("accessibility_reduce_motion")
         private val JOURNAL_BIOMETRIC_PROTECTED = booleanPreferencesKey("journal_biometric_protection")
+        private val JOURNAL_ORPHANS_CLAIMED = booleanPreferencesKey("journal_orphans_claimed")
     }
 }

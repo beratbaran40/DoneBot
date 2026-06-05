@@ -16,6 +16,7 @@ import com.todoapp.mobile.domain.constants.DailyPlanDefaults
 import com.todoapp.mobile.domain.repository.AuthRepository
 import com.todoapp.mobile.domain.repository.DailyPlanPreferences
 import com.todoapp.mobile.domain.repository.JournalBiometricPreferences
+import com.todoapp.mobile.domain.repository.JournalRepository
 import com.todoapp.mobile.domain.repository.LanguageRepository
 import com.todoapp.mobile.domain.repository.SecretPreferences
 import com.todoapp.mobile.domain.repository.ThemeRepository
@@ -66,6 +67,7 @@ constructor(
     private val dataStoreHelper: DataStoreHelper,
     private val userRepository: UserRepository,
     private val journalBiometricPreferences: JournalBiometricPreferences,
+    private val journalRepository: JournalRepository,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(UiState())
@@ -241,6 +243,10 @@ constructor(
             userRepository
                 .deleteAccount()
                 .onSuccess {
+                    // Purge this user's local-only journal (+photos) BEFORE logout: clearLocalSession nulls
+                    // the cached user, so the owner must be resolved while still signed in.
+                    runCatching { journalRepository.deleteAllForCurrentUser() }
+                        .onFailure { Timber.tag("AccountDelete").w(it, "journal purge failed") }
                     _uiState.update {
                         it.copy(showDeleteAccountDialog = false, isDeletingAccount = false)
                     }
