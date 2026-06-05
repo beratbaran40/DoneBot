@@ -2,7 +2,9 @@ package com.todoapp.mobile.common
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.core.content.ContextCompat
@@ -19,3 +21,18 @@ fun Context.needsCameraPermission(): Boolean = ContextCompat.checkSelfPermission
     this,
     Manifest.permission.CAMERA,
 ) != PackageManager.PERMISSION_GRANTED
+
+/**
+ * Opens this app's details page in system Settings, where the user can grant a
+ * permission the OS refuses to prompt for (e.g. permanently-denied CAMERA).
+ */
+fun Context.openAppDetailsSettings() {
+    runCatching {
+        startActivity(
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.fromParts("package", packageName, null)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            },
+        )
+    }
+}

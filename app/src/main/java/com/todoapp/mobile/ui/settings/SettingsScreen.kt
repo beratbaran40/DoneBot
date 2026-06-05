@@ -1,13 +1,10 @@
 package com.todoapp.mobile.ui.settings
 
-import android.Manifest
 import android.app.AlarmManager
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
@@ -50,10 +47,12 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.todoapp.mobile.BuildConfig
 import com.todoapp.mobile.R
+import com.todoapp.mobile.common.openAppDetailsSettings
 import com.todoapp.mobile.domain.model.ThemePreference
 import com.todoapp.mobile.domain.security.SecretModeReopenOptions
 import com.todoapp.mobile.ui.permissions.NotificationPermissionPrompt
 import com.todoapp.mobile.ui.permissions.OverlayPermissionPrompt
+import com.todoapp.mobile.ui.permissions.rememberCameraPermissionRequest
 import com.todoapp.mobile.ui.settings.SettingsContract.UiAction
 import com.todoapp.mobile.ui.settings.SettingsContract.UiState
 import com.todoapp.uikit.components.TDText
@@ -141,9 +140,7 @@ private fun SettingsContent(
     }
 
     val context = LocalContext.current
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-    ) { onCheckPermissions() }
+    val requestCameraPermission = rememberCameraPermissionRequest(onGranted = { onCheckPermissions() })
 
     Column(
         modifier =
@@ -383,16 +380,9 @@ private fun SettingsContent(
                 onCheckedChange = {
                     if (uiState.cameraGranted) {
                         // Camera permission can't be revoked programmatically — send to App Settings.
-                        runCatching {
-                            context.startActivity(
-                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                    data = Uri.fromParts("package", context.packageName, null)
-                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                },
-                            )
-                        }
+                        context.openAppDetailsSettings()
                     } else {
-                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                        requestCameraPermission()
                     }
                 },
                 colors = SwitchDefaults.colors(

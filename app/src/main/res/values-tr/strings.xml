@@ -905,6 +905,10 @@
     <string name="polaroid_permission_denied">Fotoğraf çekmek için kamera izni gerekli</string>
     <string name="polaroid_camera_unavailable">Bu cihazda kamera yok</string>
     <string name="polaroid_save_error">Fotoğraf kaydedilemedi</string>
+    <string name="camera_permission_required_title">Kamera izni gerekli</string>
+    <string name="camera_permission_rationale_body">DoneBot, günlük girişlerin için Polaroid tarzı fotoğraflar çekmek üzere kamerayı kullanır.</string>
+    <string name="camera_permission_settings_body">Fotoğraf çekmek için Ayarlar\'dan bu uygulamaya kamera erişimi ver.</string>
+    <string name="open_settings">Ayarları Aç</string>
 
     <!-- Avatar crop -->
     <string name="avatar_crop_screen_title">Fotoğrafı kırp</string>

@@ -904,6 +904,10 @@
     <string name="polaroid_permission_denied">Camera permission is needed to take photos</string>
     <string name="polaroid_camera_unavailable">No camera available on this device</string>
     <string name="polaroid_save_error">Couldn\'t save photo</string>
+    <string name="camera_permission_required_title">Camera permission needed</string>
+    <string name="camera_permission_rationale_body">DoneBot uses the camera to take Polaroid-style photos for your journal entries.</string>
+    <string name="camera_permission_settings_body">To take photos, allow camera access for this app in Settings.</string>
+    <string name="open_settings">Open Settings</string>
 
     <!-- Avatar crop -->
     <string name="avatar_crop_screen_title">Crop photo</string>
