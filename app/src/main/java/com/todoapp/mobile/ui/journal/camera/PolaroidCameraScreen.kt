@@ -319,7 +319,7 @@ internal fun PolaroidCameraBody(
                         TDButton(
                             modifier = Modifier.weight(1f),
                             text = stringResource(string.polaroid_retake),
-                            type = TDButtonType.SECONDARY,
+                            type = TDButtonType.CANCEL,
                             size = TDButtonSize.SMALL,
                             fullWidth = true,
                             onClick = onRetake,
