@@ -768,6 +768,8 @@
     <string name="chat_retry">Retry</string>
     <string name="chat_dismiss">Dismiss</string>
     <string name="chat_loop_overflow">I got stuck looking things up. Try asking again in a different way.</string>
+    <string name="chat_error_guest_limited">DoneBot has limited functionality for unregistered users. Sign in to ask anything.</string>
+    <string name="chat_sign_in">Sign in</string>
     <string name="chat_error_rate_limited_cooldown_format">Try again in %1$ds…</string>
     <string name="chat_char_count_format">%1$d/%2$d</string>
     <string name="chat_tool_busy_generic">Looking up your tasks…</string>

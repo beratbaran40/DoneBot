@@ -52,4 +52,9 @@ internal object ChatPreviewData {
         messages = sampleMessages,
         error = ChatContract.ChatError.OFFLINE,
     )
+
+    val guestLimitedReady: ChatContract.UiState.Ready = ChatContract.UiState.Ready(
+        messages = sampleMessages.take(2),
+        error = ChatContract.ChatError.NOT_AUTHENTICATED,
+    )
 }

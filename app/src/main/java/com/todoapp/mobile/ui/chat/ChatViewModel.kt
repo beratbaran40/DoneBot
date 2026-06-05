@@ -10,8 +10,10 @@ import com.todoapp.mobile.data.network.NetworkMonitor
 import com.todoapp.mobile.data.repository.DataStoreHelper
 import com.todoapp.mobile.domain.model.ChatMessage
 import com.todoapp.mobile.domain.repository.ChatRepository
+import com.todoapp.mobile.domain.repository.SessionPreferences
 import com.todoapp.mobile.domain.repository.TaskSyncRepository
 import com.todoapp.mobile.navigation.NavigationEffect
+import com.todoapp.mobile.navigation.Screen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -40,6 +42,7 @@ class ChatViewModel @Inject constructor(
     private val dataStoreHelper: DataStoreHelper,
     private val intentClassifier: LocalIntentClassifier,
     private val taskSyncRepository: TaskSyncRepository,
+    private val sessionPreferences: SessionPreferences,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<ChatContract.UiState>(ChatContract.UiState.Loading)
     val uiState: StateFlow<ChatContract.UiState> = _uiState.asStateFlow()
@@ -80,7 +83,16 @@ class ChatViewModel @Inject constructor(
             ChatContract.UiAction.OnClearHistory -> clearHistory()
             ChatContract.UiAction.OnRetry -> retry()
             ChatContract.UiAction.OnDismissError -> dismissError()
+            ChatContract.UiAction.OnSignInTap -> navigateToSignIn()
         }
+    }
+
+    private fun navigateToSignIn() {
+        _navEffect.trySend(
+            NavigationEffect.Navigate(
+                Screen.Login(redirectAfterLogin = Screen.Chat::class.qualifiedName),
+            ),
+        )
     }
 
     private fun updateDraft(text: String) {
@@ -153,6 +165,19 @@ class ChatViewModel @Inject constructor(
                             isThinking = false,
                             toolInFlight = null,
                         )
+                        else -> latest
+                    }
+                }
+                return@launch
+            }
+            // Guests / signed-out users (no access token) can only use local intents.
+            // Anything that needs the backend is gated here, before any network call.
+            if (sessionPreferences.getAccessToken().isNullOrBlank()) {
+                Timber.tag(METRICS_TAG).i("guest_backend_blocked")
+                setError(ChatContract.ChatError.NOT_AUTHENTICATED, lastFailedPrompt = null)
+                _uiState.update { latest ->
+                    when (latest) {
+                        is ChatContract.UiState.Ready -> latest.copy(isThinking = false, toolInFlight = null)
                         else -> latest
                     }
                 }

@@ -14,6 +14,7 @@ import com.todoapp.mobile.data.auth.AuthTokenManager
 import com.todoapp.mobile.data.model.network.data.AuthResponseData
 import com.todoapp.mobile.data.model.network.request.LoginRequest
 import com.todoapp.mobile.data.repository.DataStoreHelper
+import com.todoapp.mobile.domain.repository.ChatRepository
 import com.todoapp.mobile.domain.repository.SessionPreferences
 import com.todoapp.mobile.domain.repository.TaskSyncRepository
 import com.todoapp.mobile.domain.repository.UserRepository
@@ -27,6 +28,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -41,6 +43,7 @@ constructor(
     private val sessionPreferences: SessionPreferences,
     private val dataStoreHelper: DataStoreHelper,
     private val taskSyncRepository: TaskSyncRepository,
+    private val chatRepository: ChatRepository,
     savedStateHandle: SavedStateHandle,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
@@ -173,6 +176,13 @@ constructor(
 
     private fun handleSuccessfulLogin(loginResponseData: AuthResponseData) {
         viewModelScope.launch {
+            // Defensive: if a different user signs in (e.g. logout was interrupted by a
+            // process kill before chat was wiped), purge the previous user's DoneBot history
+            // so it never leaks into this session. Read before setUser overwrites the cache.
+            val previousUserId = dataStoreHelper.observeUser().first()?.id
+            if (previousUserId != null && previousUserId != loginResponseData.user.id) {
+                chatRepository.clear()
+            }
             sessionPreferences.setAccessToken(loginResponseData.accessToken)
             sessionPreferences.setRefreshToken(loginResponseData.refreshToken)
             sessionPreferences.setExpiresAt(loginResponseData.expiresIn)
@@ -209,6 +219,7 @@ constructor(
         return when {
             redirect.contains("CreateNewGroup") -> Screen.CreateNewGroup
             redirect.contains("Groups") -> Screen.Groups()
+            redirect.contains("Chat") -> Screen.Chat
             else -> Screen.Home
         }
     }

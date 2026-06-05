@@ -13,6 +13,7 @@ import com.todoapp.mobile.data.source.remote.fcm.TDFireBaseMessagingService
 import com.todoapp.mobile.domain.engine.PomodoroEngine
 import com.todoapp.mobile.domain.repository.AuthEvent
 import com.todoapp.mobile.domain.repository.AuthRepository
+import com.todoapp.mobile.domain.repository.ChatRepository
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.JournalRepository
 import com.todoapp.mobile.domain.repository.PendingPhotoRepository
@@ -52,6 +53,7 @@ constructor(
     private val taskSyncRepository: TaskSyncRepository,
     private val currentRouteTracker: CurrentRouteTracker,
     private val pendingPhotoRepository: PendingPhotoRepository,
+    private val chatRepository: ChatRepository,
     private val journalRepository: JournalRepository,
 ) : ViewModel() {
     private val _uiEffect = Channel<UiEffect>()
@@ -209,6 +211,8 @@ constructor(
             .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: resetCooldown failed") }
         runCatching { pendingPhotoRepository.clearAll() }
             .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: pendingPhoto clearAll failed") }
+        runCatching { chatRepository.clear() }
+            .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: chat clear failed") }
         // Journal entries are intentionally NOT wiped here. Unlike tasks/groups/chat (which re-sync or are
         // stateless on the backend), the journal is local-only with no backend copy; a ForceLogout from a
         // failed token refresh must never destroy the owner's diary. Per-user isolation is handled by

@@ -466,6 +466,7 @@ private fun ChatErrorBanner(
             ChatContract.ChatError.OFFLINE -> R.string.chat_error_offline
             ChatContract.ChatError.LOOP_OVERFLOW -> R.string.chat_loop_overflow
             ChatContract.ChatError.RATE_LIMITED -> R.string.chat_error_rate_limited
+            ChatContract.ChatError.NOT_AUTHENTICATED -> R.string.chat_error_guest_limited
         },
     )
     val canRetry = lastFailedPrompt != null && error != ChatContract.ChatError.BLOCKED
@@ -499,6 +500,15 @@ private fun ChatErrorBanner(
                 TDText(
                     text = retryLabel,
                     color = if (retryDisabledByCooldown) TDTheme.colors.gray else TDTheme.colors.crossRed,
+                    style = TDTheme.typography.subheading1,
+                )
+            }
+        }
+        if (error == ChatContract.ChatError.NOT_AUTHENTICATED) {
+            TextButton(onClick = { onAction(ChatContract.UiAction.OnSignInTap) }) {
+                TDText(
+                    text = stringResource(R.string.chat_sign_in),
+                    color = TDTheme.colors.crossRed,
                     style = TDTheme.typography.subheading1,
                 )
             }
@@ -735,6 +745,18 @@ private fun ChatScreenErrorPreview() {
     TDTheme {
         ChatScreen(
             uiState = ChatPreviewData.errorReady,
+            uiEffect = flowOf(),
+            onAction = {},
+        )
+    }
+}
+
+@TDPreviewWide
+@Composable
+private fun ChatScreenGuestLimitedPreview() {
+    TDTheme {
+        ChatScreen(
+            uiState = ChatPreviewData.guestLimitedReady,
             uiEffect = flowOf(),
             onAction = {},
         )

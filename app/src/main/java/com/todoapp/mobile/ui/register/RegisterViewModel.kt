@@ -13,6 +13,7 @@ import com.todoapp.mobile.data.auth.AuthTokenManager
 import com.todoapp.mobile.data.model.network.data.AuthResponseData
 import com.todoapp.mobile.data.model.network.request.RegisterRequest
 import com.todoapp.mobile.data.repository.DataStoreHelper
+import com.todoapp.mobile.domain.repository.ChatRepository
 import com.todoapp.mobile.domain.repository.SessionPreferences
 import com.todoapp.mobile.domain.repository.TaskSyncRepository
 import com.todoapp.mobile.domain.repository.UserRepository
@@ -26,6 +27,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -40,6 +42,7 @@ constructor(
     private val authTokenManager: AuthTokenManager,
     private val dataStoreHelper: DataStoreHelper,
     private val taskSyncRepository: TaskSyncRepository,
+    private val chatRepository: ChatRepository,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     private val redirectAfterRegister: String? = savedStateHandle.toRoute<Screen.Register>().redirectAfterRegister
@@ -176,6 +179,12 @@ constructor(
 
     private fun handleSuccessfulRegister(registerResponseData: AuthResponseData) {
         viewModelScope.launch {
+            // Defensive: a brand-new account is always a different user than any cached one,
+            // so purge stale DoneBot history (covers logout interrupted by a process kill).
+            val previousUserId = dataStoreHelper.observeUser().first()?.id
+            if (previousUserId != null && previousUserId != registerResponseData.user.id) {
+                chatRepository.clear()
+            }
             sessionPreferences.setAccessToken(registerResponseData.accessToken)
             sessionPreferences.setExpiresAt(registerResponseData.expiresIn)
             sessionPreferences.setRefreshToken(registerResponseData.refreshToken)
@@ -208,6 +217,7 @@ constructor(
         return when {
             redirect.contains("CreateNewGroup") -> Screen.CreateNewGroup
             redirect.contains("Groups") -> Screen.Groups()
+            redirect.contains("Chat") -> Screen.Chat
             else -> Screen.Home
         }
     }

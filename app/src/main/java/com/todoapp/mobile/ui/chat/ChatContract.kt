@@ -25,6 +25,7 @@ object ChatContract {
         OFFLINE,
         LOOP_OVERFLOW,
         RATE_LIMITED,
+        NOT_AUTHENTICATED,
     }
 
     sealed interface UiAction {
@@ -33,6 +34,7 @@ object ChatContract {
         data object OnClearHistory : UiAction
         data object OnRetry : UiAction
         data object OnDismissError : UiAction
+        data object OnSignInTap : UiAction
     }
 
     sealed interface UiEffect {
