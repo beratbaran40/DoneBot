@@ -24,6 +24,10 @@ CLAUDE.md
 FCM_SESSION_REPORT.md
 LOGO_AUDIT.md
 NEON_COST_SESSION_2026-05-20.md
+DONEBOT_CAPABILITIES.md
+SUPERCLAUDE_CONFLICT_ANALYSIS.md
+# Design-skill working docs (brief / IA / tokens / tasks / plans)
+.design/
 .claude/commands/
 .claude/skills/
 .claude/scheduled_tasks.lock
