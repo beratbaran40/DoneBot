@@ -6,6 +6,7 @@ import com.todoapp.mobile.domain.model.Subtask
 
 fun SubtaskEntity.toDomain(): Subtask = Subtask(
     id = id,
+    remoteId = remoteId,
     parentTaskId = parentTaskId,
     title = title,
     isCompleted = isCompleted,
@@ -23,4 +24,5 @@ fun Subtask.toEntity(
     isCompleted = isCompleted,
     orderIndex = orderIndex,
     syncStatus = syncStatus,
+    remoteId = remoteId,
 )

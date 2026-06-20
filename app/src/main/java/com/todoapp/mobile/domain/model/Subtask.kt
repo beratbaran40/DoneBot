@@ -9,6 +9,8 @@ import androidx.compose.runtime.Immutable
 @Immutable
 data class Subtask(
     val id: Long = 0L,
+    /** Server id once synced (backend V11), null while still device-local. */
+    val remoteId: Long? = null,
     val parentTaskId: Long = 0L,
     val title: String,
     val isCompleted: Boolean = false,

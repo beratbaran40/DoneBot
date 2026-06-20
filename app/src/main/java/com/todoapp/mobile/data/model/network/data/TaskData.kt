@@ -32,6 +32,16 @@ data class TaskData(
     val locationName: String? = null,
     val locationAddress: String? = null,
     val photoUrls: List<String> = emptyList(),
+    /** Ordered steps of a staged task (empty for a plain task). Synced since backend V11. */
+    val subtasks: List<SubtaskData> = emptyList(),
+)
+
+@Serializable
+data class SubtaskData(
+    val id: Long,
+    val title: String,
+    val isCompleted: Boolean = false,
+    val orderIndex: Int = 0,
 )
 
 @Serializable

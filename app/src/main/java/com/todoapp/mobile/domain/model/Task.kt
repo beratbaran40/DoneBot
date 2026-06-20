@@ -2,6 +2,7 @@ package com.todoapp.mobile.domain.model
 
 import androidx.compose.runtime.Immutable
 import com.todoapp.mobile.data.model.network.data.TaskData
+import com.todoapp.mobile.data.model.network.request.SubtaskRequest
 import com.todoapp.mobile.data.model.network.request.TaskRequest
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -94,6 +95,16 @@ fun Task.toCreateTaskRequestDto(
     locationLng = locationLng,
     locationName = locationName,
     locationAddress = locationAddress,
+    // null (not empty) when there are no steps, so syncing a plain task never tells the
+    // backend to wipe steps another device may have added. See TaskRequest.subtasks.
+    subtasks = subtasks.takeIf { it.isNotEmpty() }?.map {
+        SubtaskRequest(
+            remoteId = it.remoteId,
+            title = it.title,
+            isCompleted = it.isCompleted,
+            orderIndex = it.orderIndex,
+        )
+    },
 )
 
 fun TaskData.toDomain(): Task = Task(

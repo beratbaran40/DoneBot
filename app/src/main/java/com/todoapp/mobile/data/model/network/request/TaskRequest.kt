@@ -24,6 +24,21 @@ data class TaskRequest(
     val locationLng: Double? = null,
     val locationName: String? = null,
     val locationAddress: String? = null,
+    /**
+     * Ordered steps of a staged task. `null` = leave the server's steps untouched (sent for
+     * non-staged tasks, so an empty list never wipes another device's steps); a non-null list =
+     * reconcile the step set. The client only sends a non-null list when the task actually has steps.
+     */
+    val subtasks: List<SubtaskRequest>? = null,
+)
+
+@Serializable
+data class SubtaskRequest(
+    /** Server id of an existing step, or null for a step created on the client. */
+    val remoteId: Long? = null,
+    val title: String,
+    val isCompleted: Boolean = false,
+    val orderIndex: Int = 0,
 )
 
 @Serializable
