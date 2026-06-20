@@ -102,6 +102,8 @@ object CalendarContract {
 
         data object OnJournalTap : UiAction
 
+        data object OnCreateHubTap : UiAction
+
         data object OnRefresh : UiAction
     }
 
@@ -118,6 +120,8 @@ object CalendarContract {
         val locationAddress: String? = null,
         val locationLat: Double? = null,
         val locationLng: Double? = null,
+        val subtaskTotal: Int = 0,
+        val subtaskDone: Int = 0,
     )
 
     @Immutable

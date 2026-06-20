@@ -11,6 +11,7 @@ import com.todoapp.mobile.domain.repository.SecretPreferences
 import com.todoapp.mobile.domain.repository.TaskRepository
 import com.todoapp.mobile.domain.security.SecretModeConditionFactory
 import com.todoapp.mobile.domain.security.SecretModeReopenOptions
+import com.todoapp.mobile.domain.usecase.SetTaskCompletionUseCase
 import com.todoapp.mobile.navigation.NavigationEffect
 import com.todoapp.mobile.navigation.Screen
 import com.todoapp.mobile.ui.filteredtasks.FilteredTasksContract.SortOrder
@@ -40,6 +41,7 @@ class FilteredTasksViewModel
 @Inject
 constructor(
     private val taskRepository: TaskRepository,
+    private val setTaskCompletion: SetTaskCompletionUseCase,
     private val secretModePreferences: SecretPreferences,
     savedStateHandle: SavedStateHandle,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
@@ -144,7 +146,7 @@ constructor(
 
     private fun checkTask(task: Task) {
         viewModelScope.launch(ioDispatcher) {
-            taskRepository.updateTaskCompletion(task.id, isCompleted = !task.isCompleted)
+            setTaskCompletion(task, completed = !task.isCompleted)
         }
     }
 

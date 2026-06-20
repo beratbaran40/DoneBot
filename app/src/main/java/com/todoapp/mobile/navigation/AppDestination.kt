@@ -98,6 +98,13 @@ sealed class AppDestination(
         hasInfoDialog = true,
     )
 
+    data object CreationHub : AppDestination(
+        title = R.string.creation_hub_title,
+        route = Screen.CreationHub::class.requiredRoute(),
+        icon = null,
+        selectedIcon = null,
+    )
+
     data object CreateNewGroup : AppDestination(
         title = R.string.new_group,
         route = Screen.CreateNewGroup::class.requiredRoute(),

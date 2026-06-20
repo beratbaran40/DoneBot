@@ -53,6 +53,7 @@ fun TDDatePickerDialog(
                 ),
             ) ?: stringResource(R.string.pick_a_date),
             onClick = { isPickerOpen = true },
+            emphasizeValue = selectedDate != null,
             trailingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_calendar2),

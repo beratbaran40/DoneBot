@@ -159,6 +159,7 @@ constructor(
                 )
             is UiAction.OnJumpToEarliestOverdue -> jumpToEarliestOverdue()
             is UiAction.OnJournalTap -> _navEffect.trySend(NavigationEffect.Navigate(Screen.Journal))
+            is UiAction.OnCreateHubTap -> _navEffect.trySend(NavigationEffect.Navigate(Screen.CreationHub))
             is UiAction.OnRefresh -> refresh()
         }
     }
@@ -470,6 +471,8 @@ constructor(
             locationAddress = task.locationAddress,
             locationLat = task.locationLat,
             locationLng = task.locationLng,
+            subtaskTotal = task.subtaskTotal,
+            subtaskDone = task.subtaskDone,
         )
     }
 

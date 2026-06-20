@@ -22,6 +22,7 @@ import com.todoapp.mobile.domain.repository.TaskRepository
 import com.todoapp.mobile.domain.repository.TaskSyncRepository
 import com.todoapp.mobile.domain.security.SecretModeConditionFactory
 import com.todoapp.mobile.domain.security.SecretModeReopenOptions
+import com.todoapp.mobile.domain.usecase.SetTaskCompletionUseCase
 import com.todoapp.mobile.navigation.NavigationEffect
 import com.todoapp.mobile.navigation.Screen
 import com.todoapp.mobile.ui.home.HomeContract.UiAction
@@ -61,6 +62,7 @@ class HomeViewModel
 constructor(
     private val taskRepository: TaskRepository,
     private val taskSyncRepository: TaskSyncRepository,
+    private val setTaskCompletion: SetTaskCompletionUseCase,
     private val secretModePreferences: SecretPreferences,
     private val alarmScheduler: AlarmScheduler,
     private val pomodoroEngine: PomodoroEngine,
@@ -88,6 +90,7 @@ constructor(
     private lateinit var selectedTask: Task
     private var fetchJob: Job? = null
     private var pendingDeleteJob: Job? = null
+    private var subtaskJob: Job? = null
 
     private val displayedMonthFlow = MutableStateFlow(YearMonth.now(clock))
 
@@ -142,6 +145,12 @@ constructor(
             is UiAction.OnTaskClick -> openTaskDetail(uiAction.task)
             is UiAction.OnPomodoroTap -> navigateToPomodoro()
             is UiAction.OnJournalTap -> _navEffect.trySend(NavigationEffect.Navigate(Screen.Journal))
+            is UiAction.OnCreateHubTap -> _navEffect.trySend(NavigationEffect.Navigate(Screen.CreationHub))
+            is UiAction.OnStagedExpandToggle -> toggleStagedExpand(uiAction.taskId)
+            is UiAction.OnSubtaskToggle ->
+                viewModelScope.launch(ioDispatcher) {
+                    taskRepository.toggleSubtask(uiAction.subtaskId, uiAction.isCompleted)
+                }
             is UiAction.OnCompletedStatCardTap -> navigateToFilteredTasks(isCompleted = true)
             is UiAction.OnPendingStatCardTap -> navigateToFilteredTasks(isCompleted = false)
             is UiAction.OnSuccessfulBiometricAuthenticationHandle -> handleSuccessfulBiometricAuthentication()
@@ -257,13 +266,28 @@ constructor(
         }
     }
 
+    private fun toggleStagedExpand(taskId: Long) {
+        val current = (_uiState.value as? UiState.Success)?.expandedStagedTaskId
+        subtaskJob?.cancel()
+        if (current == taskId) {
+            updateSuccessState { it.copy(expandedStagedTaskId = null, expandedSubtasks = emptyList()) }
+            return
+        }
+        updateSuccessState { it.copy(expandedStagedTaskId = taskId, expandedSubtasks = emptyList()) }
+        subtaskJob = viewModelScope.launch {
+            taskRepository.observeSubtasks(taskId).collect { subs ->
+                updateSuccessState { it.copy(expandedSubtasks = subs) }
+            }
+        }
+    }
+
     private fun fetchDailyTask(date: LocalDate) {
         fetchJob?.cancel()
         fetchJob =
             viewModelScope.launch {
                 delay(LOADING_DELAY)
                 combine(
-                    taskRepository.observeTasksByDate(date, includeRecurringInstances = false),
+                    taskRepository.observeTasksByDate(date, includeRecurringInstances = true),
                     taskRepository.observePendingTasksInAWeek(date),
                     taskRepository.countCompletedTasksInAWeek(date),
                     taskRepository.observeTaskPhotoUrls(),
@@ -484,20 +508,7 @@ constructor(
     private fun checkTask(uiAction: UiAction.OnTaskCheck) {
         viewModelScope.launch(ioDispatcher) {
             val task = uiAction.task
-            if (task.recurrence != com.todoapp.mobile.domain.model.Recurrence.NONE) {
-                val state = _uiState.value as? UiState.Success
-                val date = state?.selectedDate ?: LocalDate.now()
-                taskRepository.setInstanceCompletion(
-                    taskId = task.id,
-                    date = date,
-                    completed = !task.isCompleted,
-                )
-            } else {
-                taskRepository.updateTaskCompletion(
-                    task.id,
-                    isCompleted = !task.isCompleted,
-                )
-            }
+            setTaskCompletion(task, completed = !task.isCompleted)
         }
     }
 

@@ -12,6 +12,7 @@ import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.domain.repository.PendingPhotoRepository
 import com.todoapp.mobile.domain.repository.TaskRepository
 import com.todoapp.mobile.navigation.NavigationEffect
+import com.todoapp.mobile.ui.common.taskform.taskFormType
 import com.todoapp.mobile.ui.details.DetailsContract.UiAction
 import com.todoapp.mobile.ui.details.DetailsContract.UiEffect
 import com.todoapp.mobile.ui.details.DetailsContract.UiState
@@ -69,28 +70,7 @@ constructor(
                     return@launch
                 }
                 originalTask = task
-                val initial = UiState.Success(
-                    taskId = task.remoteId ?: -1L,
-                    taskTitle = task.title,
-                    taskTimeStart = task.timeStart,
-                    taskTimeEnd = task.timeEnd,
-                    taskDate = task.date,
-                    taskDescription = task.description.orEmpty(),
-                    dialogSelectedDate = task.date,
-                    isDirty = false,
-                    titleError = null,
-                    isSaving = false,
-                    photoUrls = task.photoUrls,
-                    locationName = task.locationName,
-                    locationAddress = task.locationAddress,
-                    locationLat = task.locationLat,
-                    locationLng = task.locationLng,
-                    selectedCategory = task.category,
-                    customCategoryName = task.customCategoryName.orEmpty(),
-                    selectedRecurrence = task.recurrence,
-                    reminderOffsetMinutes = task.reminderOffsetMinutes,
-                    isAllDay = task.isAllDay,
-                )
+                val initial = successFromTask(task)
                 _uiState.value = initial.copy(isReminderInPast = computeIsReminderInPast(initial))
                 // Photos live server-side; fetch authoritative list via remoteId
                 task.remoteId?.let { remoteId ->
@@ -102,6 +82,39 @@ constructor(
                 _uiState.value = UiState.Error(message = "Failed to load task", throwable = e)
             }
         }
+    }
+
+    private fun successFromTask(task: Task): UiState.Success {
+        val drafts = if (task.subtasks.isNotEmpty()) {
+            task.subtasks.sortedBy { it.orderIndex }.map { SubtaskDraft(it.id, it.title, it.isCompleted) } +
+                SubtaskDraft(null, "", false)
+        } else {
+            emptyList()
+        }
+        return UiState.Success(
+            taskId = task.remoteId ?: -1L,
+            taskTitle = task.title,
+            taskTimeStart = task.timeStart,
+            taskTimeEnd = task.timeEnd,
+            taskDate = task.date,
+            taskDescription = task.description.orEmpty(),
+            dialogSelectedDate = task.date,
+            isDirty = false,
+            titleError = null,
+            isSaving = false,
+            photoUrls = task.photoUrls,
+            locationName = task.locationName,
+            locationAddress = task.locationAddress,
+            locationLat = task.locationLat,
+            locationLng = task.locationLng,
+            selectedCategory = task.category,
+            customCategoryName = task.customCategoryName.orEmpty(),
+            selectedRecurrence = task.recurrence,
+            reminderOffsetMinutes = task.reminderOffsetMinutes,
+            isAllDay = task.isAllDay,
+            taskType = taskFormType(task.subtasks.isNotEmpty(), task.recurrence),
+            subtaskDrafts = drafts,
+        )
     }
 
     fun onAction(uiAction: UiAction) {
@@ -128,29 +141,20 @@ constructor(
             is UiAction.OnCustomCategoryNameChange -> changeCustomCategoryName(uiAction.name)
             is UiAction.OnRecurrenceChange -> changeRecurrence(uiAction.recurrence)
             is UiAction.OnReminderOffsetChange -> changeReminderOffset(uiAction.minutes)
+            is UiAction.OnSubtaskTitleChange -> changeSubtaskTitle(uiAction.index, uiAction.title)
+            is UiAction.OnSubtaskToggle -> toggleSubtaskDraft(uiAction.index)
+            is UiAction.OnSubtaskRemove -> removeSubtaskDraft(uiAction.index)
             is UiAction.OnAllDayChange -> changeAllDay(uiAction.isAllDay)
         }
     }
 
     private fun changeCategory(category: TaskCategory) {
-        updateSuccessState { state ->
-            // BIRTHDAY auto-defaults to YEARLY when the user hasn't picked one;
-            // moving off BIRTHDAY reverts that auto-set so the explainer doesn't linger.
-            val nextRecurrence = when {
-                category == TaskCategory.BIRTHDAY && state.selectedRecurrence == Recurrence.NONE ->
-                    Recurrence.YEARLY
-
-                state.selectedCategory == TaskCategory.BIRTHDAY &&
-                    category != TaskCategory.BIRTHDAY &&
-                    state.selectedRecurrence == Recurrence.YEARLY ->
-                    Recurrence.NONE
-
-                else -> state.selectedRecurrence
-            }
-            state.copy(
+        // Type is fixed on the detail screen, so category no longer drives recurrence (the old
+        // BIRTHDAY→YEARLY auto-sync would have silently turned a one-time task into a routine).
+        updateSuccessState {
+            it.copy(
                 selectedCategory = category,
-                selectedRecurrence = nextRecurrence,
-                customCategoryName = if (category == TaskCategory.OTHER) state.customCategoryName else "",
+                customCategoryName = if (category == TaskCategory.OTHER) it.customCategoryName else "",
             )
         }
     }
@@ -169,6 +173,74 @@ constructor(
 
     private fun changeAllDay(isAllDay: Boolean) {
         updateSuccessState { it.copy(isAllDay = isAllDay) }
+    }
+
+    private fun changeSubtaskTitle(index: Int, title: String) {
+        updateSuccessState { state ->
+            if (index !in state.subtaskDrafts.indices) {
+                state
+            } else {
+                val drafts = state.subtaskDrafts.toMutableList()
+                drafts[index] = drafts[index].copy(title = title)
+                // Keep one trailing empty row so the next step can be typed inline.
+                if (index == drafts.lastIndex && title.isNotBlank()) drafts.add(SubtaskDraft(null, "", false))
+                state.copy(subtaskDrafts = drafts)
+            }
+        }
+    }
+
+    private fun toggleSubtaskDraft(index: Int) {
+        updateSuccessState { state ->
+            if (index !in state.subtaskDrafts.indices) {
+                state
+            } else {
+                val drafts = state.subtaskDrafts.toMutableList()
+                drafts[index] = drafts[index].copy(isCompleted = !drafts[index].isCompleted)
+                state.copy(subtaskDrafts = drafts)
+            }
+        }
+    }
+
+    private fun removeSubtaskDraft(index: Int) {
+        updateSuccessState { state ->
+            val realCount = state.subtaskDrafts.count { it.title.isNotBlank() }
+            val isLastRealStep = realCount <= 1 &&
+                index in state.subtaskDrafts.indices &&
+                state.subtaskDrafts[index].title.isNotBlank()
+            if (index !in state.subtaskDrafts.indices || isLastRealStep) {
+                // Staged tasks keep ≥1 step (type is fixed — never degrade to one-time).
+                state
+            } else {
+                val drafts = state.subtaskDrafts.toMutableList().apply { removeAt(index) }
+                val withTrailing = if (drafts.isEmpty() || drafts.last().title.isNotBlank()) {
+                    drafts + SubtaskDraft(null, "", false)
+                } else {
+                    drafts
+                }
+                state.copy(subtaskDrafts = withTrailing)
+            }
+        }
+    }
+
+    /** Commits staged-step edits on Save: delete removed, add new, rename + toggle existing. */
+    private suspend fun reconcileSubtasks(state: UiState.Success) {
+        val localId = currentTaskId ?: return
+        val original = originalTask?.subtasks ?: emptyList()
+        val drafts = state.subtaskDrafts.filter { it.title.isNotBlank() }
+        val draftIds = drafts.mapNotNull { it.id }.toSet()
+        original.filter { it.id !in draftIds }.forEach { taskRepository.deleteSubtask(it.id) }
+        val originalById = original.associateBy { it.id }
+        for (draft in drafts) {
+            if (draft.id == null) {
+                taskRepository.addSubtask(localId, draft.title)
+            } else {
+                val orig = originalById[draft.id]
+                if (orig != null) {
+                    if (orig.title != draft.title) taskRepository.updateSubtaskTitle(draft.id, draft.title)
+                    if (orig.isCompleted != draft.isCompleted) taskRepository.toggleSubtask(draft.id, draft.isCompleted)
+                }
+            }
+        }
     }
 
     private fun setLocation(name: String?, address: String?, lat: Double?, lng: Double?) {
@@ -307,6 +379,7 @@ constructor(
                 val updatedTask = buildUpdatedTask(currentState, existingTask)
                     .copy(photoUrls = refreshedPhotoUrls)
                 taskRepository.update(updatedTask)
+                reconcileSubtasks(currentState)
                 onSaveSuccess(updatedTask)
             } catch (e: IOException) {
                 Log.e("EditViewModel", "Failed to save changes", e)
@@ -362,30 +435,7 @@ constructor(
             return
         }
 
-        val reverted = UiState.Success(
-            taskId = existingTask.remoteId ?: -1L,
-            taskTitle = existingTask.title,
-            titleError = null,
-            taskTimeStart = existingTask.timeStart,
-            taskTimeEnd = existingTask.timeEnd,
-            taskDate = existingTask.date,
-            taskDescription = existingTask.description.orEmpty(),
-            dialogSelectedDate = existingTask.date,
-            isDirty = false,
-            isSaving = false,
-            photoUrls = existingTask.photoUrls,
-            pendingPhotoUploads = emptyList(),
-            pendingPhotoDeleteIds = emptySet(),
-            locationName = existingTask.locationName,
-            locationAddress = existingTask.locationAddress,
-            locationLat = existingTask.locationLat,
-            locationLng = existingTask.locationLng,
-            selectedCategory = existingTask.category,
-            customCategoryName = existingTask.customCategoryName.orEmpty(),
-            selectedRecurrence = existingTask.recurrence,
-            reminderOffsetMinutes = existingTask.reminderOffsetMinutes,
-            isAllDay = existingTask.isAllDay,
-        )
+        val reverted = successFromTask(existingTask)
         _uiState.value = reverted.copy(isReminderInPast = computeIsReminderInPast(reverted))
         _uiEffect.trySend(UiEffect.ShowToast(R.string.changes_cancelled))
     }
@@ -459,11 +509,20 @@ constructor(
         isAllDay = current.isAllDay,
     )
 
+    private fun subtaskDraftsChanged(state: UiState.Success, original: Task): Boolean {
+        val originalKey = original.subtasks.sortedBy { it.orderIndex }
+            .map { Triple(it.id, it.title, it.isCompleted) }
+        val currentKey = state.subtaskDrafts.filter { it.title.isNotBlank() }
+            .map { Triple(it.id, it.title, it.isCompleted) }
+        return originalKey != currentKey
+    }
+
     private fun computeIsDirty(state: UiState.Success): Boolean {
         val original = originalTask ?: return false
         if (state.pendingPhotoUploads.isNotEmpty() || state.pendingPhotoDeleteIds.isNotEmpty()) {
             return true
         }
+        if (subtaskDraftsChanged(state, original)) return true
         val candidateTask =
             original.copy(
                 title = state.taskTitle,

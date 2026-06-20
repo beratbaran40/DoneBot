@@ -2,6 +2,7 @@ package com.todoapp.mobile.ui.home
 
 import androidx.compose.runtime.Immutable
 import com.todoapp.mobile.domain.model.DayMode
+import com.todoapp.mobile.domain.model.Subtask
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.ui.settings.PermissionType
 import java.time.LocalDate
@@ -44,6 +45,8 @@ object HomeContract {
             val hasOverdueBeforeDisplayedMonth: Boolean = false,
             val overdueCount: Int = 0,
             val taskDatesInMonth: Set<LocalDate> = emptySet(),
+            val expandedStagedTaskId: Long? = null,
+            val expandedSubtasks: List<Subtask> = emptyList(),
         ) : UiState
 
         data class Error(
@@ -207,6 +210,17 @@ object HomeContract {
         data object OnJumpToEarliestOverdue : UiAction
 
         data object OnJournalTap : UiAction
+
+        data object OnCreateHubTap : UiAction
+
+        data class OnStagedExpandToggle(
+            val taskId: Long,
+        ) : UiAction
+
+        data class OnSubtaskToggle(
+            val subtaskId: Long,
+            val isCompleted: Boolean,
+        ) : UiAction
     }
 
     enum class HomeFilter {

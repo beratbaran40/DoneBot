@@ -242,9 +242,7 @@ private fun ActivitySuccessContent(
                 Spacer(modifier = Modifier.height(80.dp))
             }
             HomeFabMenu(
-                onAddTask = { onAction(UiAction.OnShowBottomSheet) },
-                onPomodoro = { onAction(UiAction.OnPomodoroTap) },
-                onJournal = { onAction(UiAction.OnJournalTap) },
+                onCreate = { onAction(UiAction.OnCreateHubTap) },
             )
         }
     }

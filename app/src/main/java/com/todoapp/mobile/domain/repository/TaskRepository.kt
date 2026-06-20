@@ -2,6 +2,7 @@ package com.todoapp.mobile.domain.repository
 
 import com.todoapp.mobile.data.model.entity.TaskEntity
 import com.todoapp.mobile.domain.model.Recurrence
+import com.todoapp.mobile.domain.model.Subtask
 import com.todoapp.mobile.domain.model.Task
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
@@ -25,6 +26,8 @@ data class DailyBucket(
     val pending: Int,
 )
 
+// Aggregate-root repository: tasks + recurrence + per-day completion + sync + staged subtasks.
+@Suppress("TooManyFunctions")
 interface TaskRepository {
     /** Map of remote task id -> list of photo URLs. Populated on every remote sync. */
     fun observeTaskPhotoUrls(): Flow<Map<Long, List<String>>>
@@ -149,4 +152,21 @@ interface TaskRepository {
     ): Flow<List<Task>>
 
     fun searchTasks(query: String): Flow<List<Task>>
+
+    // --- Staged-task subtasks (personal tasks only) ---
+
+    /** Observe the ordered steps ("adımlar") of a staged task. */
+    fun observeSubtasks(taskId: Long): Flow<List<Subtask>>
+
+    /** Append a new step; reopens the parent if it had been auto-completed. */
+    suspend fun addSubtask(taskId: Long, title: String)
+
+    /** Toggle a step; recomputes the parent's completion per the staged invariant. */
+    suspend fun toggleSubtask(subtaskId: Long, isCompleted: Boolean)
+
+    /** Delete a step; no-op when it is the last one (a staged task keeps ≥1 step). */
+    suspend fun deleteSubtask(subtaskId: Long)
+
+    /** Rename a step; completion is untouched so the parent invariant is unaffected. */
+    suspend fun updateSubtaskTitle(subtaskId: Long, title: String)
 }

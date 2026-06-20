@@ -52,6 +52,8 @@ import com.todoapp.mobile.ui.changepassword.ChangePasswordViewModel
 import com.todoapp.mobile.ui.chat.ChatScreen
 import com.todoapp.mobile.ui.chat.ChatViewModel
 import com.todoapp.mobile.ui.common.ScreenInfoDialog
+import com.todoapp.mobile.ui.creationhub.CreationHubScreen
+import com.todoapp.mobile.ui.creationhub.CreationHubViewModel
 import com.todoapp.mobile.ui.details.DetailsScreen
 import com.todoapp.mobile.ui.details.DetailsViewModel
 import com.todoapp.mobile.ui.filteredtasks.FilteredTasksScreen
@@ -157,6 +159,16 @@ fun NavGraph(
                 onAction = viewModel::onAction,
             )
             NavigationEffectController(navEffect)
+        }
+        composable<Screen.CreationHub> {
+            val viewModel: CreationHubViewModel = hiltViewModel()
+            val state by viewModel.state.collectAsStateWithLifecycle()
+            NavigationEffectController(viewModel.navEffect)
+            CreationHubScreen(
+                state = state,
+                effect = viewModel.effect,
+                onAction = viewModel::onAction,
+            )
         }
         composable<Screen.Calendar> {
             val viewModel: CalendarViewModel = hiltViewModel()

@@ -45,6 +45,14 @@ data class Task(
     val locationAddress: String? = null,
     val locationLat: Double? = null,
     val locationLng: Double? = null,
+    /** Ordered steps of a staged task. Non-empty ⇒ this task is "staged". Personal tasks only. */
+    val subtasks: List<Subtask> = emptyList(),
+    /**
+     * Lightweight staged-progress for list surfaces, populated cheaply via a COUNT query (the full
+     * [subtasks] list is only loaded in the detail screen). `subtaskTotal == 0` ⇒ not a staged task.
+     */
+    val subtaskTotal: Int = 0,
+    val subtaskDone: Int = 0,
 )
 
 fun Task.toAlarmItem(

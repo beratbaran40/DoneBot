@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.TaskCategory
+import com.todoapp.mobile.ui.common.taskform.TaskFormType
 import com.todoapp.mobile.ui.home.PendingPhoto
 import java.time.LocalDate
 import java.time.LocalTime
@@ -39,6 +40,10 @@ object DetailsContract {
             val pendingPhotoUploads: List<PendingPhoto> = emptyList(),
             // Existing photoIds that the user marked for deletion. Drained on Save.
             val pendingPhotoDeleteIds: Set<Long> = emptySet(),
+            // Type is fixed at creation; derived from the loaded task and shown read-only.
+            val taskType: TaskFormType = TaskFormType.ONE_TIME,
+            // Editable steps for a staged task (rename/toggle/add/remove). Reconciled on Save.
+            val subtaskDrafts: List<SubtaskDraft> = emptyList(),
             val showDiscardDialog: Boolean = false,
         ) : UiState
 
@@ -128,6 +133,19 @@ object DetailsContract {
         data object OnConfirmDiscard : UiAction
 
         data object OnDismissDiscardDialog : UiAction
+
+        data class OnSubtaskTitleChange(
+            val index: Int,
+            val title: String,
+        ) : UiAction
+
+        data class OnSubtaskToggle(
+            val index: Int,
+        ) : UiAction
+
+        data class OnSubtaskRemove(
+            val index: Int,
+        ) : UiAction
     }
 
     sealed interface UiEffect {

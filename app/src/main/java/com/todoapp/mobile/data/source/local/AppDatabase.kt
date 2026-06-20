@@ -16,6 +16,7 @@ import com.todoapp.mobile.data.model.entity.GroupTaskEntity
 import com.todoapp.mobile.data.model.entity.JournalEntryEntity
 import com.todoapp.mobile.data.model.entity.PendingPhotoEntity
 import com.todoapp.mobile.data.model.entity.PomodoroEntity
+import com.todoapp.mobile.data.model.entity.SubtaskEntity
 import com.todoapp.mobile.data.model.entity.SyncStatus
 import com.todoapp.mobile.data.model.entity.TaskDailyCompletionEntity
 import com.todoapp.mobile.data.model.entity.TaskEntity
@@ -23,9 +24,10 @@ import com.todoapp.mobile.data.source.local.converter.StringListConverter
 import com.todoapp.mobile.data.source.local.datasource.GroupDao
 
 @Database(
-    version = 20,
+    version = 21,
     entities = [
         TaskEntity::class,
+        SubtaskEntity::class,
         PomodoroEntity::class,
         GroupEntity::class,
         GroupTaskEntity::class,
@@ -56,6 +58,7 @@ import com.todoapp.mobile.data.source.local.datasource.GroupDao
         AutoMigration(from = 17, to = 18),
         AutoMigration(from = 18, to = 19),
         AutoMigration(from = 19, to = 20),
+        AutoMigration(from = 20, to = 21),
     ],
 )
 @TypeConverters(AppDatabase.SyncStatusConverter::class, StringListConverter::class)
@@ -84,6 +87,8 @@ abstract class AppDatabase : RoomDatabase() {
     }
 
     abstract fun taskDao(): TaskDao
+
+    abstract fun subtaskDao(): SubtaskDao
 
     abstract fun groupDao(): GroupDao
 

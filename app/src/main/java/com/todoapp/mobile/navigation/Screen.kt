@@ -16,6 +16,9 @@ interface Screen {
     data object Home : Screen
 
     @Serializable
+    data object CreationHub : Screen
+
+    @Serializable
     data object Settings : Screen
 
     @Serializable

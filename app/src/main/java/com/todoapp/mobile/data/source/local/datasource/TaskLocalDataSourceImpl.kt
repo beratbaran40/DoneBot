@@ -1,7 +1,10 @@
 package com.todoapp.mobile.data.source.local.datasource
 
+import com.todoapp.mobile.data.model.entity.SubtaskEntity
 import com.todoapp.mobile.data.model.entity.TaskEntity
 import com.todoapp.mobile.data.source.local.DayCount
+import com.todoapp.mobile.data.source.local.SubtaskCount
+import com.todoapp.mobile.data.source.local.SubtaskDao
 import com.todoapp.mobile.data.source.local.TaskDao
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -10,6 +13,7 @@ class TaskLocalDataSourceImpl
 @Inject
 constructor(
     private val taskDao: TaskDao,
+    private val subtaskDao: SubtaskDao,
 ) : TaskLocalDataSource {
     override fun observeAll(): Flow<List<TaskEntity>> = taskDao.getAllTasks()
 
@@ -99,4 +103,22 @@ constructor(
     override fun observeOverdueTasks(today: Long): Flow<List<TaskEntity>> = taskDao.observeOverdueTasks(today)
 
     override suspend fun shiftDatesByOneDay(taskIds: List<Long>) = taskDao.shiftDatesByOneDay(taskIds)
+
+    override fun observeSubtasks(taskId: Long): Flow<List<SubtaskEntity>> = subtaskDao.observeByTask(taskId)
+
+    override suspend fun getSubtasks(taskId: Long): List<SubtaskEntity> = subtaskDao.getByTask(taskId)
+
+    override suspend fun getSubtaskById(id: Long): SubtaskEntity? = subtaskDao.getById(id)
+
+    override suspend fun countSubtasks(taskId: Long): Int = subtaskDao.countByTask(taskId)
+
+    override suspend fun insertSubtask(subtask: SubtaskEntity): Long = subtaskDao.insert(subtask)
+
+    override suspend fun insertSubtasks(subtasks: List<SubtaskEntity>) = subtaskDao.insertAll(subtasks)
+
+    override suspend fun updateSubtask(subtask: SubtaskEntity) = subtaskDao.update(subtask)
+
+    override suspend fun deleteSubtask(subtask: SubtaskEntity) = subtaskDao.delete(subtask)
+
+    override fun observeSubtaskCounts(): Flow<List<SubtaskCount>> = subtaskDao.observeSubtaskCounts()
 }

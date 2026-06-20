@@ -11,9 +11,11 @@ import android.util.Log
 import com.todoapp.mobile.common.DomainException
 import com.todoapp.mobile.data.mapper.toDomain
 import com.todoapp.mobile.data.mapper.toEntity
+import com.todoapp.mobile.data.model.entity.SubtaskEntity
 import com.todoapp.mobile.data.model.entity.SyncStatus
 import com.todoapp.mobile.data.model.entity.TaskDailyCompletionEntity
 import com.todoapp.mobile.data.model.entity.TaskEntity
+import com.todoapp.mobile.data.source.local.SubtaskCount
 import com.todoapp.mobile.data.source.local.TaskDailyCompletionDao
 import com.todoapp.mobile.data.source.local.datasource.GroupTaskLocalDataSource
 import com.todoapp.mobile.data.source.local.datasource.TaskLocalDataSource
@@ -23,6 +25,7 @@ import com.todoapp.mobile.domain.alarm.AlarmScheduler
 import com.todoapp.mobile.domain.alarm.AlarmType
 import com.todoapp.mobile.domain.constants.DailyPlanDefaults
 import com.todoapp.mobile.domain.model.Recurrence
+import com.todoapp.mobile.domain.model.Subtask
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.domain.model.firesOn
 import com.todoapp.mobile.domain.model.toAlarmItem
@@ -46,7 +49,9 @@ import java.time.LocalTime
 import java.time.ZoneId
 import javax.inject.Inject
 
-@Suppress("LargeClass")
+// Aggregate-root repository (tasks + recurrence + per-day completion + sync + staged subtasks).
+// The function count is inherent to the aggregate, not accidental complexity — suppress narrowly.
+@Suppress("LargeClass", "TooManyFunctions")
 class TaskRepositoryImpl
 @Inject
 constructor(
@@ -61,6 +66,11 @@ constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : TaskRepository {
     private val taskPhotoUrls = kotlinx.coroutines.flow.MutableStateFlow<Map<Long, List<String>>>(emptyMap())
+
+    // Staged-task progress preservation: when a parent is completed via the cascade shortcut we snapshot
+    // which steps were already done, so un-completing the parent restores that progress instead of zeroing
+    // it. Session-memory only.
+    private val stagedSnapshots = mutableMapOf<Long, Set<Long>>()
 
     override fun observeTaskPhotoUrls(): Flow<Map<Long, List<String>>> = taskPhotoUrls
 
@@ -79,7 +89,7 @@ constructor(
             endDate = endDate.toEpochDay(),
         ).map { list ->
             list.map { it.toDomain() }
-        }
+        }.withSubtaskCounts()
 
     override fun observeTasksByDate(date: LocalDate, includeRecurringInstances: Boolean): Flow<List<Task>> {
         val epochDay = date.toEpochDay()
@@ -105,13 +115,27 @@ constructor(
                 )
             }
             nonRecurring + recurringInstances
-        }
+        }.withSubtaskCounts()
     }
 
     override fun observeRecurringByType(recurrence: Recurrence): Flow<List<Task>> {
         if (recurrence == Recurrence.NONE) return kotlinx.coroutines.flow.flowOf(emptyList())
-        return localDataSource.observeByRecurrence(recurrence.name).map { list ->
-            list.map { it.toDomain() }
+        // The recurrence-filter tabs are a "today-centric" management view: recurring completion is
+        // tracked per-day in task_daily_completions (never on the base row), so reconstruct isCompleted
+        // for today and stamp date=today. This keeps the checkbox in sync with SetTaskCompletionUseCase,
+        // which writes the instance for task.date.
+        val today = LocalDate.now()
+        return combine(
+            localDataSource.observeByRecurrence(recurrence.name),
+            dailyCompletionDao.observeForDate(today.toEpochDay()),
+        ) { list, completions ->
+            val completedIds = completions.map { it.taskId }.toSet()
+            list.map { entity ->
+                entity.toDomain().copy(
+                    date = today,
+                    isCompleted = entity.id in completedIds,
+                )
+            }
         }
     }
 
@@ -321,6 +345,13 @@ constructor(
         // the local insert that runs after addTask returns.
         val localEntity = task.toEntity(SyncStatus.PENDING_CREATE).copy(id = 0L)
         val localId = localDataSource.insert(withInitializedOrder(localEntity))
+        if (task.subtasks.isNotEmpty()) {
+            localDataSource.insertSubtasks(
+                task.subtasks.mapIndexed { index, subtask ->
+                    subtask.toEntity(parentTaskId = localId, orderIndex = index)
+                },
+            )
+        }
         scheduleRecurringAlarmIfNeeded(localId, task)
 
         remoteDataSource
@@ -399,21 +430,55 @@ constructor(
         isCompleted: Boolean,
     ) = withContext(ioDispatcher) {
         val current = localDataSource.getTaskById(id) ?: return@withContext
+        val steps = localDataSource.getSubtasks(id)
+        if (steps.isNotEmpty()) {
+            // Staged: the parent checkbox is a snapshot-preserving shortcut (see applyStagedParentCompletion).
+            applyStagedParentCompletion(id, steps, isCompleted)
+            recomputeParentCompletion(id)
+            return@withContext
+        }
         if (current.isCompleted == isCompleted) return@withContext
         // SYNCED rows must flip to PENDING_UPDATE so SyncWorker pushes the change; otherwise
         // the next syncRemoteTasksWithLocal reconcile sees the local row as in-sync, compares
         // it to the (still-uncompleted) server row, and overwrites the user's checkbox.
         // PENDING_CREATE/UPDATE/DELETE must NOT be downgraded — SyncWorker pipeline expects
         // those states to be processed in order.
-        val nextSyncStatus = when (current.syncStatus) {
-            SyncStatus.SYNCED -> SyncStatus.PENDING_UPDATE
-            else -> current.syncStatus
+        localDataSource.update(current.copy(isCompleted = isCompleted, syncStatus = current.syncStatus.afterEdit()))
+    }
+
+    /**
+     * Completing a staged parent snapshots which steps were already done and marks all done; un-completing
+     * restores that snapshot so prior progress is preserved (1/3 → ✔ 3/3 → ✗ → 1/3). With no snapshot
+     * (the task was completed by ticking every step individually), un-completing clears all steps.
+     */
+    private suspend fun applyStagedParentCompletion(
+        taskId: Long,
+        steps: List<SubtaskEntity>,
+        complete: Boolean,
+    ) {
+        if (complete) {
+            if (steps.any { !it.isCompleted }) {
+                stagedSnapshots[taskId] = steps.filter { it.isCompleted }.map { it.id }.toSet()
+            }
+            steps.filter { !it.isCompleted }.forEach {
+                localDataSource.updateSubtask(it.copy(isCompleted = true, syncStatus = it.syncStatus.afterEdit()))
+            }
+        } else {
+            val snapshot = stagedSnapshots.remove(taskId)
+            steps.forEach { step ->
+                val nextDone = snapshot?.contains(step.id) ?: false
+                if (step.isCompleted != nextDone) {
+                    localDataSource.updateSubtask(
+                        step.copy(isCompleted = nextDone, syncStatus = step.syncStatus.afterEdit()),
+                    )
+                }
+            }
         }
-        localDataSource.update(current.copy(isCompleted = isCompleted, syncStatus = nextSyncStatus))
     }
 
     override suspend fun getTaskById(id: Long): Task? = withContext(ioDispatcher) {
-        localDataSource.getTaskById(id)?.toDomain()
+        val entity = localDataSource.getTaskById(id) ?: return@withContext null
+        entity.toDomain().copy(subtasks = localDataSource.getSubtasks(id).map { it.toDomain() })
     }
 
     override suspend fun fetchRemoteTask(id: Long): Result<Task> = com.todoapp.mobile.common
@@ -907,7 +972,7 @@ constructor(
 
     override fun searchTasks(query: String): Flow<List<Task>> {
         val likeQuery = "%$query%"
-        return localDataSource.search(likeQuery).map { list -> list.map { it.toDomain() } }
+        return localDataSource.search(likeQuery).map { list -> list.map { it.toDomain() } }.withSubtaskCounts()
     }
 
     override fun observeTasksByWeekAndStatus(
@@ -922,6 +987,7 @@ constructor(
                 endDate = weekEnd.toEpochDay(),
                 isCompleted = isCompleted,
             ).map { list -> list.map { it.toDomain() } }
+            .withSubtaskCounts()
     }
 
     override suspend fun reorderTasksForDate(
@@ -959,6 +1025,74 @@ constructor(
             onSuccess = { Result.success(Unit) },
             onFailure = { t -> Result.failure(DomainException.fromThrowable(t)) },
         )
+    }
+
+    override fun observeSubtasks(taskId: Long): Flow<List<Subtask>> = localDataSource.observeSubtasks(taskId).map { list -> list.map { it.toDomain() } }
+
+    override suspend fun addSubtask(taskId: Long, title: String) = withContext(ioDispatcher) {
+        val order = localDataSource.countSubtasks(taskId)
+        localDataSource.insertSubtask(
+            SubtaskEntity(title = title, parentTaskId = taskId, orderIndex = order),
+        )
+        // Adding an incomplete step reopens a parent that had been auto-completed.
+        recomputeParentCompletion(taskId)
+    }
+
+    override suspend fun toggleSubtask(subtaskId: Long, isCompleted: Boolean) = withContext(ioDispatcher) {
+        val subtask = localDataSource.getSubtaskById(subtaskId) ?: return@withContext
+        if (subtask.isCompleted != isCompleted) {
+            localDataSource.updateSubtask(
+                subtask.copy(isCompleted = isCompleted, syncStatus = subtask.syncStatus.afterEdit()),
+            )
+        }
+        // An individual step edit invalidates any cascade snapshot for this parent.
+        stagedSnapshots.remove(subtask.parentTaskId)
+        recomputeParentCompletion(subtask.parentTaskId)
+    }
+
+    override suspend fun deleteSubtask(subtaskId: Long) = withContext(ioDispatcher) {
+        val subtask = localDataSource.getSubtaskById(subtaskId) ?: return@withContext
+        // A staged task keeps at least one step so it never silently degrades into a plain task.
+        if (localDataSource.countSubtasks(subtask.parentTaskId) <= 1) return@withContext
+        localDataSource.deleteSubtask(subtask)
+        recomputeParentCompletion(subtask.parentTaskId)
+    }
+
+    override suspend fun updateSubtaskTitle(subtaskId: Long, title: String) = withContext(ioDispatcher) {
+        val subtask = localDataSource.getSubtaskById(subtaskId) ?: return@withContext
+        if (subtask.title != title) {
+            localDataSource.updateSubtask(
+                subtask.copy(title = title, syncStatus = subtask.syncStatus.afterEdit()),
+            )
+        }
+    }
+
+    /** Reapplies the staged invariant: the parent is done iff it has steps and all of them are done. */
+    private suspend fun recomputeParentCompletion(taskId: Long) {
+        val subtasks = localDataSource.getSubtasks(taskId)
+        if (subtasks.isEmpty()) return
+        val allDone = subtasks.all { it.isCompleted }
+        val parent = localDataSource.getTaskById(taskId) ?: return
+        if (parent.isCompleted != allDone) {
+            localDataSource.update(
+                parent.copy(isCompleted = allDone, syncStatus = parent.syncStatus.afterEdit()),
+            )
+        }
+    }
+
+    private fun SyncStatus.afterEdit(): SyncStatus = if (this == SyncStatus.SYNCED) SyncStatus.PENDING_UPDATE else this
+
+    /** Decorates a task-list flow with cheap staged-progress counts (subtaskTotal / subtaskDone). */
+    private fun Flow<List<Task>>.withSubtaskCounts(): Flow<List<Task>> = combine(localDataSource.observeSubtaskCounts()) { tasks, counts ->
+        if (counts.isEmpty()) {
+            tasks
+        } else {
+            val byId: Map<Long, SubtaskCount> = counts.associateBy { it.taskId }
+            tasks.map { task ->
+                val count = byId[task.id]
+                if (count != null) task.copy(subtaskTotal = count.total, subtaskDone = count.done) else task
+            }
+        }
     }
 
     companion object {

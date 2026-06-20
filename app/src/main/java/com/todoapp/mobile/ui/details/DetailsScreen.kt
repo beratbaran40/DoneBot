@@ -39,9 +39,10 @@ import com.todoapp.mobile.R
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.ui.common.categoryOptions
-import com.todoapp.mobile.ui.common.recurrenceExplainer
-import com.todoapp.mobile.ui.common.recurrenceOptions
-import com.todoapp.mobile.ui.common.reminderOffsetOptions
+import com.todoapp.mobile.ui.common.taskform.TaskFormType
+import com.todoapp.mobile.ui.common.taskform.TaskFrequencyChips
+import com.todoapp.mobile.ui.common.taskform.TaskReminderChips
+import com.todoapp.mobile.ui.common.taskform.TaskTypeHeader
 import com.todoapp.mobile.ui.details.DetailsContract.UiAction
 import com.todoapp.mobile.ui.details.DetailsContract.UiEffect
 import com.todoapp.mobile.ui.details.DetailsContract.UiState
@@ -53,8 +54,6 @@ import com.todoapp.uikit.components.TDCategoryPicker
 import com.todoapp.uikit.components.TDCompactOutlinedTextField
 import com.todoapp.uikit.components.TDDatePickerDialog
 import com.todoapp.uikit.components.TDPickerField
-import com.todoapp.uikit.components.TDRecurrencePicker
-import com.todoapp.uikit.components.TDReminderOffsetPicker
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDWheelTimePicker
 import com.todoapp.uikit.extensions.collectWithLifecycle
@@ -202,6 +201,8 @@ private fun DetailsSuccessContent(
                     .padding(vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                DetailsTypeHeader(uiState.taskType)
+
                 TDCompactOutlinedTextField(
                     label = stringResource(R.string.task_title),
                     value = uiState.taskTitle,
@@ -209,6 +210,14 @@ private fun DetailsSuccessContent(
                     isError = uiState.titleError != null,
                     supportingText = uiState.titleError?.let { stringResource(it) },
                 )
+
+                // Routine surfaces frequency right after the title (before the start date).
+                if (uiState.taskType == TaskFormType.ROUTINE) {
+                    TaskFrequencyChips(
+                        selected = uiState.selectedRecurrence,
+                        onSelect = { onAction(UiAction.OnRecurrenceChange(it)) },
+                    )
+                }
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     TDText(
@@ -290,87 +299,54 @@ private fun DetailsSuccessContent(
                     }
                 }
 
-                TDText(
-                    text = stringResource(R.string.category_label),
-                    style = TDTheme.typography.heading6,
-                    color = TDTheme.colors.onBackground,
-                )
-                TDCategoryPicker(
-                    selectedKey = uiState.selectedCategory.name,
-                    options = categoryOptions(),
-                    onSelected = { key -> onAction(UiAction.OnCategoryChange(TaskCategory.valueOf(key))) },
-                )
-                if (uiState.selectedCategory == TaskCategory.OTHER) {
-                    TDCompactOutlinedTextField(
-                        label = stringResource(R.string.category_other_hint),
-                        value = uiState.customCategoryName,
-                        onValueChange = { onAction(UiAction.OnCustomCategoryNameChange(it)) },
+                // Category is hidden for staged goals (no single category for a multi-step task).
+                if (uiState.taskType != TaskFormType.STAGED) {
+                    TDText(
+                        text = stringResource(R.string.category_label),
+                        style = TDTheme.typography.heading6,
+                        color = TDTheme.colors.onBackground,
                     )
-                }
-
-                TDText(
-                    text = stringResource(R.string.recurrence_label),
-                    style = TDTheme.typography.heading6,
-                    color = TDTheme.colors.onBackground,
-                )
-                TDRecurrencePicker(
-                    selectedKey = uiState.selectedRecurrence.name,
-                    options = recurrenceOptions(),
-                    onSelected = { key -> onAction(UiAction.OnRecurrenceChange(Recurrence.valueOf(key))) },
-                )
-                if (uiState.selectedRecurrence != Recurrence.NONE) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(TDTheme.colors.background, RoundedCornerShape(8.dp))
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            painter = painterResource(com.example.uikit.R.drawable.ic_warning),
-                            contentDescription = null,
-                            tint = TDTheme.colors.orange,
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        TDText(
-                            text = recurrenceExplainer(uiState.selectedRecurrence),
-                            style = TDTheme.typography.subheading1,
-                            color = TDTheme.colors.orange,
+                    TDCategoryPicker(
+                        selectedKey = uiState.selectedCategory.name,
+                        options = categoryOptions(),
+                        onSelected = { key -> onAction(UiAction.OnCategoryChange(TaskCategory.valueOf(key))) },
+                    )
+                    if (uiState.selectedCategory == TaskCategory.OTHER) {
+                        TDCompactOutlinedTextField(
+                            label = stringResource(R.string.category_other_hint),
+                            value = uiState.customCategoryName,
+                            onValueChange = { onAction(UiAction.OnCustomCategoryNameChange(it)) },
                         )
                     }
                 }
 
-                TDText(
-                    text = stringResource(R.string.reminder_label),
-                    style = TDTheme.typography.heading6,
-                    color = TDTheme.colors.onBackground,
-                )
-                TDReminderOffsetPicker(
-                    selectedMinutes = uiState.reminderOffsetMinutes,
-                    options = reminderOffsetOptions(),
-                    onSelected = { onAction(UiAction.OnReminderOffsetChange(it)) },
-                )
-                if (uiState.isReminderInPast) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(TDTheme.colors.background, RoundedCornerShape(8.dp))
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            painter = painterResource(com.example.uikit.R.drawable.ic_warning),
-                            contentDescription = null,
-                            tint = TDTheme.colors.orange,
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        TDText(
-                            text = stringResource(R.string.reminder_in_past_warning),
-                            style = TDTheme.typography.subheading1,
-                            color = TDTheme.colors.orange,
-                        )
+                // Reminder applies to one-time & routine; staged steps don't carry their own reminder.
+                if (uiState.taskType != TaskFormType.STAGED) {
+                    TaskReminderChips(
+                        selected = uiState.reminderOffsetMinutes,
+                        onSelect = { onAction(UiAction.OnReminderOffsetChange(it)) },
+                    )
+                    if (uiState.isReminderInPast) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(TDTheme.colors.background, RoundedCornerShape(8.dp))
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                painter = painterResource(com.example.uikit.R.drawable.ic_warning),
+                                contentDescription = null,
+                                tint = TDTheme.colors.orange,
+                                modifier = Modifier.size(18.dp),
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            TDText(
+                                text = stringResource(R.string.reminder_in_past_warning),
+                                style = TDTheme.typography.subheading1,
+                                color = TDTheme.colors.orange,
+                            )
+                        }
                     }
                 }
 
@@ -402,6 +378,15 @@ private fun DetailsSuccessContent(
                 pendingUploads = uiState.pendingPhotoUploads,
                 onCancelPending = { index -> onAction(UiAction.OnPendingPhotoCancel(index)) },
             )
+
+            if (uiState.taskType == TaskFormType.STAGED) {
+                DetailsSubtaskEditor(
+                    drafts = uiState.subtaskDrafts,
+                    onTitleChange = { index, title -> onAction(UiAction.OnSubtaskTitleChange(index, title)) },
+                    onToggle = { index -> onAction(UiAction.OnSubtaskToggle(index)) },
+                    onRemove = { index -> onAction(UiAction.OnSubtaskRemove(index)) },
+                )
+            }
         }
 
         Column(
@@ -539,5 +524,64 @@ private fun DetailsSuccessPreview_OtherCategory() {
                 reminderOffsetMinutes = 60L,
             ),
         ) {}
+    }
+}
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun DetailsSuccessPreview_Routine() {
+    TDTheme {
+        DetailsSuccessContent(
+            DetailsPreviewData.successState(
+                taskTitle = "Su iç",
+                taskType = TaskFormType.ROUTINE,
+                selectedRecurrence = com.todoapp.mobile.domain.model.Recurrence.DAILY,
+                reminderOffsetMinutes = 60L,
+            ),
+        ) {}
+    }
+}
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun DetailsSuccessPreview_Staged() {
+    TDTheme {
+        DetailsSuccessContent(
+            DetailsPreviewData.successState(
+                taskTitle = "Tez bölümünü bitir",
+                taskType = TaskFormType.STAGED,
+                subtaskDrafts = listOf(
+                    SubtaskDraft(1L, "Giriş", true),
+                    SubtaskDraft(2L, "Yöntem", false),
+                    SubtaskDraft(null, "", false),
+                ),
+            ),
+        ) {}
+    }
+}
+
+@Composable
+private fun DetailsTypeHeader(type: TaskFormType) {
+    when (type) {
+        TaskFormType.ONE_TIME -> TaskTypeHeader(
+            icon = painterResource(com.example.uikit.R.drawable.ic_edit_task),
+            name = stringResource(R.string.type_one_time_title),
+            subtitle = stringResource(R.string.type_one_time_subtitle),
+            accent = TDTheme.colors.darkPending,
+        )
+
+        TaskFormType.ROUTINE -> TaskTypeHeader(
+            icon = painterResource(R.drawable.ic_calendar),
+            name = stringResource(R.string.type_routine_title),
+            subtitle = stringResource(R.string.type_routine_subtitle),
+            accent = TDTheme.colors.purple,
+        )
+
+        TaskFormType.STAGED -> TaskTypeHeader(
+            icon = painterResource(R.drawable.ic_staged),
+            name = stringResource(R.string.type_staged_title),
+            subtitle = stringResource(R.string.type_staged_subtitle),
+            accent = TDTheme.colors.mediumGreen,
+        )
     }
 }

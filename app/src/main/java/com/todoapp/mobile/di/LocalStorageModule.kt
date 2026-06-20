@@ -20,6 +20,7 @@ import com.todoapp.mobile.data.source.local.GroupMemberDao
 import com.todoapp.mobile.data.source.local.GroupTaskDao
 import com.todoapp.mobile.data.source.local.JournalEntryDao
 import com.todoapp.mobile.data.source.local.PomodoroDao
+import com.todoapp.mobile.data.source.local.SubtaskDao
 import com.todoapp.mobile.data.source.local.TaskDao
 import com.todoapp.mobile.data.source.local.datasource.GroupDao
 import com.todoapp.mobile.domain.repository.DailyPlanPreferences
@@ -153,6 +154,10 @@ object LocalStorageModule {
     @Provides
     @Singleton
     fun provideTaskDao(database: AppDatabase): TaskDao = database.taskDao()
+
+    @Provides
+    @Singleton
+    fun provideSubtaskDao(database: AppDatabase): SubtaskDao = database.subtaskDao()
 
     @Provides
     @Singleton

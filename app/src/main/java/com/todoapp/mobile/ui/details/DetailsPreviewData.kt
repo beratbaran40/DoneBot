@@ -5,6 +5,7 @@ package com.todoapp.mobile.ui.details
 import androidx.annotation.StringRes
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.TaskCategory
+import com.todoapp.mobile.ui.common.taskform.TaskFormType
 import com.todoapp.mobile.ui.details.DetailsContract.UiState
 import java.time.LocalDate
 import java.time.LocalTime
@@ -25,6 +26,8 @@ object DetailsPreviewData {
         selectedRecurrence: Recurrence = Recurrence.NONE,
         reminderOffsetMinutes: Long? = 0L,
         isAllDay: Boolean = false,
+        taskType: TaskFormType = TaskFormType.ONE_TIME,
+        subtaskDrafts: List<SubtaskDraft> = emptyList(),
     ) = UiState.Success(
         isDirty = isDirty,
         isSaving = isSaving,
@@ -41,5 +44,7 @@ object DetailsPreviewData {
         selectedRecurrence = selectedRecurrence,
         reminderOffsetMinutes = reminderOffsetMinutes,
         isAllDay = isAllDay,
+        taskType = taskType,
+        subtaskDrafts = subtaskDrafts,
     )
 }

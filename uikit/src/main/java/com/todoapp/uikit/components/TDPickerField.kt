@@ -24,6 +24,7 @@ fun TDPickerField(
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     supportingText: String? = null,
+    emphasizeValue: Boolean = false,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
 ) {
@@ -51,6 +52,11 @@ fun TDPickerField(
                 modifier =
                 Modifier
                     .fillMaxWidth(),
+                disabledTextColor = if (emphasizeValue) {
+                    TDTheme.colors.onBackground
+                } else {
+                    TDTheme.colors.onSurface.copy(alpha = 0.38f)
+                },
                 leadingIcon = leadingIcon,
                 trailingIcon = trailingIcon,
                 isError = isError,

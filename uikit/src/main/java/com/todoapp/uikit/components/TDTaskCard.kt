@@ -44,6 +44,8 @@ fun TDTaskCard(
     onPhotoClick: (() -> Unit)? = null,
     locationLabel: String? = null,
     onLocationClick: (() -> Unit)? = null,
+    subtaskTotal: Int = 0,
+    subtaskDone: Int = 0,
 ) {
     val contentAlpha = if (isCompleted) 0.5f else 1f
     val titleDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None
@@ -91,6 +93,13 @@ fun TDTaskCard(
                 locationLabel = locationLabel,
                 onLocationClick = onLocationClick,
             )
+            if (subtaskTotal > 0) {
+                TDSubtaskProgress(
+                    completed = subtaskDone,
+                    total = subtaskTotal,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }

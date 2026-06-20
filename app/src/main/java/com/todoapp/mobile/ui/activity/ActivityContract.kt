@@ -130,6 +130,8 @@ object ActivityContract {
         data object OnViewOverdue : UiAction
 
         data object OnJournalTap : UiAction
+
+        data object OnCreateHubTap : UiAction
     }
 
     sealed interface UiEffect

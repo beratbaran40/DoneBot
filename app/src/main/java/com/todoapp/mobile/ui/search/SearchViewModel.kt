@@ -10,6 +10,7 @@ import com.todoapp.mobile.domain.repository.SecretPreferences
 import com.todoapp.mobile.domain.repository.TaskRepository
 import com.todoapp.mobile.domain.security.SecretModeConditionFactory
 import com.todoapp.mobile.domain.security.SecretModeReopenOptions
+import com.todoapp.mobile.domain.usecase.SetTaskCompletionUseCase
 import com.todoapp.mobile.navigation.NavigationEffect
 import com.todoapp.mobile.navigation.Screen
 import com.todoapp.mobile.ui.search.SearchContract.DateRangeFilter
@@ -46,6 +47,7 @@ class SearchViewModel
 @Inject
 constructor(
     private val taskRepository: TaskRepository,
+    private val setTaskCompletion: SetTaskCompletionUseCase,
     private val groupRepository: GroupRepository,
     private val secretPreferences: SecretPreferences,
 ) : ViewModel() {
@@ -272,7 +274,7 @@ constructor(
 
     private fun toggleCompletion(task: Task) {
         viewModelScope.launch {
-            taskRepository.updateTaskCompletion(task.id, isCompleted = !task.isCompleted)
+            setTaskCompletion(task, completed = !task.isCompleted)
         }
     }
 }

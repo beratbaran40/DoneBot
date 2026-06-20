@@ -44,15 +44,15 @@ fun ThemeSelector(
 
         Row(
             modifier =
-            Modifier
-                .padding(start = 16.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(TDTheme.colors.background)
-                .border(
-                    width = 1.dp,
-                    color = TDTheme.colors.gray,
-                    shape = RoundedCornerShape(12.dp),
-                ),
+                Modifier
+                    .padding(start = 16.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(TDTheme.colors.background)
+                    .border(
+                        width = 1.dp,
+                        color = TDTheme.colors.gray,
+                        shape = RoundedCornerShape(12.dp),
+                    ),
         ) {
             ThemeItem(
                 selected = currentTheme == ThemePreference.LIGHT_MODE,
@@ -69,7 +69,7 @@ fun ThemeSelector(
             ThemeItem(
                 selected = currentTheme == ThemePreference.SYSTEM_DEFAULT,
                 onClick = { onThemeChange(ThemePreference.SYSTEM_DEFAULT) },
-                icon = painterResource(com.example.uikit.R.drawable.ic_system_default),
+                icon = painterResource(R.drawable.ic_mobile),
             )
         }
     }
@@ -83,27 +83,28 @@ private fun ThemeItem(
 ) {
     Box(
         modifier =
-        Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(
-                if (selected) {
-                    TDTheme.colors.pendingGray
-                } else {
-                    Color.Transparent
-                },
-            ).clickable { onClick() }
-            .padding(12.dp),
+            Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(
+                    if (selected) {
+                        TDTheme.colors.pendingGray
+                    } else {
+                        Color.Transparent
+                    },
+                )
+                .clickable { onClick() }
+                .padding(12.dp),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             painter = icon,
             contentDescription = stringResource(R.string.app_theme),
             tint =
-            if (selected) {
-                TDTheme.colors.onPrimary
-            } else {
-                TDTheme.colors.gray
-            },
+                if (selected) {
+                    TDTheme.colors.onPrimary
+                } else {
+                    TDTheme.colors.gray
+                },
             modifier = Modifier.size(24.dp),
         )
     }

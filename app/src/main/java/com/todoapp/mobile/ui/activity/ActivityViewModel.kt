@@ -324,6 +324,7 @@ constructor(
                 viewModelScope.launch { activityPreferences.setIncludeRecurring(action.include) }
             UiAction.OnViewOverdue -> _navEffect.trySend(NavigationEffect.Navigate(Screen.Calendar))
             UiAction.OnJournalTap -> _navEffect.trySend(NavigationEffect.Navigate(Screen.Journal))
+            UiAction.OnCreateHubTap -> _navEffect.trySend(NavigationEffect.Navigate(Screen.CreationHub))
         }
     }
 

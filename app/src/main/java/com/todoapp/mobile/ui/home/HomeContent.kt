@@ -265,6 +265,10 @@ fun HomeContent(
                     }
                 },
                 modifier = Modifier.fillMaxSize(),
+                expandedStagedTaskId = uiState.expandedStagedTaskId,
+                expandedSubtasks = uiState.expandedSubtasks,
+                onStagedExpandToggle = { onAction(UiAction.OnStagedExpandToggle(it)) },
+                onSubtaskToggle = { id, done -> onAction(UiAction.OnSubtaskToggle(id, done)) },
                 emptyTitleRes = emptyTitleRes,
                 emptyDescriptionRes = emptyDescriptionRes,
                 emptyImageRes = emptyImageRes,
@@ -403,9 +407,7 @@ fun HomeContent(
                 },
             )
             HomeFabMenu(
-                onAddTask = { onAction(UiAction.OnShowBottomSheet) },
-                onPomodoro = { onAction(UiAction.OnPomodoroTap) },
-                onJournal = { onAction(UiAction.OnJournalTap) },
+                onCreate = { onAction(UiAction.OnCreateHubTap) },
             )
             Box(
                 modifier =

@@ -280,6 +280,8 @@ private fun SearchTaskItem(
             onCheckBoxClick = { onAction(UiAction.OnTaskCheck(task)) },
             locationLabel = task.locationName,
             onLocationClick = openLocation,
+            subtaskTotal = task.subtaskTotal,
+            subtaskDone = task.subtaskDone,
         )
         Spacer(Modifier.height(4.dp))
         Row(

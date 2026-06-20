@@ -216,6 +216,7 @@ fun TDCompactOutlinedTextField(
     style: TextStyle = TDTheme.typography.heading6,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     color: Color = TDTheme.colors.onSurface,
+    disabledTextColor: Color = TDTheme.colors.onSurface.copy(alpha = 0.38f),
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     supportingText: String? = null,
@@ -292,12 +293,7 @@ fun TDCompactOutlinedTextField(
                     cursorBrush = SolidColor(if (isError) TDTheme.colors.red else TDTheme.colors.pendingGray),
                     textStyle =
                     TDTheme.typography.regularTextStyle.copy(
-                        color =
-                        if (enabled) {
-                            TDTheme.colors.onSurface
-                        } else {
-                            TDTheme.colors.onSurface.copy(alpha = 0.38f)
-                        },
+                        color = if (enabled) TDTheme.colors.onSurface else disabledTextColor,
                     ),
                     modifier =
                     Modifier

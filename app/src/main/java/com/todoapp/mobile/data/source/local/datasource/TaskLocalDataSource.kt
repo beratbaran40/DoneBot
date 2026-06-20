@@ -1,7 +1,9 @@
 package com.todoapp.mobile.data.source.local.datasource
 
+import com.todoapp.mobile.data.model.entity.SubtaskEntity
 import com.todoapp.mobile.data.model.entity.TaskEntity
 import com.todoapp.mobile.data.source.local.DayCount
+import com.todoapp.mobile.data.source.local.SubtaskCount
 import kotlinx.coroutines.flow.Flow
 
 interface TaskLocalDataSource {
@@ -71,4 +73,24 @@ interface TaskLocalDataSource {
     fun observeOverdueTasks(today: Long): Flow<List<TaskEntity>>
 
     suspend fun shiftDatesByOneDay(taskIds: List<Long>)
+
+    // --- Subtasks (child of the personal Task aggregate) ---
+
+    fun observeSubtasks(taskId: Long): Flow<List<SubtaskEntity>>
+
+    suspend fun getSubtasks(taskId: Long): List<SubtaskEntity>
+
+    suspend fun getSubtaskById(id: Long): SubtaskEntity?
+
+    suspend fun countSubtasks(taskId: Long): Int
+
+    suspend fun insertSubtask(subtask: SubtaskEntity): Long
+
+    suspend fun insertSubtasks(subtasks: List<SubtaskEntity>)
+
+    suspend fun updateSubtask(subtask: SubtaskEntity)
+
+    suspend fun deleteSubtask(subtask: SubtaskEntity)
+
+    fun observeSubtaskCounts(): Flow<List<SubtaskCount>>
 }

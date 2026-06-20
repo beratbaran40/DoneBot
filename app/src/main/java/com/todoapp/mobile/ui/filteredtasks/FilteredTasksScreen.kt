@@ -312,6 +312,8 @@ private fun FilteredTasksSuccessContent(
                                         onCheckBoxClick = { onAction(UiAction.OnTaskCheck(task)) },
                                         locationLabel = task.locationName,
                                         onLocationClick = openLocation,
+                                        subtaskTotal = task.subtaskTotal,
+                                        subtaskDone = task.subtaskDone,
                                     )
                                 }
                             }

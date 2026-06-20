@@ -224,9 +224,7 @@ private fun CalendarSuccessContent(
                 }
             }
             HomeFabMenu(
-                onAddTask = { onAction(UiAction.OnShowBottomSheet) },
-                onPomodoro = { onAction(UiAction.OnPomodoroTap) },
-                onJournal = { onAction(UiAction.OnJournalTap) },
+                onCreate = { onAction(UiAction.OnCreateHubTap) },
             )
             val viewerUrl = uiState.viewerPhotoUrl
             if (!viewerUrl.isNullOrBlank()) {
@@ -301,6 +299,8 @@ private fun PersonalTaskEntry(
         onPhotoClick = item.photoUrl?.let { url -> { onPhotoClick(url) } },
         locationLabel = item.locationName,
         onLocationClick = openLocation,
+        subtaskTotal = item.subtaskTotal,
+        subtaskDone = item.subtaskDone,
     )
 }
 

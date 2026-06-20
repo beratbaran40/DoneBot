@@ -48,7 +48,9 @@ import com.example.uikit.R
 import com.todoapp.mobile.common.maskDescription
 import com.todoapp.mobile.common.maskTitle
 import com.todoapp.mobile.domain.model.Recurrence
+import com.todoapp.mobile.domain.model.Subtask
 import com.todoapp.mobile.domain.model.Task
+import com.todoapp.mobile.ui.common.components.SubtaskChecklist
 import com.todoapp.mobile.ui.common.rememberOpenLocation
 import com.todoapp.uikit.components.TDTaskCardWithCheckbox
 import com.todoapp.uikit.components.TDText
@@ -69,6 +71,10 @@ fun HomeTaskList(
     onToggleTaskSecret: (Task) -> Unit,
     onMoveTask: (Int, Int) -> Unit,
     onReorderFinished: () -> Unit,
+    expandedStagedTaskId: Long? = null,
+    expandedSubtasks: List<Subtask> = emptyList(),
+    onStagedExpandToggle: (Long) -> Unit = {},
+    onSubtaskToggle: (Long, Boolean) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
     emptyTitleRes: Int = com.todoapp.mobile.R.string.no_tasks_today,
     emptyDescriptionRes: Int = com.todoapp.mobile.R.string.no_tasks_today_description,
@@ -258,6 +264,17 @@ fun HomeTaskList(
                                         onLocationClick = openLocation,
                                         isOverdue = isOverdue,
                                         overdueLabel = overdueLabel,
+                                        subtaskTotal = task.subtaskTotal,
+                                        subtaskDone = task.subtaskDone,
+                                        subtaskExpanded = task.id == expandedStagedTaskId,
+                                        onSubtaskExpandToggle = { onStagedExpandToggle(task.id) },
+                                        subtaskContent = {
+                                            SubtaskChecklist(
+                                                subtasks = expandedSubtasks,
+                                                onToggle = onSubtaskToggle,
+                                                masked = task.isSecret,
+                                            )
+                                        },
                                     )
                                 }
                             } else {
@@ -280,6 +297,17 @@ fun HomeTaskList(
                                     onLocationClick = openLocation,
                                     isOverdue = isOverdue,
                                     overdueLabel = overdueLabel,
+                                    subtaskTotal = task.subtaskTotal,
+                                    subtaskDone = task.subtaskDone,
+                                    subtaskExpanded = task.id == expandedStagedTaskId,
+                                    onSubtaskExpandToggle = { onStagedExpandToggle(task.id) },
+                                    subtaskContent = {
+                                        SubtaskChecklist(
+                                            subtasks = expandedSubtasks,
+                                            onToggle = onSubtaskToggle,
+                                            masked = task.isSecret,
+                                        )
+                                    },
                                 )
                             }
                         }
