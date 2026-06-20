@@ -92,5 +92,7 @@ interface TaskLocalDataSource {
 
     suspend fun deleteSubtask(subtask: SubtaskEntity)
 
+    suspend fun deleteSubtasksByTask(taskId: Long)
+
     fun observeSubtaskCounts(): Flow<List<SubtaskCount>>
 }

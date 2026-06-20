@@ -15,6 +15,7 @@ import com.todoapp.mobile.data.model.entity.SubtaskEntity
 import com.todoapp.mobile.data.model.entity.SyncStatus
 import com.todoapp.mobile.data.model.entity.TaskDailyCompletionEntity
 import com.todoapp.mobile.data.model.entity.TaskEntity
+import com.todoapp.mobile.data.model.network.data.SubtaskData
 import com.todoapp.mobile.data.source.local.SubtaskCount
 import com.todoapp.mobile.data.source.local.TaskDailyCompletionDao
 import com.todoapp.mobile.data.source.local.datasource.GroupTaskLocalDataSource
@@ -365,8 +366,10 @@ constructor(
                         photoUrls = remoteTask.photoUrls.joinToString(","),
                     ),
                 )
+                writeBackSubtasks(localId, remoteTask.subtasks)
             }
-        // onFailure: row already exists as PENDING_CREATE, SyncWorker will push it later.
+        // onFailure: row already exists as PENDING_CREATE, SyncWorker will push it later
+        // (syncCreatedTask re-sends the local steps).
     }
 
     override suspend fun insertWithPhotos(
@@ -376,6 +379,13 @@ constructor(
         // Same local-first pattern as insert(); see comment above for the race rationale.
         val localEntity = task.toEntity(SyncStatus.PENDING_CREATE).copy(id = 0L)
         val localId = localDataSource.insert(withInitializedOrder(localEntity))
+        if (task.subtasks.isNotEmpty()) {
+            localDataSource.insertSubtasks(
+                task.subtasks.mapIndexed { index, subtask ->
+                    subtask.toEntity(parentTaskId = localId, orderIndex = index)
+                },
+            )
+        }
 
         remoteDataSource
             .addTask(task)
@@ -389,6 +399,7 @@ constructor(
                         ),
                     )
                 }
+                writeBackSubtasks(localId, remoteTask.subtasks)
                 for ((bytes, mime) in photos) {
                     uploadTaskPhoto(remoteTask.id, bytes, mime).getOrNull()
                 }
@@ -749,6 +760,19 @@ constructor(
             // group task (from stale data on earlier builds). Keeps Home free of dups.
             val groupRemoteIds = groupTaskLocalDataSource.getAllRemoteIds()
             if (groupRemoteIds.isNotEmpty()) localDataSource.deleteByRemoteIds(groupRemoteIds)
+
+            // Reconcile staged-task steps for every personal task still present locally. Re-read the
+            // local set so freshly-inserted parents (with their new local ids) are included; match
+            // remote tasks by remoteId. reconcileSubtasksFromRemote skips any task with a pending
+            // local push, so it never clobbers unsynced step edits.
+            val localByRemoteIdAfterSync = localDataSource.observeAll().first()
+                .mapNotNull { entity -> entity.remoteId?.let { id -> id to entity } }
+                .toMap()
+            for (remote in remotePersonal) {
+                val localParent = localByRemoteIdAfterSync[remote.id] ?: continue
+                reconcileSubtasksFromRemote(localParent, remote.subtasks)
+            }
+
             // Pull per-day completions for daily tasks so the home toggle stays consistent
             // across devices. Window is small enough to fetch eagerly.
             syncDailyCompletionsWindow()
@@ -900,26 +924,10 @@ constructor(
         val remoteId = checkNotNull(taskEntity.remoteId) {
             "syncUpdatedTask called with locally-only task ${taskEntity.id}"
         }
-        val remoteResult = remoteDataSource.updateTask(remoteId, taskEntity.toDomain())
-
-        return remoteResult.fold(
-            onSuccess = { remoteTask ->
-                val updated =
-                    taskEntity.copy(
-                        remoteId = remoteTask.id,
-                        syncStatus = SyncStatus.SYNCED,
-                    )
-
-                runCatching { localDataSource.update(updated) }
-            },
-            onFailure = {
-                Result.failure(it)
-            },
-        )
-    }
-
-    private suspend fun syncCreatedTask(taskEntity: TaskEntity): Result<Unit> {
-        val remoteResult = remoteDataSource.addTask(taskEntity.toDomain())
+        // Steps travel with the parent task (one aggregate). For a plain task this is empty, which
+        // toCreateTaskRequestDto turns into subtasks=null so the server leaves any steps untouched.
+        val localSubtasks = localDataSource.getSubtasks(taskEntity.id).map { it.toDomain() }
+        val remoteResult = remoteDataSource.updateTask(remoteId, taskEntity.toDomain().copy(subtasks = localSubtasks))
 
         return remoteResult.fold(
             onSuccess = { remoteTask ->
@@ -931,6 +939,30 @@ constructor(
 
                 runCatching {
                     localDataSource.update(updated)
+                    writeBackSubtasks(taskEntity.id, remoteTask.subtasks)
+                }
+            },
+            onFailure = {
+                Result.failure(it)
+            },
+        )
+    }
+
+    private suspend fun syncCreatedTask(taskEntity: TaskEntity): Result<Unit> {
+        val localSubtasks = localDataSource.getSubtasks(taskEntity.id).map { it.toDomain() }
+        val remoteResult = remoteDataSource.addTask(taskEntity.toDomain().copy(subtasks = localSubtasks))
+
+        return remoteResult.fold(
+            onSuccess = { remoteTask ->
+                val updated =
+                    taskEntity.copy(
+                        remoteId = remoteTask.id,
+                        syncStatus = SyncStatus.SYNCED,
+                    )
+
+                runCatching {
+                    localDataSource.update(updated)
+                    writeBackSubtasks(taskEntity.id, remoteTask.subtasks)
                     pendingPhotoRepository.drain(taskEntity.id, remoteTask.id) { bytes, mime ->
                         uploadTaskPhoto(remoteTask.id, bytes, mime).map {}
                     }
@@ -1036,6 +1068,7 @@ constructor(
         )
         // Adding an incomplete step reopens a parent that had been auto-completed.
         recomputeParentCompletion(taskId)
+        markParentPendingUpdate(taskId)
     }
 
     override suspend fun toggleSubtask(subtaskId: Long, isCompleted: Boolean) = withContext(ioDispatcher) {
@@ -1048,6 +1081,7 @@ constructor(
         // An individual step edit invalidates any cascade snapshot for this parent.
         stagedSnapshots.remove(subtask.parentTaskId)
         recomputeParentCompletion(subtask.parentTaskId)
+        markParentPendingUpdate(subtask.parentTaskId)
     }
 
     override suspend fun deleteSubtask(subtaskId: Long) = withContext(ioDispatcher) {
@@ -1056,6 +1090,7 @@ constructor(
         if (localDataSource.countSubtasks(subtask.parentTaskId) <= 1) return@withContext
         localDataSource.deleteSubtask(subtask)
         recomputeParentCompletion(subtask.parentTaskId)
+        markParentPendingUpdate(subtask.parentTaskId)
     }
 
     override suspend fun updateSubtaskTitle(subtaskId: Long, title: String) = withContext(ioDispatcher) {
@@ -1064,6 +1099,7 @@ constructor(
             localDataSource.updateSubtask(
                 subtask.copy(title = title, syncStatus = subtask.syncStatus.afterEdit()),
             )
+            markParentPendingUpdate(subtask.parentTaskId)
         }
     }
 
@@ -1081,6 +1117,64 @@ constructor(
     }
 
     private fun SyncStatus.afterEdit(): SyncStatus = if (this == SyncStatus.SYNCED) SyncStatus.PENDING_UPDATE else this
+
+    /**
+     * Steps ride along with their parent task on sync (the whole staged task is one aggregate).
+     * A step edit doesn't touch the `tasks` row, and SyncWorker only walks task rows, so flip the
+     * parent to PENDING_UPDATE here — otherwise the step change is invisible to the pusher.
+     */
+    private suspend fun markParentPendingUpdate(taskId: Long) {
+        val parent = localDataSource.getTaskById(taskId) ?: return
+        if (parent.syncStatus == SyncStatus.SYNCED) {
+            localDataSource.update(parent.copy(syncStatus = SyncStatus.PENDING_UPDATE))
+        }
+    }
+
+    /**
+     * Mirrors the server's step set onto the local rows after a push (create/update) returns. We
+     * full-replace rather than match, so local rows pick up their server `remoteId` and land as
+     * SYNCED. The parent's local id is unchanged, so this never trips the subtasks' CASCADE FK.
+     */
+    private suspend fun writeBackSubtasks(localParentId: Long, remote: List<SubtaskData>) {
+        localDataSource.deleteSubtasksByTask(localParentId)
+        if (remote.isEmpty()) return
+        localDataSource.insertSubtasks(
+            remote.sortedBy { it.orderIndex }.mapIndexed { index, s ->
+                SubtaskEntity(
+                    title = s.title,
+                    parentTaskId = localParentId,
+                    isCompleted = s.isCompleted,
+                    orderIndex = index,
+                    syncStatus = SyncStatus.SYNCED,
+                    remoteId = s.id,
+                )
+            },
+        )
+    }
+
+    /**
+     * Pull-side step reconcile: bring a synced parent's local steps in line with the server's set
+     * (covers steps added/edited/deleted on another device — even when the parent's own fields are
+     * unchanged). Skips any task with a pending local push so we never overwrite unsynced edits;
+     * the local push wins and the next pull reconciles afterwards.
+     */
+    private suspend fun reconcileSubtasksFromRemote(localParent: TaskEntity, remote: List<SubtaskData>) {
+        if (localParent.syncStatus != SyncStatus.SYNCED) return
+        val locals = localDataSource.getSubtasks(localParent.id)
+        if (locals.any { it.syncStatus != SyncStatus.SYNCED }) return
+        if (subtasksMatch(locals, remote)) return
+        writeBackSubtasks(localParent.id, remote)
+    }
+
+    /** True when local steps already equal the server set (by remoteId + title + completion). */
+    private fun subtasksMatch(locals: List<SubtaskEntity>, remote: List<SubtaskData>): Boolean {
+        if (locals.size != remote.size) return false
+        val localSorted = locals.sortedBy { it.orderIndex }
+        val remoteSorted = remote.sortedBy { it.orderIndex }
+        return localSorted.zip(remoteSorted).all { (l, r) ->
+            l.remoteId == r.id && l.title == r.title && l.isCompleted == r.isCompleted
+        }
+    }
 
     /** Decorates a task-list flow with cheap staged-progress counts (subtaskTotal / subtaskDone). */
     private fun Flow<List<Task>>.withSubtaskCounts(): Flow<List<Task>> = combine(localDataSource.observeSubtaskCounts()) { tasks, counts ->

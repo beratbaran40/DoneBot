@@ -120,5 +120,7 @@ constructor(
 
     override suspend fun deleteSubtask(subtask: SubtaskEntity) = subtaskDao.delete(subtask)
 
+    override suspend fun deleteSubtasksByTask(taskId: Long) = subtaskDao.deleteByTask(taskId)
+
     override fun observeSubtaskCounts(): Flow<List<SubtaskCount>> = subtaskDao.observeSubtaskCounts()
 }
