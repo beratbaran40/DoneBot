@@ -6,11 +6,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -19,6 +21,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,7 +55,8 @@ fun GroupTaskEditSheet(
     onAction: (UiAction) -> Unit,
 ) {
     val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
-    var showTimePicker by remember { mutableStateOf(false) }
+    var showStartPicker by remember { mutableStateOf(false) }
+    var showEndPicker by remember { mutableStateOf(false) }
 
     Column(
         modifier =
@@ -95,21 +100,71 @@ fun GroupTaskEditSheet(
             onDateDeselect = { onAction(UiAction.OnEditDateDeselect) },
         )
         Spacer(Modifier.height(12.dp))
-        TDPickerField(
-            title = stringResource(com.todoapp.mobile.R.string.set_time),
-            value =
-            state.editTime?.format(timeFormatter)
-                ?: stringResource(com.todoapp.mobile.R.string.starts),
-            onClick = { showTimePicker = true },
-            leadingIcon = {
-                Icon(
-                    painter = painterResource(R.drawable.ic_clock),
-                    contentDescription = null,
-                    tint = TDTheme.colors.onBackground,
-                    modifier = Modifier.size(24.dp),
-                )
-            },
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_clock),
+                contentDescription = null,
+                tint = TDTheme.colors.onBackground,
+                modifier = Modifier.size(24.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            TDText(
+                text = stringResource(com.todoapp.mobile.R.string.task_all_day_label),
+                style = TDTheme.typography.regularTextStyle,
+                color = TDTheme.colors.onBackground,
+                modifier = Modifier.weight(1f),
+            )
+            Switch(
+                checked = state.editIsAllDay,
+                onCheckedChange = { onAction(UiAction.OnEditAllDayChange(it)) },
+                colors =
+                SwitchDefaults.colors(
+                    checkedThumbColor = TDTheme.colors.purple,
+                    checkedTrackColor = TDTheme.colors.lightPurple,
+                ),
+            )
+        }
+        if (!state.editIsAllDay) {
+            Spacer(Modifier.height(12.dp))
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.weight(1f)) {
+                    TDPickerField(
+                        title = stringResource(com.todoapp.mobile.R.string.set_time),
+                        value = state.editTimeStart?.format(timeFormatter)
+                            ?: stringResource(com.todoapp.mobile.R.string.starts),
+                        onClick = { showStartPicker = true },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_clock),
+                                contentDescription = null,
+                                tint = TDTheme.colors.onBackground,
+                                modifier = Modifier.size(24.dp),
+                            )
+                        },
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    TDPickerField(
+                        title = "",
+                        value = state.editTimeEnd?.format(timeFormatter)
+                            ?: stringResource(com.todoapp.mobile.R.string.ends),
+                        onClick = { showEndPicker = true },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_clock),
+                                contentDescription = null,
+                                tint = TDTheme.colors.onBackground,
+                                modifier = Modifier.size(24.dp),
+                            )
+                        },
+                    )
+                }
+            }
+        }
         Spacer(Modifier.height(12.dp))
         TDCompactOutlinedTextField(
             label = stringResource(com.todoapp.mobile.R.string.description),
@@ -148,14 +203,24 @@ fun GroupTaskEditSheet(
         )
     }
 
-    if (showTimePicker) {
+    if (showStartPicker) {
         TDWheelTimePickerDialog(
-            initialTime = state.editTime,
+            initialTime = state.editTimeStart,
             onConfirm = {
-                onAction(UiAction.OnEditTimeChange(it))
-                showTimePicker = false
+                onAction(UiAction.OnEditTimeStartChange(it))
+                showStartPicker = false
             },
-            onDismiss = { showTimePicker = false },
+            onDismiss = { showStartPicker = false },
+        )
+    }
+    if (showEndPicker) {
+        TDWheelTimePickerDialog(
+            initialTime = state.editTimeEnd,
+            onConfirm = {
+                onAction(UiAction.OnEditTimeEndChange(it))
+                showEndPicker = false
+            },
+            onDismiss = { showEndPicker = false },
         )
     }
 }

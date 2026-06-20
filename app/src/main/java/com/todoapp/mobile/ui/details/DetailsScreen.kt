@@ -35,10 +35,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.todoapp.mobile.BuildConfig
 import com.todoapp.mobile.R
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.ui.common.categoryOptions
+import com.todoapp.mobile.ui.common.components.TaskPhotoBannerEditable
+import com.todoapp.mobile.ui.common.components.TaskTypeBadge
 import com.todoapp.mobile.ui.common.taskform.TaskFormType
 import com.todoapp.mobile.ui.common.taskform.TaskFrequencyChips
 import com.todoapp.mobile.ui.common.taskform.TaskReminderChips
@@ -187,205 +190,224 @@ private fun DetailsSuccessContent(
             modifier =
             Modifier
                 .weight(1f)
-                .verticalScroll(verticalScroll)
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .verticalScroll(verticalScroll),
         ) {
-            Spacer(Modifier.height(8.dp))
-
-            Column(
-                modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .padding(vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                DetailsTypeHeader(uiState.taskType)
-
-                TDCompactOutlinedTextField(
-                    label = stringResource(R.string.task_title),
-                    value = uiState.taskTitle,
-                    onValueChange = { onAction(UiAction.OnTaskTitleEdit(it)) },
-                    isError = uiState.titleError != null,
-                    supportingText = uiState.titleError?.let { stringResource(it) },
-                )
-
-                // Routine surfaces frequency right after the title (before the start date).
-                if (uiState.taskType == TaskFormType.ROUTINE) {
-                    TaskFrequencyChips(
-                        selected = uiState.selectedRecurrence,
-                        onSelect = { onAction(UiAction.OnRecurrenceChange(it)) },
-                    )
-                }
-
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TDText(
-                        text = stringResource(R.string.task_date),
-                        style = TDTheme.typography.heading6,
-                        color = TDTheme.colors.onSurface,
-                    )
-                    TDDatePickerDialog(
-                        selectedDate = uiState.dialogSelectedDate,
-                        onDateSelect = { onAction(UiAction.OnDialogDateSelect(it)) },
-                        onDateDeselect = { onAction(UiAction.OnDialogDateDeselect) },
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        painter = painterResource(com.example.uikit.R.drawable.ic_clock),
-                        tint = TDTheme.colors.onBackground,
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp),
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    TDText(
-                        text = stringResource(R.string.task_all_day_label),
-                        style = TDTheme.typography.regularTextStyle,
-                        color = TDTheme.colors.onBackground,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Switch(
-                        checked = uiState.isAllDay,
-                        onCheckedChange = { onAction(UiAction.OnAllDayChange(it)) },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = TDTheme.colors.purple,
-                            checkedTrackColor = TDTheme.colors.lightPurple,
-                        ),
-                    )
-                }
-
-                if (!uiState.isAllDay) {
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            TDPickerField(
-                                title = stringResource(R.string.set_time),
-                                value =
-                                uiState.taskTimeStart?.format(timeFormatter)
-                                    ?: stringResource(R.string.starts),
-                                onClick = { showStartTimePicker = true },
-                                leadingIcon = {
-                                    Icon(
-                                        painter = painterResource(com.example.uikit.R.drawable.ic_clock),
-                                        tint = TDTheme.colors.onBackground,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(24.dp),
-                                    )
-                                },
-                            )
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            TDPickerField(
-                                title = "",
-                                value =
-                                uiState.taskTimeEnd?.format(timeFormatter)
-                                    ?: stringResource(R.string.ends),
-                                onClick = { showEndTimePicker = true },
-                                leadingIcon = {
-                                    Icon(
-                                        painter = painterResource(com.example.uikit.R.drawable.ic_clock),
-                                        tint = TDTheme.colors.onBackground,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(24.dp),
-                                    )
-                                },
-                            )
-                        }
-                    }
-                }
-
-                // Category is hidden for staged goals (no single category for a multi-step task).
-                if (uiState.taskType != TaskFormType.STAGED) {
-                    TDText(
-                        text = stringResource(R.string.category_label),
-                        style = TDTheme.typography.heading6,
-                        color = TDTheme.colors.onBackground,
-                    )
-                    TDCategoryPicker(
-                        selectedKey = uiState.selectedCategory.name,
-                        options = categoryOptions(),
-                        onSelected = { key -> onAction(UiAction.OnCategoryChange(TaskCategory.valueOf(key))) },
-                    )
-                    if (uiState.selectedCategory == TaskCategory.OTHER) {
-                        TDCompactOutlinedTextField(
-                            label = stringResource(R.string.category_other_hint),
-                            value = uiState.customCategoryName,
-                            onValueChange = { onAction(UiAction.OnCustomCategoryNameChange(it)) },
-                        )
-                    }
-                }
-
-                // Reminder applies to one-time & routine; staged steps don't carry their own reminder.
-                if (uiState.taskType != TaskFormType.STAGED) {
-                    TaskReminderChips(
-                        selected = uiState.reminderOffsetMinutes,
-                        onSelect = { onAction(UiAction.OnReminderOffsetChange(it)) },
-                    )
-                    if (uiState.isReminderInPast) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(TDTheme.colors.background, RoundedCornerShape(8.dp))
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Icon(
-                                painter = painterResource(com.example.uikit.R.drawable.ic_warning),
-                                contentDescription = null,
-                                tint = TDTheme.colors.orange,
-                                modifier = Modifier.size(18.dp),
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            TDText(
-                                text = stringResource(R.string.reminder_in_past_warning),
-                                style = TDTheme.typography.subheading1,
-                                color = TDTheme.colors.orange,
-                            )
-                        }
-                    }
-                }
-
-                TDCompactOutlinedTextField(
-                    label = stringResource(R.string.description),
-                    value = uiState.taskDescription,
-                    onValueChange = { onAction(UiAction.OnTaskDescriptionEdit(it)) },
-                    singleLine = false,
-                )
-
-                val launchLocationPicker =
-                    com.todoapp.mobile.ui.common.rememberLocationPickerLauncher { name, address, lat, lng ->
-                        onAction(UiAction.OnLocationPicked(name, address, lat, lng))
-                    }
-                com.todoapp.uikit.components.TDLocationPicker(
-                    name = uiState.locationName,
-                    address = uiState.locationAddress,
-                    addLabel = stringResource(R.string.location_add_hint),
-                    clearContentDescription = stringResource(R.string.location_clear),
-                    onClick = launchLocationPicker,
-                    onClear = { onAction(UiAction.OnLocationCleared) },
+            // Hero banner = cover photo (newest pending upload, else first saved photo). Full-bleed.
+            val bannerBytes = uiState.pendingPhotoUploads.lastOrNull()?.bytes
+            val bannerUrl = uiState.photoUrls.firstOrNull()?.let { detailsAbsoluteUrl(it) }
+            val bannerModel: Any? = bannerBytes ?: bannerUrl
+            if (bannerModel != null) {
+                TaskPhotoBannerEditable(
+                    displayModel = bannerModel,
+                    onCropped = { bytes -> replaceBannerPhoto(uiState, onAction, bytes) },
+                    onRemove = { removeBannerPhoto(uiState, onAction) },
+                    badge = { TaskTypeBadge(uiState.taskType) },
                 )
             }
 
-            TaskPhotosSection(
-                photoUrls = uiState.photoUrls,
-                onPick = { bytes, mime -> onAction(UiAction.OnPhotoPicked(bytes, mime)) },
-                onDelete = { photoId -> onAction(UiAction.OnPhotoDelete(photoId)) },
-                pendingUploads = uiState.pendingPhotoUploads,
-                onCancelPending = { index -> onAction(UiAction.OnPendingPhotoCancel(index)) },
-            )
+            Column(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Spacer(Modifier.height(8.dp))
 
-            if (uiState.taskType == TaskFormType.STAGED) {
-                DetailsSubtaskEditor(
-                    drafts = uiState.subtaskDrafts,
-                    onTitleChange = { index, title -> onAction(UiAction.OnSubtaskTitleChange(index, title)) },
-                    onToggle = { index -> onAction(UiAction.OnSubtaskToggle(index)) },
-                    onRemove = { index -> onAction(UiAction.OnSubtaskRemove(index)) },
+                Column(
+                    modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .padding(vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    // Type now shows as the banner's corner badge when a banner is present.
+                    if (bannerModel == null) {
+                        DetailsTypeHeader(uiState.taskType)
+                    }
+
+                    TDCompactOutlinedTextField(
+                        label = stringResource(R.string.task_title),
+                        value = uiState.taskTitle,
+                        onValueChange = { onAction(UiAction.OnTaskTitleEdit(it)) },
+                        isError = uiState.titleError != null,
+                        supportingText = uiState.titleError?.let { stringResource(it) },
+                    )
+
+                    // Routine surfaces frequency right after the title (before the start date).
+                    if (uiState.taskType == TaskFormType.ROUTINE) {
+                        TaskFrequencyChips(
+                            selected = uiState.selectedRecurrence,
+                            onSelect = { onAction(UiAction.OnRecurrenceChange(it)) },
+                        )
+                    }
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TDText(
+                            text = stringResource(R.string.task_date),
+                            style = TDTheme.typography.heading6,
+                            color = TDTheme.colors.onSurface,
+                        )
+                        TDDatePickerDialog(
+                            selectedDate = uiState.dialogSelectedDate,
+                            onDateSelect = { onAction(UiAction.OnDialogDateSelect(it)) },
+                            onDateDeselect = { onAction(UiAction.OnDialogDateDeselect) },
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            painter = painterResource(com.example.uikit.R.drawable.ic_clock),
+                            tint = TDTheme.colors.onBackground,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        TDText(
+                            text = stringResource(R.string.task_all_day_label),
+                            style = TDTheme.typography.regularTextStyle,
+                            color = TDTheme.colors.onBackground,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Switch(
+                            checked = uiState.isAllDay,
+                            onCheckedChange = { onAction(UiAction.OnAllDayChange(it)) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = TDTheme.colors.purple,
+                                checkedTrackColor = TDTheme.colors.lightPurple,
+                            ),
+                        )
+                    }
+
+                    if (!uiState.isAllDay) {
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                TDPickerField(
+                                    title = stringResource(R.string.set_time),
+                                    value =
+                                    uiState.taskTimeStart?.format(timeFormatter)
+                                        ?: stringResource(R.string.starts),
+                                    onClick = { showStartTimePicker = true },
+                                    leadingIcon = {
+                                        Icon(
+                                            painter = painterResource(com.example.uikit.R.drawable.ic_clock),
+                                            tint = TDTheme.colors.onBackground,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp),
+                                        )
+                                    },
+                                )
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                TDPickerField(
+                                    title = "",
+                                    value =
+                                    uiState.taskTimeEnd?.format(timeFormatter)
+                                        ?: stringResource(R.string.ends),
+                                    onClick = { showEndTimePicker = true },
+                                    leadingIcon = {
+                                        Icon(
+                                            painter = painterResource(com.example.uikit.R.drawable.ic_clock),
+                                            tint = TDTheme.colors.onBackground,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp),
+                                        )
+                                    },
+                                )
+                            }
+                        }
+                    }
+
+                    // Category is hidden for staged goals (no single category for a multi-step task).
+                    if (uiState.taskType != TaskFormType.STAGED) {
+                        TDText(
+                            text = stringResource(R.string.category_label),
+                            style = TDTheme.typography.heading6,
+                            color = TDTheme.colors.onBackground,
+                        )
+                        TDCategoryPicker(
+                            selectedKey = uiState.selectedCategory.name,
+                            options = categoryOptions(),
+                            onSelected = { key -> onAction(UiAction.OnCategoryChange(TaskCategory.valueOf(key))) },
+                        )
+                        if (uiState.selectedCategory == TaskCategory.OTHER) {
+                            TDCompactOutlinedTextField(
+                                label = stringResource(R.string.category_other_hint),
+                                value = uiState.customCategoryName,
+                                onValueChange = { onAction(UiAction.OnCustomCategoryNameChange(it)) },
+                            )
+                        }
+                    }
+
+                    // Reminder applies to one-time & routine; staged steps don't carry their own reminder.
+                    if (uiState.taskType != TaskFormType.STAGED) {
+                        TaskReminderChips(
+                            selected = uiState.reminderOffsetMinutes,
+                            onSelect = { onAction(UiAction.OnReminderOffsetChange(it)) },
+                        )
+                        if (uiState.isReminderInPast) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(TDTheme.colors.background, RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    painter = painterResource(com.example.uikit.R.drawable.ic_warning),
+                                    contentDescription = null,
+                                    tint = TDTheme.colors.orange,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                TDText(
+                                    text = stringResource(R.string.reminder_in_past_warning),
+                                    style = TDTheme.typography.subheading1,
+                                    color = TDTheme.colors.orange,
+                                )
+                            }
+                        }
+                    }
+
+                    TDCompactOutlinedTextField(
+                        label = stringResource(R.string.description),
+                        value = uiState.taskDescription,
+                        onValueChange = { onAction(UiAction.OnTaskDescriptionEdit(it)) },
+                        singleLine = false,
+                    )
+
+                    val launchLocationPicker =
+                        com.todoapp.mobile.ui.common.rememberLocationPickerLauncher { name, address, lat, lng ->
+                            onAction(UiAction.OnLocationPicked(name, address, lat, lng))
+                        }
+                    com.todoapp.uikit.components.TDLocationPicker(
+                        name = uiState.locationName,
+                        address = uiState.locationAddress,
+                        addLabel = stringResource(R.string.location_add_hint),
+                        clearContentDescription = stringResource(R.string.location_clear),
+                        onClick = launchLocationPicker,
+                        onClear = { onAction(UiAction.OnLocationCleared) },
+                    )
+                }
+
+                TaskPhotosSection(
+                    photoUrls = uiState.photoUrls,
+                    onPick = { bytes, mime -> onAction(UiAction.OnPhotoPicked(bytes, mime)) },
+                    onDelete = { photoId -> onAction(UiAction.OnPhotoDelete(photoId)) },
+                    pendingUploads = uiState.pendingPhotoUploads,
+                    onCancelPending = { index -> onAction(UiAction.OnPendingPhotoCancel(index)) },
                 )
+
+                if (uiState.taskType == TaskFormType.STAGED) {
+                    DetailsSubtaskEditor(
+                        drafts = uiState.subtaskDrafts,
+                        onTitleChange = { index, title -> onAction(UiAction.OnSubtaskTitleChange(index, title)) },
+                        onToggle = { index -> onAction(UiAction.OnSubtaskToggle(index)) },
+                        onRemove = { index -> onAction(UiAction.OnSubtaskRemove(index)) },
+                    )
+                }
             }
         }
 
@@ -558,6 +580,33 @@ private fun DetailsSuccessPreview_Staged() {
             ),
         ) {}
     }
+}
+
+private fun detailsAbsoluteUrl(relative: String): String = BuildConfig.BASE_URL.trimEnd('/') + "/" + relative.trimStart('/')
+
+private fun detailsPhotoIdFromUrl(url: String): Long? = url.trimEnd('/').substringAfterLast('/').toLongOrNull()
+
+/** Removes the current banner cover: cancels the newest staged upload, else stages the saved cover for delete. */
+private fun removeBannerPhoto(
+    state: UiState.Success,
+    onAction: (UiAction) -> Unit,
+) {
+    if (state.pendingPhotoUploads.isNotEmpty()) {
+        onAction(UiAction.OnPendingPhotoCancel(state.pendingPhotoUploads.lastIndex))
+    } else {
+        val coverUrl = state.photoUrls.firstOrNull() ?: return
+        detailsPhotoIdFromUrl(coverUrl)?.let { onAction(UiAction.OnPhotoDelete(it)) }
+    }
+}
+
+/** Replaces the cover: removes the current one, then stages the freshly cropped image. */
+private fun replaceBannerPhoto(
+    state: UiState.Success,
+    onAction: (UiAction) -> Unit,
+    bytes: ByteArray,
+) {
+    removeBannerPhoto(state, onAction)
+    onAction(UiAction.OnPhotoPicked(bytes, "image/jpeg"))
 }
 
 @Composable

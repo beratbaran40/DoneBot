@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.todoapp.mobile.R
+import com.todoapp.mobile.domain.model.GroupMember
 import com.todoapp.mobile.domain.model.GroupTask
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.UserRepository
@@ -73,7 +74,9 @@ constructor(
             is UiAction.OnEditDescriptionChange -> updateSuccess { it.copy(editDescription = action.description) }
             is UiAction.OnEditDateSelect -> updateSuccess { it.copy(editDate = action.date) }
             UiAction.OnEditDateDeselect -> updateSuccess { it.copy(editDate = null) }
-            is UiAction.OnEditTimeChange -> updateSuccess { it.copy(editTime = action.time) }
+            is UiAction.OnEditAllDayChange -> changeEditAllDay(action.isAllDay)
+            is UiAction.OnEditTimeStartChange -> updateSuccess { it.copy(editTimeStart = action.time) }
+            is UiAction.OnEditTimeEndChange -> updateSuccess { it.copy(editTimeEnd = action.time) }
             is UiAction.OnEditAssigneeChange -> updateSuccess { it.copy(editAssigneeId = action.userId) }
             is UiAction.OnPhotoPicked -> uploadPhoto(action.bytes, action.mimeType)
             is UiAction.OnPhotoDelete -> deletePhoto(action.photoId)
@@ -105,7 +108,7 @@ constructor(
         viewModelScope.launch {
             groupRepository
                 .uploadTaskPhoto(taskId, bytes, mimeType)
-                .onSuccess { loadTask() }
+                .onSuccess { loadTask(force = true) }
                 .onFailure { _uiEffect.trySend(UiEffect.ShowToast(it.message ?: "Failed to upload photo")) }
         }
     }
@@ -114,12 +117,12 @@ constructor(
         viewModelScope.launch {
             groupRepository
                 .deleteTaskPhoto(taskId, photoId)
-                .onSuccess { loadTask() }
+                .onSuccess { loadTask(force = true) }
                 .onFailure { _uiEffect.trySend(UiEffect.ShowToast(it.message ?: "Failed to delete photo")) }
         }
     }
 
-    private fun loadTask() {
+    private fun loadTask(force: Boolean = false) {
         viewModelScope.launch {
             currentUserId = userRepository.getUserInfo().getOrNull()?.id ?: -1L
 
@@ -157,7 +160,7 @@ constructor(
                 }
 
             groupRepository
-                .getGroupTasks(groupId)
+                .getGroupTasks(groupId, force = force)
                 .onSuccess { tasks ->
                     val task = tasks.find { it.id == taskId }
                     if (task == null) {
@@ -165,7 +168,7 @@ constructor(
                     } else {
                         _uiState.value =
                             UiState.Success(
-                                task = task.toUiModel(),
+                                task = task.toUiModel(members.associateBy { m -> m.userId }),
                                 groupName = detail?.name.orEmpty(),
                                 members = memberUiItems,
                             )
@@ -212,7 +215,9 @@ constructor(
                 editTitle = task.title,
                 editDescription = task.description.orEmpty(),
                 editDate = zdt?.toLocalDate(),
-                editTime = zdt?.toLocalTime(),
+                editIsAllDay = task.isAllDay,
+                editTimeStart = task.timeStart ?: zdt?.toLocalTime(),
+                editTimeEnd = task.timeEnd,
                 editAssigneeId = task.assigneeUserId,
                 editLocationName = task.locationName,
                 editLocationAddress = task.locationAddress,
@@ -228,11 +233,13 @@ constructor(
             _uiEffect.trySend(UiEffect.ShowToast(context.getString(R.string.task_title_empty)))
             return
         }
+        val allDay = state.editIsAllDay
+        val startTime = if (allDay) LocalTime.MIDNIGHT else (state.editTimeStart ?: LocalTime.MIDNIGHT)
+        val endTime = if (allDay) END_OF_DAY else (state.editTimeEnd ?: startTime)
         val dueDate: Long? =
             state.editDate?.let { date ->
-                val time = state.editTime ?: LocalTime.MIDNIGHT
                 date
-                    .atTime(time)
+                    .atTime(startTime)
                     .atZone(ZoneId.systemDefault())
                     .toInstant()
                     .toEpochMilli()
@@ -249,6 +256,9 @@ constructor(
                     dueDate = dueDate,
                     priority = state.task.priority,
                     assignedToUserId = state.editAssigneeId,
+                    isAllDay = allDay,
+                    timeStart = startTime.toSecondOfDay().toLong(),
+                    timeEnd = endTime.toSecondOfDay().toLong(),
                     locationName = state.editLocationName?.takeIf { it.isNotBlank() },
                     locationAddress = state.editLocationAddress?.takeIf { it.isNotBlank() },
                     locationLat = state.editLocationLat,
@@ -270,6 +280,9 @@ constructor(
                                 description = s.editDescription.ifBlank { null },
                                 dueTime = dueDate?.let { formatDueDate(it) },
                                 rawDueDate = dueDate,
+                                isAllDay = allDay,
+                                timeStart = startTime,
+                                timeEnd = endTime,
                                 assigneeName = newAssigneeName,
                                 assigneeInitials = newAssigneeInitials,
                                 assigneeUserId = s.editAssigneeId,
@@ -291,11 +304,23 @@ constructor(
         }
     }
 
+    private fun changeEditAllDay(isAllDay: Boolean) {
+        updateSuccess { s ->
+            if (!isAllDay && s.editTimeStart == null) {
+                // Turning off all-day with no prior time: default to the next full hour + 1h end.
+                val start = LocalTime.now().plusHours(1).withMinute(0).withSecond(0).withNano(0)
+                s.copy(editIsAllDay = false, editTimeStart = start, editTimeEnd = start.plusHours(1))
+            } else {
+                s.copy(editIsAllDay = isAllDay)
+            }
+        }
+    }
+
     private fun updateSuccess(transform: (UiState.Success) -> UiState.Success) {
         _uiState.update { current -> (current as? UiState.Success)?.let(transform) ?: current }
     }
 
-    private fun GroupTask.toUiModel(): TaskUiModel {
+    private fun GroupTask.toUiModel(membersById: Map<Long, GroupMember> = emptyMap()): TaskUiModel {
         val isAssignedToMe = assignee?.userId == currentUserId
         val assigneeInitials =
             assignee
@@ -304,6 +329,8 @@ constructor(
                 ?.mapNotNull { it.firstOrNull()?.toString() }
                 ?.take(2)
                 ?.joinToString("")
+        // The /tasks list's assignedTo carries no avatar; resolve it from the loaded member list.
+        val assigneeAvatar = assignee?.userId?.let { membersById[it]?.avatarUrl } ?: assignee?.avatarUrl
         return TaskUiModel(
             id = id,
             title = title,
@@ -311,10 +338,13 @@ constructor(
             priority = priority,
             dueTime = dueDate?.let { formatDueDate(it) },
             rawDueDate = dueDate,
+            isAllDay = isAllDay,
+            timeStart = timeStart,
+            timeEnd = timeEnd,
             isCompleted = isCompleted,
             assigneeName = assignee?.displayName,
             assigneeInitials = assigneeInitials,
-            assigneeAvatarUrl = assignee?.avatarUrl,
+            assigneeAvatarUrl = assigneeAvatar,
             assigneeUserId = assignee?.userId,
             isAssignedToMe = isAssignedToMe,
             canDelete = isAssignedToMe || currentUserRole == "ADMIN",
@@ -340,5 +370,9 @@ constructor(
                 context.getString(R.string.due_prefix) + " " + sdf.format(Date(timestamp))
             }
         }
+    }
+
+    private companion object {
+        private val END_OF_DAY: LocalTime = LocalTime.of(23, 59)
     }
 }

@@ -64,6 +64,7 @@ class ChatViewModel @Inject constructor(
             val initial = chatRepository.getMessages()
             val savedDraft = dataStoreHelper.observeChatDraft().first()
             _uiState.value = ChatContract.UiState.Ready(messages = initial, draft = savedDraft)
+            maybeResumePendingPrompt()
             chatRepository.observeMessages().collect { messages ->
                 _uiState.update { current ->
                     when (current) {
@@ -116,6 +117,9 @@ class ChatViewModel @Inject constructor(
 
     private fun dismissError() {
         cooldownJob?.cancel()
+        // Dismissing the guest "sign in" banner means "forget it" — drop any pending prompt
+        // so it won't auto-fire on a later, unrelated login.
+        viewModelScope.launch { dataStoreHelper.setPendingChatPrompt("") }
         _uiState.update { current ->
             when (current) {
                 is ChatContract.UiState.Ready -> current.copy(
@@ -174,6 +178,9 @@ class ChatViewModel @Inject constructor(
             // Anything that needs the backend is gated here, before any network call.
             if (sessionPreferences.getAccessToken().isNullOrBlank()) {
                 Timber.tag(METRICS_TAG).i("guest_backend_blocked")
+                // Persist the blocked prompt so a fresh ChatViewModel (recreated by the
+                // login redirect) can auto-resend it once the user signs in.
+                dataStoreHelper.setPendingChatPrompt(prompt)
                 setError(ChatContract.ChatError.NOT_AUTHENTICATED, lastFailedPrompt = null)
                 _uiState.update { latest ->
                     when (latest) {
@@ -210,6 +217,53 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             executeSendInternal(prompt)
         }
+    }
+
+    /**
+     * On a freshly-recreated ViewModel (e.g. after the guest taps "Sign in" and the login
+     * redirect rebuilds the Chat destination), pick up the prompt the user was gated on and
+     * send it automatically — no retype. The prompt lives in DataStore so it survives both
+     * the navigation round-trip and ViewModel recreation; works for the register path too.
+     */
+    private fun maybeResumePendingPrompt() {
+        viewModelScope.launch {
+            val pending = dataStoreHelper.getPendingChatPrompt()
+            if (pending.isBlank()) return@launch
+            // Still signed out (VM recreated before they actually logged in): keep the prompt
+            // for the eventual login. Dismissing the banner is the explicit "forget it" path.
+            if (sessionPreferences.getAccessToken().isNullOrBlank()) return@launch
+            dataStoreHelper.setPendingChatPrompt("")
+            if (!networkMonitor.isOnline.value) {
+                setError(ChatContract.ChatError.OFFLINE, lastFailedPrompt = pending)
+                return@launch
+            }
+            Timber.tag(METRICS_TAG).i("guest_pending_resumed")
+            resendPendingPrompt(pending)
+        }
+    }
+
+    private suspend fun resendPendingPrompt(prompt: String) {
+        // The guest turn was already echoed into Room before the gate, so reuse that bubble
+        // instead of duplicating it. If it's gone (e.g. history cleared by a different-user
+        // login), re-add it so the prompt still has a visible user message.
+        val alreadyEchoed = chatRepository.getMessages().lastOrNull()?.let {
+            it.role == ChatMessage.Role.USER && it.content == prompt
+        } ?: false
+        if (!alreadyEchoed) {
+            chatRepository.appendUserMessage(prompt)
+        }
+        _uiState.update { current ->
+            when (current) {
+                is ChatContract.UiState.Ready -> current.copy(
+                    isThinking = true,
+                    error = null,
+                    lastFailedPrompt = null,
+                    rateLimitCooldownSecondsRemaining = 0,
+                )
+                else -> current
+            }
+        }
+        executeSendInternal(prompt)
     }
 
     private suspend fun executeSendInternal(prompt: String) {
@@ -369,6 +423,7 @@ class ChatViewModel @Inject constructor(
         cooldownJob?.cancel()
         viewModelScope.launch {
             chatRepository.clear()
+            dataStoreHelper.setPendingChatPrompt("")
             _uiState.update { current ->
                 when (current) {
                     is ChatContract.UiState.Ready -> current.copy(

@@ -10,7 +10,20 @@ import java.time.LocalTime
 object CreationHubContract {
     enum class Step { HUB_ROOT, TASK_TYPE, TASK_CORE }
 
-    enum class TaskType { ONE_TIME, ROUTINE, STAGED }
+    enum class TaskType { ONE_TIME, ROUTINE, STAGED, GROUP }
+
+    /** A group the current user administers — carries both ids: local for members, remote for create. */
+    @Immutable
+    data class GroupOption(val localId: Long, val remoteId: Long, val name: String)
+
+    /** A group member shown in the assignee picker. */
+    @Immutable
+    data class AssigneeOption(
+        val userId: Long,
+        val displayName: String,
+        val avatarUrl: String?,
+        val initials: String,
+    )
 
     @Immutable
     data class UiState(
@@ -39,6 +52,14 @@ object CreationHubContract {
         val placeholderIndex: Int = 0,
         val titleError: Boolean = false,
         val isSaving: Boolean = false,
+        // Group task (only meaningful when taskType == GROUP).
+        val adminGroups: List<GroupOption> = emptyList(),
+        val selectedGroupLocalId: Long? = null,
+        val selectedGroupRemoteId: Long? = null,
+        val groupMembers: List<AssigneeOption> = emptyList(),
+        // null = unassigned (the valid default — a group-wide task).
+        val selectedAssigneeId: Long? = null,
+        val priority: String? = null,
     )
 
     sealed interface UiAction {
@@ -94,6 +115,12 @@ object CreationHubContract {
         ) : UiAction
 
         data object OnLocationCleared : UiAction
+
+        data class OnGroupSelect(val localId: Long, val remoteId: Long) : UiAction
+
+        data class OnAssigneeSelect(val userId: Long?) : UiAction
+
+        data class OnPrioritySelect(val priority: String?) : UiAction
 
         data object OnCreate : UiAction
     }

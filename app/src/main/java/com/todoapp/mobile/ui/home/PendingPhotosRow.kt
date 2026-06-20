@@ -20,16 +20,20 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.todoapp.mobile.R
+import com.todoapp.mobile.ui.common.components.ImageCropOverlay
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.theme.TDTheme
 
@@ -39,18 +43,14 @@ fun PendingPhotosRow(
     onPick: (ByteArray, String) -> Unit,
     onRemoveAt: (Int) -> Unit,
 ) {
-    val context = LocalContext.current
+    var cropSource by remember { mutableStateOf<String?>(null) }
     val picker =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.PickVisualMedia(),
         ) { uri ->
             uri ?: return@rememberLauncherForActivityResult
-            val cr = context.contentResolver
-            val mime = cr.getType(uri) ?: "image/jpeg"
-            val bytes =
-                runCatching { cr.openInputStream(uri)?.use { it.readBytes() } }
-                    .getOrNull() ?: return@rememberLauncherForActivityResult
-            onPick(bytes, mime)
+            // Route the picked image through the square crop overlay; onPick fires with cropped bytes.
+            cropSource = uri.toString()
         }
 
     Column(Modifier.fillMaxWidth()) {
@@ -106,5 +106,16 @@ fun PendingPhotosRow(
                 }
             }
         }
+    }
+
+    cropSource?.let { src ->
+        ImageCropOverlay(
+            source = src,
+            onCropped = { bytes ->
+                onPick(bytes, "image/jpeg")
+                cropSource = null
+            },
+            onDismiss = { cropSource = null },
+        )
     }
 }

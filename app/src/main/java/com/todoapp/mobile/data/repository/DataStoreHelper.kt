@@ -147,6 +147,25 @@ constructor(
         }
     }
 
+    /**
+     * The chat prompt a signed-out user was blocked on. Persisted (not just held in the
+     * ViewModel) so it survives the login round-trip + ViewModel recreation, letting the
+     * chat auto-resend it once the user signs in. One-shot read.
+     */
+    suspend fun getPendingChatPrompt(): String = dataStore.data.map { preferences ->
+        preferences[PENDING_CHAT_PROMPT] ?: ""
+    }.first()
+
+    suspend fun setPendingChatPrompt(value: String) {
+        dataStore.edit { preferences ->
+            if (value.isEmpty()) {
+                preferences.remove(PENDING_CHAT_PROMPT)
+            } else {
+                preferences[PENDING_CHAT_PROMPT] = value
+            }
+        }
+    }
+
     fun observeReduceMotion(): Flow<Boolean> = dataStore.data.map { preferences ->
         preferences[REDUCE_MOTION] ?: false
     }
@@ -195,6 +214,7 @@ constructor(
         private val LAST_USED_REMINDER_OFFSET = longPreferencesKey("last_used_reminder_offset")
         private val SUGGEST_CARD_DISMISSED_DAY = longPreferencesKey("suggest_card_dismissed_day")
         private val CHAT_DRAFT = stringPreferencesKey("chat_draft")
+        private val PENDING_CHAT_PROMPT = stringPreferencesKey("pending_chat_prompt")
         private val REDUCE_MOTION = booleanPreferencesKey("accessibility_reduce_motion")
         private val JOURNAL_BIOMETRIC_PROTECTED = booleanPreferencesKey("journal_biometric_protection")
         private val JOURNAL_ORPHANS_CLAIMED = booleanPreferencesKey("journal_orphans_claimed")

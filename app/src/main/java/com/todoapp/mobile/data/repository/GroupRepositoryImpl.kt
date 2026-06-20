@@ -349,6 +349,7 @@ constructor(
             invalidateGroupCache(groupId)
         }
 
+    @Suppress("LongParameterList")
     override suspend fun updateGroupTask(
         groupId: Long,
         taskId: Long,
@@ -357,6 +358,9 @@ constructor(
         dueDate: Long?,
         priority: String?,
         assignedToUserId: Long?,
+        isAllDay: Boolean?,
+        timeStart: Long?,
+        timeEnd: Long?,
         locationName: String?,
         locationAddress: String?,
         locationLat: Double?,
@@ -379,6 +383,9 @@ constructor(
                     title = title,
                     description = description,
                     dueDate = dueDate,
+                    isAllDay = isAllDay,
+                    timeStart = timeStart,
+                    timeEnd = timeEnd,
                     priority = priority,
                     assigneeId = assignedToUserId,
                     clearAssignee = assignedToUserId == null,

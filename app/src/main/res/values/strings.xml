@@ -404,6 +404,10 @@
     <string name="no_tasks_subtitle">Create your first task to get started!</string>
     <string name="new_task">+ New Task</string>
     <string name="all">All</string>
+    <string name="group_time_today">Today</string>
+    <string name="group_time_this_week">This week</string>
+    <string name="group_time_this_month">This month</string>
+    <string name="group_time_all">All</string>
     <string name="assigned_to_me">Assigned to Me</string>
     <string name="invite">Invite</string>
     <string name="remove">Remove</string>
@@ -913,6 +917,12 @@
     <string name="avatar_crop_screen_title">Crop photo</string>
     <string name="avatar_crop_done">Done</string>
     <string name="avatar_crop_save_error">Couldn\'t process photo</string>
+    <string name="image_crop_title">Adjust photo</string>
+    <string name="image_crop_done">Done</string>
+    <string name="task_banner_edit_cd">Edit image</string>
+    <string name="task_banner_edit">Edit image</string>
+    <string name="task_banner_replace">Replace image</string>
+    <string name="task_banner_remove">Remove image</string>
     <string name="settings_camera_permission_title">Camera</string>
     <string name="settings_camera_permission_description">Take Polaroid-style photos for your journal</string>
     <string name="journal_entry_delete_confirm_title">Delete this entry?</string>
@@ -974,6 +984,11 @@
     <string name="type_routine_subtitle">Repeats on a schedule</string>
     <string name="type_staged_title">Staged</string>
     <string name="type_staged_subtitle">A big goal in small steps</string>
+    <string name="type_group_title">Group task</string>
+    <string name="type_group_subtitle">Assign a task to a group you manage</string>
+    <string name="creation_group_label">Group</string>
+    <string name="creation_assignee_unassigned">Unassigned</string>
+    <string name="creation_group_required">Select a group</string>
     <string name="creation_reminder_off">Off</string>
     <string name="creation_reminder_ontime">On time</string>
     <string name="creation_reminder_15m">15 min</string>

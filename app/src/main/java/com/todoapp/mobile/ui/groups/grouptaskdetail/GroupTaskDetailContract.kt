@@ -14,6 +14,9 @@ object GroupTaskDetailContract {
         val priority: String?,
         val dueTime: String?,
         val rawDueDate: Long?,
+        val isAllDay: Boolean = false,
+        val timeStart: LocalTime? = null,
+        val timeEnd: LocalTime? = null,
         val isCompleted: Boolean,
         val assigneeName: String?,
         val assigneeInitials: String?,
@@ -40,7 +43,9 @@ object GroupTaskDetailContract {
             val editTitle: String = "",
             val editDescription: String = "",
             val editDate: LocalDate? = null,
-            val editTime: LocalTime? = null,
+            val editIsAllDay: Boolean = false,
+            val editTimeStart: LocalTime? = null,
+            val editTimeEnd: LocalTime? = null,
             val editAssigneeId: Long? = null,
             val isSaving: Boolean = false,
             val editLocationName: String? = null,
@@ -79,7 +84,15 @@ object GroupTaskDetailContract {
 
         data object OnEditDateDeselect : UiAction
 
-        data class OnEditTimeChange(
+        data class OnEditAllDayChange(
+            val isAllDay: Boolean,
+        ) : UiAction
+
+        data class OnEditTimeStartChange(
+            val time: LocalTime,
+        ) : UiAction
+
+        data class OnEditTimeEndChange(
             val time: LocalTime,
         ) : UiAction
 

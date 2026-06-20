@@ -1,7 +1,6 @@
 package com.todoapp.mobile.ui.groups.groupdetail
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
@@ -33,11 +31,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.uikit.R
 import com.todoapp.mobile.BuildConfig
+import com.todoapp.mobile.ui.common.components.AssigneeUi
+import com.todoapp.mobile.ui.common.components.GroupTaskAssigneeSelector
+import com.todoapp.mobile.ui.common.components.PrioritySelector
 import com.todoapp.mobile.ui.home.ExistingPhoto
 import com.todoapp.mobile.ui.home.PendingPhotosRow
 import com.todoapp.mobile.ui.home.TaskFormState
@@ -164,7 +164,14 @@ fun GroupAddTaskSheet(
         if (members.isNotEmpty()) {
             Spacer(Modifier.height(12.dp))
             GroupTaskAssigneeSelector(
-                members = members,
+                members = members.map {
+                    AssigneeUi(
+                        userId = it.userId,
+                        displayName = it.displayName,
+                        avatarUrl = it.avatarUrl,
+                        initials = it.initials,
+                    )
+                },
                 selectedAssigneeId = formState.selectedAssigneeId,
                 onAssigneeSelected = { userId -> onAction(TaskFormUiAction.AssigneeChange(userId)) },
             )
@@ -214,87 +221,6 @@ private fun GroupAddTaskSheetPreview() {
             members = emptyList(),
             onAction = {},
         )
-    }
-}
-
-@Composable
-private fun GroupTaskAssigneeSelector(
-    members: List<GroupDetailContract.GroupMemberUiItem>,
-    selectedAssigneeId: Long?,
-    onAssigneeSelected: (Long?) -> Unit,
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        TDText(
-            text = stringResource(com.todoapp.mobile.R.string.assign_to),
-            style = TDTheme.typography.heading3,
-            color = TDTheme.colors.onBackground.copy(alpha = 0.7f),
-            modifier = Modifier.padding(vertical = 8.dp),
-        )
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            items(members, key = { it.userId }) { member ->
-                val isSelected = member.userId == selectedAssigneeId
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier =
-                    Modifier
-                        .clickable {
-                            onAssigneeSelected(if (isSelected) null else member.userId)
-                        }.padding(4.dp),
-                ) {
-                    val absoluteAvatarUrl =
-                        member.avatarUrl?.takeIf { it.isNotBlank() }?.let {
-                            val base =
-                                BuildConfig.BASE_URL
-                                    .trimEnd('/')
-                            "$base/${it.trimStart('/')}"
-                        }
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier =
-                        Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (isSelected) {
-                                    TDTheme.colors.pendingGray
-                                } else {
-                                    TDTheme.colors.lightPending
-                                },
-                            ).then(
-                                if (isSelected) {
-                                    Modifier.border(2.dp, TDTheme.colors.pendingGray, CircleShape)
-                                } else {
-                                    Modifier
-                                },
-                            ),
-                    ) {
-                        if (absoluteAvatarUrl != null) {
-                            AsyncImage(
-                                model = absoluteAvatarUrl,
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.size(40.dp).clip(CircleShape),
-                            )
-                        } else {
-                            TDText(
-                                text = member.initials,
-                                style = TDTheme.typography.subheading2,
-                                color = if (isSelected) TDTheme.colors.surface else TDTheme.colors.pendingGray,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                    }
-                    Spacer(Modifier.height(4.dp))
-                    TDText(
-                        text = member.displayName.split(" ").firstOrNull() ?: member.displayName,
-                        style = TDTheme.typography.subheading4,
-                        color = if (isSelected) TDTheme.colors.pendingGray else TDTheme.colors.gray,
-                    )
-                }
-            }
-        }
     }
 }
 
@@ -354,73 +280,5 @@ private fun ExistingPhotosRow(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun PrioritySelector(
-    selected: String?,
-    onSelect: (String?) -> Unit,
-) {
-    val options: List<Pair<String?, String>> =
-        listOf(
-            null to stringResource(com.todoapp.mobile.R.string.priority_none),
-            "LOW" to "LOW",
-            "MEDIUM" to "MED",
-            "HIGH" to "HIGH",
-        )
-    Column(Modifier.fillMaxWidth()) {
-        TDText(
-            text = stringResource(com.todoapp.mobile.R.string.priority),
-            style = TDTheme.typography.subheading2,
-            color = TDTheme.colors.onBackground,
-        )
-        Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            options.forEach { (value, label) ->
-                PriorityChip(
-                    value = value,
-                    label = label,
-                    isSelected = selected == value,
-                    onClick = { onSelect(value) },
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PriorityChip(
-    value: String?,
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-) {
-    val (bg, fg) =
-        when (value?.uppercase()) {
-            "HIGH" -> TDTheme.colors.lightRed to TDTheme.colors.crossRed
-            "MEDIUM" -> TDTheme.colors.lightOrange to TDTheme.colors.orange
-            "LOW" -> TDTheme.colors.lightPending to TDTheme.colors.darkPending
-            else -> TDTheme.colors.lightPending to TDTheme.colors.pendingGray
-        }
-    val containerBg = if (isSelected) bg else bg.copy(alpha = 0.35f)
-    val contentColor = if (isSelected) fg else fg.copy(alpha = 0.6f)
-    Box(
-        modifier =
-        Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(containerBg)
-            .then(
-                if (isSelected) Modifier.border(2.dp, TDTheme.colors.pendingGray, RoundedCornerShape(8.dp))
-                else Modifier,
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-    ) {
-        TDText(
-            text = label,
-            style = TDTheme.typography.subheading1,
-            color = contentColor,
-        )
     }
 }

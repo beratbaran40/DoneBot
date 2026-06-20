@@ -108,8 +108,14 @@ fun CreationHubScreen(
         ) { step ->
             when (step) {
                 Step.HUB_ROOT -> CreationHubCarousel(onAction = onAction)
-                Step.TASK_TYPE -> CreationHubTypeStep(onAction = onAction)
-                Step.TASK_CORE -> CreationHubCoreStep(state = state, onAction = onAction)
+                Step.TASK_TYPE ->
+                    CreationHubTypeStep(showGroupCard = state.adminGroups.isNotEmpty(), onAction = onAction)
+                Step.TASK_CORE ->
+                    if (state.taskType == TaskType.GROUP) {
+                        CreationHubGroupStep(state = state, onAction = onAction)
+                    } else {
+                        CreationHubCoreStep(state = state, onAction = onAction)
+                    }
             }
         }
         if (showInfo) {
@@ -235,6 +241,12 @@ private fun TypeHeaderBlock(taskType: TaskType) {
             accent = TDTheme.colors.mediumGreen
             nameRes = R.string.type_staged_title
             subtitleRes = R.string.type_staged_subtitle
+        }
+        TaskType.GROUP -> {
+            icon = painterResource(R.drawable.ic_groups)
+            accent = TDTheme.colors.darkPurple
+            nameRes = R.string.type_group_title
+            subtitleRes = R.string.type_group_subtitle
         }
     }
     Column(

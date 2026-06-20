@@ -68,6 +68,8 @@ object GroupDetailContract {
             val activities: List<GroupActivityUiItem>,
             val selectedTab: Int = 0,
             val taskFilter: TaskFilter = TaskFilter.ALL,
+            val statusFilter: GroupTaskStatusFilter = GroupTaskStatusFilter.ALL,
+            val timeFilter: GroupTaskTimeFilter = GroupTaskTimeFilter.ALL,
             val currentUserRole: String = "",
             val isTaskSheetOpen: Boolean = false,
             val taskFormState: TaskFormState = TaskFormState(),
@@ -85,6 +87,12 @@ object GroupDetailContract {
 
     enum class TaskFilter { ALL, ASSIGNED_TO_ME }
 
+    /** Completed/pending scope, driven by tapping the stat cards. */
+    enum class GroupTaskStatusFilter { ALL, COMPLETED, PENDING }
+
+    /** Due-date scope for the overview task list. */
+    enum class GroupTaskTimeFilter { TODAY, THIS_WEEK, THIS_MONTH, ALL }
+
     sealed interface UiAction {
         data class OnTabSelected(
             val index: Int,
@@ -92,6 +100,14 @@ object GroupDetailContract {
 
         data class OnTaskFilterSelected(
             val filter: TaskFilter,
+        ) : UiAction
+
+        data class OnStatusFilterSelected(
+            val status: GroupTaskStatusFilter,
+        ) : UiAction
+
+        data class OnTimeFilterSelected(
+            val filter: GroupTaskTimeFilter,
         ) : UiAction
 
         data class OnTaskChecked(

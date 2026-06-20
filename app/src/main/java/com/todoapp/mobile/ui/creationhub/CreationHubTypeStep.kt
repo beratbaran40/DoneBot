@@ -14,7 +14,10 @@ import com.todoapp.uikit.theme.TDTheme
 import com.example.uikit.R as UiKitR
 
 @Composable
-internal fun CreationHubTypeStep(onAction: (UiAction) -> Unit) {
+internal fun CreationHubTypeStep(
+    showGroupCard: Boolean,
+    onAction: (UiAction) -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         TDOptionCard(
             title = stringResource(R.string.type_one_time_title),
@@ -37,5 +40,15 @@ internal fun CreationHubTypeStep(onAction: (UiAction) -> Unit) {
             accentColor = TDTheme.colors.mediumGreen,
             onClick = { onAction(UiAction.OnTypeSelect(TaskType.STAGED)) },
         )
+        // Only shown when the user administers at least one group.
+        if (showGroupCard) {
+            TDOptionCard(
+                title = stringResource(R.string.type_group_title),
+                subtitle = stringResource(R.string.type_group_subtitle),
+                icon = painterResource(R.drawable.ic_groups),
+                accentColor = TDTheme.colors.darkPurple,
+                onClick = { onAction(UiAction.OnTypeSelect(TaskType.GROUP)) },
+            )
+        }
     }
 }

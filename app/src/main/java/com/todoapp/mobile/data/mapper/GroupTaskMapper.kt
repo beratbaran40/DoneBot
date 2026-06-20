@@ -34,6 +34,9 @@ fun TaskData.toGroupTask(): GroupTask = GroupTask(
             joinedAt = 0L,
         )
     },
+    isAllDay = isAllDay,
+    timeStart = LocalTime.ofSecondOfDay(timeStart.coerceIn(0L, MAX_SECOND_OF_DAY)),
+    timeEnd = LocalTime.ofSecondOfDay(timeEnd.coerceIn(0L, MAX_SECOND_OF_DAY)),
     photoUrls = photoUrls,
     locationName = locationName,
     locationAddress = locationAddress,
@@ -85,6 +88,9 @@ fun GroupTaskEntity.toDomain(): GroupTask = GroupTask(
     } else {
         null
     },
+    isAllDay = isAllDay,
+    timeStart = timeStart?.let { LocalTime.ofSecondOfDay(it.coerceIn(0L, MAX_SECOND_OF_DAY)) },
+    timeEnd = timeEnd?.let { LocalTime.ofSecondOfDay(it.coerceIn(0L, MAX_SECOND_OF_DAY)) },
     photoUrls = photoUrls.split(',').filter { it.isNotBlank() },
     groupId = remoteGroupId,
     locationName = locationName,
@@ -105,6 +111,9 @@ fun GroupTask.toEntity(
     isCompleted = isCompleted,
     priority = priority,
     dueDate = dueDate,
+    isAllDay = isAllDay,
+    timeStart = timeStart?.toSecondOfDay()?.toLong(),
+    timeEnd = timeEnd?.toSecondOfDay()?.toLong(),
     assigneeUserId = assignee?.userId,
     assigneeDisplayName = assignee?.displayName,
     assigneeAvatarUrl = assignee?.avatarUrl,
@@ -114,3 +123,5 @@ fun GroupTask.toEntity(
     locationName = locationName,
     locationAddress = locationAddress,
 )
+
+private const val MAX_SECOND_OF_DAY = 86_399L

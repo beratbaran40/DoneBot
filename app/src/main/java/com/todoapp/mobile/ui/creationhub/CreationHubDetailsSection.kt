@@ -86,8 +86,8 @@ internal fun CreationHubDetailsSection(
                     onValueChange = { onAction(UiAction.OnDescriptionChange(it)) },
                     singleLine = false,
                 )
-                // Staged tasks have no category — it's a multi-step goal, not a single categorised task.
-                if (state.taskType != TaskType.STAGED) {
+                // Staged goals and group tasks have no single category — hide the picker for both.
+                if (state.taskType != TaskType.STAGED && state.taskType != TaskType.GROUP) {
                     TDCategoryPicker(
                         selectedKey = state.category.name,
                         options = categoryOptions(),

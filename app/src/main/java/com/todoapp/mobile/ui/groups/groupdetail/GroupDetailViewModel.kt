@@ -105,6 +105,8 @@ constructor(
         when (action) {
             is UiAction.OnTabSelected -> updateSuccessState { it.copy(selectedTab = action.index) }
             is UiAction.OnTaskFilterSelected -> updateSuccessState { it.copy(taskFilter = action.filter) }
+            is UiAction.OnStatusFilterSelected -> updateSuccessState { it.copy(statusFilter = action.status) }
+            is UiAction.OnTimeFilterSelected -> updateSuccessState { it.copy(timeFilter = action.filter) }
             is UiAction.OnTaskChecked -> handleTaskChecked(action.taskId, action.isChecked)
             UiAction.OnNewTaskTap -> updateSuccessState { it.copy(isTaskSheetOpen = true) }
             UiAction.OnDismissGroupTaskSheet ->
@@ -189,6 +191,7 @@ constructor(
                 }
 
             val currentUserRole = members.find { it.userId == currentUserId }?.role?.uppercase().orEmpty()
+            val membersById = members.associateBy { it.userId }
             val previousState = _uiState.value as? UiState.Success
 
             _uiState.value =
@@ -199,12 +202,14 @@ constructor(
                     memberCount = members.size,
                     completedCount = tasks.count { it.isCompleted },
                     pendingCount = tasks.count { !it.isCompleted },
-                    tasks = tasks.map { it.toUiItem(currentUserRole) },
+                    tasks = tasks.map { it.toUiItem(currentUserRole, membersById) },
                     members = members.map { it.toUiItem(currentUserId) },
                     activities = activities.map { it.toUiItem() },
                     currentUserRole = currentUserRole,
                     selectedTab = previousState?.selectedTab ?: 0,
                     taskFilter = previousState?.taskFilter ?: GroupDetailContract.TaskFilter.ALL,
+                    statusFilter = previousState?.statusFilter ?: GroupDetailContract.GroupTaskStatusFilter.ALL,
+                    timeFilter = previousState?.timeFilter ?: GroupDetailContract.GroupTaskTimeFilter.ALL,
                     isTaskSheetOpen = previousState?.isTaskSheetOpen ?: false,
                     taskFormState = previousState?.taskFormState ?: TaskFormState(),
                     editingTaskId = previousState?.editingTaskId,
@@ -611,6 +616,12 @@ constructor(
                             assigneeName = if (isCurrentlyAssignedToMe) null else currentUserName,
                             assigneeInitials = if (isCurrentlyAssignedToMe) null else currentUserInitials,
                             assigneeId = if (isCurrentlyAssignedToMe) null else currentUserId,
+                            assigneeAvatarUrl =
+                            if (isCurrentlyAssignedToMe) {
+                                null
+                            } else {
+                                s.members.find { m -> m.userId == currentUserId }?.avatarUrl
+                            },
                         )
                     } else {
                         t
@@ -636,7 +647,10 @@ constructor(
         _uiState.update { current -> (current as? UiState.Success)?.let(transform) ?: current }
     }
 
-    private fun GroupTask.toUiItem(currentUserRole: String = ""): GroupTaskUiItem {
+    private fun GroupTask.toUiItem(
+        currentUserRole: String = "",
+        membersById: Map<Long, GroupMember> = emptyMap(),
+    ): GroupTaskUiItem {
         val assigneeInitials =
             assignee
                 ?.displayName
@@ -645,12 +659,14 @@ constructor(
                 ?.take(2)
                 ?.joinToString("")
         val isAssignedToMe = assignee?.userId == currentUserId
+        // The /tasks list's assignedTo carries no avatar; resolve it from the loaded member list.
+        val assigneeAvatar = assignee?.userId?.let { membersById[it]?.avatarUrl } ?: assignee?.avatarUrl
         return GroupTaskUiItem(
             id = id,
             title = title,
             description = description,
             assigneeId = assignee?.userId,
-            assigneeAvatarUrl = assignee?.avatarUrl,
+            assigneeAvatarUrl = assigneeAvatar,
             assigneeName = assignee?.displayName,
             assigneeInitials = assigneeInitials,
             dueTime = dueDate?.let { formatDueDate(it) },

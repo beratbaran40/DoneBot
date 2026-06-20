@@ -408,6 +408,10 @@
     <string name="no_tasks_subtitle">Başlamak için ilk görevinizi oluşturun!</string>
     <string name="new_task">+ Yeni Görev</string>
     <string name="all">Tümü</string>
+    <string name="group_time_today">Bugün</string>
+    <string name="group_time_this_week">Bu hafta</string>
+    <string name="group_time_this_month">Bu ay</string>
+    <string name="group_time_all">Tümü</string>
     <string name="assigned_to_me">Bana Atanan</string>
     <string name="invite">Davet Et</string>
     <string name="remove">Kaldır</string>
@@ -914,6 +918,12 @@
     <string name="avatar_crop_screen_title">Fotoğrafı kırp</string>
     <string name="avatar_crop_done">Tamam</string>
     <string name="avatar_crop_save_error">Fotoğraf işlenemedi</string>
+    <string name="image_crop_title">Fotoğrafı ayarla</string>
+    <string name="image_crop_done">Tamam</string>
+    <string name="task_banner_edit_cd">Görseli düzenle</string>
+    <string name="task_banner_edit">Görseli düzenle</string>
+    <string name="task_banner_replace">Görseli değiştir</string>
+    <string name="task_banner_remove">Görseli kaldır</string>
     <string name="settings_camera_permission_title">Kamera</string>
     <string name="settings_camera_permission_description">Günlüğün için Polaroid tarzı fotoğraflar çek</string>
     <string name="journal_entry_delete_confirm_title">Bu kaydı sil?</string>
@@ -975,6 +985,11 @@
     <string name="type_routine_subtitle">Belirli aralıklarla tekrar eder</string>
     <string name="type_staged_title">Aşamalı</string>
     <string name="type_staged_subtitle">Birkaç adımda biten büyük bir iş</string>
+    <string name="type_group_title">Grup görevi</string>
+    <string name="type_group_subtitle">Yönettiğin bir gruba görev ata</string>
+    <string name="creation_group_label">Grup</string>
+    <string name="creation_assignee_unassigned">Atama yok</string>
+    <string name="creation_group_required">Bir grup seç</string>
     <string name="creation_reminder_off">Kapalı</string>
     <string name="creation_reminder_ontime">Zamanında</string>
     <string name="creation_reminder_15m">15 dk</string>

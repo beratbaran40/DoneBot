@@ -8,15 +8,19 @@ import com.todoapp.mobile.domain.alarm.AlarmScheduler
 import com.todoapp.mobile.domain.alarm.AlarmType
 import com.todoapp.mobile.domain.constants.DailyPlanDefaults
 import com.todoapp.mobile.domain.engine.PomodoroEngine
+import com.todoapp.mobile.domain.model.GroupMember
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.Subtask
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.domain.model.toAlarmItem
 import com.todoapp.mobile.domain.repository.DailyPlanPreferences
+import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.TaskRepository
 import com.todoapp.mobile.navigation.NavigationEffect
 import com.todoapp.mobile.navigation.Screen
+import com.todoapp.mobile.ui.creationhub.CreationHubContract.AssigneeOption
+import com.todoapp.mobile.ui.creationhub.CreationHubContract.GroupOption
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.Step
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiAction
@@ -25,10 +29,12 @@ import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiState
 import com.todoapp.mobile.ui.home.PendingPhoto
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -44,6 +50,7 @@ class CreationHubViewModel
 @Inject
 constructor(
     private val taskRepository: TaskRepository,
+    private val groupRepository: GroupRepository,
     private val alarmScheduler: AlarmScheduler,
     private val dailyPlanPreferences: DailyPlanPreferences,
     private val pomodoroEngine: PomodoroEngine,
@@ -57,6 +64,21 @@ constructor(
 
     private val _navEffect by lazy { Channel<NavigationEffect>() }
     val navEffect by lazy { _navEffect.receiveAsFlow() }
+
+    private var membersJob: Job? = null
+
+    init {
+        // Group-task creation is offered only for groups the user administers.
+        viewModelScope.launch {
+            groupRepository.observeAllGroups()
+                .map { groups ->
+                    groups
+                        .filter { it.role.uppercase() == "ADMIN" && it.remoteId != null }
+                        .map { GroupOption(localId = it.id, remoteId = it.remoteId!!, name = it.name) }
+                }
+                .collect { admin -> _state.update { it.copy(adminGroups = admin) } }
+        }
+    }
 
     fun onAction(action: UiAction) {
         when (action) {
@@ -104,6 +126,10 @@ constructor(
                     it.copy(locationName = null, locationAddress = null, locationLat = null, locationLng = null)
                 }
 
+            is UiAction.OnGroupSelect -> selectGroup(action.localId, action.remoteId)
+            is UiAction.OnAssigneeSelect -> _state.update { it.copy(selectedAssigneeId = action.userId) }
+            is UiAction.OnPrioritySelect -> _state.update { it.copy(priority = action.priority) }
+
             is UiAction.OnCreate -> create()
         }
     }
@@ -132,7 +158,47 @@ constructor(
                 placeholderIndex = Random.nextInt(CreationHubPlaceholders.count),
             )
         }
+        // With a single admin group there's nothing to pick — auto-select it and load its members.
+        if (type == TaskType.GROUP) {
+            _state.value.adminGroups.singleOrNull()?.let { selectGroup(it.localId, it.remoteId) }
+        }
     }
+
+    private fun selectGroup(localId: Long, remoteId: Long) {
+        _state.update {
+            it.copy(
+                selectedGroupLocalId = localId,
+                selectedGroupRemoteId = remoteId,
+                selectedAssigneeId = null,
+                groupMembers = emptyList(),
+            )
+        }
+        membersJob?.cancel()
+        membersJob = viewModelScope.launch {
+            // The user may never have opened this group's detail, so the local member table can be
+            // empty/stale — warm it once from the remote, then render whatever the Flow emits.
+            runCatching { groupRepository.getGroupMembers(remoteId) }
+                .onSuccess { result ->
+                    val members = result.getOrNull()
+                    if (members != null) {
+                        _state.update { it.copy(groupMembers = members.map(::toAssigneeOption)) }
+                    }
+                }
+            groupRepository.observeGroupMembers(localId).collect { members ->
+                _state.update { it.copy(groupMembers = members.map(::toAssigneeOption)) }
+            }
+        }
+    }
+
+    private fun toAssigneeOption(member: GroupMember): AssigneeOption = AssigneeOption(
+        userId = member.userId,
+        displayName = member.displayName,
+        avatarUrl = member.avatarUrl,
+        initials = member.displayName.trim().split(" ")
+            .filter { it.isNotBlank() }
+            .take(2)
+            .joinToString("") { it.first().uppercase() },
+    )
 
     private fun changeAllDay(isAllDay: Boolean) {
         _state.update { s ->
@@ -173,6 +239,10 @@ constructor(
             return
         }
         val type = s.taskType ?: return
+        if (type == TaskType.GROUP) {
+            createGroupTask(s)
+            return
+        }
         val subtaskTitles = s.subtaskDrafts.map { it.trim() }.filter { it.isNotBlank() }
         if (type == TaskType.STAGED && subtaskTitles.isEmpty()) {
             _effect.trySend(UiEffect.ShowToast(R.string.creation_need_one_step))
@@ -222,6 +292,59 @@ constructor(
             scheduleOneShotReminder(task)
             _effect.trySend(UiEffect.ShowToast(R.string.creation_task_created))
             _navEffect.trySend(NavigationEffect.Back)
+        }
+    }
+
+    /**
+     * Creates a task in the selected admin group. Unassigned (assignedToUserId = null) is valid and is
+     * the default. Photos are uploaded after create using the returned remote task id (mirrors
+     * GroupDetailViewModel). No local AlarmScheduler call — group reminders are server-side.
+     */
+    private fun createGroupTask(s: UiState) {
+        val remoteId = s.selectedGroupRemoteId
+        if (remoteId == null) {
+            _effect.trySend(UiEffect.ShowToast(R.string.creation_group_required))
+            return
+        }
+        _state.update { it.copy(isSaving = true) }
+        viewModelScope.launch {
+            val allDay = s.isAllDay
+            val start = if (allDay) LocalTime.MIDNIGHT else (s.timeStart ?: LocalTime.of(DEFAULT_START_HOUR, 0))
+            val end = if (allDay) {
+                LocalTime.of(END_OF_DAY_HOUR, END_OF_DAY_MINUTE)
+            } else {
+                s.timeEnd ?: start.plusHours(1)
+            }
+            val task = Task(
+                title = s.title.trim(),
+                description = s.description.trim().ifBlank { null },
+                date = s.date,
+                timeStart = start,
+                timeEnd = end,
+                isCompleted = false,
+                isSecret = s.isSecret,
+                isAllDay = allDay,
+                locationName = s.locationName,
+                locationAddress = s.locationAddress,
+                locationLat = s.locationLat,
+                locationLng = s.locationLng,
+                // No recurrence / category / subtasks — group tasks are a flat, assignable task.
+            )
+            groupRepository.createGroupTask(
+                groupId = remoteId,
+                task = task,
+                priority = s.priority,
+                assignedToUserId = s.selectedAssigneeId,
+            ).onSuccess { newTaskId ->
+                s.pendingPhotos.forEach {
+                    runCatching { groupRepository.uploadTaskPhoto(newTaskId, it.bytes, it.mimeType) }
+                }
+                _effect.trySend(UiEffect.ShowToast(R.string.creation_task_created))
+                _navEffect.trySend(NavigationEffect.Back)
+            }.onFailure {
+                _state.update { it.copy(isSaving = false) }
+                _effect.trySend(UiEffect.ShowToast(R.string.failed_to_create_task))
+            }
         }
     }
 

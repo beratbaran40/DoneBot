@@ -36,7 +36,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -45,6 +44,7 @@ import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.todoapp.mobile.BuildConfig
 import com.todoapp.mobile.R
+import com.todoapp.mobile.ui.common.components.ImageCropOverlay
 import com.todoapp.mobile.ui.home.PendingPhoto
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.theme.TDTheme
@@ -57,18 +57,14 @@ fun TaskPhotosSection(
     pendingUploads: List<PendingPhoto> = emptyList(),
     onCancelPending: (Int) -> Unit = {},
 ) {
-    val context = LocalContext.current
+    var cropSource by remember { mutableStateOf<String?>(null) }
     val picker =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.PickVisualMedia(),
         ) { uri ->
             uri ?: return@rememberLauncherForActivityResult
-            val cr = context.contentResolver
-            val mime = cr.getType(uri) ?: "image/jpeg"
-            val bytes =
-                runCatching { cr.openInputStream(uri)?.use { it.readBytes() } }
-                    .getOrNull() ?: return@rememberLauncherForActivityResult
-            onPick(bytes, mime)
+            // Route the picked image through the square crop overlay; onPick fires with cropped bytes.
+            cropSource = uri.toString()
         }
     var viewerUrl by remember { mutableStateOf<String?>(null) }
     var viewerPhotoId by remember { mutableStateOf<Long?>(null) }
@@ -137,6 +133,17 @@ fun TaskPhotosSection(
                     viewerPhotoId = null
                 }
             },
+        )
+    }
+
+    cropSource?.let { src ->
+        ImageCropOverlay(
+            source = src,
+            onCropped = { bytes ->
+                onPick(bytes, "image/jpeg")
+                cropSource = null
+            },
+            onDismiss = { cropSource = null },
         )
     }
 }

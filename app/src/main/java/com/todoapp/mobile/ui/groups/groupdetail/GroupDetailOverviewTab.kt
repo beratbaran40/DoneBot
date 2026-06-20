@@ -11,8 +11,10 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +27,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -48,6 +51,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.BuildConfig
 import com.todoapp.mobile.R
+import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract.GroupTaskStatusFilter
+import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract.GroupTaskTimeFilter
 import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract.GroupTaskUiItem
 import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract.TaskFilter
 import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract.UiAction
@@ -55,11 +60,16 @@ import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract.UiState
 import com.todoapp.mobile.ui.home.SecretOrNormalPhotoBanner
 import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonType
+import com.todoapp.uikit.components.TDChoiceChip
 import com.todoapp.uikit.components.TDPriorityBadge
 import com.todoapp.uikit.components.TDTaskCardWithCheckbox
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDUndoSnackbar
 import com.todoapp.uikit.theme.TDTheme
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import com.example.uikit.R as UiKitR
 
 @Composable
@@ -93,8 +103,21 @@ fun GroupDetailOverviewTab(
                     memberCount = uiState.memberCount,
                     completedCount = uiState.completedCount,
                     pendingCount = uiState.pendingCount,
+                    statusFilter = uiState.statusFilter,
+                    onMemberClick = { onAction(UiAction.OnTabSelected(MEMBERS_TAB_INDEX)) },
+                    onCompletedClick = {
+                        onAction(UiAction.OnStatusFilterSelected(toggleStatus(uiState.statusFilter, GroupTaskStatusFilter.COMPLETED)))
+                    },
+                    onPendingClick = {
+                        onAction(UiAction.OnStatusFilterSelected(toggleStatus(uiState.statusFilter, GroupTaskStatusFilter.PENDING)))
+                    },
                 )
                 Spacer(modifier = Modifier.height(16.dp))
+                GroupTimeFilterRow(
+                    selected = uiState.timeFilter,
+                    onSelected = { onAction(UiAction.OnTimeFilterSelected(it)) },
+                )
+                Spacer(modifier = Modifier.height(8.dp))
                 TaskFilterRow(
                     selectedFilter = uiState.taskFilter,
                     onFilterSelected = { onAction(UiAction.OnTaskFilterSelected(it)) },
@@ -103,10 +126,17 @@ fun GroupDetailOverviewTab(
             }
 
             val displayedTasks =
-                when (uiState.taskFilter) {
-                    TaskFilter.ALL -> uiState.tasks
-                    TaskFilter.ASSIGNED_TO_ME -> uiState.tasks.filter { it.isAssignedToMe }
-                }.filter { it.id != uiState.undoDeleteTaskId }
+                uiState.tasks
+                    .filter { it.id != uiState.undoDeleteTaskId }
+                    .filter { uiState.taskFilter == TaskFilter.ALL || it.isAssignedToMe }
+                    .filter {
+                        when (uiState.statusFilter) {
+                            GroupTaskStatusFilter.ALL -> true
+                            GroupTaskStatusFilter.COMPLETED -> it.isCompleted
+                            GroupTaskStatusFilter.PENDING -> !it.isCompleted
+                        }
+                    }
+                    .filter { matchesTimeFilter(it.rawDueDate, uiState.timeFilter) }
 
             if (displayedTasks.isEmpty()) {
                 item {
@@ -184,6 +214,10 @@ private fun GroupStatsRow(
     memberCount: Int,
     completedCount: Int,
     pendingCount: Int,
+    statusFilter: GroupTaskStatusFilter,
+    onMemberClick: () -> Unit,
+    onCompletedClick: () -> Unit,
+    onPendingClick: () -> Unit,
 ) {
     Row(
         modifier =
@@ -200,6 +234,7 @@ private fun GroupStatsRow(
             iconBg = TDTheme.colors.gray,
             iconTint = TDTheme.colors.background,
             countColor = TDTheme.colors.onBackground,
+            onClick = onMemberClick,
         )
         GroupStatCard(
             iconRes = UiKitR.drawable.ic_tasks_done,
@@ -209,6 +244,8 @@ private fun GroupStatsRow(
             iconTint = TDTheme.colors.darkGreen,
             countColor = TDTheme.colors.darkGreen,
             modifier = Modifier.weight(1f),
+            onClick = onCompletedClick,
+            selected = statusFilter == GroupTaskStatusFilter.COMPLETED,
         )
         GroupStatCard(
             modifier = Modifier.weight(1f),
@@ -218,6 +255,8 @@ private fun GroupStatsRow(
             iconBg = TDTheme.colors.mediumPending,
             iconTint = TDTheme.colors.white,
             countColor = TDTheme.colors.pendingGray,
+            onClick = onPendingClick,
+            selected = statusFilter == GroupTaskStatusFilter.PENDING,
         )
     }
 }
@@ -231,12 +270,16 @@ private fun GroupStatCard(
     iconTint: Color,
     countColor: Color,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    selected: Boolean = false,
 ) {
     Row(
         modifier =
         modifier
             .clip(RoundedCornerShape(12.dp))
             .background(cardBg)
+            .then(if (selected) Modifier.border(2.dp, countColor, RoundedCornerShape(12.dp)) else Modifier)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -265,6 +308,63 @@ private fun GroupStatCard(
         }
     }
 }
+
+@Composable
+private fun GroupTimeFilterRow(
+    selected: GroupTaskTimeFilter,
+    onSelected: (GroupTaskTimeFilter) -> Unit,
+) {
+    val options =
+        listOf(
+            GroupTaskTimeFilter.TODAY to R.string.group_time_today,
+            GroupTaskTimeFilter.THIS_WEEK to R.string.group_time_this_week,
+            GroupTaskTimeFilter.THIS_MONTH to R.string.group_time_this_month,
+            GroupTaskTimeFilter.ALL to R.string.group_time_all,
+        )
+    Row(
+        modifier =
+        Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        options.forEach { (filter, labelRes) ->
+            TDChoiceChip(
+                label = stringResource(labelRes),
+                selected = selected == filter,
+                onClick = { onSelected(filter) },
+            )
+        }
+    }
+}
+
+private const val MEMBERS_TAB_INDEX = 1
+
+private fun toggleStatus(
+    current: GroupTaskStatusFilter,
+    target: GroupTaskStatusFilter,
+): GroupTaskStatusFilter = if (current == target) GroupTaskStatusFilter.ALL else target
+
+private fun matchesTimeFilter(
+    rawDueDate: Long?,
+    filter: GroupTaskTimeFilter,
+): Boolean {
+    if (filter == GroupTaskTimeFilter.ALL) return true
+    val due = rawDueDate ?: return false
+    val date = Instant.ofEpochMilli(due).atZone(ZoneId.systemDefault()).toLocalDate()
+    val today = LocalDate.now()
+    return when (filter) {
+        GroupTaskTimeFilter.TODAY -> date == today
+        GroupTaskTimeFilter.THIS_WEEK -> {
+            val weekStart = today.with(DayOfWeek.MONDAY)
+            !date.isBefore(weekStart) && !date.isAfter(weekStart.plusDays(WEEK_LAST_DAY_OFFSET))
+        }
+        GroupTaskTimeFilter.THIS_MONTH -> date.year == today.year && date.month == today.month
+        GroupTaskTimeFilter.ALL -> true
+    }
+}
+
+private const val WEEK_LAST_DAY_OFFSET = 6L
 
 @Composable
 private fun TaskFilterRow(

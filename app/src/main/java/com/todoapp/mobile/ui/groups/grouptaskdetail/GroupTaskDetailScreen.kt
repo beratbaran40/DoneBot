@@ -32,11 +32,14 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.todoapp.mobile.BuildConfig
 import com.todoapp.mobile.R
+import com.todoapp.mobile.ui.common.components.TaskPhotoBannerEditable
 import com.todoapp.mobile.ui.groups.groupdetail.AssigneeAvatar
 import com.todoapp.mobile.ui.groups.grouptaskdetail.GroupTaskDetailContract.TaskUiModel
 import com.todoapp.mobile.ui.groups.grouptaskdetail.GroupTaskDetailContract.UiAction
 import com.todoapp.mobile.ui.groups.grouptaskdetail.GroupTaskDetailContract.UiState
+import com.todoapp.uikit.components.TDPriorityBadge
 import com.todoapp.uikit.components.TDScreenWithSheet
 import com.todoapp.uikit.components.TDTaskStatusLabel
 import com.todoapp.uikit.components.TDText
@@ -111,114 +114,149 @@ private fun TaskDetailBody(
         Modifier
             .fillMaxSize()
             .background(TDTheme.colors.background)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 24.dp),
+            .verticalScroll(rememberScrollState()),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(),
+        // Hero banner = first photo (full-bleed). Group tasks show the priority badge in the corner.
+        if (task.photoUrls.isNotEmpty()) {
+            val cover = groupAbsoluteUrl(task.photoUrls.first())
+            TaskPhotoBannerEditable(
+                displayModel = cover,
+                onCropped = { bytes -> replaceGroupBannerPhoto(task, onAction, bytes) },
+                onRemove = { removeGroupBannerPhoto(task, onAction) },
+                badge = { task.priority?.let { TDPriorityBadge(priority = it) } },
+            )
+        }
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier =
+                    Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { onAction(UiAction.OnToggleComplete) }
+                        .padding(12.dp),
+                ) {
+                    TDTaskStatusLabel(isCompleted = task.isCompleted)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    TDText(
+                        text = task.title,
+                        style = TDTheme.typography.heading3,
+                        color = TDTheme.colors.onBackground,
+                    )
+                }
+                IconButton(onClick = { onAction(UiAction.OnEditTap) }) {
+                    Icon(
+                        painter = painterResource(UiKitR.drawable.ic_edit_task),
+                        contentDescription = stringResource(R.string.edit_task),
+                        tint = TDTheme.colors.pendingGray,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
+            }
+
+            if (!task.description.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                TDText(
+                    text = task.description,
+                    style = TDTheme.typography.subheading3,
+                    color = TDTheme.colors.gray,
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Column(
                 modifier =
                 Modifier
-                    .weight(1f)
+                    .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .clickable { onAction(UiAction.OnToggleComplete) }
-                    .padding(12.dp),
+                    .background(TDTheme.colors.lightPending)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                TDTaskStatusLabel(isCompleted = task.isCompleted)
-                Spacer(modifier = Modifier.width(12.dp))
-                TDText(
-                    text = task.title,
-                    style = TDTheme.typography.heading3,
-                    color = TDTheme.colors.onBackground,
-                )
-            }
-            IconButton(onClick = { onAction(UiAction.OnEditTap) }) {
-                Icon(
-                    painter = painterResource(UiKitR.drawable.ic_edit_task),
-                    contentDescription = stringResource(R.string.edit_task),
-                    tint = TDTheme.colors.pendingGray,
-                    modifier = Modifier.size(22.dp),
-                )
-            }
-        }
+                task.assigneeName?.let { name ->
+                    MetadataRow(label = stringResource(R.string.assignee)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            AssigneeAvatar(
+                                avatarUrl = task.assigneeAvatarUrl,
+                                initials = task.assigneeInitials ?: name.take(2).uppercase(),
+                            )
+                            TDText(
+                                text = name,
+                                style = TDTheme.typography.subheading2,
+                                color = TDTheme.colors.onBackground,
+                            )
+                        }
+                    }
+                }
 
-        if (!task.description.isNullOrBlank()) {
-            Spacer(modifier = Modifier.height(16.dp))
-            TDText(
-                text = task.description,
-                style = TDTheme.typography.subheading3,
-                color = TDTheme.colors.gray,
-                modifier = Modifier.padding(horizontal = 12.dp),
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Column(
-            modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(TDTheme.colors.lightPending)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            task.assigneeName?.let { name ->
-                MetadataRow(label = stringResource(R.string.assignee)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        AssigneeAvatar(
-                            avatarUrl = task.assigneeAvatarUrl,
-                            initials = task.assigneeInitials ?: name.take(2).uppercase(),
-                        )
+                task.dueTime?.let { time ->
+                    MetadataRow(label = stringResource(R.string.due_prefix)) {
                         TDText(
-                            text = name,
+                            text = time,
                             style = TDTheme.typography.subheading2,
                             color = TDTheme.colors.onBackground,
                         )
                     }
                 }
-            }
 
-            task.dueTime?.let { time ->
-                MetadataRow(label = stringResource(R.string.due_prefix)) {
+                MetadataRow(label = stringResource(R.string.status)) {
                     TDText(
-                        text = time,
+                        text =
+                        if (task.isCompleted) {
+                            stringResource(
+                                UiKitR.string.status_completed,
+                            )
+                        } else {
+                            stringResource(UiKitR.string.status_pending)
+                        },
                         style = TDTheme.typography.subheading2,
-                        color = TDTheme.colors.onBackground,
+                        color = if (task.isCompleted) TDTheme.colors.darkGreen else TDTheme.colors.gray,
                     )
                 }
             }
 
-            MetadataRow(label = stringResource(R.string.status)) {
-                TDText(
-                    text =
-                    if (task.isCompleted) {
-                        stringResource(
-                            UiKitR.string.status_completed,
-                        )
-                    } else {
-                        stringResource(UiKitR.string.status_pending)
-                    },
-                    style = TDTheme.typography.subheading2,
-                    color = if (task.isCompleted) TDTheme.colors.darkGreen else TDTheme.colors.gray,
-                )
-            }
+            Spacer(modifier = Modifier.height(24.dp))
+
+            TaskPhotosSection(
+                photoUrls = task.photoUrls,
+                onPick = { bytes, mime -> onAction(UiAction.OnPhotoPicked(bytes, mime)) },
+                onDelete = { photoId -> onAction(UiAction.OnPhotoDelete(photoId)) },
+            )
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        TaskPhotosSection(
-            photoUrls = task.photoUrls,
-            onPick = { bytes, mime -> onAction(UiAction.OnPhotoPicked(bytes, mime)) },
-            onDelete = { photoId -> onAction(UiAction.OnPhotoDelete(photoId)) },
-        )
     }
+}
+
+private fun groupAbsoluteUrl(relative: String): String = BuildConfig.BASE_URL.trimEnd('/') + "/" + relative.trimStart('/')
+
+private fun groupPhotoIdFromUrl(url: String): Long? = url.trimEnd('/').substringAfterLast('/').toLongOrNull()
+
+/** Group task photos upload/delete immediately (no staging); the VM reloads after each. */
+private fun removeGroupBannerPhoto(
+    task: TaskUiModel,
+    onAction: (UiAction) -> Unit,
+) {
+    val cover = task.photoUrls.firstOrNull() ?: return
+    groupPhotoIdFromUrl(cover)?.let { onAction(UiAction.OnPhotoDelete(it)) }
+}
+
+private fun replaceGroupBannerPhoto(
+    task: TaskUiModel,
+    onAction: (UiAction) -> Unit,
+    bytes: ByteArray,
+) {
+    removeGroupBannerPhoto(task, onAction)
+    onAction(UiAction.OnPhotoPicked(bytes, "image/jpeg"))
 }
 
 @Composable

@@ -68,7 +68,9 @@ internal fun CreationHubCoreStep(
                     stepPlaceholder = { stringResource(CreationHubPlaceholders.stepRes(it)) },
                 )
             }
-            null -> TaskFormDateField(date = state.date, onSelect = { onAction(UiAction.OnDateSelect(it)) })
+            // GROUP is rendered by CreationHubGroupStep, never reaches here; arm kept for exhaustiveness.
+            TaskType.GROUP, null ->
+                TaskFormDateField(date = state.date, onSelect = { onAction(UiAction.OnDateSelect(it)) })
         }
 
         CreationHubDetailsSection(state = state, onAction = onAction)
