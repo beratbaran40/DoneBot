@@ -192,3 +192,40 @@ fun TDWeeklyCircularProgressIndicatorPreview(modifier: Modifier = Modifier) {
         }
     }
 }
+
+@TDPreviewWide
+@Composable
+private fun TDWeeklyCircularProgressIndicatorStatesPreview() {
+    TDTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
+            // Nothing completed yet, some in progress
+            TDWeeklyCircularProgressIndicator(
+                modifier = Modifier.fillMaxWidth(),
+                progress = 0f,
+                inProgress = 0.4f,
+                strokeWidth = 14.dp,
+                strokeCap = Butt,
+            )
+            // Half completed
+            TDWeeklyCircularProgressIndicator(
+                modifier = Modifier.fillMaxWidth(),
+                progress = 0.5f,
+                inProgress = 0.25f,
+                strokeWidth = 14.dp,
+                strokeCap = Butt,
+            )
+            // Fully completed
+            TDWeeklyCircularProgressIndicator(
+                modifier = Modifier.fillMaxWidth(),
+                progress = 1f,
+                strokeWidth = 14.dp,
+                strokeCap = Butt,
+            )
+        }
+    }
+}

@@ -59,6 +59,7 @@ import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonSize
 import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -284,5 +285,15 @@ private fun CropMaskOverlay(
                 style = Stroke(width = 2.dp.toPx()),
             )
         }
+    }
+}
+
+// The image cannot decode in a preview (no Coil/network), so this captures the overlay chrome in its
+// loading state: black backdrop, title, back arrow and the disabled "Done" button.
+@TDPreview
+@Composable
+private fun ImageCropOverlayLoadingPreview() {
+    TDTheme {
+        ImageCropOverlay(source = "", onCropped = {}, onDismiss = {})
     }
 }

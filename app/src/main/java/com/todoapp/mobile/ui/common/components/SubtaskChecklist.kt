@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.common.maskTitle
 import com.todoapp.mobile.domain.model.Subtask
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 import com.example.uikit.R as UiKitR
 
@@ -83,6 +84,31 @@ fun SubtaskChecklist(
                     color = TDTheme.colors.onBackground.copy(alpha = if (checked) 0.5f else 1f),
                 )
             }
+        }
+    }
+}
+
+@TDPreview
+@Composable
+private fun SubtaskChecklistPreview() {
+    val steps = listOf(
+        Subtask(id = 1, parentTaskId = 1, title = "Buy the groceries", isCompleted = true, orderIndex = 0),
+        Subtask(id = 2, parentTaskId = 1, title = "Cook dinner", isCompleted = false, orderIndex = 1),
+        Subtask(id = 3, parentTaskId = 1, title = "Wash the dishes", isCompleted = false, orderIndex = 2),
+    )
+    TDTheme {
+        Column(
+            modifier = Modifier
+                .background(TDTheme.colors.background)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
+            // Partial progress
+            SubtaskChecklist(subtasks = steps, onToggle = { _, _ -> })
+            // All done
+            SubtaskChecklist(subtasks = steps.map { it.copy(isCompleted = true) }, onToggle = { _, _ -> })
+            // Masked (secret mode)
+            SubtaskChecklist(subtasks = steps, onToggle = { _, _ -> }, masked = true)
         }
     }
 }

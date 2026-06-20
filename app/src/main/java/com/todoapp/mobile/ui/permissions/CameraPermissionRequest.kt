@@ -21,6 +21,7 @@ import com.todoapp.mobile.R.string
 import com.todoapp.mobile.common.needsCameraPermission
 import com.todoapp.mobile.common.openAppDetailsSettings
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.previews.TDPreviewDialog
 import com.todoapp.uikit.theme.TDTheme
 import com.example.uikit.R as UiKitR
 
@@ -165,4 +166,17 @@ private fun CameraPermissionDialog(
             }
         },
     )
+}
+
+@TDPreviewDialog
+@Composable
+private fun CameraPermissionDialogPreview() {
+    TDTheme {
+        CameraPermissionDialog(
+            body = stringResource(string.camera_permission_rationale_body),
+            confirmText = stringResource(UiKitR.string.grant_permission),
+            onConfirm = {},
+            onDismiss = {},
+        )
+    }
 }

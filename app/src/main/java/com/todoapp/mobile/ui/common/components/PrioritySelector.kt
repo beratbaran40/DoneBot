@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
 /** Priority picker for group tasks (None / Low / Medium / High). `null` = no priority. */
@@ -88,5 +89,23 @@ private fun PriorityChip(
             style = TDTheme.typography.subheading1,
             color = contentColor,
         )
+    }
+}
+
+@TDPreview
+@Composable
+private fun PrioritySelectorPreview() {
+    TDTheme {
+        Column(
+            modifier = Modifier
+                .background(TDTheme.colors.background)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            PrioritySelector(selected = null, onSelect = {})
+            PrioritySelector(selected = "LOW", onSelect = {})
+            PrioritySelector(selected = "MEDIUM", onSelect = {})
+            PrioritySelector(selected = "HIGH", onSelect = {})
+        }
     }
 }

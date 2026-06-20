@@ -228,3 +228,52 @@ fun TDTaskCardPreview() {
         }
     }
 }
+
+@TDPreview
+@Composable
+private fun TDTaskCardRichPreview() {
+    TDTheme {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            // Staged task with subtask progress
+            TDTaskCard(
+                taskTitle = "Plan the trip",
+                description = "Lock the itinerary",
+                deadlinePrimary = "Tomorrow",
+                deadlineSecondary = "Apr 27 · 10:00",
+                deadlineColor = TDTheme.colors.onBackground,
+                statusTone = TDStatusChipTone.Neutral,
+                statusLabel = "Pending",
+                subtaskTotal = 5,
+                subtaskDone = 2,
+            )
+            // Task with a tappable location pill
+            TDTaskCard(
+                taskTitle = "Dentist appointment",
+                deadlinePrimary = "in 30m",
+                deadlineSecondary = "Apr 26 · 15:00",
+                deadlineColor = TDTheme.colors.onBackground,
+                statusTone = TDStatusChipTone.Neutral,
+                statusLabel = "Pending",
+                locationLabel = "Acıbadem Hospital",
+                onLocationClick = {},
+            )
+            // Completed staged task with a photo banner (the image is absent in previews)
+            TDTaskCard(
+                taskTitle = "Birthday cake",
+                description = "Pick up from the bakery",
+                deadlinePrimary = "Done",
+                deadlineSecondary = "Apr 26 · 17:00",
+                deadlineColor = TDTheme.colors.darkGreen,
+                statusTone = TDStatusChipTone.Success,
+                statusLabel = "Done",
+                isCompleted = true,
+                photoUrl = "https://example.com/cake.jpg",
+                subtaskTotal = 3,
+                subtaskDone = 3,
+            )
+        }
+    }
+}

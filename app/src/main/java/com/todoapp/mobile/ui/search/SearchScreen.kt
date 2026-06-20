@@ -430,3 +430,34 @@ private fun SearchScreenSuccessDarkPreview() {
         )
     }
 }
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun SearchScreenEmptyResultsPreview() {
+    TDTheme {
+        SearchScreen(
+            uiState =
+            UiState.Success(
+                query = "xyzzy",
+                results = emptyList(),
+                filters = SearchContract.SearchFilters(),
+            ),
+            query = "xyzzy",
+            uiEffect = emptyFlow(),
+            onAction = {},
+        )
+    }
+}
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun SearchScreenErrorPreview() {
+    TDTheme {
+        SearchScreen(
+            uiState = UiState.Error("Something went wrong while searching"),
+            query = "Buy",
+            uiEffect = emptyFlow(),
+            onAction = {},
+        )
+    }
+}

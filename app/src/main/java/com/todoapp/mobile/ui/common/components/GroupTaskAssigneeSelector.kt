@@ -28,6 +28,7 @@ import coil.compose.AsyncImage
 import com.todoapp.mobile.BuildConfig
 import com.todoapp.mobile.R
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
 /**
@@ -153,5 +154,28 @@ private fun MemberChip(
             style = TDTheme.typography.subheading4,
             color = if (selected) TDTheme.colors.pendingGray else TDTheme.colors.gray,
         )
+    }
+}
+
+@TDPreview
+@Composable
+private fun GroupTaskAssigneeSelectorPreview() {
+    val members = listOf(
+        AssigneeUi(userId = 1, displayName = "Ada Lovelace", avatarUrl = null, initials = "AL"),
+        AssigneeUi(userId = 2, displayName = "Grace Hopper", avatarUrl = null, initials = "GH"),
+        AssigneeUi(userId = 3, displayName = "Alan Turing", avatarUrl = null, initials = "AT"),
+    )
+    TDTheme {
+        Column(
+            modifier = Modifier
+                .background(TDTheme.colors.background)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            // Unassigned (group-wide)
+            GroupTaskAssigneeSelector(members = members, selectedAssigneeId = null, onAssigneeSelected = {})
+            // A member selected
+            GroupTaskAssigneeSelector(members = members, selectedAssigneeId = 2L, onAssigneeSelected = {})
+        }
     }
 }

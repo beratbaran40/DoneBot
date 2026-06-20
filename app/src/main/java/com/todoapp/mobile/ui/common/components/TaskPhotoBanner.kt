@@ -229,3 +229,17 @@ private fun TaskPhotoBannerEditablePreview() {
         }
     }
 }
+
+@TDPreview
+@Composable
+private fun TaskPhotoBannerNoBadgePreview() {
+    TDTheme {
+        Box(modifier = Modifier.background(TDTheme.colors.lightPending)) {
+            TaskPhotoBannerEditable(
+                displayModel = "https://example.com/cover.jpg",
+                onCropped = {},
+                onRemove = {},
+            )
+        }
+    }
+}

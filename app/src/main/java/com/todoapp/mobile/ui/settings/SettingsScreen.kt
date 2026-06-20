@@ -811,3 +811,61 @@ private fun SettingsScreenPreview() {
         )
     }
 }
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun SettingsScreenLogoutDialogPreview() {
+    TDTheme {
+        SettingsScreen(
+            uiState = UiState(
+                isUserAuthenticated = true,
+                displayName = "Ada Lovelace",
+                email = "ada@example.com",
+                showLogoutDialog = true,
+            ),
+            onAction = {},
+            onCheckPermissions = {},
+            onDismissPermission = {},
+        )
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun SettingsScreenDeleteAccountDialogPreview() {
+    TDTheme {
+        SettingsScreen(
+            uiState = UiState(
+                isUserAuthenticated = true,
+                displayName = "Ada Lovelace",
+                email = "ada@example.com",
+                showDeleteAccountDialog = true,
+            ),
+            onAction = {},
+            onCheckPermissions = {},
+            onDismissPermission = {},
+        )
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun SettingsScreenDeletingAccountPreview() {
+    TDTheme {
+        SettingsScreen(
+            uiState = UiState(
+                isUserAuthenticated = true,
+                displayName = "Ada Lovelace",
+                email = "ada@example.com",
+                showDeleteAccountDialog = true,
+                isDeletingAccount = true,
+            ),
+            onAction = {},
+            onCheckPermissions = {},
+            onDismissPermission = {},
+        )
+    }
+}

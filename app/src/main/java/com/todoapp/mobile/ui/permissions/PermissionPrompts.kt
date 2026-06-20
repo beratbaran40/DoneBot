@@ -18,6 +18,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.net.toUri
 import com.todoapp.mobile.R
 import com.todoapp.uikit.components.TDPermissionPromptCard
+import com.todoapp.uikit.previews.TDPreview
+import com.todoapp.uikit.theme.TDTheme
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
@@ -102,4 +104,21 @@ private fun openAppNotificationSettings(context: Context) {
             putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
         }
     context.startActivity(intent)
+}
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@TDPreview
+@Composable
+private fun NotificationPermissionPromptPreview() {
+    TDTheme {
+        NotificationPermissionPrompt(onGranted = {}, onDismiss = {})
+    }
+}
+
+@TDPreview
+@Composable
+private fun OverlayPermissionPromptPreview() {
+    TDTheme {
+        OverlayPermissionPrompt(onGranted = {}, onDismiss = {})
+    }
 }
