@@ -109,10 +109,13 @@ constructor(
             val recurringInstances = recurring.mapNotNull { entity ->
                 val rule = Recurrence.fromStorage(entity.recurrence)
                 val anchor = LocalDate.ofEpochDay(entity.date)
-                if (!rule.firesOn(anchor, date)) return@mapNotNull null
+                val finishedOn = entity.finishedOn?.let { LocalDate.ofEpochDay(it) }
+                if (!rule.firesOn(anchor, date, finishedOn)) return@mapNotNull null
                 entity.toDomain().copy(
                     date = date,
-                    isCompleted = entity.id in completedTaskIds,
+                    // The finish day itself renders completed (derived from finishedOn, which syncs);
+                    // earlier days keep their own per-day completion.
+                    isCompleted = entity.id in completedTaskIds || entity.finishedOn == epochDay,
                 )
             }
             nonRecurring + recurringInstances
@@ -121,20 +124,16 @@ constructor(
 
     override fun observeRecurringByType(recurrence: Recurrence): Flow<List<Task>> {
         if (recurrence == Recurrence.NONE) return kotlinx.coroutines.flow.flowOf(emptyList())
-        // The recurrence-filter tabs are a "today-centric" management view: recurring completion is
-        // tracked per-day in task_daily_completions (never on the base row), so reconstruct isCompleted
-        // for today and stamp date=today. This keeps the checkbox in sync with SetTaskCompletionUseCase,
-        // which writes the instance for task.date.
+        // The recurrence-filter tabs are a "manage the routine" view: the checkbox reflects whether the
+        // WHOLE routine is finished (finishedOn != null) — set via setRoutineFinished — not today's
+        // per-day completion (that lives on the Today tab). Stamp date=today so the row still renders
+        // against the current day.
         val today = LocalDate.now()
-        return combine(
-            localDataSource.observeByRecurrence(recurrence.name),
-            dailyCompletionDao.observeForDate(today.toEpochDay()),
-        ) { list, completions ->
-            val completedIds = completions.map { it.taskId }.toSet()
+        return localDataSource.observeByRecurrence(recurrence.name).map { list ->
             list.map { entity ->
                 entity.toDomain().copy(
                     date = today,
-                    isCompleted = entity.id in completedIds,
+                    isCompleted = entity.finishedOn != null,
                 )
             }
         }
@@ -178,6 +177,31 @@ constructor(
                 ),
             )
         }.onFailure { Log.w("setDailyCompletion", "remote sync failed: ${it.message}") }
+        Unit
+    }
+
+    override suspend fun setRoutineFinished(
+        taskId: Long,
+        finishedOn: LocalDate?,
+    ) = withContext(ioDispatcher) {
+        val current = localDataSource.getTaskById(taskId) ?: return@withContext
+        // Only recurring tasks can be "finished"; plain tasks use the base isCompleted path.
+        if (current.recurrence == Recurrence.NONE.name) return@withContext
+        val epochDay = finishedOn?.toEpochDay()
+        if (current.finishedOn == epochDay) return@withContext
+        // Persist + flip SYNCED→PENDING_UPDATE so SyncWorker pushes finishedOn to the backend.
+        // syncUpdatedTask preserves the local row, so finishedOn survives the SYNCED transition.
+        val updated = current.copy(finishedOn = epochDay, syncStatus = current.syncStatus.afterEdit())
+        localDataSource.update(updated)
+        if (finishedOn != null) {
+            // Finishing: the routine arms no more alarms. The finish-day occurrence renders completed in
+            // the Today tab + week/month stats by deriving from finishedOn (which syncs), so no per-day
+            // write is needed — keeping it consistent cross-device and off the daily-only completion endpoint.
+            runCatching { alarmScheduler.cancelRecurring(taskId) }
+        } else {
+            // Un-finishing: the routine resumes, so re-arm its recurring alarm.
+            scheduleRecurringAlarmIfNeeded(updated.id, updated.toDomain())
+        }
         Unit
     }
 
@@ -324,14 +348,14 @@ constructor(
             recurring.forEach { entity ->
                 val recurrence = Recurrence.fromStorage(entity.recurrence)
                 val anchor = LocalDate.ofEpochDay(entity.date)
+                val finishedOn = entity.finishedOn?.let { LocalDate.ofEpochDay(it) }
                 for (offset in 0 until totalDays) {
                     val day = startDate.plusDays(offset.toLong())
-                    if (recurrence.firesOn(anchor, day)) {
-                        if (entity.id to day.toEpochDay() in completionKeys) {
-                            completed.merge(day, 1, Int::plus)
-                        } else {
-                            pending.merge(day, 1, Int::plus)
-                        }
+                    if (recurrence.firesOn(anchor, day, finishedOn)) {
+                        // Finish day counts as completed via finishedOn so stats match the Today tab.
+                        val done = entity.id to day.toEpochDay() in completionKeys ||
+                            entity.finishedOn == day.toEpochDay()
+                        if (done) completed.merge(day, 1, Int::plus) else pending.merge(day, 1, Int::plus)
                     }
                 }
             }
@@ -534,20 +558,26 @@ constructor(
     override suspend fun update(task: Task) = withContext(ioDispatcher) {
         val taskEntity = localDataSource.getTaskById(task.id)
 
+        // Finish-state (finishedOn) is owned exclusively by setRoutineFinished, never by the edit form
+        // (which always carries finishedOn = null). Preserve the stored value across an edit — locally
+        // AND on the wire — so editing a finished routine doesn't silently resurrect it.
+        val preserved = task.copy(finishedOn = taskEntity?.finishedOn?.let { LocalDate.ofEpochDay(it) })
+
         // Re-arm or cancel the recurring alarm based on the new recurrence. Always cancel first
-        // (no-op if there was no alarm) so a change to NONE clears it.
-        runCatching { alarmScheduler.cancelRecurring(task.id) }
-        scheduleRecurringAlarmIfNeeded(task.id, task)
+        // (no-op if there was no alarm) so a change to NONE clears it. A finished routine stays
+        // alarm-less (scheduleRecurringAlarmIfNeeded skips finishedOn != null).
+        runCatching { alarmScheduler.cancelRecurring(preserved.id) }
+        scheduleRecurringAlarmIfNeeded(preserved.id, preserved)
         // Edits to a non-recurring task can change date/timeStart/reminderOffsetMinutes, all of which
         // affect when the one-shot alarm fires. Cancel + reschedule so the user-visible reminder stays
         // in sync with what they just saved. cancelTask is taskId-based and idempotent (no-op if none scheduled).
-        rescheduleOneShotAlarm(task)
+        rescheduleOneShotAlarm(preserved)
 
         if (taskEntity?.syncStatus != SyncStatus.SYNCED) {
             // no need to update remote because its not synced
             localDataSource.update(
-                task.toEntity(SyncStatus.PENDING_CREATE).copy(
-                    id = task.id,
+                preserved.toEntity(SyncStatus.PENDING_CREATE).copy(
+                    id = preserved.id,
                     remoteId = taskEntity?.remoteId,
                 ),
             )
@@ -558,10 +588,10 @@ constructor(
             "SYNCED task ${taskEntity.id} is missing remoteId"
         }
         remoteDataSource
-            .updateTask(remoteIdForUpdate, task)
+            .updateTask(remoteIdForUpdate, preserved)
             .onSuccess { remoteTask ->
                 localDataSource.update(
-                    task
+                    preserved
                         .toEntity(SyncStatus.SYNCED)
                         .copy(
                             id = taskEntity.id,
@@ -571,7 +601,7 @@ constructor(
                 )
             }.onFailure {
                 localDataSource.update(
-                    task.toEntity(SyncStatus.PENDING_UPDATE).copy(
+                    preserved.toEntity(SyncStatus.PENDING_UPDATE).copy(
                         id = taskEntity.id,
                         remoteId = taskEntity.remoteId,
                     ),
@@ -603,6 +633,8 @@ constructor(
 
     private suspend fun scheduleRecurringAlarmIfNeeded(taskId: Long, task: Task) {
         if (task.recurrence == Recurrence.NONE) return
+        // A finished routine arms no future alarms — it no longer fires on upcoming days.
+        if (task.finishedOn != null) return
         // All-day tasks have a 00:00 placeholder timeStart; honor the user's daily-plan hour
         // (or the 09:00 default) so a daily birthday-style reminder doesn't fire at midnight.
         val effectiveTime = effectiveAlarmTime(task)
@@ -831,7 +863,8 @@ constructor(
         recurrence == other.recurrence &&
         reminderOffsetMinutes == other.reminderOffsetMinutes &&
         isAllDay == other.isAllDay &&
-        photoUrls == other.photoUrls
+        photoUrls == other.photoUrls &&
+        finishedOn == other.finishedOn
 
     override suspend fun syncLocalTasksToServer(): Result<Unit> = withContext(ioDispatcher) {
         val nonSyncedTasks = findNonSyncedTasks()

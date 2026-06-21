@@ -18,6 +18,7 @@ object HomePreviewData {
         pendingTaskCountThisWeek: Int = 0,
         isSheetOpen: Boolean = false,
         isDeleteDialogOpen: Boolean = false,
+        isFinishRoutineDialogOpen: Boolean = false,
         isSecretModeEnabled: Boolean = true,
         taskTitle: String = "",
         dialogSelectedDate: LocalDate? = null,
@@ -35,8 +36,8 @@ object HomePreviewData {
         yesterdayCompletedCount: Int = 0,
         isEndOfDayMoment: Boolean = false,
         currentTimeFormatted: String = "09:30",
-        selectedFilter: com.todoapp.mobile.ui.home.HomeContract.HomeFilter = com.todoapp.mobile.ui.home.HomeContract.HomeFilter.TODAY,
-        lastRecurringFilter: com.todoapp.mobile.ui.home.HomeContract.HomeFilter = com.todoapp.mobile.ui.home.HomeContract.HomeFilter.DAILY,
+        selectedFilter: HomeContract.HomeFilter = HomeContract.HomeFilter.TODAY,
+        lastRecurringFilter: HomeContract.HomeFilter = HomeContract.HomeFilter.DAILY,
     ) = UiState.Success(
         selectedDate = selectedDate,
         displayedMonth = displayedMonth,
@@ -45,6 +46,7 @@ object HomePreviewData {
         pendingTaskCountThisWeek = pendingTaskCountThisWeek,
         isSheetOpen = isSheetOpen,
         isDeleteDialogOpen = isDeleteDialogOpen,
+        isFinishRoutineDialogOpen = isFinishRoutineDialogOpen,
         isSecretModeEnabled = isSecretModeEnabled,
         taskFormState =
         TaskFormState(
@@ -100,6 +102,35 @@ object HomePreviewData {
                 timeEnd = LocalTime.of(14, 30),
                 isCompleted = false,
                 isSecret = false,
+            ),
+        )
+
+    /** Recurring tasks for the Recurring-tab previews: one active, one finished (finishedOn set). */
+    val sampleRoutines =
+        listOf(
+            Task(
+                id = 10L,
+                title = "Drink water",
+                description = "8 glasses a day",
+                date = LocalDate.now(),
+                timeStart = LocalTime.of(8, 0),
+                timeEnd = LocalTime.of(8, 5),
+                isCompleted = false,
+                isSecret = false,
+                recurrence = com.todoapp.mobile.domain.model.Recurrence.DAILY,
+            ),
+            Task(
+                id = 11L,
+                title = "Morning stretch",
+                description = "10 min routine",
+                date = LocalDate.now().minusDays(20),
+                timeStart = LocalTime.of(7, 0),
+                timeEnd = LocalTime.of(7, 10),
+                // Finished routine: the Recurring tab renders it checked (isCompleted = finishedOn != null).
+                isCompleted = true,
+                isSecret = false,
+                recurrence = com.todoapp.mobile.domain.model.Recurrence.DAILY,
+                finishedOn = LocalDate.now(),
             ),
         )
 }

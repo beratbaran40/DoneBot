@@ -46,6 +46,12 @@ data class Task(
     val locationAddress: String? = null,
     val locationLat: Double? = null,
     val locationLng: Double? = null,
+    /**
+     * The day the user marked the whole recurring routine done from the Recurring tab. Null = still
+     * active. A recurring task stops firing on days AFTER this date (see [firesOn]); days up to and
+     * including it keep their per-day completion. Meaningless for non-recurring tasks.
+     */
+    val finishedOn: LocalDate? = null,
     /** Ordered steps of a staged task. Non-empty ⇒ this task is "staged". Personal tasks only. */
     val subtasks: List<Subtask> = emptyList(),
     /**
@@ -89,6 +95,7 @@ fun Task.toCreateTaskRequestDto(
     category = category.name,
     customCategoryName = customCategoryName,
     recurrence = recurrence.name,
+    finishedOn = finishedOn?.toEpochDay(),
     isAllDay = isAllDay,
     reminderOffsetMinutes = reminderOffsetMinutes ?: 0L,
     locationLat = locationLat,
@@ -127,4 +134,5 @@ fun TaskData.toDomain(): Task = Task(
     locationLng = locationLng,
     locationName = locationName,
     locationAddress = locationAddress,
+    finishedOn = finishedOn?.let { LocalDate.ofEpochDay(it) },
 )

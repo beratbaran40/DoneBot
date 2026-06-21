@@ -380,6 +380,7 @@ fun HomeContent(
                     item {
                         HomeSectionTabRow(
                             isRecurring = uiState.selectedFilter != HomeContract.HomeFilter.TODAY,
+                            selectedDate = uiState.selectedDate,
                             onSelectToday = {
                                 onAction(UiAction.OnFilterChange(HomeContract.HomeFilter.TODAY))
                             },
@@ -445,6 +446,32 @@ fun HomeContent(
                 },
                 dismissButton = {
                     TextButton(onClick = { onAction(UiAction.OnDeleteDialogDismiss) }) {
+                        Text(
+                            text = stringResource(com.todoapp.mobile.R.string.cancel),
+                            color = TDTheme.colors.gray,
+                        )
+                    }
+                },
+            )
+        }
+        if (uiState.isFinishRoutineDialogOpen) {
+            AlertDialog(
+                onDismissRequest = { onAction(UiAction.OnFinishRoutineDialogDismiss) },
+                title = { Text(stringResource(com.todoapp.mobile.R.string.finish_routine_dialog_title)) },
+                titleContentColor = TDTheme.colors.onBackground,
+                containerColor = TDTheme.colors.background,
+                textContentColor = TDTheme.colors.gray,
+                text = { Text(stringResource(com.todoapp.mobile.R.string.finish_routine_dialog_message)) },
+                confirmButton = {
+                    TextButton(onClick = { onAction(UiAction.OnFinishRoutineDialogConfirm) }) {
+                        Text(
+                            text = stringResource(com.todoapp.mobile.R.string.finish_routine_confirm),
+                            color = TDTheme.colors.darkPending,
+                        )
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { onAction(UiAction.OnFinishRoutineDialogDismiss) }) {
                         Text(
                             text = stringResource(com.todoapp.mobile.R.string.cancel),
                             color = TDTheme.colors.gray,
@@ -980,10 +1007,29 @@ private fun HomeContentRecurringPreview() {
         HomeContent(
             uiState =
             HomePreviewData.successState(
-                tasks = HomePreviewData.sampleTasks,
+                tasks = HomePreviewData.sampleRoutines,
                 completedTaskCountThisWeek = 5,
                 pendingTaskCountThisWeek = 8,
                 selectedFilter = HomeContract.HomeFilter.DAILY,
+            ),
+            onAction = {},
+            modifier = Modifier.padding(horizontal = 24.dp),
+        )
+    }
+}
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun HomeContentFinishRoutineDialogPreview() {
+    TDTheme {
+        HomeContent(
+            uiState =
+            HomePreviewData.successState(
+                tasks = HomePreviewData.sampleRoutines,
+                completedTaskCountThisWeek = 3,
+                pendingTaskCountThisWeek = 4,
+                selectedFilter = HomeContract.HomeFilter.DAILY,
+                isFinishRoutineDialogOpen = true,
             ),
             onAction = {},
             modifier = Modifier.padding(horizontal = 24.dp),

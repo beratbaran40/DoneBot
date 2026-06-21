@@ -840,6 +840,12 @@
     <string name="home_section_tab_recurring">Recurring</string>
     <string name="home_section_tab_selected_cd">selected</string>
     <string name="home_section_tab_unselected_cd">not selected</string>
+    <!-- Home — Today tab label with the selected date, e.g. "Today · 21 Jun" -->
+    <string name="home_section_tab_today_dated">%1$s · %2$s</string>
+    <!-- Home — finish-routine confirmation (Recurring tab) -->
+    <string name="finish_routine_dialog_title">Complete this routine?</string>
+    <string name="finish_routine_dialog_message">This marks the whole routine as done — it shows as completed and stops appearing on upcoming days. You can undo it from the Recurring tab.</string>
+    <string name="finish_routine_confirm">Complete</string>
     <!-- Home — back to today pill (shown below the date strip when today is off-screen) -->
     <string name="home_back_to_today">Back to today</string>
     <!-- Home — suggest card (kept) -->

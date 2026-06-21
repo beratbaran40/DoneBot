@@ -68,7 +68,7 @@ constructor(
     private val pomodoroEngine: PomodoroEngine,
     private val groupRepository: GroupRepository,
     private val dataStoreHelper: DataStoreHelper,
-    private val clock: java.time.Clock,
+    private val clock: Clock,
     @ApplicationContext private val appContext: Context,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
@@ -88,6 +88,7 @@ constructor(
     val navEffect by lazy { _navEffect.receiveAsFlow() }
 
     private lateinit var selectedTask: Task
+    private var pendingFinishTask: Task? = null
     private var fetchJob: Job? = null
     private var pendingDeleteJob: Job? = null
     private var subtaskJob: Job? = null
@@ -118,6 +119,8 @@ constructor(
             is UiAction.OnTaskLongPress -> onTaskLongPressed(uiAction)
             is UiAction.OnDeleteDialogConfirm -> onDeleteDialogConfirmed()
             is UiAction.OnDeleteDialogDismiss -> closeDeleteDialog()
+            is UiAction.OnFinishRoutineDialogConfirm -> onFinishRoutineConfirmed()
+            is UiAction.OnFinishRoutineDialogDismiss -> dismissFinishRoutineDialog()
             is UiAction.OnMoveTask -> updateTaskIndices(uiAction)
             is UiAction.OnTaskTitleChange -> changeTaskTitle(uiAction)
             is UiAction.OnTaskDescriptionChange -> changeTaskDescription(uiAction)
@@ -506,10 +509,39 @@ constructor(
     }
 
     private fun checkTask(uiAction: UiAction.OnTaskCheck) {
+        val state = _uiState.value as? UiState.Success
+        val task = uiAction.task
+        // Recurring tab ("Tekrarlı"): the checkbox finishes/resumes the WHOLE routine, not one day.
+        if (state != null && state.selectedFilter != HomeContract.HomeFilter.TODAY) {
+            if (task.finishedOn == null) {
+                pendingFinishTask = task
+                updateSuccessState { it.copy(isFinishRoutineDialogOpen = true) }
+            } else {
+                // Already finished → resume immediately (non-destructive, no confirm).
+                viewModelScope.launch(ioDispatcher) {
+                    taskRepository.setRoutineFinished(task.id, finishedOn = null)
+                }
+            }
+            return
+        }
+        // Today tab: per-day completion (unchanged).
         viewModelScope.launch(ioDispatcher) {
-            val task = uiAction.task
             setTaskCompletion(task, completed = !task.isCompleted)
         }
+    }
+
+    private fun onFinishRoutineConfirmed() {
+        val task = pendingFinishTask ?: return
+        pendingFinishTask = null
+        updateSuccessState { it.copy(isFinishRoutineDialogOpen = false) }
+        viewModelScope.launch(ioDispatcher) {
+            taskRepository.setRoutineFinished(task.id, finishedOn = LocalDate.now(clock))
+        }
+    }
+
+    private fun dismissFinishRoutineDialog() {
+        pendingFinishTask = null
+        updateSuccessState { it.copy(isFinishRoutineDialogOpen = false) }
     }
 
     private fun deleteTask(task: Task) {
@@ -706,7 +738,7 @@ constructor(
             kotlinx.coroutines.flow.flow {
                 while (true) {
                     emit(java.time.LocalDateTime.now(clock))
-                    kotlinx.coroutines.delay(AUX_TICK_MILLIS)
+                    delay(AUX_TICK_MILLIS)
                 }
             }.map { now ->
                 val mode = com.todoapp.mobile.common.computeDayMode(now.toLocalTime())
@@ -723,7 +755,7 @@ constructor(
                 )
             }.distinctUntilChanged()
                 .flatMapLatest { tick ->
-                    kotlinx.coroutines.flow.combine(
+                    combine(
                         dataStoreHelper.observeUser(),
                         taskRepository.observeTasksByDate(tick.today.minusDays(1), includeRecurringInstances = false),
                         dataStoreHelper.observeSuggestCardDismissedDay(),
@@ -755,14 +787,14 @@ constructor(
                 updateSuccessState { state ->
                     if (state.currentTimeFormatted == now) state else state.copy(currentTimeFormatted = now)
                 }
-                kotlinx.coroutines.delay(AUX_TICK_MILLIS)
+                delay(AUX_TICK_MILLIS)
             }
         }
         viewModelScope.launch {
             kotlinx.coroutines.flow.flow {
                 while (true) {
                     emit(LocalDate.now(clock))
-                    kotlinx.coroutines.delay(AUX_TICK_MILLIS)
+                    delay(AUX_TICK_MILLIS)
                 }
             }
                 .distinctUntilChanged()
@@ -829,7 +861,7 @@ constructor(
     )
 
     private data class AuxTick(
-        val today: java.time.LocalDate,
+        val today: LocalDate,
         val mode: com.todoapp.mobile.domain.model.DayMode,
         val isEndOfDay: Boolean,
         val todayEpoch: Long,

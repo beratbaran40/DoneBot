@@ -45,7 +45,8 @@ constructor(
 
     private suspend fun rescheduleRecurringTaskAlarms() {
         val tasks = taskRepository.observeAllTasks().first()
-            .filter { it.recurrence != Recurrence.NONE }
+            // Finished routines no longer fire on upcoming days, so they arm no recurring alarm.
+            .filter { it.recurrence != Recurrence.NONE && it.finishedOn == null }
         tasks.forEach { task ->
             runCatching {
                 alarmScheduler.scheduleRecurring(

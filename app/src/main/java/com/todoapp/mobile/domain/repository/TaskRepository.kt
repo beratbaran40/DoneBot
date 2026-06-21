@@ -96,6 +96,16 @@ interface TaskRepository {
         completed: Boolean,
     )
 
+    /**
+     * Retire / un-retire a whole recurring routine from the Recurring tab. [finishedOn] = the day it
+     * was finished (the routine stops firing on later days and shows completed); null = resume it.
+     * No-op for non-recurring tasks.
+     */
+    suspend fun setRoutineFinished(
+        taskId: Long,
+        finishedOn: LocalDate?,
+    )
+
     /** All tasks of a given recurrence type, ordered by anchor date then start time. */
     fun observeRecurringByType(recurrence: Recurrence): Flow<List<Task>>
 

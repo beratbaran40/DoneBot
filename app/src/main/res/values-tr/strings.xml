@@ -841,6 +841,12 @@
     <string name="home_section_tab_recurring">Rutinler</string>
     <string name="home_section_tab_selected_cd">seçili</string>
     <string name="home_section_tab_unselected_cd">seçili değil</string>
+    <!-- Home — Bugün sekmesi etiketi + seçili tarih, ör. "Bugün · 21 Haz" -->
+    <string name="home_section_tab_today_dated">%1$s · %2$s</string>
+    <!-- Home — rutini bitir onayı (Rutinler sekmesi) -->
+    <string name="finish_routine_dialog_title">Bu rutin tamamlansın mı?</string>
+    <string name="finish_routine_dialog_message">Bu rutin tamamlandı görünür ve ilerleyen günlerde çıkmaz. (Rutinler sekmesinden geri alabilirsin.)</string>
+    <string name="finish_routine_confirm">Tamamla</string>
     <!-- Home — back to today pill (shown below the date strip when today is off-screen) -->
     <string name="home_back_to_today">Bugüne dön</string>
 <!-- Home — suggest card (kept) -->

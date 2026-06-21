@@ -44,6 +44,12 @@ data class TaskEntity(
     @ColumnInfo(name = "location_lng") val locationLng: Double? = null,
     @ColumnInfo(name = "location_name") val locationName: String? = null,
     @ColumnInfo(name = "location_address") val locationAddress: String? = null,
+    /**
+     * Epoch day on which the whole recurring routine was marked finished from the Recurring tab.
+     * Null = still active. A recurring task stops firing on days AFTER this date (see
+     * Recurrence.firesOn); days up to and including it keep their per-day completion state.
+     */
+    @ColumnInfo(name = "finished_on") val finishedOn: Long? = null,
 )
 
 enum class SyncStatus {

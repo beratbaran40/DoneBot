@@ -19,16 +19,27 @@ enum class Recurrence {
  * Whether a task with this recurrence rule fires on [day], anchored at [anchor] (the date the
  * user chose when creating the task). Pure function — used by the alarm next-fire calculator
  * and the per-week stat-card expansion.
+ *
+ * [finishedOn] is the day the routine was retired from the Recurring tab (null = active): the rule
+ * never fires on days AFTER it, so a finished routine drops off upcoming days while its history
+ * (days up to and including [finishedOn]) is preserved.
  */
-fun Recurrence.firesOn(anchor: LocalDate, day: LocalDate): Boolean = when (this) {
-    Recurrence.NONE -> anchor == day
-    Recurrence.DAILY -> !day.isBefore(anchor)
-    Recurrence.WEEKLY -> !day.isBefore(anchor) && day.dayOfWeek == anchor.dayOfWeek
-    Recurrence.MONTHLY -> !day.isBefore(anchor) &&
-        day.dayOfMonth == clampedDayOfMonth(anchor.dayOfMonth, day.year, day.monthValue)
-    Recurrence.YEARLY -> !day.isBefore(anchor) &&
-        day.monthValue == anchor.monthValue &&
-        day.dayOfMonth == clampedDayOfMonth(anchor.dayOfMonth, day.year, day.monthValue)
+fun Recurrence.firesOn(
+    anchor: LocalDate,
+    day: LocalDate,
+    finishedOn: LocalDate? = null,
+): Boolean {
+    if (finishedOn != null && day.isAfter(finishedOn)) return false
+    return when (this) {
+        Recurrence.NONE -> anchor == day
+        Recurrence.DAILY -> !day.isBefore(anchor)
+        Recurrence.WEEKLY -> !day.isBefore(anchor) && day.dayOfWeek == anchor.dayOfWeek
+        Recurrence.MONTHLY -> !day.isBefore(anchor) &&
+            day.dayOfMonth == clampedDayOfMonth(anchor.dayOfMonth, day.year, day.monthValue)
+        Recurrence.YEARLY -> !day.isBefore(anchor) &&
+            day.monthValue == anchor.monthValue &&
+            day.dayOfMonth == clampedDayOfMonth(anchor.dayOfMonth, day.year, day.monthValue)
+    }
 }
 
 /**

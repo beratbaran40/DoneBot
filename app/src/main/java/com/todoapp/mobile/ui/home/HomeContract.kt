@@ -28,6 +28,7 @@ object HomeContract {
             val pendingTaskCountThisWeek: Int,
             val isSheetOpen: Boolean,
             val isDeleteDialogOpen: Boolean,
+            val isFinishRoutineDialogOpen: Boolean = false,
             val isSecretModeEnabled: Boolean,
             val taskFormState: TaskFormState = TaskFormState(),
             val pendingDeleteTask: Task? = null,
@@ -99,6 +100,10 @@ object HomeContract {
         data object OnDeleteDialogDismiss : UiAction
 
         data object OnDeleteDialogConfirm : UiAction
+
+        data object OnFinishRoutineDialogConfirm : UiAction
+
+        data object OnFinishRoutineDialogDismiss : UiAction
 
         data object OnRetry : UiAction
 

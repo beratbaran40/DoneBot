@@ -41,6 +41,7 @@ fun TaskEntity.toDomain(): Task = Task(
     locationLng = locationLng,
     locationName = locationName,
     locationAddress = locationAddress,
+    finishedOn = finishedOn?.toLocalDate(),
 )
 
 fun Task.toEntity(syncStatus: SyncStatus = SyncStatus.SYNCED): TaskEntity {
@@ -65,5 +66,6 @@ fun Task.toEntity(syncStatus: SyncStatus = SyncStatus.SYNCED): TaskEntity {
         locationLng = locationLng,
         locationName = locationName?.takeIf { it.isNotBlank() },
         locationAddress = locationAddress?.takeIf { it.isNotBlank() },
+        finishedOn = finishedOn?.toEpochDayLong(),
     )
 }

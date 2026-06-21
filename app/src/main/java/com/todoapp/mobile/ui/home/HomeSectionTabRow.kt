@@ -10,12 +10,17 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.theme.TDTheme
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /**
  * Two-tab text row with a rounded pill indicator under the active tab: "Bugünkü" / "Tekrarlı".
@@ -25,6 +30,7 @@ import com.todoapp.uikit.theme.TDTheme
 @Composable
 internal fun HomeSectionTabRow(
     isRecurring: Boolean,
+    selectedDate: LocalDate,
     onSelectToday: () -> Unit,
     onSelectRecurring: () -> Unit,
     modifier: Modifier = Modifier,
@@ -32,7 +38,7 @@ internal fun HomeSectionTabRow(
     val selectedIndex = if (isRecurring) 1 else 0
     val tabs =
         listOf(
-            stringResource(R.string.home_section_tab_today) to onSelectToday,
+            todaySectionTabLabel(selectedDate) to onSelectToday,
             stringResource(R.string.home_section_tab_recurring) to onSelectRecurring,
         )
     SecondaryTabRow(
@@ -76,12 +82,49 @@ internal fun HomeSectionTabRow(
     }
 }
 
+/**
+ * Today-tab label that surfaces the selected day so the tab isn't ambiguous when the date strip is
+ * scrolled to another day: "Bugün · 21 Haz" when today is selected, just "25 Haz" otherwise.
+ */
+@Composable
+private fun todaySectionTabLabel(selectedDate: LocalDate): String {
+    val locale = LocalConfiguration.current.locales[0] ?: Locale.getDefault()
+    val formatter = remember(locale) { DateTimeFormatter.ofPattern(DAY_MONTH_PATTERN, locale) }
+    val dateStr = formatter.format(selectedDate)
+    return if (selectedDate == LocalDate.now()) {
+        stringResource(
+            R.string.home_section_tab_today_dated,
+            stringResource(R.string.home_section_tab_today),
+            dateStr,
+        )
+    } else {
+        dateStr
+    }
+}
+
+private const val DAY_MONTH_PATTERN = "d MMM"
+
 @com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun HomeSectionTabRowTodayPreview() {
     TDTheme {
         HomeSectionTabRow(
             isRecurring = false,
+            selectedDate = LocalDate.now(),
+            onSelectToday = {},
+            onSelectRecurring = {},
+            modifier = Modifier.padding(16.dp),
+        )
+    }
+}
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun HomeSectionTabRowOtherDayPreview() {
+    TDTheme {
+        HomeSectionTabRow(
+            isRecurring = false,
+            selectedDate = LocalDate.now().plusDays(4),
             onSelectToday = {},
             onSelectRecurring = {},
             modifier = Modifier.padding(16.dp),
@@ -95,6 +138,7 @@ private fun HomeSectionTabRowRecurringPreview() {
     TDTheme {
         HomeSectionTabRow(
             isRecurring = true,
+            selectedDate = LocalDate.now(),
             onSelectToday = {},
             onSelectRecurring = {},
             modifier = Modifier.padding(16.dp),
@@ -108,6 +152,7 @@ private fun HomeSectionTabRowDarkPreview() {
     TDTheme(darkTheme = true) {
         HomeSectionTabRow(
             isRecurring = true,
+            selectedDate = LocalDate.now(),
             onSelectToday = {},
             onSelectRecurring = {},
             modifier = Modifier.padding(16.dp),

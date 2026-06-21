@@ -25,6 +25,7 @@ data class TaskData(
     val category: String? = null,
     val customCategoryName: String? = null,
     val recurrence: String? = null,
+    val finishedOn: Long? = null,
     val isAllDay: Boolean = false,
     val reminderOffsetMinutes: Long = 0L,
     val locationLat: Double? = null,
