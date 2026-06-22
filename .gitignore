@@ -41,8 +41,8 @@ docs/
 thesis-screenshots/
 todoapp-screnshots/
 .screenshots-review/
-/donebot prod/PRODUCTION_READINESS_RAPOR.md
-/donebot prod/Ekran Resmi 2026-05-15 10.34.39.png
+# Prod-readiness working docs — local-only, never tracked (report, session notes, screenshots)
+/donebot prod/
 
 # Secrets, signing & environment (never commit)
 # Environment files
