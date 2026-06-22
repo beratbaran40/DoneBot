@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.todoapp.mobile.MainContract.UiEffect
 import com.todoapp.mobile.data.repository.DataStoreHelper
 import com.todoapp.mobile.data.source.remote.fcm.TDFireBaseMessagingService
@@ -116,6 +117,18 @@ constructor(
             // trigger the claim.
             runCatching { journalRepository.claimOrphansForCurrentUser() }
                 .onFailure { Timber.tag("Journal").w(it, "claimOrphansForCurrentUser failed") }
+        }
+
+        // Tag every crash report with the signed-in user so Crashlytics groups issues per account.
+        // observeUser emits the persisted user on startup, the new user on login/register, and null
+        // on logout — so a single collector keeps the userId correct across the whole session.
+        viewModelScope.launch {
+            dataStoreHelper.observeUser()
+                .map { it?.id }
+                .distinctUntilChanged()
+                .collect { userId ->
+                    FirebaseCrashlytics.getInstance().setUserId(userId?.toString().orEmpty())
+                }
         }
     }
 

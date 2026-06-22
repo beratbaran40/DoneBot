@@ -11,6 +11,8 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.work.Configuration
 import com.google.android.libraries.places.api.Places
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.todoapp.mobile.data.log.CrashlyticsTree
 import com.todoapp.mobile.data.network.NetworkMonitor
 import com.todoapp.mobile.data.notification.NotificationService
 import com.todoapp.mobile.data.notification.PomodoroNotificationChannels
@@ -63,9 +65,7 @@ class Application :
 
     override fun onCreate() {
         super<Application>.onCreate()
-        if (BuildConfig.DEBUG) {
-            Timber.plant(Timber.DebugTree())
-        }
+        initCrashReporting()
         installAppCheck()
         initializePlacesSdk()
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
@@ -74,6 +74,25 @@ class Application :
         ProcessLifecycleOwner.get().lifecycleScope.launch(ioDispatcher) {
             runCatching { rescheduleAllAlarmsUseCase() }
                 .onFailure { Timber.tag("RescheduleAllAlarms").w(it, "reschedule on app start failed") }
+        }
+    }
+
+    /**
+     * Crashlytics + Timber wiring. Collection is OFF in debug (manual test crashes would pollute the
+     * prod dashboard); release plants [CrashlyticsTree] so Timber WARN/ERROR survive as breadcrumbs /
+     * non-fatals — without it, release Timber logs go nowhere. Custom keys ride along on every report.
+     */
+    private fun initCrashReporting() {
+        FirebaseCrashlytics.getInstance().apply {
+            setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG)
+            setCustomKey("build_type", if (BuildConfig.DEBUG) "debug" else "release")
+            setCustomKey("version_name", BuildConfig.VERSION_NAME)
+            setCustomKey("version_code", BuildConfig.VERSION_CODE)
+        }
+        if (BuildConfig.DEBUG) {
+            Timber.plant(Timber.DebugTree())
+        } else {
+            Timber.plant(CrashlyticsTree())
         }
     }
 
