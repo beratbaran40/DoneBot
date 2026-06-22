@@ -150,10 +150,7 @@ constructor(
             is UiAction.OnJournalTap -> _navEffect.trySend(NavigationEffect.Navigate(Screen.Journal))
             is UiAction.OnCreateHubTap -> _navEffect.trySend(NavigationEffect.Navigate(Screen.CreationHub))
             is UiAction.OnStagedExpandToggle -> toggleStagedExpand(uiAction.taskId)
-            is UiAction.OnSubtaskToggle ->
-                viewModelScope.launch(ioDispatcher) {
-                    taskRepository.toggleSubtask(uiAction.subtaskId, uiAction.isCompleted)
-                }
+            is UiAction.OnSubtaskToggle -> viewModelScope.launch(ioDispatcher) { taskRepository.toggleSubtask(uiAction.subtaskId, uiAction.isCompleted) }
             is UiAction.OnCompletedStatCardTap -> navigateToFilteredTasks(isCompleted = true)
             is UiAction.OnPendingStatCardTap -> navigateToFilteredTasks(isCompleted = false)
             is UiAction.OnSuccessfulBiometricAuthenticationHandle -> handleSuccessfulBiometricAuthentication()
@@ -163,28 +160,28 @@ constructor(
             is UiAction.OnPreviousMonth -> navigateToPreviousMonth()
             is UiAction.OnNextMonth -> navigateToNextMonth()
             is UiAction.OnJumpToEarliestOverdue -> jumpToEarliestOverdue()
-            is UiAction.OnGroupSelectionChanged ->
-                updateSuccessState {
-                    it.copy(taskFormState = it.taskFormState.copy(selectedGroupId = uiAction.groupId))
-                }
-            is UiAction.OnPendingPhotoAdd ->
-                updateSuccessState { s ->
-                    s.copy(
-                        taskFormState =
-                        s.taskFormState.copy(
-                            pendingPhotos = s.taskFormState.pendingPhotos + PendingPhoto(uiAction.bytes, uiAction.mimeType),
+            is UiAction.OnGroupSelectionChanged -> updateSuccessState { it.copy(taskFormState = it.taskFormState.copy(selectedGroupId = uiAction.groupId)) }
+            is UiAction.OnPendingPhotoAdd -> updateSuccessState { s ->
+                s.copy(
+                    taskFormState = s.taskFormState.copy(
+                        pendingPhotos = s.taskFormState.pendingPhotos + PendingPhoto(
+                            uiAction.bytes,
+                            uiAction.mimeType,
                         ),
-                    )
-                }
+                    ),
+                )
+            }
+
             is UiAction.OnPendingPhotoRemove ->
                 updateSuccessState { s ->
                     s.copy(
                         taskFormState =
-                        s.taskFormState.copy(
-                            pendingPhotos = s.taskFormState.pendingPhotos.filterIndexed { i, _ -> i != uiAction.index },
-                        ),
+                            s.taskFormState.copy(
+                                pendingPhotos = s.taskFormState.pendingPhotos.filterIndexed { i, _ -> i != uiAction.index },
+                            ),
                     )
                 }
+
             is UiAction.DismissPermission -> dismissPermission(uiAction.type)
             is UiAction.PermissionGranted -> dismissPermission(uiAction.type)
             is UiAction.RefreshPermissions -> refreshPermissions()
@@ -302,7 +299,7 @@ constructor(
                         }
                     timber.log.Timber.tag("TaskFetch").d(
                         "Home tasks=${withPhotos.size}, with photos=${withPhotos.count { it.photoUrls.isNotEmpty() }}, " +
-                            "in-mem map size=${photoUrls.size}",
+                                "in-mem map size=${photoUrls.size}",
                     )
                     DailyData(withPhotos, pendingTaskCount, completedTaskCount)
                 }.collect { data ->
@@ -344,7 +341,7 @@ constructor(
                                 createInitialState(date, data, initialDisplayName).copy(
                                     overdueDates = dates,
                                     hasOverdueBeforeDisplayedMonth =
-                                    dates.any { d -> d.isBefore(firstOfDisplayed) },
+                                        dates.any { d -> d.isBefore(firstOfDisplayed) },
                                     overdueCount = initialOverdue.size,
                                     taskDatesInMonth = initialTaskDates,
                                 )
@@ -481,7 +478,7 @@ constructor(
                     category = form.selectedCategory,
                     customCategoryName = form.customCategoryName.takeIf {
                         form.selectedCategory == com.todoapp.mobile.domain.model.TaskCategory.OTHER &&
-                            it.isNotBlank()
+                                it.isNotBlank()
                     },
                     recurrence = form.selectedRecurrence,
                     isAllDay = form.isAllDay,
@@ -643,12 +640,12 @@ constructor(
             // moving off BIRTHDAY reverts that auto-set so the explainer doesn't linger.
             val nextRecurrence = when {
                 category == com.todoapp.mobile.domain.model.TaskCategory.BIRTHDAY &&
-                    form.selectedRecurrence == com.todoapp.mobile.domain.model.Recurrence.NONE ->
+                        form.selectedRecurrence == com.todoapp.mobile.domain.model.Recurrence.NONE ->
                     com.todoapp.mobile.domain.model.Recurrence.YEARLY
 
                 form.selectedCategory == com.todoapp.mobile.domain.model.TaskCategory.BIRTHDAY &&
-                    category != com.todoapp.mobile.domain.model.TaskCategory.BIRTHDAY &&
-                    form.selectedRecurrence == com.todoapp.mobile.domain.model.Recurrence.YEARLY ->
+                        category != com.todoapp.mobile.domain.model.TaskCategory.BIRTHDAY &&
+                        form.selectedRecurrence == com.todoapp.mobile.domain.model.Recurrence.YEARLY ->
                     com.todoapp.mobile.domain.model.Recurrence.NONE
 
                 else -> form.selectedRecurrence
@@ -746,7 +743,7 @@ constructor(
                 // tail of the calendar day. NIGHT also covers 00:00-05:59, where the user
                 // has just entered today — gate that out via the explicit hour check.
                 val isEndOfDay = mode == com.todoapp.mobile.domain.model.DayMode.EVENING ||
-                    (mode == com.todoapp.mobile.domain.model.DayMode.NIGHT && now.hour >= END_OF_DAY_HOUR)
+                        (mode == com.todoapp.mobile.domain.model.DayMode.NIGHT && now.hour >= END_OF_DAY_HOUR)
                 AuxTick(
                     today = now.toLocalDate(),
                     mode = mode,
@@ -827,8 +824,10 @@ constructor(
                     ),
                 )
             }
+
             com.todoapp.mobile.domain.model.DayMode.EVENING,
-            com.todoapp.mobile.domain.model.DayMode.NIGHT -> {
+            com.todoapp.mobile.domain.model.DayMode.NIGHT,
+                -> {
                 if (!state.isEndOfDayMoment) return
                 val pendingIds = state.tasks.filter { !it.isCompleted }.map { it.id }
                 viewModelScope.launch {
@@ -836,6 +835,7 @@ constructor(
                     dismissSuggestCard()
                 }
             }
+
             com.todoapp.mobile.domain.model.DayMode.MIDDAY -> Unit
         }
     }
@@ -931,9 +931,9 @@ constructor(
             }
 
             !form.isAllDay &&
-                form.taskTimeStart != null &&
-                form.taskTimeEnd != null &&
-                !form.taskTimeEnd.isAfter(form.taskTimeStart) -> {
+                    form.taskTimeStart != null &&
+                    form.taskTimeEnd != null &&
+                    !form.taskTimeEnd.isAfter(form.taskTimeStart) -> {
                 showTransientError(R.string.error_task_end_before_start) { s, v ->
                     s.copy(taskFormState = s.taskFormState.copy(timeErrorRes = v))
                 }
@@ -1005,9 +1005,9 @@ constructor(
         updateSuccessState {
             it.copy(
                 taskFormState =
-                it.taskFormState.copy(
-                    isAdvancedSettingsExpanded = !it.taskFormState.isAdvancedSettingsExpanded,
-                ),
+                    it.taskFormState.copy(
+                        isAdvancedSettingsExpanded = !it.taskFormState.isAdvancedSettingsExpanded,
+                    ),
             )
         }
     }
@@ -1064,7 +1064,7 @@ constructor(
     }
 
     companion object {
-        private const val LOADING_DELAY = 200L
+        private const val LOADING_DELAY = 100L
         private const val AUX_TICK_MILLIS = 60_000L
         private const val UNDO_DELAY_MS = 5000L
 
