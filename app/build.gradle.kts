@@ -9,6 +9,14 @@ private val localProps: Properties =
         val f = rootProject.file("local.properties")
         if (f.exists()) f.inputStream().use { load(it) }
     }
+
+// Release signing — read from keystore.properties at the repo root (gitignored, never committed).
+// Absent on CI and fresh clones, so the release signingConfig below is wired only when it exists.
+private val keystorePropsFile = rootProject.file("keystore.properties")
+private val keystoreProps: Properties =
+    Properties().apply {
+        if (keystorePropsFile.exists()) keystorePropsFile.inputStream().use { load(it) }
+    }
 val debugBaseUrl: String = localProps.getProperty("debugBaseUrl", "https://donebot-backend.onrender.com/")
 // Google Maps Platform API key. Add `MAPS_API_KEY=…` to local.properties (not in git).
 // Empty string is acceptable at build-time — Maps SDK will fail at runtime which is fine
@@ -59,6 +67,19 @@ android {
         buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
     }
 
+    signingConfigs {
+        create("release") {
+            // Populated from keystore.properties; the ?.let leaves the config empty when the file is
+            // absent so non-release tasks (and CI without secrets) still configure cleanly.
+            keystoreProps.getProperty("storeFile")?.let { path ->
+                storeFile = file(path)
+                storePassword = keystoreProps.getProperty("storePassword")
+                keyAlias = keystoreProps.getProperty("keyAlias")
+                keyPassword = keystoreProps.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         debug {
             buildConfigField("String", "BASE_URL", "\"$debugBaseUrl\"")
@@ -76,6 +97,11 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            // Sign with the release key when keystore.properties is present; never fall back to the
+            // debug key for a release build (Play rejects debug-signed uploads).
+            if (keystorePropsFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             buildConfigField("String", "BASE_URL", "\"https://donebot-backend.onrender.com/\"")
             buildConfigField(
                 "String",
@@ -93,6 +119,14 @@ android {
             )
         }
     }
+
+    // AAB: let Play serve per-device splits (smaller installs than one universal APK).
+    bundle {
+        language { enableSplit = true }
+        density { enableSplit = true }
+        abi { enableSplit = true }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
