@@ -241,6 +241,9 @@
     <string name="remember_your_password">"Remember your password? "</string>
     <string name="back_to_login">Back to Login</string>
     <string name="reset_link_sent">If that email is registered, a reset link has been sent.</string>
+    <string name="login_social_only_google">This email is registered with Google sign-in. Use the Google button below to continue.</string>
+    <string name="login_social_only_facebook">This email is registered with Facebook sign-in. Use Facebook to continue.</string>
+    <string name="login_social_only_generic">This email is registered with a social account. Use the social sign-in you originally signed up with.</string>
     <string name="reset_password">Reset Password</string>
     <string name="reset_password_success">Password reset — please sign in with your new password.</string>
     <string name="reset_token_invalid">This reset link is invalid or has expired.</string>

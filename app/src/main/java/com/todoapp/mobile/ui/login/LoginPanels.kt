@@ -33,6 +33,7 @@ import com.todoapp.mobile.ui.login.LoginContract.UiState
 import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDCompactOutlinedTextField
+import com.todoapp.uikit.components.TDInfoCard
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.theme.TDTheme
 
@@ -91,6 +92,18 @@ internal fun LoginFormPanel(
         style = TDTheme.typography.heading5,
         color = TDTheme.colors.gray,
     )
+    uiState.socialOnlyProvider?.let { provider ->
+        Spacer(Modifier.height(16.dp))
+        TDInfoCard(
+            text =
+            when (provider) {
+                "google" -> stringResource(R.string.login_social_only_google)
+                "facebook" -> stringResource(R.string.login_social_only_facebook)
+                else -> stringResource(R.string.login_social_only_generic)
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
     Spacer(Modifier.height(24.dp))
 
     TDCompactOutlinedTextField(
@@ -202,7 +215,7 @@ internal fun LoginFormPanel(
         TDButton(
             text = stringResource(R.string.google),
             fullWidth = true,
-            type = TDButtonType.OUTLINE,
+            type = if (uiState.socialOnlyProvider == "google") TDButtonType.PRIMARY else TDButtonType.OUTLINE,
             icon = painterResource(R.drawable.ic_google_logo),
             modifier = Modifier.fillMaxWidth(),
         ) { onAction(UiAction.OnGoogleSignInTap) }

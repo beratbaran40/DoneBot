@@ -246,6 +246,9 @@
     <string name="remember_your_password">"Şifrenizi hatırladınız mı? "</string>
     <string name="back_to_login">Girişe Dön</string>
     <string name="reset_link_sent">Bu e-posta kayıtlıysa sıfırlama bağlantısı gönderildi.</string>
+    <string name="login_social_only_google">Bu e-posta Google ile kayıtlı. Devam etmek için aşağıdaki Google düğmesini kullanın.</string>
+    <string name="login_social_only_facebook">Bu e-posta Facebook ile kayıtlı. Devam etmek için Facebook ile giriş yapın.</string>
+    <string name="login_social_only_generic">Bu e-posta bir sosyal hesapla kayıtlı. Lütfen kayıt olduğunuz sosyal giriş yöntemini kullanın.</string>
     <string name="reset_password">Şifreyi Sıfırla</string>
     <string name="reset_password_success">Şifre sıfırlandı — lütfen yeni şifrenizle giriş yapın.</string>
     <string name="reset_token_invalid">Bu sıfırlama bağlantısı geçersiz veya süresi dolmuş.</string>

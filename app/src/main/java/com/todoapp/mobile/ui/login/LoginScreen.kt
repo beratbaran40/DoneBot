@@ -255,6 +255,22 @@ private fun LoginContentGeneralErrorPreview() {
 
 @com.todoapp.uikit.previews.TDPreview
 @Composable
+private fun LoginContentSocialOnlyPreview() {
+    TDTheme {
+        LoginContent(
+            uiState =
+            UiState(
+                email = "name@example.com",
+                socialOnlyProvider = "google",
+                hasSubmittedOnce = true,
+            ),
+            onAction = {},
+        )
+    }
+}
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
 private fun LoginContentLoadingPreview() {
     TDTheme {
         LoginContent(

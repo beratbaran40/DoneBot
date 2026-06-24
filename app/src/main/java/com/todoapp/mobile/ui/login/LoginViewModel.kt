@@ -103,7 +103,7 @@ constructor(
     }
 
     private fun login() = viewModelScope.launch {
-        _uiState.update { it.copy(isLoading = true) }
+        _uiState.update { it.copy(isLoading = true, socialOnlyProvider = null) }
 
         userRepository
             .login(
@@ -122,18 +122,30 @@ constructor(
                 },
                 onFailure = { throwable ->
                     _uiState.update { it.copy(isLoading = false) }
-                    if (throwable is DomainException.Server) {
-                        _uiState.update {
-                            it.copy(
-                                emailError = LoginContract.LoginError(throwable.message ?: "Try again later"),
-                            )
-                        }
-                    } else {
-                        _uiState.update {
-                            it.copy(
-                                generalError = LoginContract.LoginError(throwable.message ?: "Try again later"),
-                            )
-                        }
+                    when (throwable) {
+                        is DomainException.OAuthAccountExists ->
+                            _uiState.update {
+                                it.copy(
+                                    socialOnlyProvider = throwable.provider ?: "social",
+                                    emailError = null,
+                                    passwordError = null,
+                                    generalError = null,
+                                )
+                            }
+
+                        is DomainException.Server ->
+                            _uiState.update {
+                                it.copy(
+                                    emailError = LoginContract.LoginError(throwable.message ?: "Try again later"),
+                                )
+                            }
+
+                        else ->
+                            _uiState.update {
+                                it.copy(
+                                    generalError = LoginContract.LoginError(throwable.message ?: "Try again later"),
+                                )
+                            }
                     }
                 },
             )
@@ -228,6 +240,7 @@ constructor(
         _uiState.update { current ->
             current.copy(
                 email = email,
+                socialOnlyProvider = null,
                 emailError =
                 if (current.hasSubmittedOnce) {
                     ValidationManager

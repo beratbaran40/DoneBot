@@ -11,6 +11,7 @@ object LoginContract {
         val emailError: LoginError? = null,
         val passwordError: LoginError? = null,
         val generalError: LoginError? = null,
+        val socialOnlyProvider: String? = null,
         val isLoading: Boolean = false,
         val hasSubmittedOnce: Boolean = false,
     )

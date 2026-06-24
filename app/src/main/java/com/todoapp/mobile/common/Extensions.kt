@@ -41,14 +41,13 @@ suspend fun <T> handleRequest(request: suspend () -> Response<BaseResponse<T?>>)
         if (response.isSuccessful.not()) {
             val errorBody = response.errorBody()?.string()
             Log.d("error", errorBody.toString())
-            val message =
-                errorBody
-                    ?.let {
-                        runCatching { Json.decodeFromString<ErrorResponse>(it).message }.getOrNull()
-                    }
-                    ?: response.message()
-                    ?: "Something went wrong"
+            val parsed =
+                errorBody?.let {
+                    runCatching { Json.decodeFromString<ErrorResponse>(it) }.getOrNull()
+                }
+            val message = parsed?.message ?: response.message() ?: "Something went wrong"
             Log.d("error", message)
+            parsed?.errorCode?.toOAuthAccountException()?.let { return Result.failure(it) }
             return when (response.code()) {
                 401, 403 -> Result.failure(DomainException.Unauthorized())
                 else -> Result.failure(DomainException.Server(message))
@@ -108,6 +107,12 @@ sealed class DomainException(
         message: String,
     ) : DomainException(message)
 
+    // The email belongs to an existing account that only signs in via a social provider
+    // (no password). `provider` is "google"/"facebook"/null. Routed by errorCode, not HTTP status.
+    class OAuthAccountExists(
+        val provider: String?,
+    ) : DomainException("Account uses social sign-in")
+
     class Database(
         message: String,
     ) : DomainException(message)
@@ -137,6 +142,17 @@ sealed class DomainException(
         }
     }
 }
+
+// Maps a backend errorCode like "oauth_account_google" to the typed exception the login
+// ViewModel branches on. Returns null for any non-oauth code.
+private fun String.toOAuthAccountException(): DomainException.OAuthAccountExists? =
+    if (startsWith("oauth_account")) {
+        DomainException.OAuthAccountExists(
+            removePrefix("oauth_account").trim('_').ifBlank { null },
+        )
+    } else {
+        null
+    }
 
 @Composable
 fun PomodoroModeUi.resolveTextColor(): Color = when (colorKey) {
