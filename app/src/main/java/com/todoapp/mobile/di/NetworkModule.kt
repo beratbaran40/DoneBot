@@ -15,6 +15,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.util.concurrent.TimeUnit
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -69,6 +70,14 @@ object NetworkModule {
         return OkHttpClient
             .Builder()
             .dispatcher(dispatcher)
+            // Explicit timeouts so a half-open socket can't leave a request hanging forever
+            // (endless spinner + leaked call). Read/call are deliberately generous so the DoneBot
+            // chat's server-side Vertex function-call loop, photo uploads, and a cold Neon wake
+            // aren't cut off; tighten only if these stay comfortably under the limit in practice.
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .callTimeout(90, TimeUnit.SECONDS)
             .addInterceptor(authInterceptor)
             .authenticator(tokenRefreshAuthenticator)
             .build()

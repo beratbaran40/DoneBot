@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Production default: HTTPS only, no cleartext, system CAs only. The release build talks
+         exclusively to the HTTPS Render backend, so cleartext is never needed in production. -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Local backend development over the emulator loopback / localhost. Release never connects
+         to these hosts, and loopback cannot be MITM'd, so permitting cleartext here is safe. Keeps
+         the documented `debugBaseUrl=http://10.0.2.2:8080/` dev workflow (app/build.gradle.kts) working. -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">localhost</domain>
+    </domain-config>
+
+    <!-- Debug builds only: also trust user-installed CAs so Charles/Proxyman can inspect HTTPS
+         traffic during development. Has no effect on release builds. -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>

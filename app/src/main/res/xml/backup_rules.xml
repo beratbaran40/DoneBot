@@ -9,4 +9,13 @@
     <!-- Encrypted prefs are sealed by a device-bound Keystore master key that Auto Backup cannot copy,
          so restoring this file onto another device fails to decrypt (AEADBadTagException). -->
     <exclude domain="sharedpref" path="todo_prefs.xml" />
+    <!-- Auth tokens (access/refresh/expiry) live in the "user_prefs" Preferences DataStore, not in
+         EncryptedSharedPreferences. Exclude the datastore dir so JWTs never ride a Google Drive
+         backup and a restore can't resurrect a stale, undecryptable session. -->
+    <exclude domain="file" path="datastore/" />
+    <!-- Room database (tasks, journal, chat, groups). Device-local and re-synced from the backend
+         on login, so it must not be carried onto a different install via backup. -->
+    <exclude domain="database" path="todo_db" />
+    <exclude domain="database" path="todo_db-shm" />
+    <exclude domain="database" path="todo_db-wal" />
 </full-backup-content>
