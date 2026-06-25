@@ -108,7 +108,7 @@ sealed class DomainException(
     ) : DomainException(message)
 
     // The email belongs to an existing account that only signs in via a social provider
-    // (no password). `provider` is "google"/"facebook"/null. Routed by errorCode, not HTTP status.
+    // (no password). `provider` is "google"/null. Routed by errorCode, not HTTP status.
     class OAuthAccountExists(
         val provider: String?,
     ) : DomainException("Account uses social sign-in")

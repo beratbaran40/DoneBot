@@ -98,7 +98,6 @@ internal fun LoginFormPanel(
             text =
             when (provider) {
                 "google" -> stringResource(R.string.login_social_only_google)
-                "facebook" -> stringResource(R.string.login_social_only_facebook)
                 else -> stringResource(R.string.login_social_only_generic)
             },
             modifier = Modifier.fillMaxWidth(),
