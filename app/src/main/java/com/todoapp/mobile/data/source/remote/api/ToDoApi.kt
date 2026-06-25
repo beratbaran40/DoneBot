@@ -134,6 +134,9 @@ interface ToDoApi {
     @DELETE("users/me")
     suspend fun deleteAccount(): Response<BaseResponse<Unit?>>
 
+    @GET("users/me/export")
+    suspend fun exportUserData(): Response<BaseResponse<kotlinx.serialization.json.JsonObject?>>
+
     @POST("chat/message")
     suspend fun sendChatMessage(
         @Body request: com.todoapp.mobile.data.model.network.request.ChatMessageRequest,

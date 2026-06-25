@@ -135,6 +135,12 @@ constructor(
             .onSuccess { rememberUser(it) }
     }
 
+    override suspend fun exportData(): Result<String> = handleRequest { todoApi.exportUserData() }
+        .map {
+            kotlinx.serialization.json.Json { prettyPrint = true }
+                .encodeToString(kotlinx.serialization.json.JsonObject.serializer(), it)
+        }
+
     override suspend fun updateDisplayName(displayName: String): Result<UserData> {
         return handleRequest { todoApi.updateUser(UpdateUserRequest(displayName = displayName)) }
             .onSuccess {

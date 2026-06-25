@@ -935,6 +935,10 @@
     <string name="task_banner_remove">Görseli kaldır</string>
     <string name="settings_camera_permission_title">Kamera</string>
     <string name="settings_camera_permission_description">Günlüğün için Polaroid tarzı fotoğraflar çek</string>
+    <string name="settings_download_data_title">Verilerimi indir</string>
+    <string name="settings_download_data_description">DoneBot\'un senin için sakladığı her şeyi JSON dosyası olarak dışa aktar</string>
+    <string name="settings_download_data_saved">Verilerin kaydedildi</string>
+    <string name="settings_download_data_error">Verilerin dışa aktarılamadı. Lütfen tekrar dene</string>
     <string name="journal_entry_delete_confirm_title">Bu kaydı sil?</string>
     <string name="journal_entry_delete_confirm_message">Bu kayda ekli fotoğraflar da silinecek. Geri alınamaz.</string>
     <string name="journal_entry_discard_confirm_title">Değişiklikleri sil?</string>

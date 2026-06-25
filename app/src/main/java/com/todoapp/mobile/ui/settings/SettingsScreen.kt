@@ -392,6 +392,35 @@ private fun SettingsContent(
             )
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = TDTheme.colors.onBackground.copy(alpha = 0.1f))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onAction(UiAction.OnDownloadDataClick) },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                TDText(
+                    text = stringResource(R.string.settings_download_data_title),
+                    style = TDTheme.typography.heading6,
+                    color = TDTheme.colors.onBackground,
+                )
+                TDText(
+                    text = stringResource(R.string.settings_download_data_description),
+                    style = TDTheme.typography.subheading2,
+                    color = TDTheme.colors.gray,
+                )
+            }
+            Icon(
+                painter = painterResource(com.example.uikit.R.drawable.ic_arrow_forward),
+                contentDescription = null,
+                tint = TDTheme.colors.onBackground,
+            )
+        }
+
         SectionHeader(R.string.settings_section_accessibility)
 
         Row(

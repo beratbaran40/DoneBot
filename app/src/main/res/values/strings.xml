@@ -934,6 +934,10 @@
     <string name="task_banner_remove">Remove image</string>
     <string name="settings_camera_permission_title">Camera</string>
     <string name="settings_camera_permission_description">Take Polaroid-style photos for your journal</string>
+    <string name="settings_download_data_title">Download my data</string>
+    <string name="settings_download_data_description">Export everything DoneBot stores for you as a JSON file</string>
+    <string name="settings_download_data_saved">Your data was saved</string>
+    <string name="settings_download_data_error">Couldn\'t export your data. Please try again</string>
     <string name="journal_entry_delete_confirm_title">Delete this entry?</string>
     <string name="journal_entry_delete_confirm_message">Photos attached to this entry will also be removed. This can\'t be undone.</string>
     <string name="journal_entry_discard_confirm_title">Discard changes?</string>

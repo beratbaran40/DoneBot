@@ -233,6 +233,7 @@ constructor(
             UiAction.OnDeleteAccountDismiss ->
                 _uiState.update { it.copy(showDeleteAccountDialog = false) }
             UiAction.OnDeleteAccountConfirm -> deleteAccount()
+            UiAction.OnDownloadDataClick -> downloadMyData()
         }
     }
 
@@ -260,6 +261,17 @@ constructor(
                         else -> R.string.delete_account_error_generic
                     }
                     _uiEffect.send(UiEffect.ShowToast(context.getString(msg)))
+                }
+        }
+    }
+
+    private fun downloadMyData() {
+        viewModelScope.launch {
+            userRepository.exportData()
+                .onSuccess { json -> _uiEffect.send(UiEffect.SaveDataExport(json)) }
+                .onFailure { error ->
+                    Timber.tag("DataExport").w(error, "exportData failed")
+                    _uiEffect.send(UiEffect.ShowToast(context.getString(R.string.settings_download_data_error)))
                 }
         }
     }

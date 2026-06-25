@@ -145,14 +145,13 @@ sealed class DomainException(
 
 // Maps a backend errorCode like "oauth_account_google" to the typed exception the login
 // ViewModel branches on. Returns null for any non-oauth code.
-private fun String.toOAuthAccountException(): DomainException.OAuthAccountExists? =
-    if (startsWith("oauth_account")) {
-        DomainException.OAuthAccountExists(
-            removePrefix("oauth_account").trim('_').ifBlank { null },
-        )
-    } else {
-        null
-    }
+private fun String.toOAuthAccountException(): DomainException.OAuthAccountExists? = if (startsWith("oauth_account")) {
+    DomainException.OAuthAccountExists(
+        removePrefix("oauth_account").trim('_').ifBlank { null },
+    )
+} else {
+    null
+}
 
 @Composable
 fun PomodoroModeUi.resolveTextColor(): Color = when (colorKey) {

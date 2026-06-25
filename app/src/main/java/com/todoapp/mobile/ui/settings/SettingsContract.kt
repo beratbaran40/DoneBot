@@ -85,6 +85,8 @@ object SettingsContract {
         data object OnDeleteAccountDismiss : UiAction
 
         data object OnDeleteAccountConfirm : UiAction
+
+        data object OnDownloadDataClick : UiAction
     }
 
     sealed interface UiEffect {
@@ -96,6 +98,10 @@ object SettingsContract {
 
         data class ApplyLocale(
             val tag: String,
+        ) : UiEffect
+
+        data class SaveDataExport(
+            val json: String,
         ) : UiEffect
     }
 }

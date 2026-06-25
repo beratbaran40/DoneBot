@@ -71,6 +71,7 @@ fun SecretModeSettingsScreen(
                 Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
             SettingsContract.UiEffect.RecreateActivity -> Unit
             is SettingsContract.UiEffect.ApplyLocale -> Unit
+            is SettingsContract.UiEffect.SaveDataExport -> Unit
         }
     }
 

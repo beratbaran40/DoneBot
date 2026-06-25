@@ -43,6 +43,8 @@ interface UserRepository {
     suspend fun setPushEnabled(enabled: Boolean): Result<Boolean>
 
     suspend fun deleteAccount(): Result<Unit>
+
+    suspend fun exportData(): Result<String>
 }
 
 interface AuthRepository {

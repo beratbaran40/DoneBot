@@ -112,6 +112,7 @@ import com.todoapp.mobile.ui.settings.SecretModeSettingsScreen
 import com.todoapp.mobile.ui.settings.SettingsContract
 import com.todoapp.mobile.ui.settings.SettingsScreen
 import com.todoapp.mobile.ui.settings.SettingsViewModel
+import com.todoapp.mobile.ui.settings.rememberDataExportSaver
 import com.todoapp.mobile.ui.splash.TDSplashScreen
 import com.todoapp.mobile.ui.topbar.ShowTopBar
 import com.todoapp.mobile.ui.topbar.TopBarViewModel
@@ -236,10 +237,13 @@ fun NavGraph(
             val viewModel: SettingsViewModel = hiltViewModel()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             val context = LocalContext.current
+            val saveExport = rememberDataExportSaver()
             NavigationEffectController(viewModel.navEffect)
             viewModel.uiEffect.collectWithLifecycle { effect ->
                 when (effect) {
-                    is SettingsContract.UiEffect.ShowToast -> Unit
+                    is SettingsContract.UiEffect.ShowToast ->
+                        android.widget.Toast.makeText(context, effect.message, android.widget.Toast.LENGTH_SHORT).show()
+                    is SettingsContract.UiEffect.SaveDataExport -> saveExport(effect.json)
                     SettingsContract.UiEffect.RecreateActivity -> {
                         val activity = context as? Activity ?: return@collectWithLifecycle
                         if (activity is MainActivity) MainActivity.suppressNextTransition.set(true)
