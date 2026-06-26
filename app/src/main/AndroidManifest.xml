@@ -15,7 +15,11 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- Location intentionally NOT requested: the place picker (Google Places Autocomplete) works
-         with text search alone, so no ACCESS_*_LOCATION is needed — keeps Play Data Safety simple. -->
+         with text search alone, so no ACCESS_*_LOCATION is needed — keeps Play Data Safety simple.
+         The Places SDK (places:3.5.0) still declares both location permissions itself, which merge
+         in transitively; strip them so the SHIPPED manifest stays off Play's "Location" category. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" tools:node="remove" />
 
     <!-- In-the-moment Polaroid capture for Journal entries. Camera is optional so the
          install is not blocked on camera-less devices. -->
@@ -23,10 +27,12 @@
     <uses-feature android:name="android.hardware.camera.any" android:required="false" />
 
     <!-- DoneBot shows no ads and never reads the advertising ID. firebase-analytics merges these
-         two permissions in transitively; strip them so the SHIPPED (merged) manifest matches our
-         Play Data Safety declaration of "no advertising-ID collection". See prod-readiness §6.17. -->
+         advertising/measurement permissions in transitively; strip all three so the SHIPPED (merged)
+         manifest matches our Play Data Safety declaration of "no advertising-ID collection" and keeps
+         the permission profile fully ads-free. See prod-readiness §6.17. -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
     <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION" tools:node="remove" />
 
     <application
         android:name=".Application"
