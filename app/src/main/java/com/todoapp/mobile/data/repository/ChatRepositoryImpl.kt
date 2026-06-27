@@ -1,9 +1,11 @@
 package com.todoapp.mobile.data.repository
 
+import com.todoapp.mobile.common.handleEmptyRequest
 import com.todoapp.mobile.common.handleRequest
 import com.todoapp.mobile.data.model.entity.ChatMessageEntity
 import com.todoapp.mobile.data.model.network.request.ChatHistoryTurn
 import com.todoapp.mobile.data.model.network.request.ChatMessageRequest
+import com.todoapp.mobile.data.model.network.request.ChatReportRequest
 import com.todoapp.mobile.data.model.network.response.ChatMessageResponseData
 import com.todoapp.mobile.data.source.local.ChatMessageDao
 import com.todoapp.mobile.data.source.remote.api.ToDoApi
@@ -34,6 +36,12 @@ class ChatRepositoryImpl @Inject constructor(
     ): Result<ChatMessageResponseData> = handleRequest {
         todoApi.sendChatMessage(
             ChatMessageRequest(prompt = prompt, locale = locale, history = history),
+        )
+    }
+
+    override suspend fun reportMessage(content: String, reason: String?): Result<Unit> = handleEmptyRequest {
+        todoApi.reportChatMessage(
+            ChatReportRequest(messageContent = content, reason = reason),
         )
     }
 

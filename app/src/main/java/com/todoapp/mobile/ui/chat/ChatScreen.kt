@@ -96,8 +96,12 @@ private fun ChatReadyContent(
 ) {
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     var showClearConfirm by remember { mutableStateOf(false) }
     var longPressedMessage by remember { mutableStateOf<ChatMessage?>(null) }
+    var reportTarget by remember { mutableStateOf<ChatMessage?>(null) }
+    val reportSuccessToast = stringResource(R.string.chat_report_success_toast)
+    val reportFailedToast = stringResource(R.string.chat_report_failed_toast)
 
     uiEffect.collectWithLifecycle { effect ->
         when (effect) {
@@ -105,6 +109,13 @@ private fun ChatReadyContent(
                 if (state.messages.isNotEmpty()) {
                     listState.animateScrollToItem(state.messages.lastIndex)
                 }
+            }
+            is ChatContract.UiEffect.ShowReportResult -> {
+                Toast.makeText(
+                    context,
+                    if (effect.success) reportSuccessToast else reportFailedToast,
+                    Toast.LENGTH_SHORT,
+                ).show()
             }
         }
     }
@@ -201,6 +212,20 @@ private fun ChatReadyContent(
                 onAction(ChatContract.UiAction.OnDraftChanged(prompt))
                 onAction(ChatContract.UiAction.OnSendClicked)
             },
+            onReport = {
+                longPressedMessage = null
+                reportTarget = target
+            },
+        )
+    }
+
+    reportTarget?.let { target ->
+        ReportMessageDialog(
+            onDismiss = { reportTarget = null },
+            onConfirm = {
+                reportTarget = null
+                onAction(ChatContract.UiAction.OnReportMessage(target))
+            },
         )
     }
 }
@@ -212,6 +237,7 @@ private fun MessageActionsSheet(
     target: ChatMessage,
     onDismiss: () -> Unit,
     onTryAgain: (String) -> Unit,
+    onReport: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState()
     val clipboard = LocalClipboard.current
@@ -250,6 +276,13 @@ private fun MessageActionsSheet(
                     icon = painterResource(com.example.uikit.R.drawable.ic_refresh),
                     label = stringResource(R.string.chat_action_try_again),
                     onClick = { onTryAgain(previousUserPrompt) },
+                )
+            }
+            if (target.role == ChatMessage.Role.ASSISTANT) {
+                MessageActionItem(
+                    icon = painterResource(com.example.uikit.R.drawable.ic_warning),
+                    label = stringResource(R.string.chat_action_report),
+                    onClick = onReport,
                 )
             }
         }
@@ -659,6 +692,48 @@ private fun ClearHistoryDialog(
             TextButton(onClick = onConfirm) {
                 TDText(
                     text = stringResource(R.string.chat_clear_confirm_button),
+                    color = TDTheme.colors.crossRed,
+                    style = TDTheme.typography.subheading1,
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                TDText(
+                    text = stringResource(R.string.chat_dismiss),
+                    color = TDTheme.colors.gray,
+                    style = TDTheme.typography.subheading1,
+                )
+            }
+        },
+    )
+}
+
+@Composable
+private fun ReportMessageDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = TDTheme.colors.surface,
+        title = {
+            TDText(
+                text = stringResource(R.string.chat_report_confirm_title),
+                style = TDTheme.typography.heading5,
+                color = TDTheme.colors.onBackground,
+            )
+        },
+        text = {
+            TDText(
+                text = stringResource(R.string.chat_report_confirm_message),
+                color = TDTheme.colors.gray,
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                TDText(
+                    text = stringResource(R.string.chat_report_confirm_button),
                     color = TDTheme.colors.crossRed,
                     style = TDTheme.typography.subheading1,
                 )

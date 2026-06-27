@@ -85,6 +85,26 @@ class ChatViewModel @Inject constructor(
             ChatContract.UiAction.OnRetry -> retry()
             ChatContract.UiAction.OnDismissError -> dismissError()
             ChatContract.UiAction.OnSignInTap -> navigateToSignIn()
+            is ChatContract.UiAction.OnReportMessage -> reportMessage(action.message)
+        }
+    }
+
+    /**
+     * Flags an offensive/inappropriate assistant reply for moderation review. Only
+     * assistant turns are reportable. The outcome surfaces as a toast via [ChatContract.UiEffect].
+     */
+    private fun reportMessage(message: ChatMessage) {
+        if (message.role != ChatMessage.Role.ASSISTANT) return
+        viewModelScope.launch {
+            chatRepository.reportMessage(content = message.content)
+                .onSuccess {
+                    Timber.tag(METRICS_TAG).i("chat_report_submitted")
+                    _uiEffect.trySend(ChatContract.UiEffect.ShowReportResult(success = true))
+                }
+                .onFailure { error ->
+                    Timber.tag(LOG_TAG).w(error, "chat report failed")
+                    _uiEffect.trySend(ChatContract.UiEffect.ShowReportResult(success = false))
+                }
         }
     }
 

@@ -142,6 +142,11 @@ interface ToDoApi {
         @Body request: com.todoapp.mobile.data.model.network.request.ChatMessageRequest,
     ): Response<BaseResponse<com.todoapp.mobile.data.model.network.response.ChatMessageResponseData?>>
 
+    @POST("chat/report")
+    suspend fun reportChatMessage(
+        @Body request: com.todoapp.mobile.data.model.network.request.ChatReportRequest,
+    ): Response<BaseResponse<Unit?>>
+
     @retrofit2.http.Multipart
     @POST("users/me/avatar")
     suspend fun uploadAvatar(

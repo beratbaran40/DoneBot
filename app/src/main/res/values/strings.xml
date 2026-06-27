@@ -782,6 +782,12 @@
     <string name="chat_action_copy">Copy text</string>
     <string name="chat_action_try_again">Try again</string>
     <string name="chat_action_copied_toast">Copied</string>
+    <string name="chat_action_report">Report this response</string>
+    <string name="chat_report_confirm_title">Report this response?</string>
+    <string name="chat_report_confirm_message">This sends the message to our team to review for offensive or inappropriate content. Your tasks aren\'t affected.</string>
+    <string name="chat_report_confirm_button">Report</string>
+    <string name="chat_report_success_toast">Thanks — this response was reported for review.</string>
+    <string name="chat_report_failed_toast">Couldn\'t send the report. Please try again.</string>
     <string name="chat_persona_subtitle">Productivity assistant</string>
     <string name="chat_suggested_today">What\'s due today?</string>
     <string name="chat_suggested_tomorrow">What\'s on tomorrow?</string>

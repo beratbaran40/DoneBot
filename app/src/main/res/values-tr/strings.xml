@@ -783,6 +783,12 @@
     <string name="chat_action_copy">Metni kopyala</string>
     <string name="chat_action_try_again">Tekrar dene</string>
     <string name="chat_action_copied_toast">Kopyalandı</string>
+    <string name="chat_action_report">Bu yanıtı bildir</string>
+    <string name="chat_report_confirm_title">Bu yanıtı bildir?</string>
+    <string name="chat_report_confirm_message">Bu mesajı, rahatsız edici veya uygunsuz içerik açısından incelemek üzere ekibimize gönderir. Görevlerin etkilenmez.</string>
+    <string name="chat_report_confirm_button">Bildir</string>
+    <string name="chat_report_success_toast">Teşekkürler — bu yanıt incelenmek üzere bildirildi.</string>
+    <string name="chat_report_failed_toast">Bildirim gönderilemedi. Lütfen tekrar dene.</string>
     <string name="chat_persona_subtitle">Verimlilik asistanı</string>
     <string name="chat_suggested_today">Bugün neler var?</string>
     <string name="chat_suggested_tomorrow">Yarın ne var?</string>

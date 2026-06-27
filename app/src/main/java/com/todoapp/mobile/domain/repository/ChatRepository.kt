@@ -26,4 +26,10 @@ interface ChatRepository {
         locale: String,
         history: List<ChatHistoryTurn>,
     ): Result<ChatMessageResponseData>
+
+    /**
+     * Flags an offensive or inappropriate assistant reply for human moderation
+     * review (Google Play Generative AI policy: in-app reporting of AI content).
+     */
+    suspend fun reportMessage(content: String, reason: String? = null): Result<Unit>
 }

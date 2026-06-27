@@ -35,9 +35,11 @@ object ChatContract {
         data object OnRetry : UiAction
         data object OnDismissError : UiAction
         data object OnSignInTap : UiAction
+        data class OnReportMessage(val message: ChatMessage) : UiAction
     }
 
     sealed interface UiEffect {
         data object ScrollToBottom : UiEffect
+        data class ShowReportResult(val success: Boolean) : UiEffect
     }
 }
