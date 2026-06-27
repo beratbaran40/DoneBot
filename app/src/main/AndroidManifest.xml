@@ -139,6 +139,15 @@
                 tools:node="remove" />
         </provider>
 
+        <!-- Firebase Analytics is bundled (pulled in alongside Crashlytics) but DoneBot logs no
+             analytics events and uses no analytics-driven features (no Remote Config, A/B testing,
+             audience-targeted FCM, or AdMob). Disable collection so no usage data is gathered and
+             the Play Data Safety form needs no "App activity → App interactions" declaration.
+             Crashlytics is unaffected and keeps reporting crashes, breadcrumbs, and custom keys. -->
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="false" />
+
         <!-- Google Maps Platform API key. Sourced from local.properties (MAPS_API_KEY=…)
              via the manifestPlaceholder declared in app/build.gradle.kts. -->
         <meta-data
