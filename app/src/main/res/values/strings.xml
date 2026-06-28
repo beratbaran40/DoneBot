@@ -34,6 +34,8 @@
     <string name="no_recurring_description">You don\'t have a task at this frequency yet</string>
     <string name="calendar_no_tasks_for_day">Nothing scheduled</string>
     <string name="calendar_no_tasks_for_day_description">No personal tasks or group deadlines on this day</string>
+    <string name="calendar_pick_a_day">Pick a day</string>
+    <string name="calendar_pick_a_day_description">Select a date to see its tasks and deadlines</string>
     <string name="deadline_in_hours_minutes">in %1$dh %2$dm</string>
     <string name="deadline_unassigned">Unassigned</string>
     <string name="deadline_still_pending_suffix"> · still pending</string>
@@ -114,6 +116,10 @@
     <string name="failed_to_upload_avatar">Failed to upload avatar</string>
     <string name="failed_to_delete_photo">Failed to delete photo</string>
     <string name="google_login_error">Google login error</string>
+    <string name="google_signin_no_account">No Google account found on this device. Add a Google account in Settings and try again.</string>
+    <string name="google_signin_cancelled">Google sign-in was cancelled.</string>
+    <string name="google_signin_interrupted">Connection interrupted. Please try again.</string>
+    <string name="google_signin_play_services_unavailable">Google Play Services is unavailable or out of date. Update it and try again.</string>
     <string name="assign_to_a_group">Assign to a group</string>
     <string name="app_brand">ToDo App</string>
     <string name="failed_to_load_task">Failed to load task</string>

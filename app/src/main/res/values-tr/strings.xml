@@ -34,6 +34,8 @@
     <string name="no_recurring_description">Bu sıklıkta tekrarlanan bir görevin yok</string>
     <string name="calendar_no_tasks_for_day">Planlanmış bir şey yok</string>
     <string name="calendar_no_tasks_for_day_description">Bu güne ait kişisel görev veya grup son tarihi yok</string>
+    <string name="calendar_pick_a_day">Bir gün seç</string>
+    <string name="calendar_pick_a_day_description">Görevlerini ve son tarihlerini görmek için bir tarih seç</string>
     <string name="deadline_in_hours_minutes">%1$d saat %2$d dk kaldı</string>
     <string name="deadline_unassigned">Atanmamış</string>
     <string name="deadline_still_pending_suffix"> · hala bekliyor</string>
@@ -114,6 +116,10 @@
     <string name="failed_to_upload_avatar">Avatar yüklenemedi</string>
     <string name="failed_to_delete_photo">Fotoğraf silinemedi</string>
     <string name="google_login_error">Google giriş hatası</string>
+    <string name="google_signin_no_account">Bu cihazda Google hesabı bulunamadı. Ayarlar\'dan bir Google hesabı ekleyip tekrar deneyin.</string>
+    <string name="google_signin_cancelled">Google ile giriş iptal edildi.</string>
+    <string name="google_signin_interrupted">Bağlantı kesildi. Lütfen tekrar deneyin.</string>
+    <string name="google_signin_play_services_unavailable">Google Play Hizmetleri kullanılamıyor veya güncel değil. Güncelleyip tekrar deneyin.</string>
     <string name="assign_to_a_group">Bir gruba ata</string>
     <string name="app_brand">ToDo App</string>
     <string name="failed_to_load_task">Görev yüklenemedi</string>
