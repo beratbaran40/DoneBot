@@ -45,6 +45,7 @@ import com.todoapp.mobile.ui.activity.ActivityScreen
 import com.todoapp.mobile.ui.activity.ActivityViewModel
 import com.todoapp.mobile.ui.addpomodorotimer.AddPomodoroTimerScreen
 import com.todoapp.mobile.ui.addpomodorotimer.AddPomodoroTimerViewModel
+import com.todoapp.mobile.ui.auth.AuthFormMaxWidth
 import com.todoapp.mobile.ui.banner.BannerOverlay
 import com.todoapp.mobile.ui.banner.BannerViewModel
 import com.todoapp.mobile.ui.calendar.CalendarScreen
@@ -681,7 +682,7 @@ fun NavGraph(
             val viewModel: ChangePasswordViewModel = hiltViewModel()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             NavigationEffectController(viewModel.navEffect)
-            ResponsiveContainer {
+            ResponsiveContainer(maxWidth = AuthFormMaxWidth) {
                 ChangePasswordScreen(
                     uiState = uiState,
                     uiEffect = viewModel.effect,
@@ -694,7 +695,7 @@ fun NavGraph(
             val viewModel: ResetPasswordViewModel = hiltViewModel()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             NavigationEffectController(viewModel.navEffect)
-            ResponsiveContainer {
+            ResponsiveContainer(maxWidth = AuthFormMaxWidth) {
                 ResetPasswordScreen(
                     uiState = uiState,
                     uiEffect = viewModel.effect,
