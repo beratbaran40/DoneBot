@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
@@ -23,6 +24,7 @@ fun TDChatBubble(
     text: String,
     isFromUser: Boolean,
     modifier: Modifier = Modifier,
+    maxWidth: Dp = 280.dp,
 ) {
     val bubbleColor: Color =
         if (isFromUser) TDTheme.colors.lightPurple else TDTheme.colors.lightPending
@@ -40,7 +42,7 @@ fun TDChatBubble(
     ) {
         Column(
             modifier = Modifier
-                .widthIn(max = 280.dp)
+                .widthIn(max = maxWidth)
                 .clip(shape)
                 .background(bubbleColor)
                 .padding(horizontal = 14.dp, vertical = 10.dp),

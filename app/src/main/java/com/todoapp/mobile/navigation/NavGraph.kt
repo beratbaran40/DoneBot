@@ -343,10 +343,12 @@ fun NavGraph(
             val viewModel: PomodoroLaunchViewModel = hiltViewModel()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             NavigationEffectController(viewModel.navEffect)
-            PomodoroLaunchScreen(
-                uiState = uiState,
-                onAction = viewModel::onAction,
-            )
+            ResponsiveContainer {
+                PomodoroLaunchScreen(
+                    uiState = uiState,
+                    onAction = viewModel::onAction,
+                )
+            }
             ScreenInfoDialog(
                 infoClicks = topBarViewModel.infoClicks,
                 titleRes = com.todoapp.mobile.R.string.pomodoro_info_title,

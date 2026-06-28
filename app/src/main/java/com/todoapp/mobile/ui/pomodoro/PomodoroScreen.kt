@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -38,6 +39,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.todoapp.mobile.LocalWindowSizeClass
 import com.todoapp.mobile.R
 import com.todoapp.mobile.common.RingtoneHolder
 import com.todoapp.mobile.common.toUiMode
@@ -133,7 +135,9 @@ private fun PomodoroPortraitContent(
         Column(
             modifier =
             Modifier
-                .fillMaxSize()
+                .fillMaxHeight()
+                .widthIn(max = PomodoroPortraitMaxWidth)
+                .align(Alignment.TopCenter)
                 .statusBarsPadding()
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -291,6 +295,11 @@ private fun PomodoroLandscapeContent(
         label = "pomoProgressL",
     )
 
+    // Landscape rings are small to fit a phone's short height; tablets (Expanded width) have the
+    // vertical room for the full-size ring, so the timer text isn't clipped.
+    val landscapeRingSize =
+        if (LocalWindowSizeClass.current.widthSizeClass == WindowWidthSizeClass.Expanded) 320.dp else 220.dp
+
     Box(
         modifier =
         Modifier
@@ -300,7 +309,9 @@ private fun PomodoroLandscapeContent(
         Row(
             modifier =
             Modifier
-                .fillMaxSize()
+                .fillMaxHeight()
+                .widthIn(max = PomodoroLandscapeMaxWidth)
+                .align(Alignment.Center)
                 .statusBarsPadding()
                 .padding(horizontal = 16.dp),
         ) {
@@ -326,7 +337,7 @@ private fun PomodoroLandscapeContent(
                     progressColor = contentColor,
                     trackColor = trackColor,
                     textColor = contentColor,
-                    size = 220.dp,
+                    size = landscapeRingSize,
                 )
             }
 
@@ -529,6 +540,10 @@ private fun ControlPanel(
 
 private const val COLOR_ANIM_MS = 400
 private const val PROGRESS_ANIM_MS = 900
+
+// Large-screen caps: keep the immersive full-bleed background but centre the timer panel on tablets.
+private val PomodoroPortraitMaxWidth = 480.dp
+private val PomodoroLandscapeMaxWidth = 840.dp
 
 // ── Previews ──────────────────────────────────────────────────────────────────
 
