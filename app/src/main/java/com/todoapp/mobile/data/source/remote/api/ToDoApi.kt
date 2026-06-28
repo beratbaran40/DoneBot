@@ -200,6 +200,11 @@ interface ToDoApi {
         @Path("userId") userId: Long,
     ): Response<BaseResponse<Unit?>>
 
+    @POST("family-groups/{groupId}/leave")
+    suspend fun leaveGroup(
+        @Path("groupId") groupId: Long,
+    ): Response<BaseResponse<Unit?>>
+
     @PUT("family-groups/{groupId}/transfer-ownership")
     suspend fun transferOwnership(
         @Path("groupId") groupId: Long,

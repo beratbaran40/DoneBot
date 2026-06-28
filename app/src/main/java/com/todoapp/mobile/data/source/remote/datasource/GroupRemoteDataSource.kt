@@ -38,6 +38,8 @@ interface GroupRemoteDataSource {
         userId: Long,
     ): Result<Unit>
 
+    suspend fun leaveGroup(id: Long): Result<Unit>
+
     suspend fun transferOwnership(
         id: Long,
         request: TransferOwnershipRequest,

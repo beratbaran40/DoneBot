@@ -51,6 +51,8 @@ interface GroupRepository {
         userId: Long,
     ): Result<Unit>
 
+    suspend fun leaveGroup(groupId: Long): Result<Unit>
+
     suspend fun transferOwnership(
         groupId: Long,
         userId: Long,

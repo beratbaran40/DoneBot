@@ -407,6 +407,12 @@
     <string name="failed_to_load_member">Failed to load member</string>
     <string name="failed_to_remove_member">Failed to remove member</string>
     <string name="transfer_ownership">Transfer Ownership</string>
+    <string name="leave_group">Leave Group</string>
+    <string name="leave_group_title">Leave group?</string>
+    <string name="leave_group_message">You\'ll lose access to this group\'s shared tasks. You can rejoin only if someone invites you again.</string>
+    <string name="leave_group_confirm">Leave</string>
+    <string name="left_group">You left the group</string>
+    <string name="leave_group_error">Couldn\'t leave the group</string>
     <string name="overview">Overview</string>
     <string name="members">Members</string>
     <string name="activity">Activity</string>

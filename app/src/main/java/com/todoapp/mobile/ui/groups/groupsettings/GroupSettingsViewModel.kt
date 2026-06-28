@@ -1,9 +1,11 @@
 package com.todoapp.mobile.ui.groups.groupsettings
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.todoapp.mobile.R
 import com.todoapp.mobile.data.storage.AvatarPhotoStorage
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.UserRepository
@@ -13,6 +15,7 @@ import com.todoapp.mobile.ui.groups.groupsettings.GroupSettingsContract.UiAction
 import com.todoapp.mobile.ui.groups.groupsettings.GroupSettingsContract.UiEffect
 import com.todoapp.mobile.ui.groups.groupsettings.GroupSettingsContract.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +28,7 @@ import javax.inject.Inject
 class GroupSettingsViewModel
 @Inject
 constructor(
+    @ApplicationContext private val context: Context,
     private val groupRepository: GroupRepository,
     private val userRepository: UserRepository,
     private val avatarPhotoStorage: AvatarPhotoStorage,
@@ -58,6 +62,9 @@ constructor(
                 _navEffect.trySend(
                     NavigationEffect.Navigate(Screen.TransferOwnership(groupId)),
                 )
+            UiAction.OnLeaveTap -> _uiState.update { it.copy(isLeaveDialogOpen = true) }
+            UiAction.OnLeaveDialogDismiss -> _uiState.update { it.copy(isLeaveDialogOpen = false) }
+            UiAction.OnLeaveConfirm -> leaveGroup()
             is UiAction.OnAvatarPicked ->
                 _navEffect.trySend(NavigationEffect.Navigate(Screen.AvatarCrop(action.uri)))
             is UiAction.OnAvatarCropped -> uploadCroppedAvatar(action.path)
@@ -125,6 +132,24 @@ constructor(
                 }.onFailure {
                     _uiState.update { it.copy(isSaving = false) }
                     _uiEffect.trySend(UiEffect.ShowToast("Failed to save changes"))
+                }
+        }
+    }
+
+    private fun leaveGroup() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLeaving = true) }
+            groupRepository
+                .leaveGroup(groupId)
+                .onSuccess {
+                    _uiState.update { it.copy(isLeaving = false, isLeaveDialogOpen = false) }
+                    _uiEffect.trySend(UiEffect.ShowToast(context.getString(R.string.left_group)))
+                    _navEffect.trySend(
+                        NavigationEffect.Navigate(Screen.Groups(), popUpTo = Screen.Groups(), isInclusive = false),
+                    )
+                }.onFailure {
+                    _uiState.update { it.copy(isLeaving = false, isLeaveDialogOpen = false) }
+                    _uiEffect.trySend(UiEffect.ShowToast(context.getString(R.string.leave_group_error)))
                 }
         }
     }

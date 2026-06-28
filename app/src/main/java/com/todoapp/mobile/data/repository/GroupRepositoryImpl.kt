@@ -563,6 +563,17 @@ constructor(
         .removeMember(groupId, userId)
         .onSuccess { invalidateGroupCache(groupId) }
 
+    override suspend fun leaveGroup(groupId: Long): Result<Unit> = groupRemoteDataSource
+        .leaveGroup(groupId)
+        .onSuccess {
+            val localEntity = groupLocalDataSource.getAllGroupsOrdered().first().find { it.remoteId == groupId }
+            if (localEntity != null) {
+                groupLocalDataSource.delete(localEntity)
+            }
+            invalidateGroupCache(groupId)
+            invalidateGroupsCache()
+        }
+
     override suspend fun transferOwnership(
         groupId: Long,
         userId: Long,

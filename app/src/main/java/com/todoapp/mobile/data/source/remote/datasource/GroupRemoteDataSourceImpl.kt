@@ -68,6 +68,8 @@ constructor(
         userId: Long,
     ): Result<Unit> = handleEmptyRequest { todoApi.removeMember(id, userId) }
 
+    override suspend fun leaveGroup(id: Long): Result<Unit> = handleEmptyRequest { todoApi.leaveGroup(id) }
+
     override suspend fun transferOwnership(
         id: Long,
         request: TransferOwnershipRequest,

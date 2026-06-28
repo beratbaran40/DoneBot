@@ -411,6 +411,12 @@
     <string name="failed_to_load_member">Üye yüklenemedi</string>
     <string name="failed_to_remove_member">Üye kaldırılamadı</string>
     <string name="transfer_ownership">Sahipliği Devret</string>
+    <string name="leave_group">Gruptan Ayrıl</string>
+    <string name="leave_group_title">Gruptan ayrılınsın mı?</string>
+    <string name="leave_group_message">Bu grubun paylaşılan görevlerine erişimini kaybedeceksin. Yalnızca biri seni tekrar davet ederse geri katılabilirsin.</string>
+    <string name="leave_group_confirm">Ayrıl</string>
+    <string name="left_group">Gruptan ayrıldın</string>
+    <string name="leave_group_error">Gruptan ayrılınamadı</string>
     <string name="overview">Genel Bakış</string>
     <string name="members">Eklenen Üye</string>
     <string name="activity">Aktivite</string>

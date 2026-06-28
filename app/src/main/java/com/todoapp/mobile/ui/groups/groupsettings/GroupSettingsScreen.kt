@@ -18,10 +18,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -219,6 +222,44 @@ private fun GroupSettingsContent(
 
             Spacer(modifier = Modifier.height(24.dp))
         }
+
+        if (!isAdmin) {
+            Spacer(modifier = Modifier.height(8.dp))
+            TDButton(
+                text = stringResource(com.todoapp.mobile.R.string.leave_group),
+                type = TDButtonType.OUTLINE,
+                isEnable = !uiState.isLeaving,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { onAction(UiAction.OnLeaveTap) },
+            )
+        }
+    }
+
+    if (uiState.isLeaveDialogOpen) {
+        AlertDialog(
+            onDismissRequest = { onAction(UiAction.OnLeaveDialogDismiss) },
+            title = { Text(stringResource(com.todoapp.mobile.R.string.leave_group_title)) },
+            titleContentColor = TDTheme.colors.onBackground,
+            containerColor = TDTheme.colors.background,
+            textContentColor = TDTheme.colors.gray,
+            text = { Text(stringResource(com.todoapp.mobile.R.string.leave_group_message)) },
+            confirmButton = {
+                TextButton(onClick = { onAction(UiAction.OnLeaveConfirm) }) {
+                    Text(
+                        text = stringResource(com.todoapp.mobile.R.string.leave_group_confirm),
+                        color = TDTheme.colors.crossRed,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onAction(UiAction.OnLeaveDialogDismiss) }) {
+                    Text(
+                        text = stringResource(com.todoapp.mobile.R.string.cancel),
+                        color = TDTheme.colors.gray,
+                    )
+                }
+            },
+        )
     }
 }
 
@@ -262,6 +303,25 @@ private fun GroupSettingsMemberPreview() {
                 name = "The Smith Family",
                 description = "Daily chores, grocery lists, and vacation planning for 2024.",
                 currentUserRole = "MEMBER",
+                isLoading = false,
+            ),
+            onAction = {},
+        )
+    }
+}
+
+@com.todoapp.uikit.previews.TDPreviewDialog
+@Composable
+private fun GroupSettingsLeaveDialogPreview() {
+    TDTheme {
+        GroupSettingsContent(
+            uiState =
+            GroupSettingsContract.UiState(
+                groupId = 1L,
+                name = "The Smith Family",
+                description = "Daily chores, grocery lists, and vacation planning for 2024.",
+                currentUserRole = "MEMBER",
+                isLeaveDialogOpen = true,
                 isLoading = false,
             ),
             onAction = {},
