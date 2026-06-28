@@ -1,37 +1,24 @@
 package com.todoapp.mobile.ui.forgotpassword
 
-import android.content.res.Configuration
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
+import com.todoapp.mobile.ui.auth.AuthScaffold
 import com.todoapp.mobile.ui.forgotpassword.ForgotPasswordContract.UiAction
 import com.todoapp.mobile.ui.forgotpassword.ForgotPasswordContract.UiEffect
 import com.todoapp.mobile.ui.forgotpassword.ForgotPasswordContract.UiState
@@ -64,45 +51,8 @@ private fun ForgotPasswordContent(
     uiState: UiState,
     onAction: (UiAction) -> Unit,
 ) {
-    val isPortrait = LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
-    if (isPortrait) {
-        ForgotPasswordPortraitContent(uiState = uiState, onAction = onAction)
-    } else {
-        ForgotPasswordLandscapeContent(uiState = uiState, onAction = onAction)
-    }
-}
-
-@Composable
-private fun ForgotPasswordBrandingPanel(modifier: Modifier = Modifier) {
-    Column(
-        modifier =
-        modifier
-            .background(TDTheme.colors.pendingGray)
-            .statusBarsPadding()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Box(
-            modifier =
-            Modifier
-                .size(70.dp)
-                .background(color = TDTheme.colors.white.copy(alpha = 0.25f), shape = CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painterResource(R.drawable.ic_lock_reset),
-                contentDescription = stringResource(R.string.logo),
-                modifier = Modifier.size(40.dp),
-                tint = TDTheme.colors.white,
-            )
-        }
-        Spacer(Modifier.height(8.dp))
-        TDText(
-            text = stringResource(R.string.forgot_password),
-            style = TDTheme.typography.heading1,
-            color = TDTheme.colors.white,
-        )
+    AuthScaffold(brandTitle = stringResource(R.string.forgot_password)) {
+        ForgotPasswordFormPanel(uiState = uiState, onAction = onAction)
     }
 }
 
@@ -111,7 +61,7 @@ private fun ForgotPasswordFormPanel(
     uiState: UiState,
     onAction: (UiAction) -> Unit,
 ) {
-    Spacer(Modifier.height(32.dp))
+    Spacer(Modifier.height(8.dp))
     TDText(text = stringResource(R.string.recover_access), style = TDTheme.typography.heading1)
     Spacer(Modifier.height(16.dp))
     TDText(
@@ -154,10 +104,7 @@ private fun ForgotPasswordFormPanel(
     ) { onAction(UiAction.OnForgotPasswordTap) }
     Spacer(Modifier.height(24.dp))
     Row(
-        modifier =
-        Modifier
-            .fillMaxWidth()
-            .imePadding(),
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
@@ -170,85 +117,6 @@ private fun ForgotPasswordFormPanel(
         )
     }
     Spacer(Modifier.height(32.dp))
-}
-
-@Composable
-private fun ForgotPasswordPortraitContent(
-    uiState: UiState,
-    onAction: (UiAction) -> Unit,
-) {
-    Column(
-        Modifier
-            .fillMaxSize()
-            .imePadding()
-            .background(color = TDTheme.colors.pendingGray)
-            .statusBarsPadding(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Box(
-                modifier =
-                Modifier
-                    .size(70.dp)
-                    .background(color = TDTheme.colors.white.copy(alpha = 0.25f), shape = CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painterResource(R.drawable.ic_lock_reset),
-                    contentDescription = stringResource(R.string.logo),
-                    modifier = Modifier.size(40.dp),
-                    tint = TDTheme.colors.white,
-                )
-            }
-            Spacer(Modifier.height(8.dp))
-            TDText(
-                text = stringResource(R.string.forgot_password),
-                style = TDTheme.typography.heading1,
-                color = TDTheme.colors.white,
-            )
-        }
-
-        Column(
-            Modifier
-                .weight(2f)
-                .clip(RoundedCornerShape(topStart = 60.dp, topEnd = 60.dp))
-                .background(color = TDTheme.colors.background)
-                .padding(start = 32.dp, end = 32.dp, top = 24.dp)
-                .verticalScroll(rememberScrollState()),
-        ) {
-            ForgotPasswordFormPanel(uiState = uiState, onAction = onAction)
-        }
-    }
-}
-
-@Composable
-private fun ForgotPasswordLandscapeContent(
-    uiState: UiState,
-    onAction: (UiAction) -> Unit,
-) {
-    Row(Modifier.fillMaxSize()) {
-        ForgotPasswordBrandingPanel(
-            modifier =
-            Modifier
-                .weight(1f)
-                .fillMaxHeight(),
-        )
-        Column(
-            modifier =
-            Modifier
-                .weight(1f)
-                .fillMaxHeight()
-                .background(TDTheme.colors.background)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 32.dp),
-        ) {
-            ForgotPasswordFormPanel(uiState = uiState, onAction = onAction)
-        }
-    }
 }
 
 @TDPreview

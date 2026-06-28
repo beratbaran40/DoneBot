@@ -1,40 +1,15 @@
 package com.todoapp.mobile.ui.login
 
-import android.content.res.Configuration
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsTopHeight
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import com.todoapp.mobile.R
 import com.todoapp.mobile.data.auth.GoogleSignInManager
+import com.todoapp.mobile.ui.auth.AuthScaffold
 import com.todoapp.mobile.ui.login.LoginContract.UiAction
 import com.todoapp.mobile.ui.login.LoginContract.UiEffect
 import com.todoapp.mobile.ui.login.LoginContract.UiState
-import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.extensions.collectWithLifecycle
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.flow.Flow
@@ -70,93 +45,11 @@ private fun LoginContent(
     uiState: UiState,
     onAction: (UiAction) -> Unit,
 ) {
-    val isPortrait = LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
-    if (isPortrait) {
-        LoginPortraitContent(uiState = uiState, onAction = onAction)
-    } else {
-        LoginLandscapeContent(uiState = uiState, onAction = onAction)
-    }
-}
-
-@Composable
-private fun LoginPortraitContent(
-    uiState: UiState,
-    onAction: (UiAction) -> Unit,
-) {
-    Column(
-        Modifier
-            .fillMaxSize()
-            .background(color = TDTheme.colors.pendingGray)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
+    AuthScaffold(
+        brandTitle = stringResource(R.string.login_header),
+        brandSubtitle = stringResource(R.string.elevate_your_productivity),
     ) {
-        Spacer(modifier = Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
-        Spacer(Modifier.height(32.dp))
-        Box(
-            modifier =
-            Modifier
-                .size(70.dp)
-                .background(
-                    color = TDTheme.colors.background.copy(alpha = 0.25f),
-                    shape = RoundedCornerShape(16.dp),
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painterResource(R.drawable.ic_logo),
-                contentDescription = stringResource(R.string.logo),
-                modifier = Modifier.size(40.dp),
-                tint = TDTheme.colors.white,
-            )
-        }
-        Spacer(Modifier.height(12.dp))
-        TDText(
-            text = stringResource(R.string.login_header),
-            style = TDTheme.typography.heading1,
-            color = TDTheme.colors.white,
-        )
-        TDText(
-            text = stringResource(R.string.elevate_your_productivity),
-            style = TDTheme.typography.heading4,
-            color = TDTheme.colors.white.copy(0.8f),
-        )
-        Spacer(Modifier.weight(1f))
-
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(topStart = 60.dp, topEnd = 60.dp))
-                .background(color = TDTheme.colors.background)
-                .padding(start = 32.dp, end = 32.dp, top = 32.dp),
-        ) {
-            LoginFormPanel(uiState = uiState, onAction = onAction)
-        }
-    }
-}
-
-@Composable
-private fun LoginLandscapeContent(
-    uiState: UiState,
-    onAction: (UiAction) -> Unit,
-) {
-    Row(Modifier.fillMaxSize()) {
-        LoginBrandingPanel(
-            modifier =
-            Modifier
-                .weight(1f)
-                .fillMaxHeight(),
-        )
-        Column(
-            modifier =
-            Modifier
-                .weight(1f)
-                .fillMaxHeight()
-                .background(TDTheme.colors.background)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 32.dp, vertical = 24.dp),
-        ) {
-            LoginFormPanel(uiState = uiState, onAction = onAction)
-        }
+        LoginFormPanel(uiState = uiState, onAction = onAction)
     }
 }
 

@@ -1,18 +1,12 @@
 package com.todoapp.mobile.ui.register
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -26,7 +20,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
 import com.todoapp.mobile.ui.register.RegisterContract.UiAction
@@ -36,47 +29,6 @@ import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDCompactOutlinedTextField
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.theme.TDTheme
-
-@Composable
-internal fun RegisterBrandingPanel(modifier: Modifier = Modifier) {
-    val isDark = TDTheme.isDark
-    val gradient = androidx.compose.ui.graphics.Brush.verticalGradient(
-        colors = listOf(
-            TDTheme.colors.bgColorPurple,
-            TDTheme.colors.lightPending,
-        ),
-    )
-    Column(
-        modifier = modifier
-            .background(gradient)
-            .statusBarsPadding()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        androidx.compose.foundation.Image(
-            painter = painterResource(
-                if (isDark) R.drawable.ic_idle_robot_dark else R.drawable.ic_idle_robot_light,
-            ),
-            contentDescription = null,
-            modifier = Modifier.size(140.dp),
-        )
-        Spacer(Modifier.height(12.dp))
-        TDText(
-            text = stringResource(R.string.create_account),
-            style = TDTheme.typography.heading1,
-            color = TDTheme.colors.darkPurple,
-        )
-        Spacer(Modifier.height(4.dp))
-        TDText(
-            modifier = Modifier.size(width = 300.dp, height = 70.dp),
-            text = stringResource(R.string.join_us_and_start_organizing_your_tasks_efficiently),
-            style = TDTheme.typography.heading5,
-            textAlign = TextAlign.Center,
-            color = TDTheme.colors.darkPurple.copy(0.7f),
-        )
-    }
-}
 
 @Composable
 internal fun RegisterFormPanel(
@@ -228,10 +180,7 @@ internal fun RegisterFormPanel(
 
     Spacer(Modifier.height(16.dp))
     Row(
-        Modifier
-            .fillMaxWidth()
-            .imePadding()
-            .navigationBarsPadding(),
+        Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
     ) {
         TDText(

@@ -1,18 +1,12 @@
 package com.todoapp.mobile.ui.login
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -36,45 +30,6 @@ import com.todoapp.uikit.components.TDCompactOutlinedTextField
 import com.todoapp.uikit.components.TDInfoCard
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.theme.TDTheme
-
-@Composable
-internal fun LoginBrandingPanel(modifier: Modifier = Modifier) {
-    val isDark = TDTheme.isDark
-    val gradient = androidx.compose.ui.graphics.Brush.verticalGradient(
-        colors = listOf(
-            TDTheme.colors.bgColorPurple,
-            TDTheme.colors.lightPending,
-        ),
-    )
-    Column(
-        modifier = modifier
-            .background(gradient)
-            .statusBarsPadding()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        androidx.compose.foundation.Image(
-            painter = painterResource(
-                if (isDark) R.drawable.ic_idle_robot_dark else R.drawable.ic_idle_robot_light,
-            ),
-            contentDescription = null,
-            modifier = Modifier.size(160.dp),
-        )
-        Spacer(Modifier.height(16.dp))
-        TDText(
-            text = stringResource(R.string.login_header),
-            style = TDTheme.typography.heading1,
-            color = TDTheme.colors.darkPurple,
-        )
-        Spacer(Modifier.height(4.dp))
-        TDText(
-            text = stringResource(R.string.elevate_your_productivity),
-            style = TDTheme.typography.heading5,
-            color = TDTheme.colors.darkPurple.copy(0.7f),
-        )
-    }
-}
 
 @Composable
 internal fun LoginFormPanel(
@@ -223,10 +178,7 @@ internal fun LoginFormPanel(
     Spacer(Modifier.height(24.dp))
 
     Row(
-        Modifier
-            .fillMaxWidth()
-            .imePadding()
-            .navigationBarsPadding(),
+        Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
     ) {
         TDText(
