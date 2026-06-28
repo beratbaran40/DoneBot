@@ -20,6 +20,8 @@ import kotlinx.coroutines.withContext
  * given the export JSON, opens the system "create document" picker and writes the JSON to the
  * location the user chooses — no storage permission, no FileProvider. Surfaces a result toast.
  */
+// A @Composable can't constructor-inject a dispatcher; this is a one-shot SAF write off the main thread.
+@Suppress("InjectDispatcher")
 @Composable
 fun rememberDataExportSaver(): (String) -> Unit {
     val context = LocalContext.current
