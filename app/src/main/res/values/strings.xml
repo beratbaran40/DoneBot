@@ -36,6 +36,8 @@
     <string name="calendar_no_tasks_for_day_description">No personal tasks or group deadlines on this day</string>
     <string name="calendar_pick_a_day">Pick a day</string>
     <string name="calendar_pick_a_day_description">Select a date to see its tasks and deadlines</string>
+    <string name="groups_select_a_group">Select a group</string>
+    <string name="groups_select_a_group_description">Pick a group to see its tasks, members and activity</string>
     <string name="deadline_in_hours_minutes">in %1$dh %2$dm</string>
     <string name="deadline_unassigned">Unassigned</string>
     <string name="deadline_still_pending_suffix"> · still pending</string>

@@ -66,7 +66,12 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 fun GroupScreen(
     uiState: UiState,
     onAction: (UiAction) -> Unit,
+    onGroupSelect: ((Long, String) -> Unit)? = null,
 ) {
+    // In the two-pane layout the host passes onGroupSelect to drive the detail pane; otherwise a
+    // group tap navigates full-screen via OnGroupTap (phone / single-pane behaviour).
+    val openGroup: (Long, String) -> Unit =
+        onGroupSelect ?: { id, name -> onAction(UiAction.OnGroupTap(id, name)) }
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
@@ -83,7 +88,7 @@ fun GroupScreen(
 
         is UiState.Error -> {}
         UiState.Loading -> {}
-        is UiState.Success -> GroupsContent(uiState, onAction)
+        is UiState.Success -> GroupsContent(uiState, onAction, openGroup)
     }
 }
 
@@ -92,6 +97,7 @@ fun GroupScreen(
 private fun GroupsContent(
     uiState: UiState.Success,
     onAction: (UiAction) -> Unit,
+    openGroup: (Long, String) -> Unit,
 ) {
     val hapticFeedback = LocalHapticFeedback.current
     val lazyListState = rememberLazyListState()
@@ -162,11 +168,7 @@ private fun GroupsContent(
                                 tasksIcon = R.drawable.ic_sand_clock,
                                 avatarUrl = group.avatarUrl,
                                 onViewDetailsClick = {
-                                    group.remoteId?.let {
-                                        onAction(
-                                            UiAction.OnGroupTap(it, group.name),
-                                        )
-                                    }
+                                    group.remoteId?.let { openGroup(it, group.name) }
                                 },
                                 onDeleteClick = { onAction(UiAction.OnDeleteGroupTap(group.id)) },
                                 isDragging = isDragging,
@@ -217,11 +219,7 @@ private fun GroupsContent(
                                         },
                                     ).clickable(
                                         onClick = {
-                                            group.remoteId?.let {
-                                                onAction(
-                                                    UiAction.OnGroupTap(it, group.name),
-                                                )
-                                            }
+                                            group.remoteId?.let { openGroup(it, group.name) }
                                         },
                                     ),
                             )

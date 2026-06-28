@@ -36,6 +36,8 @@
     <string name="calendar_no_tasks_for_day_description">Bu güne ait kişisel görev veya grup son tarihi yok</string>
     <string name="calendar_pick_a_day">Bir gün seç</string>
     <string name="calendar_pick_a_day_description">Görevlerini ve son tarihlerini görmek için bir tarih seç</string>
+    <string name="groups_select_a_group">Bir grup seç</string>
+    <string name="groups_select_a_group_description">Görevlerini, üyelerini ve etkinliğini görmek için bir grup seç</string>
     <string name="deadline_in_hours_minutes">%1$d saat %2$d dk kaldı</string>
     <string name="deadline_unassigned">Atanmamış</string>
     <string name="deadline_still_pending_suffix"> · hala bekliyor</string>

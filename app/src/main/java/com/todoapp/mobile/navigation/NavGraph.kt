@@ -64,6 +64,7 @@ import com.todoapp.mobile.ui.filteredtasks.FilteredTasksViewModel
 import com.todoapp.mobile.ui.forgotpassword.ForgotPasswordScreen
 import com.todoapp.mobile.ui.forgotpassword.ForgotPasswordViewModel
 import com.todoapp.mobile.ui.groups.GroupScreen
+import com.todoapp.mobile.ui.groups.GroupsTwoPane
 import com.todoapp.mobile.ui.groups.GroupsViewModel
 import com.todoapp.mobile.ui.groups.createnewgroup.CreateNewGroupScreen
 import com.todoapp.mobile.ui.groups.createnewgroup.CreateNewGroupViewModel
@@ -512,8 +513,12 @@ fun NavGraph(
                     }
                 }
             }
-            ResponsiveContainer {
-                GroupScreen(uiState, viewModel::onAction)
+            if (LocalWindowSizeClass.current.widthSizeClass == WindowWidthSizeClass.Expanded) {
+                GroupsTwoPane(uiState = uiState, onAction = viewModel::onAction)
+            } else {
+                ResponsiveContainer {
+                    GroupScreen(uiState, viewModel::onAction)
+                }
             }
             ScreenInfoDialog(
                 infoClicks = topBarViewModel.infoClicks,
