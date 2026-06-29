@@ -62,9 +62,20 @@ constructor(
                 _navEffect.trySend(
                     NavigationEffect.Navigate(Screen.TransferOwnership(groupId)),
                 )
-            UiAction.OnLeaveTap -> _uiState.update { it.copy(isLeaveDialogOpen = true) }
+            UiAction.OnLeaveTap ->
+                if (_uiState.value.currentUserRole.equals("ADMIN", ignoreCase = true)) {
+                    // The owner can't leave outright; steer them to hand ownership over first.
+                    _uiState.update { it.copy(isTransferPromptOpen = true) }
+                } else {
+                    _uiState.update { it.copy(isLeaveDialogOpen = true) }
+                }
             UiAction.OnLeaveDialogDismiss -> _uiState.update { it.copy(isLeaveDialogOpen = false) }
             UiAction.OnLeaveConfirm -> leaveGroup()
+            UiAction.OnTransferPromptDismiss -> _uiState.update { it.copy(isTransferPromptOpen = false) }
+            UiAction.OnTransferPromptConfirm -> {
+                _uiState.update { it.copy(isTransferPromptOpen = false) }
+                _navEffect.trySend(NavigationEffect.Navigate(Screen.TransferOwnership(groupId)))
+            }
             is UiAction.OnAvatarPicked ->
                 _navEffect.trySend(NavigationEffect.Navigate(Screen.AvatarCrop(action.uri)))
             is UiAction.OnAvatarCropped -> uploadCroppedAvatar(action.path)

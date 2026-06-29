@@ -418,6 +418,8 @@
     <string name="leave_group_confirm">Leave</string>
     <string name="left_group">You left the group</string>
     <string name="leave_group_error">Couldn\'t leave the group</string>
+    <string name="leave_group_owner_title">Transfer ownership first</string>
+    <string name="leave_group_owner_message">As the group owner, you must transfer ownership to another member before you can leave.</string>
     <string name="overview">Overview</string>
     <string name="members">Members</string>
     <string name="activity">Activity</string>

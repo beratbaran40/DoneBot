@@ -14,6 +14,7 @@ object GroupSettingsContract {
         val isSaving: Boolean = false,
         val isLeaving: Boolean = false,
         val isLeaveDialogOpen: Boolean = false,
+        val isTransferPromptOpen: Boolean = false,
         val isLoading: Boolean = true,
         val errorMessage: String? = null,
     )
@@ -38,6 +39,10 @@ object GroupSettingsContract {
         data object OnLeaveConfirm : UiAction
 
         data object OnLeaveDialogDismiss : UiAction
+
+        data object OnTransferPromptConfirm : UiAction
+
+        data object OnTransferPromptDismiss : UiAction
 
         /** A photo was picked; routes to the crop screen with the picked [uri]. */
         data class OnAvatarPicked(

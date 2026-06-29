@@ -422,6 +422,8 @@
     <string name="leave_group_confirm">Ayrıl</string>
     <string name="left_group">Gruptan ayrıldın</string>
     <string name="leave_group_error">Gruptan ayrılınamadı</string>
+    <string name="leave_group_owner_title">Önce sahipliği devret</string>
+    <string name="leave_group_owner_message">Grup sahibi olarak, ayrılabilmek için önce sahipliği başka bir üyeye devretmelisin.</string>
     <string name="overview">Genel Bakış</string>
     <string name="members">Eklenen Üye</string>
     <string name="activity">Aktivite</string>

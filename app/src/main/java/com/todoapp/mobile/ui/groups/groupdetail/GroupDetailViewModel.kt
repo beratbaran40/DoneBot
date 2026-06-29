@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.todoapp.mobile.R
+import com.todoapp.mobile.common.deviceTimePattern
 import com.todoapp.mobile.domain.model.GroupActivity
 import com.todoapp.mobile.domain.model.GroupMember
 import com.todoapp.mobile.domain.model.GroupTask
@@ -740,17 +741,17 @@ constructor(
         val date = Date(timestamp)
         return when {
             diff < TimeUnit.HOURS.toMillis(24) && diff > 0 -> {
-                val sdf = SimpleDateFormat("HH:mm", appLocale)
+                val sdf = SimpleDateFormat(deviceTimePattern(context), appLocale)
                 ctx.getString(R.string.due_prefix) + " " + sdf.format(date)
             }
 
             diff <= 0 && diff > -TimeUnit.HOURS.toMillis(24) -> {
-                val sdf = SimpleDateFormat("HH:mm", appLocale)
+                val sdf = SimpleDateFormat(deviceTimePattern(context), appLocale)
                 ctx.getString(R.string.due_today) + ", " + sdf.format(date)
             }
 
             else -> {
-                val sdf = SimpleDateFormat("d MMM, HH:mm", appLocale)
+                val sdf = SimpleDateFormat("d MMM, " + deviceTimePattern(context), appLocale)
                 ctx.getString(R.string.due_prefix) + " " + sdf.format(date)
             }
         }

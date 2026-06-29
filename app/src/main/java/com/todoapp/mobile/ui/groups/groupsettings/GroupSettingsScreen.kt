@@ -223,16 +223,14 @@ private fun GroupSettingsContent(
             Spacer(modifier = Modifier.height(24.dp))
         }
 
-        if (!isAdmin) {
-            Spacer(modifier = Modifier.height(8.dp))
-            TDButton(
-                text = stringResource(com.todoapp.mobile.R.string.leave_group),
-                type = TDButtonType.OUTLINE,
-                isEnable = !uiState.isLeaving,
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { onAction(UiAction.OnLeaveTap) },
-            )
-        }
+        Spacer(modifier = Modifier.height(8.dp))
+        TDButton(
+            text = stringResource(com.todoapp.mobile.R.string.leave_group),
+            type = TDButtonType.CANCEL,
+            isEnable = !uiState.isLeaving,
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { onAction(UiAction.OnLeaveTap) },
+        )
     }
 
     if (uiState.isLeaveDialogOpen) {
@@ -253,6 +251,33 @@ private fun GroupSettingsContent(
             },
             dismissButton = {
                 TextButton(onClick = { onAction(UiAction.OnLeaveDialogDismiss) }) {
+                    Text(
+                        text = stringResource(com.todoapp.mobile.R.string.cancel),
+                        color = TDTheme.colors.gray,
+                    )
+                }
+            },
+        )
+    }
+
+    if (uiState.isTransferPromptOpen) {
+        AlertDialog(
+            onDismissRequest = { onAction(UiAction.OnTransferPromptDismiss) },
+            title = { Text(stringResource(com.todoapp.mobile.R.string.leave_group_owner_title)) },
+            titleContentColor = TDTheme.colors.onBackground,
+            containerColor = TDTheme.colors.background,
+            textContentColor = TDTheme.colors.gray,
+            text = { Text(stringResource(com.todoapp.mobile.R.string.leave_group_owner_message)) },
+            confirmButton = {
+                TextButton(onClick = { onAction(UiAction.OnTransferPromptConfirm) }) {
+                    Text(
+                        text = stringResource(com.todoapp.mobile.R.string.transfer_ownership),
+                        color = TDTheme.colors.primary,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onAction(UiAction.OnTransferPromptDismiss) }) {
                     Text(
                         text = stringResource(com.todoapp.mobile.R.string.cancel),
                         color = TDTheme.colors.gray,
@@ -322,6 +347,25 @@ private fun GroupSettingsLeaveDialogPreview() {
                 description = "Daily chores, grocery lists, and vacation planning for 2024.",
                 currentUserRole = "MEMBER",
                 isLeaveDialogOpen = true,
+                isLoading = false,
+            ),
+            onAction = {},
+        )
+    }
+}
+
+@com.todoapp.uikit.previews.TDPreviewDialog
+@Composable
+private fun GroupSettingsOwnerLeavePromptPreview() {
+    TDTheme {
+        GroupSettingsContent(
+            uiState =
+            GroupSettingsContract.UiState(
+                groupId = 1L,
+                name = "The Smith Family",
+                description = "Daily chores, grocery lists, and vacation planning for 2024.",
+                currentUserRole = "ADMIN",
+                isTransferPromptOpen = true,
                 isLoading = false,
             ),
             onAction = {},
