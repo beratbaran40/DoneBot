@@ -1,5 +1,6 @@
 package com.todoapp.mobile.ui.login
 
+import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -33,7 +34,7 @@ fun LoginScreen(
                         onAction(UiAction.OnGoogleSignInFailed(error.message ?: "Sign-in Cancelled"))
                     }
             }
-            is UiEffect.ShowToast -> {}
+            is UiEffect.ShowToast -> Toast.makeText(context, it.message, Toast.LENGTH_LONG).show()
         }
     }
 

@@ -1,5 +1,6 @@
 package com.todoapp.mobile.ui.register
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -41,7 +42,7 @@ fun RegisterScreen(
                         onAction(UiAction.OnGoogleSignInFailed(error.message ?: "Sign-in cancelled"))
                     }
             }
-            is UiEffect.ShowToast -> {}
+            is UiEffect.ShowToast -> Toast.makeText(context, it.message, Toast.LENGTH_LONG).show()
         }
     }
 
