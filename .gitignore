@@ -69,3 +69,6 @@ signing.properties
 credentials.json
 secrets.properties
 secrets.xml
+
+# Session reports / scratch docs (local-only)
+SESSION_*.md
