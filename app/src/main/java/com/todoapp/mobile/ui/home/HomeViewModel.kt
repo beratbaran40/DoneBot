@@ -82,6 +82,9 @@ constructor(
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState = _uiState.asStateFlow()
 
+    // Greeting clock format follows the device's 12h/24h system setting.
+    private val timeFormatter by lazy { com.todoapp.mobile.common.deviceTimeFormatter(appContext) }
+
     private val _uiEffect by lazy { Channel<UiEffect>() }
     val uiEffect: Flow<UiEffect> by lazy { _uiEffect.receiveAsFlow() }
 
@@ -394,7 +397,7 @@ constructor(
         taskFormState = TaskFormState(),
         displayName = displayName,
         dayMode = com.todoapp.mobile.common.computeDayMode(java.time.LocalTime.now(clock)),
-        currentTimeFormatted = java.time.LocalTime.now(clock).format(TIME_FORMATTER),
+        currentTimeFormatted = java.time.LocalTime.now(clock).format(timeFormatter),
     )
 
     private fun changeSelectedDate(uiAction: UiAction.OnDateSelect) {
@@ -805,7 +808,7 @@ constructor(
         }
         viewModelScope.launch {
             while (true) {
-                val now = java.time.LocalTime.now(clock).format(TIME_FORMATTER)
+                val now = java.time.LocalTime.now(clock).format(timeFormatter)
                 updateSuccessState { state ->
                     if (state.currentTimeFormatted == now) state else state.copy(currentTimeFormatted = now)
                 }
@@ -1096,7 +1099,5 @@ constructor(
         // Lower bound of the late-evening half of NIGHT mode (22:00-23:59).
         // Below this, NIGHT means 00:00-05:59 — a freshly started day, not the day's end.
         private const val END_OF_DAY_HOUR = 22
-        private val TIME_FORMATTER: java.time.format.DateTimeFormatter =
-            java.time.format.DateTimeFormatter.ofPattern("HH:mm").withLocale(java.util.Locale.ROOT)
     }
 }

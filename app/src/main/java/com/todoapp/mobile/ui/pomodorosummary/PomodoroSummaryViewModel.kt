@@ -1,9 +1,11 @@
 package com.todoapp.mobile.ui.pomodorosummary
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.todoapp.mobile.common.deviceTimePattern
 import com.todoapp.mobile.domain.engine.PomodoroEngine
 import com.todoapp.mobile.domain.engine.PomodoroMode
 import com.todoapp.mobile.domain.engine.Session
@@ -13,6 +15,7 @@ import com.todoapp.mobile.navigation.NavigationEffect
 import com.todoapp.mobile.navigation.Screen
 import com.todoapp.mobile.ui.pomodorosummary.PomodoroSummaryContract.UiAction
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,6 +32,7 @@ constructor(
     savedStateHandle: SavedStateHandle,
     private val pomodoroRepository: PomodoroRepository,
     private val engine: PomodoroEngine,
+    @ApplicationContext private val appContext: Context,
 ) : ViewModel() {
     private val route: Screen.PomodoroSummary = savedStateHandle.toRoute()
 
@@ -41,7 +45,7 @@ constructor(
                 completedAt =
                 LocalDateTime
                     .now()
-                    .format(DateTimeFormatter.ofPattern("EEE, MMM d · HH:mm")),
+                    .format(DateTimeFormatter.ofPattern("EEE, MMM d · " + deviceTimePattern(appContext))),
             ),
         )
     val uiState = _uiState.asStateFlow()

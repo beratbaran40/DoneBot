@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.todoapp.mobile.BuildConfig
 import com.todoapp.mobile.R
+import com.todoapp.mobile.common.deviceTimeFormatter
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.ui.common.categoryOptions
@@ -63,7 +64,6 @@ import com.todoapp.uikit.extensions.collectWithLifecycle
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun DetailsScreen(
@@ -175,7 +175,8 @@ private fun DetailsSuccessContent(
     onAction: (UiAction) -> Unit,
 ) {
     val verticalScroll = rememberScrollState()
-    val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
+    val context = LocalContext.current
+    val timeFormatter = remember(context) { deviceTimeFormatter(context) }
 
     var showStartTimePicker by remember { mutableStateOf(false) }
     var showEndTimePicker by remember { mutableStateOf(false) }

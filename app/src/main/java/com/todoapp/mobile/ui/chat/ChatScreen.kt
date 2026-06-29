@@ -172,7 +172,9 @@ private fun ChatReadyContent(
                 visible = showScrollFab,
                 onClick = {
                     scope.launch {
-                        listState.animateScrollToItem(state.messages.lastIndex)
+                        if (state.messages.isNotEmpty()) {
+                            listState.animateScrollToItem(state.messages.lastIndex)
+                        }
                     }
                 },
             )

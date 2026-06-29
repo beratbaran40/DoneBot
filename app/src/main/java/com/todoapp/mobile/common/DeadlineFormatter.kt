@@ -1,6 +1,7 @@
 package com.todoapp.mobile.common
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.todoapp.mobile.R
@@ -20,8 +21,6 @@ data class DeadlineDisplay(
 )
 
 private val dateFormatter = DateTimeFormatter.ofPattern("MMM d")
-private val dateTimeFormatter = DateTimeFormatter.ofPattern("MMM d · HH:mm")
-private val timeOnlyFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
 @Composable
 fun rememberDeadlineDisplay(
@@ -33,6 +32,9 @@ fun rememberDeadlineDisplay(
     val zone = ZoneId.systemDefault()
     val due = LocalDateTime.ofInstant(Instant.ofEpochMilli(dueAtEpochMs), zone)
     val now = LocalDateTime.ofInstant(Instant.ofEpochMilli(nowEpochMs), zone)
+    val timePattern = rememberDeviceTimePattern()
+    val dateTimeFormatter = remember(timePattern) { DateTimeFormatter.ofPattern("MMM d · $timePattern") }
+    val timeOnlyFormatter = remember(timePattern) { DateTimeFormatter.ofPattern(timePattern) }
     val absoluteWithTime = due.format(dateTimeFormatter)
     val absoluteDateOnly = due.format(dateFormatter)
     val timeOnly = due.format(timeOnlyFormatter)
