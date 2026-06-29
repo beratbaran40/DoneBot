@@ -6,13 +6,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
@@ -149,28 +146,11 @@ internal fun RegisterFormPanel(
         fullWidth = true,
         modifier = Modifier.clip(RoundedCornerShape(12.dp)),
     ) { onAction(UiAction.OnSignUpTap) }
-    Spacer(Modifier.height(24.dp))
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        HorizontalDivider(modifier = Modifier.weight(1f), color = TDTheme.colors.gray.copy(0.3f))
-        TDText(
-            text = stringResource(R.string.or_continue_with),
-            style = TDTheme.typography.subheading4,
-            color = TDTheme.colors.gray,
-            modifier = Modifier.padding(horizontal = 12.dp),
-        )
-        HorizontalDivider(modifier = Modifier.weight(1f), color = TDTheme.colors.gray.copy(0.3f))
-    }
-
     Spacer(Modifier.height(16.dp))
 
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
         TDButton(
-            text = stringResource(R.string.google),
+            text = stringResource(R.string.sign_up_with_google),
             fullWidth = true,
             type = TDButtonType.OUTLINE,
             icon = painterResource(R.drawable.ic_google_logo),

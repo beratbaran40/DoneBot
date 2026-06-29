@@ -25,17 +25,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.LocalWindowSizeClass
-import com.todoapp.mobile.R
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.theme.TDTheme
 
 /** Max width of the auth form column — a single readable column on any screen. */
 val AuthFormMaxWidth = 400.dp
+
+/** Robot art size as a fraction of the circle diameter (centered); tune for badge framing. */
+private const val BRAND_ROBOT_ZOOM = 1.5f
 
 /**
  * Responsive frame for the "welcome" auth screens (login / register / forgot password).
@@ -51,9 +53,9 @@ val AuthFormMaxWidth = 400.dp
  */
 @Composable
 fun AuthScaffold(
+    modifier: Modifier = Modifier,
     brandTitle: String,
     brandSubtitle: String? = null,
-    modifier: Modifier = Modifier,
     form: @Composable () -> Unit,
 ) {
     val sizeClass = LocalWindowSizeClass.current
@@ -87,7 +89,7 @@ fun AuthScaffold(
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .background(TDTheme.colors.lightPending)
+                .background(TDTheme.colors.pendingGray)
                 .verticalScroll(rememberScrollState())
                 .imePadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -112,7 +114,7 @@ private fun AuthFormColumn(
     val styled =
         if (card) {
             base
-                .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                .clip(RoundedCornerShape(32.dp))
                 .background(TDTheme.colors.background)
                 .padding(start = 24.dp, end = 24.dp, top = 28.dp)
         } else {
@@ -124,15 +126,15 @@ private fun AuthFormColumn(
 }
 
 /**
- * Brand panel: gradient background + DoneBot illustration + title + tagline. Illustration scales by
- * window size (smaller on short landscape phones, larger on tablets) so nothing clips; the tagline
+ * Brand panel: solid pendingGray background + circular splash badge + title + tagline. Badge scales
+ * by window size (smaller on short landscape phones, larger on tablets) so nothing clips; the tagline
  * wraps instead of using a fixed-size box.
  */
 @Composable
 fun AuthBrandPanel(
+    modifier: Modifier = Modifier,
     title: String,
     subtitle: String? = null,
-    modifier: Modifier = Modifier,
 ) {
     val sizeClass = LocalWindowSizeClass.current
     val illustrationSize =
@@ -141,30 +143,27 @@ fun AuthBrandPanel(
             sizeClass.widthSizeClass == WindowWidthSizeClass.Expanded -> 180.dp
             else -> 140.dp
         }
-    val gradient =
-        Brush.verticalGradient(
-            colors = listOf(TDTheme.colors.bgColorPurple, TDTheme.colors.lightPending),
-        )
     Column(
         modifier = modifier
-            .background(gradient)
+            .background(TDTheme.colors.pendingGray)
             .statusBarsPadding()
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Image(
-            painter = painterResource(
-                if (TDTheme.isDark) R.drawable.ic_idle_robot_dark else R.drawable.ic_idle_robot_light,
-            ),
+            painter = painterResource(com.example.uikit.R.drawable.img_donebot_alarm_reminder_light),
             contentDescription = null,
-            modifier = Modifier.size(illustrationSize),
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.size(illustrationSize * BRAND_ROBOT_ZOOM),
         )
-        Spacer(Modifier.height(16.dp))
+
+        Spacer(Modifier.height(4.dp))
+
         TDText(
             text = title,
             style = TDTheme.typography.heading1,
-            color = TDTheme.colors.darkPurple,
+            color = TDTheme.colors.white,
             textAlign = TextAlign.Center,
         )
         if (subtitle != null) {
@@ -172,7 +171,7 @@ fun AuthBrandPanel(
             TDText(
                 text = subtitle,
                 style = TDTheme.typography.heading5,
-                color = TDTheme.colors.darkPurple.copy(0.7f),
+                color = TDTheme.colors.white.copy(0.7f),
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
