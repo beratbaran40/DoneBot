@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Debug-only override so the .debug build is labelled distinctly on the launcher. -->
+    <string name="app_name">DoneBot (debug)</string>
+</resources>

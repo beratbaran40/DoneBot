@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Debug-only override: orange adaptive-icon background (release stays #141841 navy) so the
+         debug app icon is visually distinct from release on the launcher. -->
+    <color name="ic_app_logo_background">#EF8829</color>
+</resources>

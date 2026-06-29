@@ -82,6 +82,13 @@ android {
 
     buildTypes {
         debug {
+            // Lets the debug build install side-by-side with release (com.todoapp.mobile.debug).
+            // NOTE: social login (Google/Facebook) + FCM are bound to the package name, so they
+            // only work on debug once com.todoapp.mobile.debug + the debug SHA-1 are registered in
+            // Firebase/Google Cloud. Email/password login works regardless. A src/debug/google-services.json
+            // placeholder keeps the build green until then.
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
             buildConfigField("String", "BASE_URL", "\"$debugBaseUrl\"")
             buildConfigField(
                 "String",

@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "348288029176",
+    "project_id": "candroidapitodos",
+    "storage_bucket": "candroidapitodos.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:348288029176:android:afb2241354a055b342860d",
+        "android_client_info": {
+          "package_name": "com.todoapp.mobile.debug"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "348288029176-g9sd1dg5364mu472j709egim05q9miup.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.todoapp.mobile.debug",
+            "certificate_hash": "461b6b2e7add9a1e7edf0517684fb858b2230a16"
+          }
+        },
+        {
+          "client_id": "348288029176-tqsrb8v3rn2pghkhc19rfva89q7q9vis.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKBYYMq8Z_axUzCa5QLRicxYscy1Xhlqo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "348288029176-tqsrb8v3rn2pghkhc19rfva89q7q9vis.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
