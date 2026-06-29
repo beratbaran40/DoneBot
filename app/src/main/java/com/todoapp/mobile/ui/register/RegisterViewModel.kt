@@ -190,6 +190,7 @@ constructor(
             sessionPreferences.setRefreshToken(registerResponseData.refreshToken)
             dataStoreHelper.setUser(registerResponseData.user)
             dataStoreHelper.setFirstLoginPermissionPromptPending(true)
+            dataStoreHelper.setTermsConsentPending(true)
 
             userRepository
                 .syncPendingFcmToken()

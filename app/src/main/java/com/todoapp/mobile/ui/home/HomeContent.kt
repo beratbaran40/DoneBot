@@ -47,8 +47,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.mobile.BuildConfig
 import com.todoapp.mobile.common.move
 import com.todoapp.mobile.ui.common.components.OverdueBanner
 import com.todoapp.mobile.ui.home.HomeContract.UiAction
@@ -486,6 +493,44 @@ fun HomeContent(
                 },
             )
         }
+        if (uiState.isTermsConsentDialogOpen) {
+            val linkStyles =
+                TextLinkStyles(
+                    style =
+                    SpanStyle(
+                        color = TDTheme.colors.primary,
+                        textDecoration = TextDecoration.Underline,
+                    ),
+                )
+            val consentMessage =
+                buildAnnotatedString {
+                    append(stringResource(com.todoapp.mobile.R.string.terms_consent_prefix))
+                    withLink(LinkAnnotation.Url(BuildConfig.PRIVACY_POLICY_URL, linkStyles)) {
+                        append(stringResource(com.todoapp.mobile.R.string.settings_privacy_policy))
+                    }
+                    append(stringResource(com.todoapp.mobile.R.string.terms_consent_connector))
+                    withLink(LinkAnnotation.Url(BuildConfig.TERMS_OF_SERVICE_URL, linkStyles)) {
+                        append(stringResource(com.todoapp.mobile.R.string.settings_terms_of_service))
+                    }
+                    append(stringResource(com.todoapp.mobile.R.string.terms_consent_suffix))
+                }
+            AlertDialog(
+                onDismissRequest = { },
+                title = { Text(stringResource(com.todoapp.mobile.R.string.terms_consent_title)) },
+                titleContentColor = TDTheme.colors.onBackground,
+                containerColor = TDTheme.colors.background,
+                textContentColor = TDTheme.colors.gray,
+                text = { Text(consentMessage) },
+                confirmButton = {
+                    TextButton(onClick = { onAction(UiAction.OnTermsConsentAccept) }) {
+                        Text(
+                            text = stringResource(com.todoapp.mobile.R.string.terms_consent_continue),
+                            color = TDTheme.colors.primary,
+                        )
+                    }
+                },
+            )
+        }
     }
 }
 
@@ -843,6 +888,24 @@ private fun HomeContentDeleteDialogPreview() {
                 completedTaskCountThisWeek = 5,
                 pendingTaskCountThisWeek = 8,
                 isDeleteDialogOpen = true,
+            ),
+            onAction = {},
+            modifier = Modifier.padding(horizontal = 24.dp),
+        )
+    }
+}
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun HomeContentTermsConsentDialogPreview() {
+    TDTheme {
+        HomeContent(
+            uiState =
+            HomePreviewData.successState(
+                tasks = HomePreviewData.sampleTasks,
+                completedTaskCountThisWeek = 5,
+                pendingTaskCountThisWeek = 8,
+                isTermsConsentDialogOpen = true,
             ),
             onAction = {},
             modifier = Modifier.padding(horizontal = 24.dp),

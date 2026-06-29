@@ -48,6 +48,7 @@ object HomeContract {
             val taskDatesInMonth: Set<LocalDate> = emptySet(),
             val expandedStagedTaskId: Long? = null,
             val expandedSubtasks: List<Subtask> = emptyList(),
+            val isTermsConsentDialogOpen: Boolean = false,
         ) : UiState
 
         data class Error(
@@ -226,6 +227,8 @@ object HomeContract {
             val subtaskId: Long,
             val isCompleted: Boolean,
         ) : UiAction
+
+        data object OnTermsConsentAccept : UiAction
     }
 
     enum class HomeFilter {

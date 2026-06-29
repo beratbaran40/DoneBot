@@ -186,6 +186,7 @@ constructor(
             is UiAction.DismissPermission -> dismissPermission(uiAction.type)
             is UiAction.PermissionGranted -> dismissPermission(uiAction.type)
             is UiAction.RefreshPermissions -> refreshPermissions()
+            is UiAction.OnTermsConsentAccept -> acceptTermsConsent()
         }
     }
 
@@ -222,6 +223,26 @@ constructor(
             if (remaining.isEmpty()) {
                 dataStoreHelper.setFirstLoginPermissionPromptPending(false)
             }
+        }
+    }
+
+    /**
+     * One-time post-signup consent: if the register flow set the pending flag, open the
+     * Terms/Privacy dialog once. Cleared in [acceptTermsConsent] so it never reappears (and is
+     * never set on login, so returning users don't see it).
+     */
+    private fun checkTermsConsentPending() {
+        viewModelScope.launch {
+            if (dataStoreHelper.observeTermsConsentPending().first()) {
+                updateSuccessState { it.copy(isTermsConsentDialogOpen = true) }
+            }
+        }
+    }
+
+    private fun acceptTermsConsent() {
+        updateSuccessState { it.copy(isTermsConsentDialogOpen = false) }
+        viewModelScope.launch {
+            dataStoreHelper.setTermsConsentPending(false)
         }
     }
 
@@ -349,7 +370,10 @@ constructor(
                             }
                         }
                     }
-                    if (becameSuccess) refreshPermissions()
+                    if (becameSuccess) {
+                        refreshPermissions()
+                        checkTermsConsentPending()
+                    }
                 }
             }
     }
