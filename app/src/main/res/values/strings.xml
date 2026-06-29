@@ -519,6 +519,7 @@
     <string name="settings_profile_avatar_content_description">Profile picture</string>
     <string name="settings_privacy_policy">Privacy Policy</string>
     <string name="settings_terms_of_service">Terms of Service</string>
+    <string name="settings_build_debug_badge">DEBUG</string>
     <string name="settings_delete_account">Delete Account</string>
     <string name="delete_account_speech_bubble">Wait… are you really leaving?</string>
     <string name="delete_account_dialog_message">This cannot be undone. All your tasks, groups, and chats will be deleted. For groups you own, admin rights will pass to a random member; if you\'re the only member, the group will be deleted too.</string>

@@ -520,6 +520,7 @@
     <string name="settings_profile_avatar_content_description">Profil fotoğrafı</string>
     <string name="settings_privacy_policy">Gizlilik Politikası</string>
     <string name="settings_terms_of_service">Kullanım Koşulları</string>
+    <string name="settings_build_debug_badge">DEBUG</string>
     <string name="settings_delete_account">Hesabı Sil</string>
     <string name="delete_account_speech_bubble">Dur biraz… gerçekten gidiyor musun?</string>
     <string name="delete_account_dialog_message">Bu işlem geri alınamaz. Tüm görevlerin, grupların ve sohbetlerin silinecek. Sahibi olduğun gruplarda yöneticilik rastgele bir üyeye devredilir; tek üye sensen grup da silinir.</string>

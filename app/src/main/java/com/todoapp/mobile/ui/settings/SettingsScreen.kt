@@ -612,6 +612,23 @@ private fun SettingsContent(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+        ) {
+            TDText(
+                text = if (BuildConfig.DEBUG) {
+                    stringResource(R.string.settings_build_debug_badge)
+                } else {
+                    BuildConfig.VERSION_NAME
+                },
+                style = TDTheme.typography.subheading2,
+                color = if (BuildConfig.DEBUG) TDTheme.colors.orange else TDTheme.colors.gray,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
