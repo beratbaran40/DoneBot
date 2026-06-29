@@ -29,6 +29,7 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -82,7 +83,7 @@ fun HomeTaskList(
     headerContent: LazyListScope.() -> Unit = {},
 ) {
     val isAnyDragging = reorderableLazyListState.isAnyItemDragging
-    val today = java.time.LocalDate.now()
+    val today = remember { java.time.LocalDate.now() }
     val overdueLabel = stringResource(com.todoapp.mobile.R.string.status_overdue)
     LazyColumn(
         modifier = modifier,
@@ -141,10 +142,19 @@ fun HomeTaskList(
             itemsIndexed(
                 items = tasks,
                 key = { _, task -> task.id },
+                contentType = { _, task -> task.photoUrls.isNotEmpty() },
             ) { index, task ->
                 val isOverdue = !task.isCompleted &&
                     task.recurrence == Recurrence.NONE &&
                     task.date.isBefore(today)
+                val displayTitle =
+                    remember(task.title, task.isSecret) {
+                        if (task.isSecret) task.title.maskTitle() else task.title
+                    }
+                val displayDescription =
+                    remember(task.description, task.isSecret) {
+                        if (task.isSecret) task.description?.maskDescription() else task.description
+                    }
                 ReorderableItem(
                     state = reorderableLazyListState,
                     key = task.id,
@@ -218,6 +228,11 @@ fun HomeTaskList(
                         ) {
                             val firstPhoto = task.photoUrls.firstOrNull()
                             if (firstPhoto != null) {
+                                val photoUrl =
+                                    remember(firstPhoto) {
+                                        val base = com.todoapp.mobile.BuildConfig.BASE_URL.trimEnd('/')
+                                        "$base/${firstPhoto.trimStart('/')}"
+                                    }
                                 Column(
                                     modifier =
                                     Modifier
@@ -229,13 +244,7 @@ fun HomeTaskList(
                                         .background(TDTheme.colors.lightPending),
                                 ) {
                                     SecretOrNormalPhotoBanner(
-                                        url =
-                                        run {
-                                            val base =
-                                                com.todoapp.mobile.BuildConfig.BASE_URL
-                                                    .trimEnd('/')
-                                            "$base/${firstPhoto.trimStart('/')}"
-                                        },
+                                        url = photoUrl,
                                         isSecret = task.isSecret,
                                     )
                                     val openLocation = rememberOpenLocation(
@@ -245,8 +254,8 @@ fun HomeTaskList(
                                         task.locationLng,
                                     )
                                     TDTaskCardWithCheckbox(
-                                        taskText = if (task.isSecret) task.title.maskTitle() else task.title,
-                                        taskDescription = if (task.isSecret) task.description?.maskDescription() else task.description,
+                                        taskText = displayTitle,
+                                        taskDescription = displayDescription,
                                         isChecked = task.isCompleted,
                                         onCheckBoxClick = { onTaskCheck(task) },
                                         isDragging = isDragging,
@@ -285,8 +294,8 @@ fun HomeTaskList(
                                     task.locationLng,
                                 )
                                 TDTaskCardWithCheckbox(
-                                    taskText = if (task.isSecret) task.title.maskTitle() else task.title,
-                                    taskDescription = if (task.isSecret) task.description?.maskDescription() else task.description,
+                                    taskText = displayTitle,
+                                    taskDescription = displayDescription,
                                     isChecked = task.isCompleted,
                                     onCheckBoxClick = { onTaskCheck(task) },
                                     isDragging = isDragging,
@@ -367,11 +376,13 @@ internal fun HomeSwipeDismissBackground(direction: SwipeToDismissBoxValue) {
 private fun categoryLabelFor(task: Task): String? {
     val categoryText = categoryDisplayText(task)
     val recurrenceText = recurrenceDisplayText(task.recurrence)
-    return when {
-        categoryText != null && recurrenceText != null -> "$categoryText · $recurrenceText"
-        categoryText != null -> categoryText
-        recurrenceText != null -> recurrenceText
-        else -> null
+    return remember(categoryText, recurrenceText) {
+        when {
+            categoryText != null && recurrenceText != null -> "$categoryText · $recurrenceText"
+            categoryText != null -> categoryText
+            recurrenceText != null -> recurrenceText
+            else -> null
+        }
     }
 }
 

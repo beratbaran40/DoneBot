@@ -44,6 +44,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
@@ -302,7 +303,7 @@ constructor(
                             "in-mem map size=${photoUrls.size}",
                     )
                     DailyData(withPhotos, pendingTaskCount, completedTaskCount)
-                }.collect { data ->
+                }.distinctUntilChanged().flowOn(ioDispatcher).collect { data ->
                     var becameSuccess = false
                     val isFirstSuccess = _uiState.value !is UiState.Success
                     val initialDisplayName =

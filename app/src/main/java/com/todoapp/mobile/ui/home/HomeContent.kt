@@ -121,35 +121,37 @@ fun HomeContent(
     var showHint by remember { mutableStateOf(false) }
     var currentHintRes by remember { mutableIntStateOf(com.todoapp.mobile.R.string.hint_swipe_left_delete) }
     val hints =
-        listOf(
-            com.todoapp.mobile.R.string.hint_swipe_left_delete,
-            com.todoapp.mobile.R.string.hint_swipe_right_secret,
-            com.todoapp.mobile.R.string.hint_long_press_reorder,
-            com.todoapp.mobile.R.string.hint_add_task,
-            com.todoapp.mobile.R.string.hint_secret_on_create,
-            com.todoapp.mobile.R.string.hint_calendar_range,
-            com.todoapp.mobile.R.string.hint_activity_stats,
-            com.todoapp.mobile.R.string.hint_task_detail,
-            com.todoapp.mobile.R.string.hint_daily_plan,
-            com.todoapp.mobile.R.string.hint_groups,
-            com.todoapp.mobile.R.string.hint_theme,
-            com.todoapp.mobile.R.string.hint_pomodoro,
-            com.todoapp.mobile.R.string.hint_weekly_picker,
-            com.todoapp.mobile.R.string.hint_weekly_stats,
-            com.todoapp.mobile.R.string.hint_group_reorder,
-            com.todoapp.mobile.R.string.hint_task_photos,
-            com.todoapp.mobile.R.string.hint_group_task_flip,
-            com.todoapp.mobile.R.string.hint_group_task_assign_swipe,
-            com.todoapp.mobile.R.string.hint_group_task_priority,
-            com.todoapp.mobile.R.string.hint_profile_avatar,
-            com.todoapp.mobile.R.string.hint_group_avatar,
-            com.todoapp.mobile.R.string.hint_pomodoro_banner,
-            com.todoapp.mobile.R.string.hint_transfer_ownership,
-            com.todoapp.mobile.R.string.hint_search_across_groups,
-            com.todoapp.mobile.R.string.hint_group_task_edit,
-            com.todoapp.mobile.R.string.hint_undo_delete,
-            com.todoapp.mobile.R.string.hint_language_switch,
-        )
+        remember {
+            listOf(
+                com.todoapp.mobile.R.string.hint_swipe_left_delete,
+                com.todoapp.mobile.R.string.hint_swipe_right_secret,
+                com.todoapp.mobile.R.string.hint_long_press_reorder,
+                com.todoapp.mobile.R.string.hint_add_task,
+                com.todoapp.mobile.R.string.hint_secret_on_create,
+                com.todoapp.mobile.R.string.hint_calendar_range,
+                com.todoapp.mobile.R.string.hint_activity_stats,
+                com.todoapp.mobile.R.string.hint_task_detail,
+                com.todoapp.mobile.R.string.hint_daily_plan,
+                com.todoapp.mobile.R.string.hint_groups,
+                com.todoapp.mobile.R.string.hint_theme,
+                com.todoapp.mobile.R.string.hint_pomodoro,
+                com.todoapp.mobile.R.string.hint_weekly_picker,
+                com.todoapp.mobile.R.string.hint_weekly_stats,
+                com.todoapp.mobile.R.string.hint_group_reorder,
+                com.todoapp.mobile.R.string.hint_task_photos,
+                com.todoapp.mobile.R.string.hint_group_task_flip,
+                com.todoapp.mobile.R.string.hint_group_task_assign_swipe,
+                com.todoapp.mobile.R.string.hint_group_task_priority,
+                com.todoapp.mobile.R.string.hint_profile_avatar,
+                com.todoapp.mobile.R.string.hint_group_avatar,
+                com.todoapp.mobile.R.string.hint_pomodoro_banner,
+                com.todoapp.mobile.R.string.hint_transfer_ownership,
+                com.todoapp.mobile.R.string.hint_search_across_groups,
+                com.todoapp.mobile.R.string.hint_group_task_edit,
+                com.todoapp.mobile.R.string.hint_undo_delete,
+                com.todoapp.mobile.R.string.hint_language_switch,
+            )
+        }
     val pullState = rememberPullToRefreshState()
     LaunchedEffect(showHint) {
         if (showHint) {
@@ -245,8 +247,12 @@ fun HomeContent(
                     if (isDark) R.drawable.img_donebot_recurring_yearly_night
                     else R.drawable.img_donebot_recurring_yearly_day
             }
+            val visibleTasks =
+                remember(localTasks, uiState.pendingDeleteTask?.id) {
+                    localTasks.filter { it.id != uiState.pendingDeleteTask?.id }
+                }
             HomeTaskList(
-                tasks = localTasks.filter { it.id != uiState.pendingDeleteTask?.id },
+                tasks = visibleTasks,
                 lazyListState = lazyListState,
                 reorderableLazyListState = reorderableLazyListState,
                 hapticFeedback = hapticFeedback,
