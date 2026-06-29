@@ -37,3 +37,21 @@
 
 # --- WebView JS interface ---
 # Project uses WebView for legal pages only (no JS bridge). No -keep needed.
+
+# --- Google Sign-In (Credential Manager + Sign in with Google) ---
+# R8 obfuscation/optimization can break the Credential Manager -> Play Services BeginSignIn
+# bridge in release, making Sign-in-with-Google silently no-op (no UI, no error). Keep the
+# credential-provider + Google ID token classes. (Official Credential Manager keep rule.)
+-if class androidx.credentials.CredentialManager
+-keep class androidx.credentials.playservices.** { *; }
+-keep class com.google.android.libraries.identity.googleid.** { *; }
+-dontwarn com.google.android.gms.**
+
+# --- Compose Navigation type-safe routes (Screen) ---
+# AppDestination.route = Screen.X::class.qualifiedName (RUNTIME reflection), but the live nav
+# route (dest.route) = the kotlinx.serialization serialName, a COMPILE-TIME string = the original
+# qualified name. R8 renaming Screen makes these diverge in release, so shouldShowNav() and
+# appDestinationFromRoute() never match -> the top AND bottom bars silently disappear. Keep
+# Screen's names so qualifiedName == serialName.
+-keep class com.todoapp.mobile.navigation.Screen
+-keep class com.todoapp.mobile.navigation.Screen$** { *; }
