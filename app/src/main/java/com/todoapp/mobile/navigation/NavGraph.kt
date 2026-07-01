@@ -11,7 +11,6 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -939,8 +938,11 @@ fun ToDoApp() {
         modifier =
         Modifier
             .fillMaxSize()
-            .background(TDTheme.colors.background)
             .imePadding(),
+        // Material3 Scaffold's Surface paints containerColor over any background modifier; without this
+        // it falls back to the default (light) colorScheme and leaks through the side gutters that the
+        // centred ResponsiveContainer leaves on tablets / landscape. Set it to the themed background.
+        containerColor = TDTheme.colors.background,
         bottomBar = { if (useBottomBar) TDBottomBar() },
         topBar = {
             Column {
