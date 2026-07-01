@@ -17,4 +17,10 @@ constructor(
     override suspend fun updatePomodoro(pomodoro: Pomodoro) = pomodoroDao.updatePomodoro(pomodoro.toEntity())
 
     override suspend fun insertPomodoro(pomodoro: Pomodoro) = pomodoroDao.insertPomodoro(pomodoro.toEntity())
+
+    override suspend fun getOrCreateDefaultSettings(): Pomodoro {
+        getSavedPomodoroSettings()?.let { return it }
+        insertPomodoro(Pomodoro.DEFAULT)
+        return getSavedPomodoroSettings() ?: Pomodoro.DEFAULT
+    }
 }

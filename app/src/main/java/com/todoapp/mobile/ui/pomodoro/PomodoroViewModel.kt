@@ -130,9 +130,9 @@ constructor(
 
     private fun initializeEngineIfNeeded() {
         viewModelScope.launch {
-            val pomodoro = requireNotNull(pomodoroRepository.getSavedPomodoroSettings()) {
-                "Pomodoro settings should be seeded at first launch"
-            }
+            // Seeds canonical defaults on first access so reaching the timer without ever opening
+            // the config screen (e.g. the launch screen's one-tap start) no longer crashes.
+            val pomodoro = pomodoroRepository.getOrCreateDefaultSettings()
             if (!engine.state.value.isRunning) {
                 val queue = buildSessionQueue(pomodoro)
                 sessionQueue = queue.toList()
@@ -255,7 +255,7 @@ constructor(
             val isLastFocus = i == pomodoro.sessionCount
             if (!isLastFocus) {
                 val breakMode =
-                    if (i % pomodoro.sectionCount == 0) {
+                    if (i % pomodoro.sectionCount.coerceAtLeast(1) == 0) {
                         PomodoroMode.LongBreak
                     } else {
                         PomodoroMode.ShortBreak

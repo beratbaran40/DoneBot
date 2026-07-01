@@ -81,10 +81,11 @@ constructor(
         val focusSeconds = pomodoro.focusTime * SECONDS_PER_MINUTE
         val shortSeconds = pomodoro.shortBreak * SECONDS_PER_MINUTE
         val longSeconds = pomodoro.longBreak * SECONDS_PER_MINUTE
+        val sectionCount = pomodoro.sectionCount.coerceAtLeast(1)
         for (i in 1..pomodoro.sessionCount) {
             queue.addLast(Session(durationSeconds = focusSeconds, mode = PomodoroMode.Focus))
             if (i != pomodoro.sessionCount) {
-                val breakMode = if (i % pomodoro.sectionCount == 0) PomodoroMode.LongBreak else PomodoroMode.ShortBreak
+                val breakMode = if (i % sectionCount == 0) PomodoroMode.LongBreak else PomodoroMode.ShortBreak
                 queue.addLast(
                     Session(
                         durationSeconds = if (breakMode == PomodoroMode.LongBreak) longSeconds else shortSeconds,
