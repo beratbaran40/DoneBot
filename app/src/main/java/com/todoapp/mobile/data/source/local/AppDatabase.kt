@@ -24,7 +24,7 @@ import com.todoapp.mobile.data.source.local.converter.StringListConverter
 import com.todoapp.mobile.data.source.local.datasource.GroupDao
 
 @Database(
-    version = 23,
+    version = 24,
     entities = [
         TaskEntity::class,
         SubtaskEntity::class,
@@ -61,6 +61,7 @@ import com.todoapp.mobile.data.source.local.datasource.GroupDao
         AutoMigration(from = 20, to = 21),
         AutoMigration(from = 21, to = 22),
         AutoMigration(from = 22, to = 23),
+        AutoMigration(from = 23, to = 24),
     ],
 )
 @TypeConverters(AppDatabase.SyncStatusConverter::class, StringListConverter::class)

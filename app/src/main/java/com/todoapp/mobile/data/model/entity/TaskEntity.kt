@@ -50,6 +50,8 @@ data class TaskEntity(
      * Recurrence.firesOn); days up to and including it keep their per-day completion state.
      */
     @ColumnInfo(name = "finished_on") val finishedOn: Long? = null,
+    /** Client-generated idempotency key (UUID); null for rows created before v24. §4.12 */
+    @ColumnInfo(name = "client_task_id") val clientTaskId: String? = null,
 )
 
 enum class SyncStatus {

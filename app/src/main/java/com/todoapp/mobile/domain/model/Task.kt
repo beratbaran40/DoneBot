@@ -12,6 +12,8 @@ import java.time.LocalTime
 data class Task(
     val id: Long = 0L,
     val remoteId: Long? = null,
+    /** Client-generated idempotency key (UUID) for create dedup; null until the first local insert. §4.12 */
+    val clientTaskId: String? = null,
     val title: String,
     val description: String?,
     val date: LocalDate,
@@ -82,6 +84,7 @@ fun Task.toCreateTaskRequestDto(
     priority: String? = null,
 ): TaskRequest = TaskRequest(
     id = if (id != 0L) id else null,
+    clientTaskId = clientTaskId,
     title = title,
     description = description,
     date = date.toEpochDay(),
@@ -117,6 +120,7 @@ fun Task.toCreateTaskRequestDto(
 fun TaskData.toDomain(): Task = Task(
     id = id,
     remoteId = id,
+    clientTaskId = clientTaskId,
     title = title,
     description = description,
     date = LocalDate.ofEpochDay(date),

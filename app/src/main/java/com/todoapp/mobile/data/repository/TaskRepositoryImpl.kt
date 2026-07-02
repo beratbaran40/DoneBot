@@ -48,6 +48,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
+import java.util.UUID
 import javax.inject.Inject
 
 // Aggregate-root repository (tasks + recurrence + per-day completion + sync + staged subtasks).
@@ -368,7 +369,10 @@ constructor(
         // addTask before inserting locally, a sync running between the two could see the
         // server-side row with no local match and insert a duplicate, which then collides with
         // the local insert that runs after addTask returns.
-        val localEntity = task.toEntity(SyncStatus.PENDING_CREATE).copy(id = 0L)
+        // §4.12: mint a stable idempotency key once so the first POST and any SyncWorker retry carry the
+        // SAME clientTaskId → the backend dedups a lost-response retry instead of inserting a duplicate.
+        val taskWithKey = task.copy(clientTaskId = task.clientTaskId ?: UUID.randomUUID().toString())
+        val localEntity = taskWithKey.toEntity(SyncStatus.PENDING_CREATE).copy(id = 0L)
         val localId = localDataSource.insert(withInitializedOrder(localEntity))
         if (task.subtasks.isNotEmpty()) {
             localDataSource.insertSubtasks(
@@ -380,7 +384,7 @@ constructor(
         scheduleRecurringAlarmIfNeeded(localId, task)
 
         remoteDataSource
-            .addTask(task)
+            .addTask(taskWithKey)
             .onSuccess { remoteTask ->
                 val current = localDataSource.getTaskById(localId) ?: return@onSuccess
                 localDataSource.update(
@@ -401,7 +405,9 @@ constructor(
         photos: List<Pair<ByteArray, String>>,
     ): Result<Unit> = runCatching {
         // Same local-first pattern as insert(); see comment above for the race rationale.
-        val localEntity = task.toEntity(SyncStatus.PENDING_CREATE).copy(id = 0L)
+        // §4.12: same stable-key minting as insert() so a retried create dedups server-side.
+        val taskWithKey = task.copy(clientTaskId = task.clientTaskId ?: UUID.randomUUID().toString())
+        val localEntity = taskWithKey.toEntity(SyncStatus.PENDING_CREATE).copy(id = 0L)
         val localId = localDataSource.insert(withInitializedOrder(localEntity))
         if (task.subtasks.isNotEmpty()) {
             localDataSource.insertSubtasks(
@@ -412,7 +418,7 @@ constructor(
         }
 
         remoteDataSource
-            .addTask(task)
+            .addTask(taskWithKey)
             .onSuccess { remoteTask ->
                 val current = localDataSource.getTaskById(localId)
                 if (current != null) {
@@ -717,6 +723,9 @@ constructor(
             localTasks.filter { it.remoteId == null && it.syncStatus == SyncStatus.PENDING_CREATE }
         val pendingCreateBySignature =
             pendingCreateLocals.associateBy { it.contentSignature() }
+        // §4.12: prefer an EXACT match on the client-generated key (robust for similar title/date/time)
+        // and fall back to the lossy content signature only for legacy rows that predate the key.
+        val pendingCreateByClientId = clientIdIndex(pendingCreateLocals)
 
         val toInsert = mutableListOf<TaskEntity>()
         val toUpdate = mutableListOf<TaskEntity>()
@@ -728,6 +737,7 @@ constructor(
                 incoming = incoming,
                 local = localByRemoteId[remote.id],
                 pendingCreateBySignature = pendingCreateBySignature,
+                pendingCreateByClientId = pendingCreateByClientId,
                 promoted = promoted,
                 toInsert = toInsert,
                 toUpdate = toUpdate,
@@ -814,6 +824,10 @@ constructor(
         )
     }
 
+    /** §4.12: index PENDING_CREATE rows by their client key, skipping legacy rows that have none. */
+    private fun clientIdIndex(rows: List<TaskEntity>): Map<String, TaskEntity> =
+        rows.mapNotNull { e -> e.clientTaskId?.let { it to e } }.toMap()
+
     /**
      * Stable signature used to match a PENDING_CREATE local row against a server-side task
      * when their remoteId hasn't been linked yet. Title + date + start/end times are enough
@@ -827,6 +841,7 @@ constructor(
         incoming: TaskEntity,
         local: TaskEntity?,
         pendingCreateBySignature: Map<String, TaskEntity>,
+        pendingCreateByClientId: Map<String, TaskEntity>,
         promoted: MutableSet<Long>,
         toInsert: MutableList<TaskEntity>,
         toUpdate: MutableList<TaskEntity>,
@@ -840,9 +855,10 @@ constructor(
             // else: identical, or local has pending CRUD — leave alone.
             return
         }
-        // No remoteId match. Try a content-signature match against PENDING_CREATE rows
-        // before falling through to a fresh insert (closes the insert() race).
-        val pending = pendingCreateBySignature[incoming.contentSignature()]
+        // No remoteId match. Match a PENDING_CREATE row before a fresh insert (closes the insert()
+        // race). §4.12: exact client-key match first, content signature only as the legacy fallback.
+        val pending = incoming.clientTaskId?.let { pendingCreateByClientId[it] }
+            ?: pendingCreateBySignature[incoming.contentSignature()]
         if (pending != null && pending.id !in promoted) {
             promoted += pending.id
             toUpdate += incoming.copy(id = pending.id, orderIndex = pending.orderIndex)

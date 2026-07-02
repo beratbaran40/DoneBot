@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class TaskRequest(
     val id: Long? = null,
+    val clientTaskId: String? = null,
     val title: String,
     val description: String?,
     val date: Long,
