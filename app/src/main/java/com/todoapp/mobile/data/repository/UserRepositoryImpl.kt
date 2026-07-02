@@ -23,6 +23,7 @@ import com.todoapp.mobile.data.source.remote.api.TodoAuthApi
 import com.todoapp.mobile.domain.repository.AuthEvent
 import com.todoapp.mobile.domain.repository.AuthRepository
 import com.todoapp.mobile.domain.repository.FCMTokenPreferences
+import com.todoapp.mobile.domain.repository.SessionPreferences
 import com.todoapp.mobile.domain.repository.UserRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -207,11 +208,21 @@ class AuthRepositoryImpl
 @Inject
 constructor(
     private val authApi: TodoAuthApi,
+    private val sessionPreferences: SessionPreferences,
 ) : AuthRepository {
     private val _events = MutableSharedFlow<AuthEvent>(replay = 0)
     override val events: SharedFlow<AuthEvent> = _events.asSharedFlow()
 
     override suspend fun logout(): Result<Unit> {
+        // Best-effort server-side revoke of THIS device's refresh token before dropping the local
+        // session. Never block sign-out on it: if the call fails the local clear still runs, and the
+        // token expires server-side within 30 days regardless. forceLogout() skips this on purpose —
+        // a server-rejected token is already invalid, so there is nothing to revoke.
+        val refreshToken = runCatching { sessionPreferences.getRefreshToken() }.getOrNull()
+        if (!refreshToken.isNullOrBlank()) {
+            runCatching { authApi.logout(RefreshTokenRequest(refreshToken)) }
+                .onFailure { Timber.tag("AuthLogout").w(it, "server logout failed; clearing local session anyway") }
+        }
         _events.emit(AuthEvent.Logout)
         return Result.success(Unit)
     }

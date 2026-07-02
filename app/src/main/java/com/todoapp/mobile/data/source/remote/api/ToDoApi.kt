@@ -291,4 +291,9 @@ interface TodoAuthApi {
     suspend fun refreshToken(
         @Body request: RefreshTokenRequest,
     ): Response<BaseResponse<RefreshTokenData?>>
+
+    @POST("auth/logout")
+    suspend fun logout(
+        @Body request: RefreshTokenRequest,
+    ): Response<BaseResponse<Unit?>>
 }
