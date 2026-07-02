@@ -7,10 +7,8 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import com.todoapp.mobile.data.auth.AuthTokenManager
 import com.todoapp.mobile.data.auth.GoogleSignInManager
 import com.todoapp.mobile.data.repository.DailyPlanPreferencesImpl
-import com.todoapp.mobile.data.repository.DataStoreHelper
 import com.todoapp.mobile.data.repository.FCMTokenPreferencesImpl
 import com.todoapp.mobile.data.repository.JournalBiometricPreferencesImpl
 import com.todoapp.mobile.data.repository.SecretPreferencesImpl
@@ -202,10 +200,6 @@ object LocalStorageModule {
     @Provides
     @Singleton
     fun provideGoogleSignInManager(): GoogleSignInManager = GoogleSignInManager
-
-    @Provides
-    @Singleton
-    fun provideAuthTokensManager(dataStoreHelper: DataStoreHelper): AuthTokenManager = AuthTokenManager(dataStoreHelper)
 }
 
 // Hilt requires `abstract class` for `@Module` types containing `@Binds` methods —

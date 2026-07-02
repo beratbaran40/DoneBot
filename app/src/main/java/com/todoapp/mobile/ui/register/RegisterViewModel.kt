@@ -8,8 +8,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.todoapp.mobile.common.DomainException
 import com.todoapp.mobile.common.passwordValidation.ValidationManager
-import com.todoapp.mobile.data.auth.AuthModel
-import com.todoapp.mobile.data.auth.AuthTokenManager
 import com.todoapp.mobile.data.model.network.data.AuthResponseData
 import com.todoapp.mobile.data.model.network.request.RegisterRequest
 import com.todoapp.mobile.data.repository.DataStoreHelper
@@ -39,7 +37,6 @@ class RegisterViewModel
 constructor(
     private val userRepository: UserRepository,
     private val sessionPreferences: SessionPreferences,
-    private val authTokenManager: AuthTokenManager,
     private val dataStoreHelper: DataStoreHelper,
     private val taskSyncRepository: TaskSyncRepository,
     private val chatRepository: ChatRepository,
@@ -158,16 +155,6 @@ constructor(
             userRepository
                 .googleLogin(idToken)
                 .onSuccess { loginData ->
-                    authTokenManager.saveTokens(
-                        AuthModel(
-                            accessToken = loginData.accessToken,
-                            refreshToken = loginData.refreshToken,
-                            userId = loginData.user.id,
-                            email = loginData.user.email,
-                            displayName = loginData.user.displayName,
-                            avatarUrl = loginData.user.avatarUrl,
-                        ),
-                    )
                     handleSuccessfulRegister(loginData)
                 }.onFailure { error ->
                     Log.e("GOOGLE_LOGIN", "Google login failed", error)

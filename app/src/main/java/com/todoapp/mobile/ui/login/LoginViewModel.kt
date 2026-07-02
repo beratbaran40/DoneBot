@@ -9,8 +9,6 @@ import androidx.navigation.toRoute
 import com.todoapp.mobile.R
 import com.todoapp.mobile.common.DomainException
 import com.todoapp.mobile.common.passwordValidation.ValidationManager
-import com.todoapp.mobile.data.auth.AuthModel
-import com.todoapp.mobile.data.auth.AuthTokenManager
 import com.todoapp.mobile.data.model.network.data.AuthResponseData
 import com.todoapp.mobile.data.model.network.request.LoginRequest
 import com.todoapp.mobile.data.repository.DataStoreHelper
@@ -39,7 +37,6 @@ class LoginViewModel
 @Inject
 constructor(
     private val userRepository: UserRepository,
-    private val authTokenManager: AuthTokenManager,
     private val sessionPreferences: SessionPreferences,
     private val dataStoreHelper: DataStoreHelper,
     private val taskSyncRepository: TaskSyncRepository,
@@ -83,16 +80,6 @@ constructor(
             userRepository
                 .googleLogin(idToken)
                 .onSuccess { loginData ->
-                    authTokenManager.saveTokens(
-                        AuthModel(
-                            accessToken = loginData.accessToken,
-                            refreshToken = loginData.refreshToken,
-                            userId = loginData.user.id,
-                            email = loginData.user.email,
-                            displayName = loginData.user.displayName,
-                            avatarUrl = loginData.user.avatarUrl,
-                        ),
-                    )
                     handleSuccessfulLogin(loginData)
                 }.onFailure { error ->
                     Log.e("GOOGLE_LOGIN", "Token retrieval FAILED", error)
