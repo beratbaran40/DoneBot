@@ -597,6 +597,8 @@
     <string name="session_expired_dialog_message">Your session has expired. Please log in again.</string>
     <string name="notification_channel_tasks_name">Tasks</string>
     <string name="notification_channel_tasks_description">Used for task reminders and updates</string>
+    <string name="notification_task_reminder_title_now">You have a task to do now!</string>
+    <string name="notification_task_reminder_title_in_minutes">You have a task to do in %1$d minutes</string>
     <string name="task_all_day_label">All Day</string>
     <string name="deadline_all_day">All day</string>
     <string name="zone_morning">Before noon</string>

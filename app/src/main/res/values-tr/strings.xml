@@ -598,6 +598,8 @@
     <string name="session_expired_dialog_message">Oturumun sona erdi. Lütfen tekrar giriş yap.</string>
     <string name="notification_channel_tasks_name">Görevler</string>
     <string name="notification_channel_tasks_description">Görev hatırlatmaları ve güncellemeleri için kullanılır</string>
+    <string name="notification_task_reminder_title_now">Şu an yapılacak bir görevin var!</string>
+    <string name="notification_task_reminder_title_in_minutes">%1$d dakika içinde yapılacak bir görevin var</string>
     <string name="task_all_day_label">Gün Boyu</string>
     <string name="deadline_all_day">Gün boyu</string>
     <string name="zone_morning">Öğleden önce</string>

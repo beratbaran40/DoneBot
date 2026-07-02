@@ -7,6 +7,7 @@ import android.content.pm.ServiceInfo
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
+import android.provider.Settings
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -18,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -29,6 +31,7 @@ import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.todoapp.mobile.MainActivity
 import com.todoapp.mobile.R
+import com.todoapp.mobile.data.notification.NotificationService
 import com.todoapp.mobile.di.IoDispatcher
 import com.todoapp.mobile.di.MainDispatcher
 import com.todoapp.mobile.domain.alarm.AlarmScheduler
@@ -51,6 +54,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.time.LocalDateTime
 import javax.inject.Inject
 import com.example.uikit.R as UikitR
@@ -123,12 +127,15 @@ class OverlayService :
             val message = intent.getStringExtra(INTENT_EXTRA_COMMAND_SHOW_OVERLAY)
             val minutesBefore = intent.getLongExtra(INTENT_EXTRA_LONG, 0)
             val overlayType = intent.getStringExtra(INTENT_EXTRA_OVERLAY_TYPE) ?: OVERLAY_TYPE_TASK
-            showOverlay(message.orEmpty(), minutesBefore, overlayType)
+            val overlayShown = showOverlay(message.orEmpty(), minutesBefore, overlayType)
             // Honor user-selected alarm sound preference. Channel sounds are immutable post-creation
-            // so we play the ringtone manually here.
-            serviceScope.launch {
-                val uri = runCatching { alarmSoundPreferences.currentAlarmSoundUri() }.getOrNull()
-                ringtone.play(context = this@OverlayService, explicitUri = uri)
+            // so we play the ringtone manually here. Skip when we fell back to a notification — the
+            // NotificationService plays its own alarm sound, so this would double up.
+            if (overlayShown) {
+                serviceScope.launch {
+                    val uri = runCatching { alarmSoundPreferences.currentAlarmSoundUri() }.getOrNull()
+                    ringtone.play(context = this@OverlayService, explicitUri = uri)
+                }
             }
         } else if (intent.hasExtra(INTENT_EXTRA_COMMAND_HIDE_OVERLAY)) {
             hideOverlay()
@@ -141,13 +148,24 @@ class OverlayService :
         message: String,
         minutesBefore: Long,
         overlayType: String,
-    ) {
+    ): Boolean {
         val targetViewRef =
             when (overlayType) {
                 OVERLAY_TYPE_DAILY_PLAN -> dailyPlanOverlayView
                 else -> taskOverlayView
             }
-        if (targetViewRef != null) return
+        if (targetViewRef != null) return true
+
+        // The overlay-vs-notification choice is frozen into the PendingIntent at *schedule* time
+        // (AlarmSchedulerImpl). If the user granted "draw over other apps", scheduled a reminder,
+        // then revoked it before fire time, addView() below would throw BadTokenException and crash
+        // this foreground service. Re-check at fire time and degrade to the notification instead.
+        if (!Settings.canDrawOverlays(this)) {
+            Timber.tag(TAG).w("Overlay permission revoked before fire; falling back to notification")
+            fallbackToNotification(message, minutesBefore)
+            stopSelf()
+            return false
+        }
 
         _lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
         _lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
@@ -161,7 +179,8 @@ class OverlayService :
                     layoutParams.x = saved.cardPositionX.toInt()
                     layoutParams.y = saved.cardPositionY.toInt()
                     dailyPlanOverlayView?.let {
-                        windowManager.updateViewLayout(it, layoutParams)
+                        runCatching { windowManager.updateViewLayout(it, layoutParams) }
+                            .onFailure { e -> Timber.tag(TAG).w(e, "updateViewLayout (restore) failed") }
                     }
                 }
             }
@@ -201,7 +220,8 @@ class OverlayService :
                                     onDrag = { dx, dy ->
                                         layoutParams.x += dx.toInt()
                                         layoutParams.y += dy.toInt()
-                                        windowManager.updateViewLayout(this@apply, layoutParams)
+                                        runCatching { windowManager.updateViewLayout(this@apply, layoutParams) }
+                                            .onFailure { e -> Timber.tag(TAG).w(e, "updateViewLayout (drag) failed") }
                                     },
                                     onDragEnd = {
                                         serviceScope.launch {
@@ -240,7 +260,22 @@ class OverlayService :
 
             OVERLAY_TYPE_TASK -> taskOverlayView = newView
         }
-        windowManager.addView(newView, layoutParams)
+        return runCatching {
+            windowManager.addView(newView, layoutParams)
+            true
+        }.getOrElse { e ->
+            // Permission can be pulled between the canDrawOverlays check above and here, or the OEM
+            // can deny the window. Clear the ref we just stored (else hideOverlay() would removeView
+            // a window that was never added and crash again), then degrade to the notification.
+            Timber.tag(TAG).w(e, "addView failed; falling back to notification")
+            when (overlayType) {
+                OVERLAY_TYPE_DAILY_PLAN -> dailyPlanOverlayView = null
+                OVERLAY_TYPE_TASK -> taskOverlayView = null
+            }
+            fallbackToNotification(message, minutesBefore)
+            stopSelf()
+            false
+        }
     }
 
     private fun rescheduleNextDailyPlan() {
@@ -262,11 +297,13 @@ class OverlayService :
 
     private fun hideOverlay() {
         taskOverlayView?.let {
-            windowManager.removeView(it)
+            runCatching { windowManager.removeView(it) }
+                .onFailure { e -> Timber.tag(TAG).w(e, "removeView (task) failed") }
             taskOverlayView = null
         }
         dailyPlanOverlayView?.let {
-            windowManager.removeView(it)
+            runCatching { windowManager.removeView(it) }
+                .onFailure { e -> Timber.tag(TAG).w(e, "removeView (daily plan) failed") }
             dailyPlanOverlayView = null
         }
         _lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
@@ -314,6 +351,12 @@ class OverlayService :
                 startForeground(OverlayServiceChannel.FOREGROUND_NOTIFICATION_ID, notification)
             }
             startedAsForeground = true
+        }.onFailure {
+            // startForegroundService() was already called by AlarmFireReceiver, so if this promotion
+            // fails the system kills the process with the un-catchable "did not call startForeground
+            // in time" exception. Stop cleanly instead.
+            Timber.tag(TAG).w(it, "startForeground failed; stopping service")
+            stopSelf()
         }
     }
 
@@ -345,6 +388,24 @@ class OverlayService :
         startActivity(intent)
     }
 
+    // Graceful degradation when the overlay window can't be drawn (permission revoked after
+    // scheduling, or OEM denial). Mirrors the NotificationService branch that AlarmFireReceiver
+    // would have taken had the permission been absent at schedule time — same extra keys.
+    private fun fallbackToNotification(
+        message: String,
+        minutesBefore: Long,
+    ) {
+        runCatching {
+            ContextCompat.startForegroundService(
+                this,
+                Intent(this, NotificationService::class.java).apply {
+                    putExtra(NotificationService.INTENT_EXTRA_MESSAGE, message)
+                    putExtra(NotificationService.INTENT_EXTRA_LONG, minutesBefore)
+                },
+            )
+        }.onFailure { Timber.tag(TAG).w(it, "Notification fallback failed") }
+    }
+
     companion object {
         const val INTENT_EXTRA_COMMAND_SHOW_OVERLAY = "INTENT_EXTRA_COMMAND_SHOW_OVERLAY"
         const val INTENT_EXTRA_COMMAND_HIDE_OVERLAY = "INTENT_EXTRA_COMMAND_HIDE_OVERLAY"
@@ -355,5 +416,6 @@ class OverlayService :
         const val OVERLAY_TYPE_TASK = "OVERLAY_TYPE_TASK"
         const val OVERLAY_TYPE_DAILY_PLAN = "OVERLAY_TYPE_DAILY_PLAN"
         const val DAILY_PLAN_BOTTOM_MARGIN_DP = 80
+        private const val TAG = "OverlayService"
     }
 }

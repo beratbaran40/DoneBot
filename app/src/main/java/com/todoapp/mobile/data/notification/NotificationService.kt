@@ -21,6 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -53,7 +54,14 @@ class NotificationService : Service() {
                 .Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_clock)
                 .setContentTitle(
-                    "You have a task to do! In ${if (remindMinutesBefore == 0) "now" else remindMinutesBefore} minutes.",
+                    if (remindMinutesBefore == 0) {
+                        getString(com.todoapp.mobile.R.string.notification_task_reminder_title_now)
+                    } else {
+                        getString(
+                            com.todoapp.mobile.R.string.notification_task_reminder_title_in_minutes,
+                            remindMinutesBefore,
+                        )
+                    },
                 ).setContentText(contentText)
                 .setContentIntent(activityPendingIntent)
                 .setAutoCancel(true)
@@ -110,6 +118,10 @@ class NotificationService : Service() {
             } else {
                 startForeground(OverlayServiceChannel.FOREGROUND_NOTIFICATION_ID, placeholder)
             }
+        }.onFailure {
+            // If promotion fails the system will kill the process for not calling startForeground in
+            // time; we stop right after anyway, but log it so a real failure isn't invisible.
+            Timber.tag(TAG).w(it, "startForeground failed")
         }
     }
 
@@ -126,5 +138,6 @@ class NotificationService : Service() {
         const val INTENT_EXTRA_MESSAGE = "extra_message"
         const val INTENT_EXTRA_LONG = "extra_time"
         private const val NOTIFICATION_ID = 1
+        private const val TAG = "NotificationService"
     }
 }
