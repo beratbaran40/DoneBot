@@ -526,6 +526,11 @@
     <string name="settings_profile_avatar_content_description">Profile picture</string>
     <string name="settings_privacy_policy">Privacy Policy</string>
     <string name="settings_terms_of_service">Terms of Service</string>
+    <string name="settings_send_feedback">Send Feedback</string>
+    <string name="feedback_email_subject">[DoneBot] Feedback</string>
+    <string name="feedback_email_body_template">Please write your feedback above this line.\n\n\n———— Diagnostics (please keep) ————\nApp: %1$s\nAndroid: %2$s\nDevice: %3$s\nLanguage: %4$s\nUser: %5$s</string>
+    <string name="feedback_user_guest">Guest</string>
+    <string name="feedback_no_email_app">No email app found. Address copied: %1$s</string>
     <string name="settings_build_debug_badge">DEBUG</string>
     <string name="settings_delete_account">Delete Account</string>
     <string name="delete_account_speech_bubble">Wait… are you really leaving?</string>

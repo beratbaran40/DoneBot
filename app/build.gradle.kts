@@ -100,6 +100,7 @@ android {
                 "TERMS_OF_SERVICE_URL",
                 "\"https://donebot-backend.onrender.com/legal/terms.html\"",
             )
+            buildConfigField("String", "SUPPORT_EMAIL", "\"donebotapp@gmail.com\"")
         }
         release {
             isMinifyEnabled = true
@@ -120,6 +121,7 @@ android {
                 "TERMS_OF_SERVICE_URL",
                 "\"https://donebot-backend.onrender.com/legal/terms.html\"",
             )
+            buildConfigField("String", "SUPPORT_EMAIL", "\"donebotapp@gmail.com\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",

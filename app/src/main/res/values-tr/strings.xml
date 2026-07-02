@@ -527,6 +527,11 @@
     <string name="settings_profile_avatar_content_description">Profil fotoğrafı</string>
     <string name="settings_privacy_policy">Gizlilik Politikası</string>
     <string name="settings_terms_of_service">Kullanım Koşulları</string>
+    <string name="settings_send_feedback">Geri Bildirim Gönder</string>
+    <string name="feedback_email_subject">[DoneBot] Geri Bildirim</string>
+    <string name="feedback_email_body_template">Lütfen geri bildiriminizi bu satırın üstüne yazın.\n\n\n———— Teşhis Bilgileri (lütfen silmeyin) ————\nUygulama: %1$s\nAndroid: %2$s\nCihaz: %3$s\nDil: %4$s\nKullanıcı: %5$s</string>
+    <string name="feedback_user_guest">Misafir</string>
+    <string name="feedback_no_email_app">E-posta uygulaması bulunamadı. Adres kopyalandı: %1$s</string>
     <string name="settings_build_debug_badge">DEBUG</string>
     <string name="settings_delete_account">Hesabı Sil</string>
     <string name="delete_account_speech_bubble">Dur biraz… gerçekten gidiyor musun?</string>

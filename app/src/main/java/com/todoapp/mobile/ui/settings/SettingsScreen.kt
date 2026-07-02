@@ -50,6 +50,7 @@ import com.todoapp.mobile.R
 import com.todoapp.mobile.common.openAppDetailsSettings
 import com.todoapp.mobile.domain.model.ThemePreference
 import com.todoapp.mobile.domain.security.SecretModeReopenOptions
+import com.todoapp.mobile.ui.common.rememberSendFeedback
 import com.todoapp.mobile.ui.permissions.NotificationPermissionPrompt
 import com.todoapp.mobile.ui.permissions.OverlayPermissionPrompt
 import com.todoapp.mobile.ui.permissions.rememberCameraPermissionRequest
@@ -141,6 +142,7 @@ private fun SettingsContent(
 
     val context = LocalContext.current
     val requestCameraPermission = rememberCameraPermissionRequest(onGranted = { onCheckPermissions() })
+    val onSendFeedback = rememberSendFeedback(userEmail = uiState.email)
 
     Column(
         modifier =
@@ -515,6 +517,28 @@ private fun SettingsContent(
         }
 
         SectionHeader(R.string.settings_section_about)
+
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clickable { onSendFeedback() },
+        ) {
+            TDText(
+                text = stringResource(R.string.settings_send_feedback),
+                style = TDTheme.typography.heading6,
+                color = TDTheme.colors.onBackground,
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Icon(
+                painter = painterResource(com.example.uikit.R.drawable.ic_arrow_forward),
+                contentDescription = null,
+                tint = TDTheme.colors.onBackground,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = TDTheme.colors.onBackground.copy(alpha = 0.1f))
+        Spacer(modifier = Modifier.height(16.dp))
 
         Row(
             Modifier
