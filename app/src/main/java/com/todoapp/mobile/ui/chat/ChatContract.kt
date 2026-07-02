@@ -26,6 +26,7 @@ object ChatContract {
         LOOP_OVERFLOW,
         RATE_LIMITED,
         NOT_AUTHENTICATED,
+        SERVER_UNAVAILABLE,
     }
 
     sealed interface UiAction {

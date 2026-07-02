@@ -350,16 +350,25 @@ class ChatViewModel @Inject constructor(
             }
             is DomainException.Server -> {
                 val message = error.message.orEmpty()
-                if (RATE_LIMIT_MARKERS.any { it in message }) {
-                    Timber.tag(LOG_TAG).w(error, "Rate limited")
-                    setError(
-                        ChatContract.ChatError.RATE_LIMITED,
-                        lastFailedPrompt = prompt,
-                        retryAfterSeconds = parseRetryAfterSeconds(message),
-                    )
-                } else {
-                    Timber.tag(LOG_TAG).w(error, "Server error: %s", message)
-                    setError(ChatContract.ChatError.GENERIC, lastFailedPrompt = prompt)
+                when {
+                    // Rate-limit first: a Vertex quota hit carries "quota" and must win over the generic path.
+                    RATE_LIMIT_MARKERS.any { it in message } -> {
+                        Timber.tag(LOG_TAG).w(error, "Rate limited")
+                        setError(
+                            ChatContract.ChatError.RATE_LIMITED,
+                            lastFailedPrompt = prompt,
+                            retryAfterSeconds = parseRetryAfterSeconds(message),
+                        )
+                    }
+                    // Vertex outage / timeout / bad-creds (backend 503) → honest "temporarily unavailable".
+                    SERVER_UNAVAILABLE_MARKERS.any { it in message } -> {
+                        Timber.tag(LOG_TAG).w(error, "AI service unavailable")
+                        setError(ChatContract.ChatError.SERVER_UNAVAILABLE, lastFailedPrompt = prompt)
+                    }
+                    else -> {
+                        Timber.tag(LOG_TAG).w(error, "Server error: %s", message)
+                        setError(ChatContract.ChatError.GENERIC, lastFailedPrompt = prompt)
+                    }
                 }
             }
             else -> {
@@ -485,5 +494,9 @@ class ChatViewModel @Inject constructor(
             "Üzgünüm, sadece bu uygulamadaki",
         )
         private val RATE_LIMIT_MARKERS = listOf("429", "rate limit", "quota")
+
+        // Backend embeds this token in the 503 reason (ChatService.vertexUnavailableMessage) so we can
+        // tell a Vertex outage apart from a generic server error without reading the numeric HTTP status.
+        private val SERVER_UNAVAILABLE_MARKERS = listOf("vertex_unavailable")
     }
 }

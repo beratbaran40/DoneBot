@@ -502,6 +502,7 @@ private fun ChatErrorBanner(
             ChatContract.ChatError.LOOP_OVERFLOW -> R.string.chat_loop_overflow
             ChatContract.ChatError.RATE_LIMITED -> R.string.chat_error_rate_limited
             ChatContract.ChatError.NOT_AUTHENTICATED -> R.string.chat_error_guest_limited
+            ChatContract.ChatError.SERVER_UNAVAILABLE -> R.string.chat_error_server_unavailable
         },
     )
     val canRetry = lastFailedPrompt != null && error != ChatContract.ChatError.BLOCKED

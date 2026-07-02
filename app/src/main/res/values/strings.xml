@@ -800,6 +800,7 @@
     <string name="chat_error_blocked">That response was blocked. Try rephrasing.</string>
     <string name="chat_error_offline">You\'re offline. Reconnect and try again.</string>
     <string name="chat_error_rate_limited">Slow down — DoneBot\'s quota is full for now. Wait a minute and try again.</string>
+    <string name="chat_error_server_unavailable">DoneBot\'s AI is taking a short break. Please try again in a moment.</string>
     <string name="chat_retry">Retry</string>
     <string name="chat_dismiss">Dismiss</string>
     <string name="chat_loop_overflow">I got stuck looking things up. Try asking again in a different way.</string>

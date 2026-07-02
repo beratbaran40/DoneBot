@@ -801,6 +801,7 @@
     <string name="chat_error_blocked">Bu yanıt engellendi. Farklı bir şekilde sormayı deneyin.</string>
     <string name="chat_error_offline">Çevrimdışısın. Bağlanıp tekrar dene.</string>
     <string name="chat_error_rate_limited">Yavaşla — DoneBot\'un kotası şimdilik dolu. Bir dakika bekle ve tekrar dene.</string>
+    <string name="chat_error_server_unavailable">DoneBot\'un yapay zekâsı kısa bir mola verdi. Lütfen birazdan tekrar dene.</string>
     <string name="chat_retry">Tekrar dene</string>
     <string name="chat_dismiss">Kapat</string>
     <string name="chat_loop_overflow">Bilgi ararken takıldım. Sorunu farklı şekilde sormayı dene.</string>
