@@ -66,11 +66,17 @@ class Application :
     override fun onCreate() {
         super<Application>.onCreate()
         initCrashReporting()
-        installAppCheck()
+        // Cold-start hot path: onCreate runs before any UI. An unhandled throw from a single init
+        // (Firebase App Check on odd Play-Services states, notification-channel creation) would crash
+        // the app on launch with no screen shown. Guard each so one failure can't block startup.
+        runCatching { installAppCheck() }
+            .onFailure { Timber.tag("AppInit").w(it, "installAppCheck failed") }
         initializePlacesSdk()
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
-        createNotificationChannel()
-        PomodoroNotificationChannels.ensurePomodoroChannel(this)
+        runCatching {
+            createNotificationChannel()
+            PomodoroNotificationChannels.ensurePomodoroChannel(this)
+        }.onFailure { Timber.tag("AppInit").w(it, "notification channel init failed") }
         ProcessLifecycleOwner.get().lifecycleScope.launch(ioDispatcher) {
             runCatching { rescheduleAllAlarmsUseCase() }
                 .onFailure { Timber.tag("RescheduleAllAlarms").w(it, "reschedule on app start failed") }
