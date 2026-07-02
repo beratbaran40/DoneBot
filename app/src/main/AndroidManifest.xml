@@ -65,6 +65,19 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="todoapp" android:host="reset-password" />
             </intent-filter>
+
+            <!-- Verified https App Link for password reset. assetlinks.json is hosted at
+                 https://donebot-backend.onrender.com/.well-known/assetlinks.json so Android opens the
+                 app directly (no browser/custom-scheme hijack) once verification succeeds. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="donebot-backend.onrender.com"
+                    android:path="/reset-password" />
+            </intent-filter>
         </activity>
 
         <!-- Stores per-app locale set via AppCompatDelegate on API < 33 -->

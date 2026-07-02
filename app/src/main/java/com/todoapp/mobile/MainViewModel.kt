@@ -2,6 +2,7 @@ package com.todoapp.mobile
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -141,15 +142,21 @@ constructor(
         }
     }
 
+    private fun isResetPasswordLink(data: Uri): Boolean {
+        val isCustomScheme = data.scheme == "todoapp" && data.host == "reset-password"
+        val isHttpsAppLink = data.scheme == "https" &&
+            data.host == "donebot-backend.onrender.com" &&
+            data.path == "/reset-password"
+        return isCustomScheme || isHttpsAppLink
+    }
+
     fun onPushIntent(intent: Intent?) {
         intent ?: return
 
-        // Password-reset deep link: todoapp://reset-password?token=...
+        // Password-reset deep link — either the verified https App Link (Android opens us directly, no
+        // hijackable custom scheme) or the todoapp:// scheme (browser-fallback relaunch from the page).
         val data = intent.data
-        if (intent.action == Intent.ACTION_VIEW &&
-            data?.scheme == "todoapp" &&
-            data.host == "reset-password"
-        ) {
+        if (intent.action == Intent.ACTION_VIEW && data != null && isResetPasswordLink(data)) {
             val token = data.getQueryParameter("token")
             if (!token.isNullOrBlank()) {
                 _pendingDeepLink.value = DeepLink.ResetPassword(token)
