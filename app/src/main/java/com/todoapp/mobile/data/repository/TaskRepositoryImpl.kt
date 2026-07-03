@@ -41,6 +41,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -73,6 +75,12 @@ constructor(
     // which steps were already done, so un-completing the parent restores that progress instead of zeroing
     // it. Session-memory only.
     private val stagedSnapshots = mutableMapOf<Long, Set<Long>>()
+
+    // Serializes the two sync bodies (push + pull) across the whole app. This repository is a @Singleton,
+    // so every WorkManager worker and ViewModel shares this one Mutex. SYNC_WORK and FETCH_WORK are distinct
+    // WorkManager unique chains that both run SyncWorker, so without this two pushes — or a push and the
+    // pull's non-atomic reconcile — could run concurrently and double-write / corrupt local state.
+    private val syncMutex = Mutex()
 
     override fun observeTaskPhotoUrls(): Flow<Map<Long, List<String>>> = taskPhotoUrls
 
@@ -704,7 +712,12 @@ constructor(
         task.timeStart
     }
 
-    override suspend fun syncRemoteTasksWithLocal(): Result<Unit> {
+    override suspend fun syncRemoteTasksWithLocal(): Result<Unit> =
+        // Serialize against the push. SYNC_WORK and FETCH_WORK are separate WorkManager unique chains, so
+        // without this a standalone push can interleave with this pull's non-atomic reconcile block.
+        syncMutex.withLock { reconcileRemoteIntoLocal() }
+
+    private suspend fun reconcileRemoteIntoLocal(): Result<Unit> {
         val remoteTasks =
             remoteDataSource.getTasks().fold(
                 onSuccess = { it },
@@ -899,6 +912,14 @@ constructor(
         finishedOn == other.finishedOn
 
     override suspend fun syncLocalTasksToServer(): Result<Unit> = withContext(ioDispatcher) {
+        // Serialize the push. SYNC_WORK and FETCH_WORK are separate WorkManager unique chains that BOTH run
+        // SyncWorker, so two pushes could otherwise execute concurrently (double POST/DELETE). The shared
+        // @Singleton mutex makes the second wait, and also serializes push vs the pull in
+        // syncRemoteTasksWithLocal so a standalone push can't interleave with the pull's non-atomic reconcile.
+        syncMutex.withLock { pushPendingTasks() }
+    }
+
+    private suspend fun pushPendingTasks(): Result<Unit> {
         // Push every pending row before giving up. A single poisoned row (e.g. a permanent 4xx) must not
         // abort the whole batch: SyncWorker's failure short-circuits the FETCH_WORK chain that runs the
         // pull, so one stuck row used to freeze push AND pull on this device until a data wipe. Collect
@@ -916,7 +937,7 @@ constructor(
                 }
             }
         }
-        if (retryable.isEmpty()) Result.success(Unit) else Result.failure(retryable.first())
+        return if (retryable.isEmpty()) Result.success(Unit) else Result.failure(retryable.first())
     }
 
     // Mirrors SyncWorker's retry set exactly. Keep in lockstep: repo reports "retryable" => the worker

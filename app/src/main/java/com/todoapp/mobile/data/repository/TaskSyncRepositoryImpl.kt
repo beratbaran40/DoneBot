@@ -34,10 +34,13 @@ constructor(
                 .setConstraints(constraints)
                 .build()
 
+        // KEEP (not REPLACE): REPLACE cancels an already-running SyncWorker mid-flight, which can leave a
+        // POST committed on the server but the local row still PENDING_CREATE (re-POST), or re-issue a
+        // DELETE that then 404s. KEEP lets the in-flight push finish and folds this trigger onto it.
         workManager
             .beginUniqueWork(
                 SYNC_WORK,
-                ExistingWorkPolicy.REPLACE,
+                ExistingWorkPolicy.KEEP,
                 sync,
             ).enqueue()
     }
@@ -68,10 +71,13 @@ constructor(
                 .setConstraints(constraints)
                 .build()
 
+        // KEEP (not REPLACE): never cancel an in-flight sync chain. The repository-level mutex serializes
+        // the actual push/pull work; KEEP just avoids tearing down a running chain when a new fetch arrives.
+        // A forced refresh that lands while a chain is running is intentionally dropped onto the running one.
         workManager
             .beginUniqueWork(
                 FETCH_WORK,
-                ExistingWorkPolicy.REPLACE,
+                ExistingWorkPolicy.KEEP,
                 sync,
             ).then(fetch)
             .enqueue()
