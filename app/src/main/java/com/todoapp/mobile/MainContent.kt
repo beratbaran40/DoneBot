@@ -45,10 +45,16 @@ fun MainContent() {
 
         NavigationEffectController(mainViewModel.navEffect)
 
+        val backStackEntry by navController.currentBackStackEntryAsState()
         val pendingDeepLink by mainViewModel.pendingDeepLink.collectAsStateWithLifecycle()
         val isLoggedIn = mainViewModel.isLoggedIn
-        LaunchedEffect(pendingDeepLink, isLoggedIn) {
+        LaunchedEffect(pendingDeepLink, isLoggedIn, backStackEntry) {
             val link = pendingDeepLink ?: return@LaunchedEffect
+            // The NavHost graph isn't set until the splash ends (ToDoApp shows a splash while
+            // isLoggedIn == null || !splashDone). On a cold reminder tap isLoggedIn can flip to true
+            // before that; navigating now would fail and consumePendingDeepLink() would drop the
+            // link. Wait until the start destination is on the back stack.
+            if (backStackEntry == null) return@LaunchedEffect
             if (link is MainViewModel.DeepLink.ResetPassword) {
                 navController.navigate(Screen.ResetPassword(token = link.token))
                 mainViewModel.consumePendingDeepLink()
@@ -68,7 +74,6 @@ fun MainContent() {
             mainViewModel.consumePendingDeepLink()
         }
 
-        val backStackEntry by navController.currentBackStackEntryAsState()
         LaunchedEffect(backStackEntry) {
             val entry = backStackEntry ?: run {
                 mainViewModel.updateCurrentRoute(route = null, args = null)

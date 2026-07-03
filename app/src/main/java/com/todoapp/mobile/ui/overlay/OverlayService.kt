@@ -1,6 +1,8 @@
 package com.todoapp.mobile.ui.overlay
 
+import android.app.ActivityOptions
 import android.app.Notification
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -122,7 +124,7 @@ class OverlayService :
         flags: Int,
         startId: Int,
     ): Int {
-        android.util.Log.d("OverlayService", "onStartCommand called, extras: ${intent.extras}")
+        Timber.tag(TAG).d("onStartCommand called, extras: %s", intent.extras)
         promoteToForeground()
         if (intent.hasExtra(INTENT_EXTRA_COMMAND_SHOW_OVERLAY)) {
             val message = intent.getStringExtra(INTENT_EXTRA_COMMAND_SHOW_OVERLAY)
@@ -386,10 +388,40 @@ class OverlayService :
     private fun openApp(taskId: Long? = null) {
         val intent =
             Intent(this, MainActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                // CLEAR_TOP (like NotificationService) so onNewIntent fires on a warm app and the
+                // reminder_task_id extra is actually delivered to MainViewModel.onPushIntent.
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 taskId?.let { putExtra(MainViewModel.EXTRA_REMINDER_TASK_ID, it) }
             }
-        startActivity(intent)
+        // A raw startActivity() from this background service is silently dropped by BAL on
+        // Android 14+, even while the overlay window is visible — the app never opens. Launch via a
+        // PendingIntent and explicitly opt into the background activity start, the mechanism the
+        // platform sanctions for exactly this case. Older versions keep the direct start.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            val pendingIntent =
+                PendingIntent.getActivity(
+                    this,
+                    taskId?.toInt() ?: 0,
+                    intent,
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+                )
+
+            // MODE_BACKGROUND_ACTIVITY_START_ALLOWED is deprecated on API 35+ in favor of the
+            // finer-grained ALLOW_ALWAYS/ALLOW_IF_VISIBLE, but it is the only mode available on
+            // API 34 and still maps to "allow" on 35/36 — keep the single constant for both.
+            @Suppress("DEPRECATION")
+            val options =
+                ActivityOptions
+                    .makeBasic()
+                    .setPendingIntentBackgroundActivityStartMode(
+                        ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED,
+                    )
+            runCatching { pendingIntent.send(this, 0, null, null, null, null, options.toBundle()) }
+                .onFailure { Timber.tag(TAG).w(it, "openApp: PendingIntent.send failed") }
+        } else {
+            runCatching { startActivity(intent) }
+                .onFailure { Timber.tag(TAG).w(it, "openApp: startActivity failed") }
+        }
     }
 
     // Graceful degradation when the overlay window can't be drawn (permission revoked after
