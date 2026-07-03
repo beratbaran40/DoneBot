@@ -72,3 +72,4 @@ secrets.xml
 
 # Session reports / scratch docs (local-only)
 SESSION_*.md
+BUG_HUNT_*.md
