@@ -17,6 +17,7 @@ import com.todoapp.mobile.data.source.local.GroupActivityDao
 import com.todoapp.mobile.data.source.local.GroupMemberDao
 import com.todoapp.mobile.data.source.local.GroupTaskDao
 import com.todoapp.mobile.data.source.local.JournalEntryDao
+import com.todoapp.mobile.data.source.local.MIGRATION_12_13
 import com.todoapp.mobile.data.source.local.PomodoroDao
 import com.todoapp.mobile.data.source.local.SubtaskDao
 import com.todoapp.mobile.data.source.local.TaskDao
@@ -55,17 +56,6 @@ object LocalStorageModule {
         )
         .addMigrations(MIGRATION_12_13)
         .build()
-
-    /**
-     * Splits the implicit category=DAILY recurrence (V1) into a separate `recurrence` column.
-     * Done as a manual migration (not auto) because the schema add comes with a data UPDATE.
-     */
-    private val MIGRATION_12_13 = object : androidx.room.migration.Migration(12, 13) {
-        override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
-            db.execSQL("ALTER TABLE tasks ADD COLUMN recurrence TEXT NOT NULL DEFAULT 'NONE'")
-            db.execSQL("UPDATE tasks SET recurrence = 'DAILY', category = 'PERSONAL' WHERE category = 'DAILY'")
-        }
-    }
 
     @Provides
     @Singleton
