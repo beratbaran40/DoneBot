@@ -1,7 +1,9 @@
 package com.todoapp.mobile.ui.profile
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.data.repository.DataStoreHelper
 import com.todoapp.mobile.data.storage.AvatarPhotoStorage
 import com.todoapp.mobile.domain.repository.UserRepository
@@ -11,6 +13,7 @@ import com.todoapp.mobile.ui.profile.ProfileContract.UiAction
 import com.todoapp.mobile.ui.profile.ProfileContract.UiEffect
 import com.todoapp.mobile.ui.profile.ProfileContract.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,6 +30,7 @@ constructor(
     private val userRepository: UserRepository,
     private val dataStoreHelper: DataStoreHelper,
     private val avatarPhotoStorage: AvatarPhotoStorage,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(UiState())
     val uiState = _uiState.asStateFlow()
@@ -86,7 +90,9 @@ constructor(
                             avatarVersion = avatarVersion,
                         )
                 }.onFailure { t ->
-                    _uiState.update { it.copy(isLoading = false, errorMessage = it.errorMessage ?: t.message) }
+                    _uiState.update {
+                        it.copy(isLoading = false, errorMessage = it.errorMessage ?: t.toUserMessage(context))
+                    }
                 }
         }
     }
@@ -110,7 +116,7 @@ constructor(
                     _uiEffect.trySend(UiEffect.ShowToast("Profile updated"))
                 }.onFailure { t ->
                     _uiState.update { it.copy(isSaving = false) }
-                    _uiEffect.trySend(UiEffect.ShowToast(t.message ?: "Failed to update profile"))
+                    _uiEffect.trySend(UiEffect.ShowToast(t.toUserMessage(context)))
                 }
         }
     }
@@ -140,7 +146,7 @@ constructor(
                     _uiEffect.trySend(UiEffect.ShowToast("Photo updated"))
                 }.onFailure { t ->
                     _uiState.update { it.copy(isUploading = false) }
-                    _uiEffect.trySend(UiEffect.ShowToast(t.message ?: "Failed to upload photo"))
+                    _uiEffect.trySend(UiEffect.ShowToast(t.toUserMessage(context)))
                 }
             // One-shot temp file — clean up regardless of upload outcome.
             avatarPhotoStorage.deletePhoto(path)

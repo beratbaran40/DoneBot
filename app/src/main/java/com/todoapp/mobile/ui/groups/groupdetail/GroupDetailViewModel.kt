@@ -13,6 +13,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.todoapp.mobile.R
 import com.todoapp.mobile.common.deviceTimePattern
+import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.domain.model.GroupActivity
 import com.todoapp.mobile.domain.model.GroupMember
 import com.todoapp.mobile.domain.model.GroupTask
@@ -173,7 +174,10 @@ constructor(
 
             val detail = detailResult.getOrNull()
             if (detail == null) {
-                _uiState.value = UiState.Error(detailResult.exceptionOrNull()?.message ?: "Failed to load group")
+                _uiState.value = UiState.Error(
+                    detailResult.exceptionOrNull()?.toUserMessage(context)
+                        ?: context.getString(R.string.error_generic),
+                )
                 return@launch
             }
 
@@ -454,7 +458,7 @@ constructor(
                     }.onFailure {
                         _uiEffect.trySend(
                             UiEffect.ShowToast(
-                                it.message ?: context.getString(R.string.failed_to_update_task),
+                                it.toUserMessage(context),
                             ),
                         )
                     }
@@ -489,7 +493,7 @@ constructor(
                     loadGroupData()
                 }.onFailure {
                     android.util.Log.e("GroupTaskCreate", "create failed", it)
-                    _uiEffect.trySend(UiEffect.ShowToast(it.message ?: "Failed to create task"))
+                    _uiEffect.trySend(UiEffect.ShowToast(it.toUserMessage(context)))
                 }
         }
     }

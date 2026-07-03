@@ -1,7 +1,9 @@
 package com.todoapp.mobile.ui.search
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.domain.model.Group
 import com.todoapp.mobile.domain.model.GroupTask
 import com.todoapp.mobile.domain.model.Task
@@ -22,6 +24,7 @@ import com.todoapp.mobile.ui.search.SearchContract.UiAction
 import com.todoapp.mobile.ui.search.SearchContract.UiEffect
 import com.todoapp.mobile.ui.search.SearchContract.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -50,6 +53,7 @@ constructor(
     private val setTaskCompletion: SetTaskCompletionUseCase,
     private val groupRepository: GroupRepository,
     private val secretPreferences: SecretPreferences,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _query = MutableStateFlow("")
     val query: kotlinx.coroutines.flow.StateFlow<String> = _query.asStateFlow()
@@ -129,7 +133,7 @@ constructor(
                         taskRepository
                             .searchTasks(raw)
                             .map { tasks -> tasks to raw }
-                            .catch { e -> _uiState.update { UiState.Error(e.message ?: "Search failed") } }
+                            .catch { e -> _uiState.update { UiState.Error(e.toUserMessage(context)) } }
                     }
                 }.collect { (personalTasks, raw) ->
                     if (raw.isNotBlank()) {

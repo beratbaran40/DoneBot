@@ -6,6 +6,7 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.todoapp.mobile.R
+import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.common.move
 import com.todoapp.mobile.common.needsOverlayPermission
 import com.todoapp.mobile.common.needsPostNotificationsPermission
@@ -266,7 +267,7 @@ constructor(
             } catch (e: IOException) {
                 _uiState.value =
                     UiState.Error(
-                        message = e.message ?: "Unknown error",
+                        message = e.toUserMessage(appContext),
                         throwable = e,
                     )
             }

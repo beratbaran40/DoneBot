@@ -1,8 +1,10 @@
 package com.todoapp.mobile.ui.invitations
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.todoapp.mobile.R
+import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.domain.model.Invitation
 import com.todoapp.mobile.domain.repository.InvitationRepository
 import com.todoapp.mobile.navigation.NavigationEffect
@@ -12,6 +14,7 @@ import com.todoapp.mobile.ui.invitations.InvitationsContract.UiAction
 import com.todoapp.mobile.ui.invitations.InvitationsContract.UiEffect
 import com.todoapp.mobile.ui.invitations.InvitationsContract.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,6 +26,7 @@ import javax.inject.Inject
 @HiltViewModel
 class InvitationsViewModel @Inject constructor(
     private val repository: InvitationRepository,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState = _uiState.asStateFlow()
@@ -83,7 +87,7 @@ class InvitationsViewModel @Inject constructor(
                     if (current is UiState.Success) {
                         _uiState.update { current.copy(isRefreshing = false) }
                     } else {
-                        _uiState.update { UiState.Error(e.message ?: "Unknown error") }
+                        _uiState.update { UiState.Error(e.toUserMessage(context)) }
                     }
                 }
         }

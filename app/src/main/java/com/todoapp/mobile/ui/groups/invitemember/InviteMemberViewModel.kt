@@ -1,10 +1,12 @@
 package com.todoapp.mobile.ui.groups.invitemember
 
+import android.content.Context
 import android.util.Patterns
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.navigation.NavigationEffect
 import com.todoapp.mobile.navigation.Screen
@@ -12,6 +14,7 @@ import com.todoapp.mobile.ui.groups.invitemember.InviteMemberContract.UiAction
 import com.todoapp.mobile.ui.groups.invitemember.InviteMemberContract.UiEffect
 import com.todoapp.mobile.ui.groups.invitemember.InviteMemberContract.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +28,7 @@ class InviteMemberViewModel
 @Inject
 constructor(
     private val groupRepository: GroupRepository,
+    @ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     private val groupId = savedStateHandle.toRoute<Screen.InviteMember>().groupId
@@ -62,7 +66,7 @@ constructor(
                     _navEffect.trySend(NavigationEffect.Back)
                 }.onFailure {
                     _uiState.update { it.copy(isLoading = false) }
-                    _uiEffect.trySend(UiEffect.ShowToast(it.message ?: "Failed to send invite"))
+                    _uiEffect.trySend(UiEffect.ShowToast(it.toUserMessage(context)))
                 }
         }
     }

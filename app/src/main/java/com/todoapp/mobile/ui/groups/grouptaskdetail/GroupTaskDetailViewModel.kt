@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.todoapp.mobile.R
+import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.domain.model.GroupMember
 import com.todoapp.mobile.domain.model.GroupTask
 import com.todoapp.mobile.domain.repository.GroupRepository
@@ -109,7 +110,7 @@ constructor(
             groupRepository
                 .uploadTaskPhoto(taskId, bytes, mimeType)
                 .onSuccess { loadTask(force = true) }
-                .onFailure { _uiEffect.trySend(UiEffect.ShowToast(it.message ?: "Failed to upload photo")) }
+                .onFailure { _uiEffect.trySend(UiEffect.ShowToast(it.toUserMessage(context))) }
         }
     }
 
@@ -118,7 +119,7 @@ constructor(
             groupRepository
                 .deleteTaskPhoto(taskId, photoId)
                 .onSuccess { loadTask(force = true) }
-                .onFailure { _uiEffect.trySend(UiEffect.ShowToast(it.message ?: "Failed to delete photo")) }
+                .onFailure { _uiEffect.trySend(UiEffect.ShowToast(it.toUserMessage(context))) }
         }
     }
 
@@ -174,7 +175,7 @@ constructor(
                             )
                     }
                 }.onFailure {
-                    _uiState.value = UiState.Error(it.message ?: context.getString(R.string.error_generic))
+                    _uiState.value = UiState.Error(it.toUserMessage(context))
                 }
         }
     }

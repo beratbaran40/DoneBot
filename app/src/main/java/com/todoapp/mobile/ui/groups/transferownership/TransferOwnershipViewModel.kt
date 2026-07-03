@@ -1,9 +1,11 @@
 package com.todoapp.mobile.ui.groups.transferownership
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.domain.model.GroupMember
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.UserRepository
@@ -14,6 +16,7 @@ import com.todoapp.mobile.ui.groups.transferownership.TransferOwnershipContract.
 import com.todoapp.mobile.ui.groups.transferownership.TransferOwnershipContract.UiEffect
 import com.todoapp.mobile.ui.groups.transferownership.TransferOwnershipContract.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +31,7 @@ class TransferOwnershipViewModel
 constructor(
     private val groupRepository: GroupRepository,
     private val userRepository: UserRepository,
+    @ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     private val groupId = savedStateHandle.toRoute<Screen.TransferOwnership>().groupId
@@ -69,7 +73,7 @@ constructor(
                             selectedUserId = null,
                         )
                 }.onFailure {
-                    _uiState.value = UiState.Error(it.message ?: "Failed to load members")
+                    _uiState.value = UiState.Error(it.toUserMessage(context))
                 }
         }
     }
@@ -104,7 +108,7 @@ constructor(
                         NavigationEffect.Navigate(Screen.Groups(), popUpTo = Screen.Groups(), isInclusive = false),
                     )
                 }.onFailure {
-                    _uiEffect.trySend(UiEffect.ShowToast(it.message ?: "Failed to transfer ownership"))
+                    _uiEffect.trySend(UiEffect.ShowToast(it.toUserMessage(context)))
                 }
         }
     }

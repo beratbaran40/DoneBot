@@ -274,6 +274,10 @@
     <string name="error_unknown">Unknown error</string>
     <string name="error_task_not_found">Task not found</string>
     <string name="error_failed_to_load_tasks">Failed to load tasks</string>
+    <string name="error_no_internet">No internet connection. Check your Wi-Fi or mobile data.</string>
+    <string name="error_session_expired">Your session has expired. Please sign in again.</string>
+    <string name="error_server_busy">The server is busy right now. Please try again in a few minutes.</string>
+    <string name="error_not_found">We couldn\'t find what you were looking for.</string>
     <string name="delete_task_title">Delete task?</string>
     <string name="task_deleted">Task deleted</string>
     <string name="group_task_deleted">Group task deleted</string>

@@ -1,9 +1,11 @@
 package com.todoapp.mobile.ui.groups.managemembers
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.domain.model.GroupMember
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.navigation.NavigationEffect
@@ -13,6 +15,7 @@ import com.todoapp.mobile.ui.groups.managemembers.ManageMembersContract.UiAction
 import com.todoapp.mobile.ui.groups.managemembers.ManageMembersContract.UiEffect
 import com.todoapp.mobile.ui.groups.managemembers.ManageMembersContract.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +28,7 @@ class ManageMembersViewModel
 @Inject
 constructor(
     private val groupRepository: GroupRepository,
+    @ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     private val groupId = savedStateHandle.toRoute<Screen.ManageMembers>().groupId
@@ -61,7 +65,7 @@ constructor(
                 .onSuccess { members ->
                     _uiState.value = UiState.Success(members.map { it.toUiItem() })
                 }.onFailure {
-                    _uiState.value = UiState.Error(it.message ?: "Failed to load members")
+                    _uiState.value = UiState.Error(it.toUserMessage(context))
                 }
         }
     }

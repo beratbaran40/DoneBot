@@ -3,10 +3,12 @@
 
 package com.todoapp.mobile.ui.activity
 
+import android.content.Context
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.todoapp.mobile.R
+import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.domain.alarm.AlarmScheduler
 import com.todoapp.mobile.domain.alarm.AlarmType
 import com.todoapp.mobile.domain.engine.PomodoroEngine
@@ -28,6 +30,7 @@ import com.todoapp.mobile.ui.activity.ActivityContract.UiState
 import com.todoapp.mobile.ui.activity.ActivityContract.YearStripMonth
 import com.todoapp.mobile.ui.home.TaskFormState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -56,6 +59,7 @@ constructor(
     private val pomodoroEngine: PomodoroEngine,
     private val activityPreferences: ActivityPreferences,
     private val observeOverdueSummary: ObserveOverdueSummaryUseCase,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState = _uiState.asStateFlow()
@@ -98,7 +102,7 @@ constructor(
                         inputs.overdueCount,
                     )
                 }
-                .catch { e -> _uiState.value = UiState.Error(e.message ?: "Unknown Error", e) }
+                .catch { e -> _uiState.value = UiState.Error(e.toUserMessage(context), e) }
                 .collect { _uiState.value = it }
         }
     }

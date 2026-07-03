@@ -279,6 +279,10 @@
     <string name="error_unknown">Bilinmeyen hata</string>
     <string name="error_task_not_found">Görev bulunamadı</string>
     <string name="error_failed_to_load_tasks">Görevler yüklenemedi</string>
+    <string name="error_no_internet">İnternet bağlantısı yok. Wi-Fi veya mobil verini kontrol et.</string>
+    <string name="error_session_expired">Oturumunun süresi doldu. Lütfen tekrar giriş yap.</string>
+    <string name="error_server_busy">Sunucu şu an meşgul. Lütfen birkaç dakika sonra tekrar dene.</string>
+    <string name="error_not_found">Aradığın şeyi bulamadık.</string>
     <string name="delete_task_title">Görev silinsin mi?</string>
     <string name="task_deleted">Görev silindi</string>
     <string name="group_task_deleted">Grup görevi silindi</string>

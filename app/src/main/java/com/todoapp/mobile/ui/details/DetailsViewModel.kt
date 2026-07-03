@@ -1,10 +1,12 @@
 package com.todoapp.mobile.ui.details
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.todoapp.mobile.R
+import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.domain.constants.DailyPlanDefaults
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.Task
@@ -19,6 +21,7 @@ import com.todoapp.mobile.ui.details.DetailsContract.UiEffect
 import com.todoapp.mobile.ui.details.DetailsContract.UiState
 import com.todoapp.mobile.ui.home.PendingPhoto
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,6 +42,7 @@ constructor(
     private val taskRepository: TaskRepository,
     private val pendingPhotoRepository: PendingPhotoRepository,
     private val setTaskCompletion: SetTaskCompletionUseCase,
+    @ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
@@ -68,7 +72,7 @@ constructor(
                 _uiState.value = UiState.Loading
                 val task = taskRepository.getTaskById(taskId)
                 if (task == null) {
-                    _uiState.value = UiState.Error(message = R.string.error_task_not_found.toString())
+                    _uiState.value = UiState.Error(message = context.getString(R.string.error_task_not_found))
                     return@launch
                 }
                 originalTask = task
@@ -81,7 +85,7 @@ constructor(
                     }
                 }
             } catch (e: IOException) {
-                _uiState.value = UiState.Error(message = "Failed to load task", throwable = e)
+                _uiState.value = UiState.Error(message = e.toUserMessage(context), throwable = e)
             }
         }
     }

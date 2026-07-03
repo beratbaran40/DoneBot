@@ -1,10 +1,12 @@
 package com.todoapp.mobile.ui.groups
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.data.model.network.data.GroupSummaryData
 import com.todoapp.mobile.di.IoDispatcher
 import com.todoapp.mobile.domain.model.Group
@@ -15,6 +17,7 @@ import com.todoapp.mobile.navigation.Screen
 import com.todoapp.mobile.ui.groups.GroupsContract.UiAction
 import com.todoapp.mobile.ui.groups.GroupsContract.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -39,6 +42,7 @@ constructor(
     private val sessionPreferences: SessionPreferences,
     savedStateHandle: SavedStateHandle,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val pendingDeleteGroupId = savedStateHandle.toRoute<Screen.Groups>().pendingDeleteGroupId
     private var pendingDeleteHandled = false
@@ -206,7 +210,7 @@ constructor(
                     .onFailure { t ->
                         Log.e("GroupsViewModel", "Failed to delete group", t)
                         _uiEffect.trySend(
-                            GroupsContract.UiEffect.ShowToast(t.message ?: "Failed to delete group"),
+                            GroupsContract.UiEffect.ShowToast(t.toUserMessage(context)),
                         )
                     }
                 updateSuccessState { it.copy(pendingDeleteGroup = null) }
@@ -225,7 +229,7 @@ constructor(
                 .onFailure { t ->
                     Log.e("GroupsViewModel", "Failed to flush pending group delete", t)
                     _uiEffect.trySend(
-                        GroupsContract.UiEffect.ShowToast(t.message ?: "Failed to delete group"),
+                        GroupsContract.UiEffect.ShowToast(t.toUserMessage(context)),
                     )
                 }
         }

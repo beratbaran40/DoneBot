@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.todoapp.mobile.R
+import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.data.storage.AvatarPhotoStorage
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.UserRepository
@@ -95,7 +96,7 @@ constructor(
                     _uiState.update { it.copy(avatarVersion = System.currentTimeMillis()) }
                     loadGroupDetail()
                 }.onFailure {
-                    _uiEffect.trySend(UiEffect.ShowToast(it.message ?: "Failed to upload avatar"))
+                    _uiEffect.trySend(UiEffect.ShowToast(it.toUserMessage(context)))
                 }
             // One-shot temp file — clean up regardless of upload outcome.
             avatarPhotoStorage.deletePhoto(path)

@@ -1,8 +1,10 @@
 package com.todoapp.mobile.ui.notifications
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.todoapp.mobile.R
+import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.domain.model.Notification
 import com.todoapp.mobile.domain.model.NotificationType
 import com.todoapp.mobile.domain.repository.NotificationRepository
@@ -12,6 +14,7 @@ import com.todoapp.mobile.ui.notifications.NotificationsContract.UiAction
 import com.todoapp.mobile.ui.notifications.NotificationsContract.UiEffect
 import com.todoapp.mobile.ui.notifications.NotificationsContract.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,6 +26,7 @@ import javax.inject.Inject
 @HiltViewModel
 class NotificationsViewModel @Inject constructor(
     private val repository: NotificationRepository,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState = _uiState.asStateFlow()
@@ -78,7 +82,7 @@ class NotificationsViewModel @Inject constructor(
                         _uiState.update { current.copy(isRefreshing = false) }
                     } else {
                         _uiState.update {
-                            UiState.Error(e.message ?: "Unknown error")
+                            UiState.Error(e.toUserMessage(context))
                         }
                     }
                 }
