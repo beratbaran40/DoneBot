@@ -39,6 +39,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.todoapp.mobile.LocalWindowSizeClass
 import com.todoapp.mobile.R
 import com.todoapp.mobile.common.RingtoneHolder
@@ -457,6 +458,12 @@ private fun ProgressRing(
     textColor: androidx.compose.ui.graphics.Color,
     size: Dp = 320.dp,
 ) {
+    // Scale the timer text to the ring so mm:ss always fits inside. Portrait & tablet keep the full
+    // 320dp ring (scale 1, unchanged); phone landscape uses a 220dp ring and the text shrinks with it.
+    val scale = size / ProgressRingReferenceSize
+    val timerStyle = TDTheme.typography.pomodoro.let { it.copy(fontSize = (it.fontSize.value * scale).sp) }
+    val digitMinWidth = ProgressRingDigitMinWidth * scale
+
     Box(
         modifier = modifier.size(size),
         contentAlignment = Alignment.Center,
@@ -471,9 +478,9 @@ private fun ProgressRing(
         AnimatedTimeMmSs(
             minutes = min,
             seconds = second,
-            style = TDTheme.typography.pomodoro,
+            style = timerStyle,
             color = textColor,
-            digitModifier = Modifier.widthIn(min = 64.dp),
+            digitModifier = Modifier.widthIn(min = digitMinWidth),
         )
     }
 }
@@ -540,6 +547,11 @@ private fun ControlPanel(
 
 private const val COLOR_ANIM_MS = 400
 private const val PROGRESS_ANIM_MS = 900
+
+// Timer text scales with the ring: 96sp text / 64dp digit slots at the reference 320dp ring, shrinking
+// proportionally for the smaller 220dp phone-landscape ring so mm:ss never overflows the circle.
+private val ProgressRingReferenceSize = 320.dp
+private val ProgressRingDigitMinWidth = 64.dp
 
 // Large-screen caps: keep the immersive full-bleed background but centre the timer panel on tablets.
 private val PomodoroPortraitMaxWidth = 480.dp
@@ -684,6 +696,23 @@ private fun Preview_ManySessions() {
                 isRunning = true,
             ),
             onAction = {},
+        )
+    }
+}
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun Preview_LandscapeRing() {
+    // The 220dp ring used on phone landscape: the timer text must stay inside the circle.
+    TDTheme {
+        ProgressRing(
+            min = 24,
+            second = 57,
+            animatedProgress = 0.7f,
+            progressColor = TDTheme.colors.purple,
+            trackColor = TDTheme.colors.lightGray,
+            textColor = TDTheme.colors.onBackground,
+            size = 220.dp,
         )
     }
 }
