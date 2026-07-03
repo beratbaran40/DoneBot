@@ -37,6 +37,9 @@ interface Screen {
     data object AlarmSounds : Screen
 
     @Serializable
+    data object Licenses : Screen
+
+    @Serializable
     data object Search : Screen
 
     @Serializable

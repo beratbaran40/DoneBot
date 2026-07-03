@@ -74,6 +74,8 @@ object SettingsContract {
 
         data object OnNavigateToAlarmSounds : UiAction
 
+        data object OnNavigateToLicenses : UiAction
+
         data class OnPushNotificationsToggle(val enabled: Boolean) : UiAction
 
         data class OnReduceMotionToggle(val enabled: Boolean) : UiAction

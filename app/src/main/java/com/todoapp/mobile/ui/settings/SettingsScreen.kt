@@ -594,6 +594,28 @@ private fun SettingsContent(
             )
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = TDTheme.colors.onBackground.copy(alpha = 0.1f))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clickable { onAction(UiAction.OnNavigateToLicenses) },
+        ) {
+            TDText(
+                text = stringResource(R.string.settings_licenses),
+                style = TDTheme.typography.heading6,
+                color = TDTheme.colors.onBackground,
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Icon(
+                painter = painterResource(com.example.uikit.R.drawable.ic_arrow_forward),
+                contentDescription = null,
+                tint = TDTheme.colors.onBackground,
+            )
+        }
+
         if (uiState.isUserAuthenticated) {
             SectionHeader(R.string.settings_section_account)
 

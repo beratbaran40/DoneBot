@@ -677,6 +677,12 @@ fun NavGraph(
             )
         }
 
+        composable<Screen.Licenses> {
+            ResponsiveContainer {
+                com.todoapp.mobile.ui.licenses.LicensesScreen()
+            }
+        }
+
         composable<Screen.ChangePassword> {
             val viewModel: ChangePasswordViewModel = hiltViewModel()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()

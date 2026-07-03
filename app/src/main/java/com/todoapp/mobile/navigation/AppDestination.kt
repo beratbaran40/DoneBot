@@ -247,6 +247,14 @@ sealed class AppDestination(
         hasInfoDialog = true,
     )
 
+    data object Licenses : AppDestination(
+        title = R.string.licenses_title,
+        route = Screen.Licenses::class.requiredRoute(),
+        icon = null,
+        selectedIcon = null,
+        hasInfoDialog = false,
+    )
+
     data object Journal : AppDestination(
         title = R.string.nav_journal_title,
         route = Screen.Journal::class.requiredRoute(),
@@ -309,6 +317,7 @@ sealed class AppDestination(
                 Notifications,
                 Invitations,
                 AlarmSounds,
+                Licenses,
                 Journal,
                 // JournalEntry, PolaroidCamera and AvatarCrop intentionally NOT listed — they hide
                 // the topbar so they can render their own floating chrome over a full-bleed surface

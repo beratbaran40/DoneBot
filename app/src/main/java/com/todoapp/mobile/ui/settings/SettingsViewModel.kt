@@ -224,6 +224,8 @@ constructor(
             UiAction.OnLoginOrRegisterClick -> _navEffect.trySend(NavigationEffect.Navigate(Screen.Login()))
             UiAction.OnNavigateToAlarmSounds ->
                 _navEffect.trySend(NavigationEffect.Navigate(Screen.AlarmSounds))
+            UiAction.OnNavigateToLicenses ->
+                _navEffect.trySend(NavigationEffect.Navigate(Screen.Licenses))
             is UiAction.OnPushNotificationsToggle -> togglePushNotifications(action.enabled)
             is UiAction.OnReduceMotionToggle -> toggleReduceMotion(action.enabled)
             is UiAction.OnJournalBiometricProtectionToggle ->
