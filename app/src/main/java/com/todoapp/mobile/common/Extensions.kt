@@ -49,6 +49,7 @@ suspend fun <T> handleRequest(request: suspend () -> Response<BaseResponse<T?>>)
             Log.d("error", message)
             parsed?.errorCode?.toOAuthAccountException()?.let { return Result.failure(it) }
             return when (response.code()) {
+                404 -> Result.failure(DomainException.NotFound())
                 401, 403 -> Result.failure(DomainException.Unauthorized())
                 else -> Result.failure(DomainException.Server(message))
             }
@@ -86,6 +87,7 @@ suspend fun handleEmptyRequest(request: suspend () -> Response<BaseResponse<Unit
             ?: "Something went wrong"
         Log.d("error", message)
         when (response.code()) {
+            404 -> Result.failure(DomainException.NotFound())
             401, 403 -> Result.failure(DomainException.Unauthorized())
             else -> Result.failure(DomainException.Server(message))
         }
@@ -102,6 +104,10 @@ sealed class DomainException(
     class NoInternet : DomainException("No internet connection")
 
     class Unauthorized : DomainException("Unauthorized")
+
+    // A PUT/DELETE landed on a resource the server no longer has (404). Distinct from Server so the push
+    // pipeline can tombstone it (drop the local row) instead of retrying a permanently-gone row forever.
+    class NotFound : DomainException("Not found")
 
     class Server(
         message: String,
@@ -123,18 +129,18 @@ sealed class DomainException(
 
     companion object {
         private const val HTTP_STATUS_UNAUTHORIZED = 401
+        private const val HTTP_STATUS_FORBIDDEN = 403
+        private const val HTTP_STATUS_NOT_FOUND = 404
 
         fun fromThrowable(t: Throwable): DomainException = when (t) {
             is UnknownHostException,
             is SocketTimeoutException,
             -> NoInternet()
 
-            is HttpException -> {
-                if (t.code() == HTTP_STATUS_UNAUTHORIZED) {
-                    Unauthorized()
-                } else {
-                    Server("Server error")
-                }
+            is HttpException -> when (t.code()) {
+                HTTP_STATUS_UNAUTHORIZED, HTTP_STATUS_FORBIDDEN -> Unauthorized()
+                HTTP_STATUS_NOT_FOUND -> NotFound()
+                else -> Server("Server error")
             }
 
             is SQLiteException -> Database(t.message ?: "Database error")
