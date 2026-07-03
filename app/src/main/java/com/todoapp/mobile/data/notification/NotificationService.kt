@@ -11,6 +11,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.example.uikit.R
 import com.todoapp.mobile.MainActivity
+import com.todoapp.mobile.MainViewModel
 import com.todoapp.mobile.common.RingtoneHolder
 import com.todoapp.mobile.di.IoDispatcher
 import com.todoapp.mobile.domain.repository.AlarmSoundPreferences
@@ -40,14 +41,21 @@ class NotificationService : Service() {
     fun sendNotification(
         contentText: String,
         remindMinutesBefore: Int,
+        taskId: Long? = null,
     ) {
-        val activityIntent = Intent(this, MainActivity::class.java)
+        val activityIntent = Intent(this, MainActivity::class.java).apply {
+            // Mirror the FCM deep-link intent so onNewIntent fires and the back stack stays sane.
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            taskId?.let { putExtra(MainViewModel.EXTRA_REMINDER_TASK_ID, it) }
+        }
         val activityPendingIntent =
             PendingIntent.getActivity(
                 this,
-                NOTIFICATION_ID,
+                // Per-task request code + UPDATE_CURRENT so the tapped notification carries THIS task's
+                // extra; a shared code + IMMUTABLE would reuse a stale PendingIntent → wrong task opens.
+                taskId?.toInt() ?: NOTIFICATION_ID,
                 activityIntent,
-                PendingIntent.FLAG_IMMUTABLE,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
         val notification =
             NotificationCompat
@@ -89,8 +97,9 @@ class NotificationService : Service() {
         promoteToForeground()
         val message = intent.getStringExtra(INTENT_EXTRA_MESSAGE)
         val time = intent.getLongExtra(INTENT_EXTRA_LONG, 0L)
+        val taskId = intent.getLongExtra(INTENT_EXTRA_TASK_ID, -1L).takeIf { it > 0 }
         if (!message.isNullOrBlank()) {
-            sendNotification(message, time.toInt())
+            sendNotification(message, time.toInt(), taskId)
         }
         // Detach so the user-visible task reminder persists after the FG placeholder is gone.
         stopForeground(STOP_FOREGROUND_REMOVE)
@@ -137,6 +146,7 @@ class NotificationService : Service() {
         const val CHANNEL_ID = "notification_channel"
         const val INTENT_EXTRA_MESSAGE = "extra_message"
         const val INTENT_EXTRA_LONG = "extra_time"
+        const val INTENT_EXTRA_TASK_ID = "extra_task_id"
         private const val NOTIFICATION_ID = 1
         private const val TAG = "NotificationService"
     }

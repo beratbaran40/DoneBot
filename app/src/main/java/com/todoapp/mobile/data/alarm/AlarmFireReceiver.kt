@@ -27,6 +27,7 @@ class AlarmFireReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
         intent ?: return
         val target = intent.getStringExtra(EXTRA_FIRE_TARGET).orEmpty()
+        val taskId = intent.getLongExtra(EXTRA_TASK_ID, -1L)
         Timber.tag(TAG).d("alarm fired target=%s", target)
 
         val serviceIntent = when (target) {
@@ -44,6 +45,7 @@ class AlarmFireReceiver : BroadcastReceiver() {
                     intent.getStringExtra(OverlayService.INTENT_EXTRA_OVERLAY_TYPE)
                         ?: OverlayService.OVERLAY_TYPE_TASK,
                 )
+                if (taskId > 0) putExtra(OverlayService.INTENT_EXTRA_TASK_ID, taskId)
             }
             FIRE_TARGET_NOTIFICATION -> Intent(context, NotificationService::class.java).apply {
                 putExtra(
@@ -54,6 +56,7 @@ class AlarmFireReceiver : BroadcastReceiver() {
                     NotificationService.INTENT_EXTRA_LONG,
                     intent.getLongExtra(NotificationService.INTENT_EXTRA_LONG, 0L),
                 )
+                if (taskId > 0) putExtra(NotificationService.INTENT_EXTRA_TASK_ID, taskId)
             }
             else -> {
                 Timber.tag(TAG).w("Unknown fire target=%s; dropping alarm", target)
@@ -102,6 +105,9 @@ class AlarmFireReceiver : BroadcastReceiver() {
         const val EXTRA_FIRE_TARGET: String = "com.todoapp.mobile.alarm.extra.FIRE_TARGET"
         const val FIRE_TARGET_OVERLAY: String = "OVERLAY"
         const val FIRE_TARGET_NOTIFICATION: String = "NOTIFICATION"
+
+        /** Task id carried on the fire broadcast so the notification/overlay can deep-link to it. §5.8 */
+        const val EXTRA_TASK_ID: String = "com.todoapp.mobile.alarm.extra.TASK_ID"
 
         // V2 keys.
         const val EXTRA_RECURRENCE: String = "com.todoapp.mobile.alarm.extra.RECURRENCE"

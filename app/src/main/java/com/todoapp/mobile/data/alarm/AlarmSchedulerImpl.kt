@@ -101,6 +101,7 @@ class AlarmSchedulerImpl(
         putExtra(OverlayService.INTENT_EXTRA_COMMAND_SHOW_OVERLAY, item.message)
         putExtra(OverlayService.INTENT_EXTRA_LONG, item.minutesBefore)
         putExtra(OverlayService.INTENT_EXTRA_OVERLAY_TYPE, overlayType)
+        item.taskId?.let { putExtra(AlarmFireReceiver.EXTRA_TASK_ID, it) }
     }
 
     private fun buildNotificationBroadcast(item: AlarmItem): Intent = Intent(
@@ -111,6 +112,7 @@ class AlarmSchedulerImpl(
         putExtra(AlarmFireReceiver.EXTRA_FIRE_TARGET, AlarmFireReceiver.FIRE_TARGET_NOTIFICATION)
         putExtra(NotificationService.INTENT_EXTRA_MESSAGE, item.message)
         putExtra(NotificationService.INTENT_EXTRA_LONG, item.minutesBefore)
+        item.taskId?.let { putExtra(AlarmFireReceiver.EXTRA_TASK_ID, it) }
     }
 
     override fun scheduleRecurring(
@@ -243,6 +245,8 @@ class AlarmSchedulerImpl(
             putExtra(AlarmFireReceiver.EXTRA_DAILY_HOUR, hour)
             putExtra(AlarmFireReceiver.EXTRA_DAILY_MINUTE, minute)
             putExtra(AlarmFireReceiver.EXTRA_DAILY_MESSAGE, message)
+            // §5.8: also carry taskId under the generic key the receiver forwards to the service.
+            putExtra(AlarmFireReceiver.EXTRA_TASK_ID, taskId)
         }
     }
 

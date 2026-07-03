@@ -59,6 +59,7 @@ fun MainContent() {
                 when (link) {
                     is MainViewModel.DeepLink.Group -> Screen.GroupDetail(groupId = link.groupId, groupName = "")
                     is MainViewModel.DeepLink.GroupTask -> Screen.GroupTaskDetail(groupId = link.groupId, taskId = link.taskId)
+                    is MainViewModel.DeepLink.Task -> Screen.Task(taskId = link.taskId)
                     is MainViewModel.DeepLink.Invitations -> Screen.Invitations
                     is MainViewModel.DeepLink.NotificationsInbox -> Screen.Notifications
                     is MainViewModel.DeepLink.ResetPassword -> return@LaunchedEffect

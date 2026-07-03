@@ -30,6 +30,7 @@ import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.todoapp.mobile.MainActivity
+import com.todoapp.mobile.MainViewModel
 import com.todoapp.mobile.R
 import com.todoapp.mobile.data.notification.NotificationService
 import com.todoapp.mobile.di.IoDispatcher
@@ -127,7 +128,8 @@ class OverlayService :
             val message = intent.getStringExtra(INTENT_EXTRA_COMMAND_SHOW_OVERLAY)
             val minutesBefore = intent.getLongExtra(INTENT_EXTRA_LONG, 0)
             val overlayType = intent.getStringExtra(INTENT_EXTRA_OVERLAY_TYPE) ?: OVERLAY_TYPE_TASK
-            val overlayShown = showOverlay(message.orEmpty(), minutesBefore, overlayType)
+            val taskId = intent.getLongExtra(INTENT_EXTRA_TASK_ID, -1L).takeIf { it > 0 }
+            val overlayShown = showOverlay(message.orEmpty(), minutesBefore, overlayType, taskId)
             // Honor user-selected alarm sound preference. Channel sounds are immutable post-creation
             // so we play the ringtone manually here. Skip when we fell back to a notification — the
             // NotificationService plays its own alarm sound, so this would double up.
@@ -148,6 +150,7 @@ class OverlayService :
         message: String,
         minutesBefore: Long,
         overlayType: String,
+        taskId: Long? = null,
     ): Boolean {
         val targetViewRef =
             when (overlayType) {
@@ -162,7 +165,7 @@ class OverlayService :
         // this foreground service. Re-check at fire time and degrade to the notification instead.
         if (!Settings.canDrawOverlays(this)) {
             Timber.tag(TAG).w("Overlay permission revoked before fire; falling back to notification")
-            fallbackToNotification(message, minutesBefore)
+            fallbackToNotification(message, minutesBefore, taskId)
             stopSelf()
             return false
         }
@@ -244,7 +247,7 @@ class OverlayService :
                                     onDismissClick = { show = false },
                                     onOpenClick = {
                                         show = false
-                                        openApp()
+                                        openApp(taskId)
                                     },
                                 )
                             }
@@ -272,7 +275,7 @@ class OverlayService :
                 OVERLAY_TYPE_DAILY_PLAN -> dailyPlanOverlayView = null
                 OVERLAY_TYPE_TASK -> taskOverlayView = null
             }
-            fallbackToNotification(message, minutesBefore)
+            fallbackToNotification(message, minutesBefore, taskId)
             stopSelf()
             false
         }
@@ -380,10 +383,11 @@ class OverlayService :
                 }
         }
 
-    private fun openApp() {
+    private fun openApp(taskId: Long? = null) {
         val intent =
             Intent(this, MainActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                taskId?.let { putExtra(MainViewModel.EXTRA_REMINDER_TASK_ID, it) }
             }
         startActivity(intent)
     }
@@ -394,6 +398,7 @@ class OverlayService :
     private fun fallbackToNotification(
         message: String,
         minutesBefore: Long,
+        taskId: Long? = null,
     ) {
         runCatching {
             ContextCompat.startForegroundService(
@@ -401,6 +406,7 @@ class OverlayService :
                 Intent(this, NotificationService::class.java).apply {
                     putExtra(NotificationService.INTENT_EXTRA_MESSAGE, message)
                     putExtra(NotificationService.INTENT_EXTRA_LONG, minutesBefore)
+                    taskId?.let { putExtra(NotificationService.INTENT_EXTRA_TASK_ID, it) }
                 },
             )
         }.onFailure { Timber.tag(TAG).w(it, "Notification fallback failed") }
@@ -413,6 +419,7 @@ class OverlayService :
         const val HIDE_OVERLAY_ANIMATION_DELAY = 300L
         const val BOUND_MODE_NOT_SUPPORTED = "Bound mode not supported"
         const val INTENT_EXTRA_OVERLAY_TYPE = "INTENT_EXTRA_OVERLAY_TYPE"
+        const val INTENT_EXTRA_TASK_ID = "INTENT_EXTRA_TASK_ID"
         const val OVERLAY_TYPE_TASK = "OVERLAY_TYPE_TASK"
         const val OVERLAY_TYPE_DAILY_PLAN = "OVERLAY_TYPE_DAILY_PLAN"
         const val DAILY_PLAN_BOTTOM_MARGIN_DP = 80

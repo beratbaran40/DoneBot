@@ -150,6 +150,9 @@ constructor(
         return isCustomScheme || isHttpsAppLink
     }
 
+    // Guard-heavy intent parser: each deep-link type is a check-and-return. One early return per type
+    // reads clearer than nesting; the count just crossed detekt's limit of 5 with the new reminder case.
+    @Suppress("ReturnCount")
     fun onPushIntent(intent: Intent?) {
         intent ?: return
 
@@ -176,6 +179,14 @@ constructor(
                 _pendingDeepLink.value = DeepLink.NotificationsInbox
                 return
             }
+        }
+
+        // Local reminder tap (notification/overlay) → open the personal task. Handled BEFORE the group
+        // path below, which returns early when no groupId is present (a personal reminder has none).
+        intent.getLongExtra(EXTRA_REMINDER_TASK_ID, -1L).takeIf { it > 0 }?.let { reminderTaskId ->
+            intent.removeExtra(EXTRA_REMINDER_TASK_ID)
+            _pendingDeepLink.value = DeepLink.Task(reminderTaskId)
+            return
         }
 
         val groupId =
@@ -206,11 +217,19 @@ constructor(
             val taskId: Long,
         ) : DeepLink
 
+        /** A local reminder (notification/overlay) tapped → open this personal task's detail. */
+        data class Task(val taskId: Long) : DeepLink
+
         data object Invitations : DeepLink
 
         data object NotificationsInbox : DeepLink
 
         data class ResetPassword(val token: String) : DeepLink
+    }
+
+    companion object {
+        /** MainActivity intent extra carrying the task id from a tapped local reminder (notification/overlay). */
+        const val EXTRA_REMINDER_TASK_ID = "reminder_task_id"
     }
 
     private suspend fun clearLocalSession() {
