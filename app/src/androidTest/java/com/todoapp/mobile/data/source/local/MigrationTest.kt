@@ -25,7 +25,7 @@ class MigrationTest {
     )
 
     @Test
-    fun migrate22To25_appliesAutoMigrationsAndValidatesSchema() {
+    fun `migrate 22 to 25 applies auto-migrations and validates schema`() {
         helper.createDatabase(TEST_DB, 22).apply {
             execSQL(
                 "INSERT INTO tasks (id, title, date, time_start, time_end, is_completed, is_secret) " +
@@ -38,7 +38,7 @@ class MigrationTest {
     }
 
     @Test
-    fun migrate12To13_backfillsRecurrenceFromDailyCategory() {
+    fun `migrate 12 to 13 backfills recurrence from the daily category`() {
         helper.createDatabase(TEST_DB, 12).apply {
             execSQL(
                 "INSERT INTO tasks (id, title, date, time_start, time_end, is_completed, is_secret, category) " +

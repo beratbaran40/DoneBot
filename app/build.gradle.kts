@@ -150,9 +150,12 @@ android {
     }
 
     testOptions {
-        // Pure-JVM unit tests: stubbed android.jar methods (android.util.Log.*, etc.) return
-        // default values instead of throwing "Method ... not mocked".
-        unitTests.isReturnDefaultValues = true
+        unitTests {
+            // Stubbed android.jar methods (android.util.Log.*, etc.) return default values instead of
+            // throwing "Method ... not mocked"; Robolectric tests additionally need real resources.
+            isReturnDefaultValues = true
+            isIncludeAndroidResources = true
+        }
     }
 
     // MigrationTestHelper reads the exported Room schema JSONs from androidTest assets.
@@ -223,6 +226,8 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.turbine)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.work.testing)
 
     // Instrumented tests (device/emulator)
     androidTestImplementation(libs.androidx.junit)
