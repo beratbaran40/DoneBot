@@ -833,6 +833,7 @@
     <string name="chat_clear_confirm_button">Clear</string>
     <string name="chat_action_clear_history">Clear conversation</string>
     <string name="chat_send_button_description">Send message</string>
+    <string name="chat_stop_button_description">Stop generating</string>
     <string name="chat_scroll_to_bottom">Scroll to latest message</string>
     <!-- Content descriptions (TalkBack labels for interactive icons) -->
     <string name="cd_close">Close</string>

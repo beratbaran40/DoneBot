@@ -56,6 +56,7 @@ class ChatViewModel @Inject constructor(
     private var cooldownJob: Job? = null
     private var cooldownEndElapsedMs: Long = 0L
     private var draftSaveJob: Job? = null
+    private var sendJob: Job? = null
     private var refusalCount: Int = 0
     private var lastSendElapsedMs: Long = 0L
 
@@ -81,6 +82,7 @@ class ChatViewModel @Inject constructor(
         when (action) {
             is ChatContract.UiAction.OnDraftChanged -> updateDraft(action.text)
             ChatContract.UiAction.OnSendClicked -> sendCurrentDraft()
+            ChatContract.UiAction.OnStopClicked -> cancelSend()
             ChatContract.UiAction.OnClearHistory -> clearHistory()
             ChatContract.UiAction.OnRetry -> retry()
             ChatContract.UiAction.OnDismissError -> dismissError()
@@ -114,6 +116,24 @@ class ChatViewModel @Inject constructor(
                 Screen.Login(redirectAfterLogin = Screen.Chat::class.qualifiedName),
             ),
         )
+    }
+
+    /**
+     * Stop tapped while the bot was thinking. Cancelling the job makes the in-flight network
+     * suspend throw CancellationException (rethrown by handleRequest), so the isThinking=false
+     * at the tail of executeSendInternal never runs — clear the thinking state here. The user's
+     * already-echoed message stays; there's simply no assistant reply for this turn.
+     */
+    private fun cancelSend() {
+        if (sendJob?.isActive != true) return
+        sendJob?.cancel()
+        _uiState.update { current ->
+            when (current) {
+                is ChatContract.UiState.Ready -> current.copy(isThinking = false, toolInFlight = null)
+                else -> current
+            }
+        }
+        Timber.tag(METRICS_TAG).i("chat_send_cancelled")
     }
 
     private fun updateDraft(text: String) {
@@ -176,7 +196,7 @@ class ChatViewModel @Inject constructor(
         )
         cooldownJob?.cancel()
         draftSaveJob?.cancel()
-        viewModelScope.launch {
+        sendJob = viewModelScope.launch {
             dataStoreHelper.setChatDraft("")
             chatRepository.appendUserMessage(prompt)
             val localMatch = intentClassifier.tryAnswer(prompt)
@@ -234,7 +254,7 @@ class ChatViewModel @Inject constructor(
             rateLimitCooldownSecondsRemaining = 0,
             lastFailedPrompt = null,
         )
-        viewModelScope.launch {
+        sendJob = viewModelScope.launch {
             executeSendInternal(prompt)
         }
     }
@@ -246,7 +266,7 @@ class ChatViewModel @Inject constructor(
      * the navigation round-trip and ViewModel recreation; works for the register path too.
      */
     private fun maybeResumePendingPrompt() {
-        viewModelScope.launch {
+        sendJob = viewModelScope.launch {
             val pending = dataStoreHelper.getPendingChatPrompt()
             if (pending.isBlank()) return@launch
             // Still signed out (VM recreated before they actually logged in): keep the prompt

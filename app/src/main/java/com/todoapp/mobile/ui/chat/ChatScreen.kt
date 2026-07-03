@@ -596,7 +596,9 @@ private fun ChatInputPill(
                 BasicTextField(
                     value = draft,
                     onValueChange = { onAction(ChatContract.UiAction.OnDraftChanged(it)) },
-                    enabled = !isThinking,
+                    // Editable even while the bot is thinking, so the user can type their next
+                    // message ahead of time and still reach the Stop button. Sending stays gated.
+                    enabled = true,
                     singleLine = false,
                     maxLines = MAX_INPUT_LINES,
                     cursorBrush = SolidColor(TDTheme.colors.purple),
@@ -624,13 +626,17 @@ private fun ChatInputPill(
                 )
             }
             Spacer(Modifier.width(8.dp))
-            SendButton(
-                enabled = canSend,
-                onClick = {
-                    onAction(ChatContract.UiAction.OnSendClicked)
-                    keyboardController?.hide()
-                },
-            )
+            if (isThinking) {
+                StopButton(onClick = { onAction(ChatContract.UiAction.OnStopClicked) })
+            } else {
+                SendButton(
+                    enabled = canSend,
+                    onClick = {
+                        onAction(ChatContract.UiAction.OnSendClicked)
+                        keyboardController?.hide()
+                    },
+                )
+            }
         }
         if (showCharCount) {
             TDText(
@@ -672,6 +678,27 @@ private fun SendButton(
             contentDescription = stringResource(R.string.chat_send_button_description),
             tint = TDTheme.colors.white,
             modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
+@Composable
+private fun StopButton(
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .background(TDTheme.colors.purple)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(com.example.uikit.R.drawable.ic_stop),
+            contentDescription = stringResource(R.string.chat_stop_button_description),
+            tint = TDTheme.colors.white,
+            modifier = Modifier.size(16.dp),
         )
     }
 }

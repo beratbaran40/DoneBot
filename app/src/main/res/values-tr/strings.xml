@@ -834,6 +834,7 @@
     <string name="chat_clear_confirm_button">Temizle</string>
     <string name="chat_action_clear_history">Sohbeti temizle</string>
     <string name="chat_send_button_description">Mesajı gönder</string>
+    <string name="chat_stop_button_description">Yanıtı durdur</string>
     <string name="chat_scroll_to_bottom">En son mesaja git</string>
     <!-- Content descriptions (TalkBack için etkileşimli ikon etiketleri) -->
     <string name="cd_close">Kapat</string>

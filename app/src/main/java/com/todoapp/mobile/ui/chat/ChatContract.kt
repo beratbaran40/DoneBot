@@ -32,6 +32,7 @@ object ChatContract {
     sealed interface UiAction {
         data class OnDraftChanged(val text: String) : UiAction
         data object OnSendClicked : UiAction
+        data object OnStopClicked : UiAction
         data object OnClearHistory : UiAction
         data object OnRetry : UiAction
         data object OnDismissError : UiAction
