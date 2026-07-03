@@ -186,6 +186,7 @@ private fun HomeErrorPreview() {
 }
 
 @com.todoapp.uikit.previews.TDPreview
+@com.todoapp.uikit.previews.TDPreviewDevices
 @Composable
 private fun HomeSuccessWithTasksPreview() {
     TDTheme {

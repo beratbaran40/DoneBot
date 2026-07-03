@@ -500,6 +500,7 @@ private fun CalendarErrorPreview() {
 }
 
 @TDPreviewWide
+@com.todoapp.uikit.previews.TDPreviewDevices
 @Composable
 private fun CalendarSuccessPreview() {
     TDTheme {

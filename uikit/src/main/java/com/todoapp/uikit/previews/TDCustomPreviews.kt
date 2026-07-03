@@ -68,3 +68,12 @@ annotation class TDPreviewDialog
     uiMode = Configuration.UI_MODE_NIGHT_YES,
 )
 annotation class TDPreviewForm
+
+/**
+ * Device-width matrix (single theme) to catch horizontal overflow across small→large phones.
+ * Small ≈ Pixel 4a (~344dp), Medium ≈ Pixel 7 (360dp), Large ≈ Pixel 7 Pro (411dp).
+ */
+@Preview(name = "Small · 344", showBackground = true, widthDp = 344)
+@Preview(name = "Medium · 360", showBackground = true, widthDp = 360)
+@Preview(name = "Large · 411", showBackground = true, widthDp = 411)
+annotation class TDPreviewDevices

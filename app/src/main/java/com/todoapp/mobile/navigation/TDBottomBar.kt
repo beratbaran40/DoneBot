@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -108,7 +109,11 @@ fun TDBottomBar() {
                 },
                 label = {
                     val labelRes = if (isChat) R.string.bottombar_chat_tab_label else screen.title
-                    Text(text = stringResource(id = labelRes))
+                    Text(
+                        text = stringResource(id = labelRes),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 },
                 alwaysShowLabel = false,
             )
