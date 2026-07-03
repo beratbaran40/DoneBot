@@ -587,9 +587,17 @@ constructor(
         rescheduleOneShotAlarm(preserved)
 
         if (taskEntity?.syncStatus != SyncStatus.SYNCED) {
-            // no need to update remote because its not synced
+            // Preserve the pending KIND by remoteId; don't collapse to PENDING_CREATE. A row that already
+            // has a remoteId lives on the server, so an edit is an UPDATE (PUT). Writing PENDING_CREATE made
+            // SyncWorker POST instead, and the backend's clientTaskId dedup returned the existing row
+            // unchanged -> the edit was silently lost. Only a never-pushed row (remoteId == null) is a CREATE.
+            val nextStatus = if (taskEntity?.remoteId == null) {
+                SyncStatus.PENDING_CREATE
+            } else {
+                SyncStatus.PENDING_UPDATE
+            }
             localDataSource.update(
-                preserved.toEntity(SyncStatus.PENDING_CREATE).copy(
+                preserved.toEntity(nextStatus).copy(
                     id = preserved.id,
                     remoteId = taskEntity?.remoteId,
                 ),
@@ -921,7 +929,10 @@ constructor(
 
     override suspend fun syncTask(taskEntity: TaskEntity): Result<Unit> = when (taskEntity.syncStatus) {
         SyncStatus.SYNCED -> Result.success(Unit)
-        SyncStatus.PENDING_CREATE -> syncCreatedTask(taskEntity)
+        // Defense-in-depth for Y2: a PENDING_CREATE row that already carries a remoteId exists on the
+        // server, so PUT it instead of POSTing a duplicate. A genuine create has remoteId == null.
+        SyncStatus.PENDING_CREATE ->
+            if (taskEntity.remoteId != null) syncUpdatedTask(taskEntity) else syncCreatedTask(taskEntity)
         SyncStatus.PENDING_UPDATE -> syncUpdatedTask(taskEntity)
         SyncStatus.PENDING_DELETE -> syncDeletedTask(taskEntity)
     }
