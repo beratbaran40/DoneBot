@@ -825,8 +825,9 @@ constructor(
     }
 
     /** §4.12: index PENDING_CREATE rows by their client key, skipping legacy rows that have none. */
-    private fun clientIdIndex(rows: List<TaskEntity>): Map<String, TaskEntity> =
-        rows.mapNotNull { e -> e.clientTaskId?.let { it to e } }.toMap()
+    private fun clientIdIndex(rows: List<TaskEntity>): Map<String, TaskEntity> {
+        return rows.mapNotNull { e -> e.clientTaskId?.let { it to e } }.toMap()
+    }
 
     /**
      * Stable signature used to match a PENDING_CREATE local row against a server-side task
