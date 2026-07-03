@@ -30,18 +30,17 @@ import org.robolectric.annotation.Config
 class SyncWorkerTest {
     private val context: Context = RuntimeEnvironment.getApplication()
 
-    private fun workerFor(repository: TaskRepository, attempt: Int): SyncWorker =
-        TestListenableWorkerBuilder<SyncWorker>(context)
-            .setRunAttemptCount(attempt)
-            .setWorkerFactory(
-                object : WorkerFactory() {
-                    override fun createWorker(
-                        appContext: Context,
-                        workerClassName: String,
-                        workerParameters: WorkerParameters,
-                    ): ListenableWorker = SyncWorker(appContext, workerParameters, repository)
-                },
-            ).build()
+    private fun workerFor(repository: TaskRepository, attempt: Int): SyncWorker = TestListenableWorkerBuilder<SyncWorker>(context)
+        .setRunAttemptCount(attempt)
+        .setWorkerFactory(
+            object : WorkerFactory() {
+                override fun createWorker(
+                    appContext: Context,
+                    workerClassName: String,
+                    workerParameters: WorkerParameters,
+                ): ListenableWorker = SyncWorker(appContext, workerParameters, repository)
+            },
+        ).build()
 
     @Test
     fun `succeeds when the sync succeeds`() = runBlocking {

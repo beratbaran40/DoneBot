@@ -52,21 +52,20 @@ class LoginViewModelTest {
     // (A blank email fails the first validation rule, so it never reaches android.util.Patterns —
     //  the valid-email path DOES touch Patterns and needs Robolectric; covered under §7.2.)
     @Test
-    fun `blank email on login tap sets emailError and does not call repository`() =
-        runTest(mainDispatcherRule.dispatcher.scheduler) {
-            val viewModel = buildViewModel()
+    fun `blank email on login tap sets emailError and does not call repository`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        val viewModel = buildViewModel()
 
-            viewModel.onAction(UiAction.OnEmailChange(""))
-            viewModel.onAction(UiAction.OnPasswordChange("password123"))
-            viewModel.onAction(UiAction.OnLoginTap)
+        viewModel.onAction(UiAction.OnEmailChange(""))
+        viewModel.onAction(UiAction.OnPasswordChange("password123"))
+        viewModel.onAction(UiAction.OnLoginTap)
 
-            viewModel.uiState.test {
-                val state = awaitItem()
-                assertNotNull(state.emailError)
-                assertTrue(state.hasSubmittedOnce)
-                cancelAndConsumeRemainingEvents()
-            }
-
-            coVerify(exactly = 0) { userRepository.login(any()) }
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertNotNull(state.emailError)
+            assertTrue(state.hasSubmittedOnce)
+            cancelAndConsumeRemainingEvents()
         }
+
+        coVerify(exactly = 0) { userRepository.login(any()) }
+    }
 }

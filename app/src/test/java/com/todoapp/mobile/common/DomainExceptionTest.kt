@@ -10,10 +10,9 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
 class DomainExceptionTest {
-    private fun httpException(code: Int): HttpException =
-        HttpException(
-            Response.error<Any>(code, "err".toResponseBody("application/json".toMediaTypeOrNull())),
-        )
+    private fun httpException(code: Int): HttpException = HttpException(
+        Response.error<Any>(code, "err".toResponseBody("application/json".toMediaTypeOrNull())),
+    )
 
     @Test
     fun `404 maps to NotFound so the push pipeline can tombstone`() {
