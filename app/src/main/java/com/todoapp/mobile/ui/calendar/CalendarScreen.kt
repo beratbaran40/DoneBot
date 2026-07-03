@@ -256,6 +256,7 @@ private fun LazyListScope.calendarTaskSections(
             ) { personalItem ->
                 PersonalTaskEntry(
                     item = personalItem,
+                    isSignedIn = uiState.isSignedIn,
                     onClick = { onAction(UiAction.OnTaskClick(it)) },
                     onPhotoClick = { onAction(UiAction.OnGroupTaskPhotoOpen(it)) },
                     modifier = Modifier.padding(horizontal = 24.dp),
@@ -274,6 +275,7 @@ private fun LazyListScope.calendarTaskSections(
             ) { recurringItem ->
                 PersonalTaskEntry(
                     item = recurringItem,
+                    isSignedIn = uiState.isSignedIn,
                     onClick = { onAction(UiAction.OnTaskClick(it)) },
                     onPhotoClick = { onAction(UiAction.OnGroupTaskPhotoOpen(it)) },
                     modifier = Modifier.padding(horizontal = 24.dp),
@@ -338,6 +340,7 @@ private fun GroupTaskEntry(
 @Composable
 private fun PersonalTaskEntry(
     item: PersonalTaskCalendarItem,
+    isSignedIn: Boolean,
     onClick: (Long) -> Unit,
     onPhotoClick: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -367,6 +370,7 @@ private fun PersonalTaskEntry(
         onLocationClick = openLocation,
         subtaskTotal = item.subtaskTotal,
         subtaskDone = item.subtaskDone,
+        isPendingSync = item.isPendingSync && isSignedIn,
     )
 }
 

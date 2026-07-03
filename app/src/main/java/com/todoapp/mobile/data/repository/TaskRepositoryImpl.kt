@@ -918,6 +918,14 @@ constructor(
      */
     private fun TaskEntity.contentSignature(): String = "$title|$date|$timeStart|$timeEnd"
 
+    /**
+     * Conflict strategy (remote pull vs. local), §5.5: a remote row overwrites the local one ONLY
+     * when the local row is clean (SYNCED) and actually differs; any pending local CRUD
+     * (PENDING_CREATE/UPDATE/DELETE) always wins and is preserved until it is pushed. There is NO
+     * `updatedAt`/last-write-wins timestamp — "differs" is a field-by-field [contentEquals] and
+     * "remote wins" is gated purely on the local sync status. A null [local] means no remoteId
+     * match: adopt a matching PENDING_CREATE row (idempotency dedup, §4.12) or insert fresh.
+     */
     private fun reconcileRemote(
         incoming: TaskEntity,
         local: TaskEntity?,

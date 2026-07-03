@@ -24,6 +24,7 @@ object CalendarContract {
             val hasOverdueBeforeDisplayedMonth: Boolean = false,
             val overdueCount: Int = 0,
             val isRefreshing: Boolean = false,
+            val isSignedIn: Boolean = false,
         ) : UiState
 
         data class Error(
@@ -122,6 +123,7 @@ object CalendarContract {
         val locationLng: Double? = null,
         val subtaskTotal: Int = 0,
         val subtaskDone: Int = 0,
+        val isPendingSync: Boolean = false,
     )
 
     @Immutable

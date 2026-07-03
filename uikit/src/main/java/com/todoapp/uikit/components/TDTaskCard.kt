@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -46,6 +47,7 @@ fun TDTaskCard(
     onLocationClick: (() -> Unit)? = null,
     subtaskTotal: Int = 0,
     subtaskDone: Int = 0,
+    isPendingSync: Boolean = false,
 ) {
     val contentAlpha = if (isCompleted) 0.5f else 1f
     val titleDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None
@@ -92,6 +94,7 @@ fun TDTaskCard(
                 deadlineColor = deadlineColor,
                 locationLabel = locationLabel,
                 onLocationClick = onLocationClick,
+                isPendingSync = isPendingSync,
             )
             if (subtaskTotal > 0) {
                 TDSubtaskProgress(
@@ -117,6 +120,7 @@ private fun InnerContent(
     deadlineColor: Color,
     locationLabel: String?,
     onLocationClick: (() -> Unit)?,
+    isPendingSync: Boolean,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(
@@ -137,6 +141,14 @@ private fun InnerContent(
                 overflow = TextOverflow.Ellipsis,
             )
             TDStatusChip(tone = statusTone, label = statusLabel)
+            if (isPendingSync) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_refresh),
+                    contentDescription = stringResource(R.string.cd_sync_pending),
+                    tint = TDTheme.colors.pendingGray,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
         }
 
         if (!description.isNullOrBlank()) {
@@ -224,6 +236,7 @@ fun TDTaskCardPreview() {
                 deadlineColor = TDTheme.colors.crossRed,
                 statusTone = TDStatusChipTone.Danger,
                 statusLabel = "Overdue",
+                isPendingSync = true,
             )
         }
     }

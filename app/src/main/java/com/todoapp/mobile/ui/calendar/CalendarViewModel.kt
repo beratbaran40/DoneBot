@@ -7,6 +7,7 @@ import com.todoapp.mobile.BuildConfig
 import com.todoapp.mobile.R
 import com.todoapp.mobile.common.maskDescription
 import com.todoapp.mobile.common.maskTitle
+import com.todoapp.mobile.data.repository.DataStoreHelper
 import com.todoapp.mobile.domain.alarm.AlarmScheduler
 import com.todoapp.mobile.domain.alarm.AlarmType
 import com.todoapp.mobile.domain.engine.PomodoroEngine
@@ -65,6 +66,7 @@ constructor(
     private val pomodoroEngine: PomodoroEngine,
     private val observeOverdueSummary: ObserveOverdueSummaryUseCase,
     private val clock: Clock,
+    private val dataStoreHelper: DataStoreHelper,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<UiState>(UiState.Success())
     val uiState = _uiState.asStateFlow()
@@ -79,6 +81,7 @@ constructor(
 
     init {
         taskSyncRepository.fetchTasks(force = true)
+        observeSignedIn()
         seedInitialOverdue()
         syncTasksWithSelectedDate()
         syncTaskDatesForMonth()
@@ -448,6 +451,16 @@ constructor(
         }
     }
 
+    // A cached user means a real account — a guest's local-only tasks never sync, so the Calendar
+    // "not synced" badge is gated on this the same way Home is (see HomeViewModel.AuxState). §5.5
+    private fun observeSignedIn() {
+        viewModelScope.launch {
+            dataStoreHelper.observeUser().collect { user ->
+                updateSuccessState { it.copy(isSignedIn = user != null) }
+            }
+        }
+    }
+
     private fun mapPersonalTasks(personalTasks: List<Task>): List<PersonalTaskCalendarItem> = personalTasks.map { task ->
         val dueAt = task.date
             .atTime(task.timeEnd)
@@ -473,6 +486,7 @@ constructor(
             locationLng = task.locationLng,
             subtaskTotal = task.subtaskTotal,
             subtaskDone = task.subtaskDone,
+            isPendingSync = task.isPendingSync,
         )
     }
 
