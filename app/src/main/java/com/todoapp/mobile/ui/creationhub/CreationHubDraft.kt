@@ -1,0 +1,106 @@
+package com.todoapp.mobile.ui.creationhub
+
+import com.todoapp.mobile.domain.model.Recurrence
+import com.todoapp.mobile.domain.model.TaskCategory
+import com.todoapp.mobile.ui.creationhub.CreationHubContract.Step
+import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskType
+import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiState
+import kotlinx.serialization.Serializable
+import java.time.LocalDate
+import java.time.LocalTime
+
+/**
+ * The process-death-durable slice of [CreationHubContract.UiState]. Only the user-entered scalar
+ * fields are kept — enough to restore a half-filled form after Android kills the process (e.g. a
+ * low-RAM device reclaims the app while the photo picker is open, the sinister case behind §5.7).
+ *
+ * Enums are stored by name and dates/times as epoch-day / second-of-day, so the whole thing is
+ * plainly serializable with no kotlin-parcelize plugin (this module doesn't apply it).
+ *
+ * Deliberately excluded, with reasons:
+ * - `pendingPhotos` — Uri/bytes aren't durable across a kill; a separate, larger effort.
+ * - `adminGroups` / `groupMembers` — re-derived from the repo on init.
+ * - group selection / assignee / priority — restoring these needs an async member reload that would
+ *   race the restore; the common task fields (below) still survive, and the group is a quick re-pick.
+ * - `clientTaskId` — a fresh idempotency key on restore is correct: nothing was submitted yet.
+ * - `titleError` / `isSaving` — transient UI flags.
+ */
+@Serializable
+data class CreationHubDraft(
+    val step: String = Step.HUB_ROOT.name,
+    val taskType: String? = null,
+    val title: String = "",
+    val dateEpochDay: Long? = null,
+    val reminderOffsetMinutes: Long? = null,
+    val recurrence: String = Recurrence.DAILY.name,
+    val subtaskDrafts: List<String> = listOf(""),
+    val detailsExpanded: Boolean = false,
+    val description: String = "",
+    val isAllDay: Boolean = true,
+    val timeStartSecondOfDay: Int? = null,
+    val timeEndSecondOfDay: Int? = null,
+    val category: String = TaskCategory.PERSONAL.name,
+    val customCategoryName: String = "",
+    val isSecret: Boolean = false,
+    val locationName: String? = null,
+    val locationAddress: String? = null,
+    val locationLat: Double? = null,
+    val locationLng: Double? = null,
+    val placeholderIndex: Int = 0,
+)
+
+/** Projects the current form state onto its durable slice. */
+fun UiState.toDraft(): CreationHubDraft = CreationHubDraft(
+    step = step.name,
+    taskType = taskType?.name,
+    title = title,
+    dateEpochDay = date.toEpochDay(),
+    reminderOffsetMinutes = reminderOffsetMinutes,
+    recurrence = recurrence.name,
+    subtaskDrafts = subtaskDrafts,
+    detailsExpanded = detailsExpanded,
+    description = description,
+    isAllDay = isAllDay,
+    timeStartSecondOfDay = timeStart?.toSecondOfDay(),
+    timeEndSecondOfDay = timeEnd?.toSecondOfDay(),
+    category = category.name,
+    customCategoryName = customCategoryName,
+    isSecret = isSecret,
+    locationName = locationName,
+    locationAddress = locationAddress,
+    locationLat = locationLat,
+    locationLng = locationLng,
+    placeholderIndex = placeholderIndex,
+)
+
+/**
+ * Rebuilds a [UiState] from [base] — which carries the non-durable fields (a fresh clientTaskId,
+ * empty photos, empty adminGroups) — with the persisted scalars layered on top. Enum names that no
+ * longer resolve (e.g. an app update dropped a value) fall back to [base]'s value.
+ */
+fun CreationHubDraft.toState(base: UiState): UiState = base.copy(
+    step = enumOrNull<Step>(step) ?: base.step,
+    taskType = taskType?.let { enumOrNull<TaskType>(it) },
+    title = title,
+    date = dateEpochDay?.let { LocalDate.ofEpochDay(it) } ?: base.date,
+    reminderOffsetMinutes = reminderOffsetMinutes,
+    recurrence = enumOrNull<Recurrence>(recurrence) ?: base.recurrence,
+    subtaskDrafts = subtaskDrafts.ifEmpty { listOf("") },
+    detailsExpanded = detailsExpanded,
+    description = description,
+    isAllDay = isAllDay,
+    timeStart = timeStartSecondOfDay?.let { LocalTime.ofSecondOfDay(it.toLong()) },
+    timeEnd = timeEndSecondOfDay?.let { LocalTime.ofSecondOfDay(it.toLong()) },
+    category = enumOrNull<TaskCategory>(category) ?: base.category,
+    customCategoryName = customCategoryName,
+    isSecret = isSecret,
+    locationName = locationName,
+    locationAddress = locationAddress,
+    locationLat = locationLat,
+    locationLng = locationLng,
+    placeholderIndex = placeholderIndex,
+)
+
+private inline fun <reified T : Enum<T>> enumOrNull(name: String): T? {
+    return runCatching { enumValueOf<T>(name) }.getOrNull()
+}

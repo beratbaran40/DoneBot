@@ -1,5 +1,6 @@
 package com.todoapp.mobile.ui.creationhub
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.todoapp.mobile.R
@@ -33,12 +34,16 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
@@ -55,6 +60,7 @@ constructor(
     private val dailyPlanPreferences: DailyPlanPreferences,
     private val pomodoroEngine: PomodoroEngine,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     private val _state = MutableStateFlow(UiState())
     val state = _state.asStateFlow()
@@ -67,7 +73,17 @@ constructor(
 
     private var membersJob: Job? = null
 
+    // Lenient so a draft written by a previous app version (extra/renamed keys) still restores.
+    private val draftJson = Json { ignoreUnknownKeys = true }
+
     init {
+        // Restore a half-filled form after process death (SavedStateHandle survives the kill) before
+        // anything paints, so the user sees their typed content instead of a blank form.
+        savedStateHandle.get<String>(DRAFT_KEY)?.let { stored ->
+            runCatching { draftJson.decodeFromString<CreationHubDraft>(stored) }
+                .getOrNull()
+                ?.let { draft -> _state.update { draft.toState(it) } }
+        }
         // Group-task creation is offered only for groups the user administers.
         viewModelScope.launch {
             groupRepository.observeAllGroups()
@@ -77,6 +93,13 @@ constructor(
                         .map { GroupOption(localId = it.id, remoteId = it.remoteId!!, name = it.name) }
                 }
                 .collect { admin -> _state.update { it.copy(adminGroups = admin) } }
+        }
+        // Persist the durable slice on every real change so the form survives process death.
+        viewModelScope.launch {
+            _state
+                .map { it.toDraft() }
+                .distinctUntilChanged()
+                .collect { savedStateHandle[DRAFT_KEY] = draftJson.encodeToString(it) }
         }
     }
 
@@ -374,6 +397,7 @@ constructor(
     }
 
     private companion object {
+        private const val DRAFT_KEY = "creation_hub_draft"
         private const val END_OF_DAY_HOUR = 23
         private const val END_OF_DAY_MINUTE = 59
         private const val DEFAULT_START_HOUR = 9
