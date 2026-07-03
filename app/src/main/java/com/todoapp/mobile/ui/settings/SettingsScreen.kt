@@ -720,6 +720,7 @@ private fun SectionHeader(@StringRes titleRes: Int) {
         text = stringResource(titleRes),
         style = TDTheme.typography.heading7,
         color = TDTheme.colors.gray,
+        isHeading = true,
     )
     Spacer(modifier = Modifier.height(8.dp))
 }

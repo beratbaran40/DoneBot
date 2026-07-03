@@ -220,6 +220,7 @@ fun TaskFormSectionLabel(text: String) {
         text = text,
         style = TDTheme.typography.heading6.copy(fontWeight = FontWeight.SemiBold),
         color = TDTheme.colors.onBackground,
+        isHeading = true,
     )
 }
 

@@ -4,6 +4,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -23,11 +25,12 @@ fun TDText(
     overflow: TextOverflow = TextOverflow.Clip,
     maxLines: Int = Int.MAX_VALUE,
     textAlign: TextAlign? = null,
+    isHeading: Boolean = false,
 ) {
     if (text != null) {
         Text(
             text = text,
-            modifier = modifier,
+            modifier = if (isHeading) modifier.semantics { heading() } else modifier,
             textAlign = textAlign,
             style =
             style.merge(

@@ -74,4 +74,9 @@
     <!-- Journal feature -->
     <string name="td_mood_selector_label_cd">Mood: %1$s</string>
     <string name="td_journal_card_photo_count">%1$d photos</string>
+    <!-- Accessibility -->
+    <string name="cd_expand_subtasks">Expand subtasks</string>
+    <string name="cd_collapse_subtasks">Collapse subtasks</string>
+    <string name="cd_state_completed">Completed</string>
+    <string name="cd_state_pending">Pending</string>
 </resources>

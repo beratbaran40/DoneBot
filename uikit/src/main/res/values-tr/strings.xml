@@ -72,4 +72,9 @@
     <!-- Günlük (journal) özelliği -->
     <string name="td_mood_selector_label_cd">Ruh hali: %1$s</string>
     <string name="td_journal_card_photo_count">%1$d fotoğraf</string>
+    <!-- Erişilebilirlik -->
+    <string name="cd_expand_subtasks">Alt görevleri genişlet</string>
+    <string name="cd_collapse_subtasks">Alt görevleri daralt</string>
+    <string name="cd_state_completed">Tamamlandı</string>
+    <string name="cd_state_pending">Bekliyor</string>
 </resources>

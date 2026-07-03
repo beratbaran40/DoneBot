@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,6 +39,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -192,9 +199,16 @@ fun TDTaskCardWithCheckbox(
                                     painter = painterResource(
                                         if (subtaskExpanded) R.drawable.ic_arrow_up else R.drawable.ic_arrow_down,
                                     ),
-                                    contentDescription = null,
+                                    contentDescription = stringResource(
+                                        if (subtaskExpanded) {
+                                            R.string.cd_collapse_subtasks
+                                        } else {
+                                            R.string.cd_expand_subtasks
+                                        },
+                                    ),
                                     tint = TDTheme.colors.pendingGray,
                                     modifier = Modifier
+                                        .minimumInteractiveComponentSize()
                                         .size(20.dp)
                                         .clip(RoundedCornerShape(6.dp))
                                         .clickable { onSubtaskExpandToggle() },
@@ -358,15 +372,25 @@ private fun TDTaskCheckBox(
         label = "checkScale",
     )
 
+    val toggleLabel = stringResource(R.string.task_completion_cd)
+    val stateLabel = stringResource(
+        if (isChecked) R.string.cd_state_completed else R.string.cd_state_pending,
+    )
     Box(
         contentAlignment = Alignment.Center,
         modifier =
         modifier
+            .minimumInteractiveComponentSize()
             .size(28.dp)
             .clip(shape)
             .background(checkboxBg, shape)
             .border(1.5.dp, checkboxBorder, shape)
-            .clickable(onClick = onToggle),
+            .clickable(onClick = onToggle)
+            .semantics {
+                role = Role.Checkbox
+                contentDescription = toggleLabel
+                stateDescription = stateLabel
+            },
     ) {
         if (isChecked) {
             Icon(

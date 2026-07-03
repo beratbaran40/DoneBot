@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -76,6 +77,7 @@ fun TDDoneBotSuggestCard(
                     }
                     Box(
                         modifier = Modifier
+                            .minimumInteractiveComponentSize()
                             .size(24.dp)
                             .clip(RoundedCornerShape(percent = 50))
                             .clickable(onClick = onDismiss),
