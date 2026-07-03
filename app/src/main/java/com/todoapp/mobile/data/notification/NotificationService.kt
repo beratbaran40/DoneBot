@@ -144,6 +144,10 @@ class NotificationService : Service() {
 
     companion object {
         const val CHANNEL_ID = "notification_channel"
+
+        // Low-importance sibling of CHANNEL_ID for non-urgent FYI pushes (§7.8) — silent, no
+        // vibration/lights. Urgent pushes (reminders, task assigned, due-soon) stay on CHANNEL_ID.
+        const val CHANNEL_ID_INFO = "notification_channel_info"
         const val INTENT_EXTRA_MESSAGE = "extra_message"
         const val INTENT_EXTRA_LONG = "extra_time"
         const val INTENT_EXTRA_TASK_ID = "extra_task_id"

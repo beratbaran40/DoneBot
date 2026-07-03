@@ -143,20 +143,39 @@ class Application :
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel =
+            val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+
+            val tasks =
                 NotificationChannel(
                     NotificationService.CHANNEL_ID,
                     getString(R.string.notification_channel_tasks_name),
                     NotificationManager.IMPORTANCE_HIGH,
                 ).apply {
+                    description = getString(R.string.notification_channel_tasks_description)
                     enableVibration(true)
                     enableLights(true)
                     setShowBadge(true)
                     lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
                 }
-            channel.description = getString(R.string.notification_channel_tasks_description)
-            val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
+
+            // Non-urgent FYI channel (§7.8): task completed by a member, invitation accepted/declined,
+            // ownership transfer, generic notices. Silent so it never interrupts; still badges + shows.
+            val info =
+                NotificationChannel(
+                    NotificationService.CHANNEL_ID_INFO,
+                    getString(R.string.notification_channel_info_name),
+                    NotificationManager.IMPORTANCE_LOW,
+                ).apply {
+                    description = getString(R.string.notification_channel_info_description)
+                    setSound(null, null)
+                    enableVibration(false)
+                    enableLights(false)
+                    setShowBadge(true)
+                    lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+                }
+
+            notificationManager.createNotificationChannel(tasks)
+            notificationManager.createNotificationChannel(info)
         }
     }
 }

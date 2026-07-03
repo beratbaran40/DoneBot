@@ -91,7 +91,7 @@ class TDFireBaseMessagingService : FirebaseMessagingService() {
             is PushPayload.TaskAssigned -> {
                 scope.launch { groupRepository.syncGroupTasks(payload.groupId, force = true) }
                 if (!isOnGroupTask(payload.groupId, payload.taskId)) {
-                    showGroupTaskNotification(title, body, payload.groupId, payload.taskId)
+                    showGroupTaskNotification(title, body, payload.groupId, payload.taskId, urgent = true)
                 }
             }
             is PushPayload.TaskCompleted -> {
@@ -102,7 +102,7 @@ class TDFireBaseMessagingService : FirebaseMessagingService() {
             }
             is PushPayload.TaskDueSoon -> {
                 if (!isOnGroupTask(payload.groupId, payload.taskId)) {
-                    showGroupTaskNotification(title, body, payload.groupId, payload.taskId)
+                    showGroupTaskNotification(title, body, payload.groupId, payload.taskId, urgent = true)
                 }
             }
             is PushPayload.InvitationReceived -> {
@@ -195,25 +195,28 @@ class TDFireBaseMessagingService : FirebaseMessagingService() {
         body: String?,
         groupId: Long,
         taskId: Long?,
+        urgent: Boolean = false,
     ) {
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(EXTRA_PUSH_GROUP_ID, groupId)
             taskId?.let { putExtra(EXTRA_PUSH_TASK_ID, it) }
         }
-        emit(title, body, buildPendingIntent(intent))
+        emit(title, body, buildPendingIntent(intent), urgent)
     }
 
     private fun showTargetedNotification(
         title: String?,
         body: String?,
         target: String,
+        // Invitation pushes are time-sensitive (the user is expected to respond) → urgent by default.
+        urgent: Boolean = true,
     ) {
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(EXTRA_PUSH_TARGET, target)
         }
-        emit(title, body, buildPendingIntent(intent))
+        emit(title, body, buildPendingIntent(intent), urgent)
     }
 
     private fun showGenericNotification(title: String?, body: String?) {
@@ -221,7 +224,8 @@ class TDFireBaseMessagingService : FirebaseMessagingService() {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(EXTRA_PUSH_TARGET, PUSH_TARGET_NOTIFICATIONS)
         }
-        emit(title, body, buildPendingIntent(intent))
+        // Generic notices are FYI-only → non-urgent (info channel).
+        emit(title, body, buildPendingIntent(intent), urgent = false)
     }
 
     private fun buildPendingIntent(intent: Intent): PendingIntent = PendingIntent.getActivity(
@@ -236,13 +240,14 @@ class TDFireBaseMessagingService : FirebaseMessagingService() {
     )
 
     @SuppressLint("MissingPermission")
-    private fun emit(title: String?, body: String?, pendingIntent: PendingIntent) {
+    private fun emit(title: String?, body: String?, pendingIntent: PendingIntent, urgent: Boolean) {
         val resolvedTitle = title ?: getString(com.todoapp.mobile.R.string.app_name)
         val resolvedBody = body.orEmpty()
         val accentColor = ContextCompat.getColor(this, com.todoapp.mobile.R.color.notification_accent)
+        val channelId = if (urgent) NotificationService.CHANNEL_ID else NotificationService.CHANNEL_ID_INFO
         val notification =
             NotificationCompat
-                .Builder(this, NotificationService.CHANNEL_ID)
+                .Builder(this, channelId)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(resolvedTitle)
                 .setContentText(resolvedBody)
@@ -251,10 +256,10 @@ class TDFireBaseMessagingService : FirebaseMessagingService() {
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
                 .setColor(accentColor)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPriority(if (urgent) NotificationCompat.PRIORITY_HIGH else NotificationCompat.PRIORITY_LOW)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-                .setDefaults(NotificationCompat.DEFAULT_VIBRATE or NotificationCompat.DEFAULT_LIGHTS)
+                .setDefaults(if (urgent) (NotificationCompat.DEFAULT_VIBRATE or NotificationCompat.DEFAULT_LIGHTS) else 0)
                 .build()
         runCatching {
             NotificationManagerCompat
