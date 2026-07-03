@@ -36,6 +36,9 @@ object DetailsContract {
             val reminderOffsetMinutes: Long? = 0L,
             val isAllDay: Boolean = false,
             val isReminderInPast: Boolean = false,
+            // Whole-task completion. Shown/toggled only for one-time tasks; routines complete
+            // per-day from the list surfaces and staged tasks derive completion from their steps.
+            val isCompleted: Boolean = false,
             // Staged photo uploads not yet on the server. Drained on Save.
             val pendingPhotoUploads: List<PendingPhoto> = emptyList(),
             // Existing photoIds that the user marked for deletion. Drained on Save.
@@ -85,6 +88,8 @@ object DetailsContract {
         data object OnDialogDateDeselect : UiAction
 
         data object OnSaveChanges : UiAction
+
+        data object OnToggleComplete : UiAction
 
         data object OnRetry : UiAction
 

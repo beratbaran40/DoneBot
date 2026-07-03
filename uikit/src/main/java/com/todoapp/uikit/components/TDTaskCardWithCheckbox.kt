@@ -310,7 +310,7 @@ fun TDTaskCardWithCheckbox(
 }
 
 @Composable
-private fun ConfettiEffect(
+internal fun ConfettiEffect(
     modifier: Modifier = Modifier,
     onAnimFinished: () -> Unit,
 ) {

@@ -26,6 +26,10 @@
     <string name="allows_the_app_to_display_notifications">Uygulamanın bildirim göstermesine izin verir</string>
     <string name="status_completed">Tamamlandı</string>
     <string name="status_pending">Bekliyor</string>
+    <string name="task_completion_pending_title">Henüz tamamlanmadı</string>
+    <string name="task_completion_pending_action">Tamamlandı olarak işaretle</string>
+    <string name="task_completion_undo_hint">Geri almak için dokun</string>
+    <string name="task_completion_cd">Görev tamamlanma durumunu değiştir</string>
     <string name="notify_me_at">%1$s\'de bildir</string>
     <string name="notify_hint">Saat çaldığında sizi bilgilendireceğim!</string>
     <string name="overlay_notification_reminder">Hatırlatıcı</string>

@@ -2,7 +2,6 @@ package com.todoapp.mobile.ui.groups.grouptaskdetail
 
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -41,7 +39,7 @@ import com.todoapp.mobile.ui.groups.grouptaskdetail.GroupTaskDetailContract.UiAc
 import com.todoapp.mobile.ui.groups.grouptaskdetail.GroupTaskDetailContract.UiState
 import com.todoapp.uikit.components.TDPriorityBadge
 import com.todoapp.uikit.components.TDScreenWithSheet
-import com.todoapp.uikit.components.TDTaskStatusLabel
+import com.todoapp.uikit.components.TDTaskCompletionCard
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.extensions.collectWithLifecycle
 import com.todoapp.uikit.theme.TDTheme
@@ -133,23 +131,12 @@ private fun TaskDetailBody(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier =
-                    Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable { onAction(UiAction.OnToggleComplete) }
-                        .padding(12.dp),
-                ) {
-                    TDTaskStatusLabel(isCompleted = task.isCompleted)
-                    Spacer(modifier = Modifier.width(12.dp))
-                    TDText(
-                        text = task.title,
-                        style = TDTheme.typography.heading3,
-                        color = TDTheme.colors.onBackground,
-                    )
-                }
+                TDText(
+                    text = task.title,
+                    style = TDTheme.typography.heading3,
+                    color = TDTheme.colors.onBackground,
+                    modifier = Modifier.weight(1f),
+                )
                 IconButton(onClick = { onAction(UiAction.OnEditTap) }) {
                     Icon(
                         painter = painterResource(UiKitR.drawable.ic_edit_task),
@@ -172,57 +159,58 @@ private fun TaskDetailBody(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Column(
-                modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(TDTheme.colors.lightPending)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                task.assigneeName?.let { name ->
-                    MetadataRow(label = stringResource(R.string.assignee)) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            AssigneeAvatar(
-                                avatarUrl = task.assigneeAvatarUrl,
-                                initials = task.assigneeInitials ?: name.take(2).uppercase(),
-                            )
+            TDTaskCompletionCard(
+                isCompleted = task.isCompleted,
+                enabled = task.canComplete,
+                disabledHint =
+                if (!task.canComplete) {
+                    stringResource(R.string.only_assignee_can_complete)
+                } else {
+                    null
+                },
+                onToggle = { onAction(UiAction.OnToggleComplete) },
+            )
+
+            if (task.assigneeName != null || task.dueTime != null) {
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Column(
+                    modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(TDTheme.colors.lightPending)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    task.assigneeName?.let { name ->
+                        MetadataRow(label = stringResource(R.string.assignee)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                AssigneeAvatar(
+                                    avatarUrl = task.assigneeAvatarUrl,
+                                    initials = task.assigneeInitials ?: name.take(2).uppercase(),
+                                )
+                                TDText(
+                                    text = name,
+                                    style = TDTheme.typography.subheading2,
+                                    color = TDTheme.colors.onBackground,
+                                )
+                            }
+                        }
+                    }
+
+                    task.dueTime?.let { time ->
+                        MetadataRow(label = stringResource(R.string.due_prefix)) {
                             TDText(
-                                text = name,
+                                text = time,
                                 style = TDTheme.typography.subheading2,
                                 color = TDTheme.colors.onBackground,
                             )
                         }
                     }
-                }
-
-                task.dueTime?.let { time ->
-                    MetadataRow(label = stringResource(R.string.due_prefix)) {
-                        TDText(
-                            text = time,
-                            style = TDTheme.typography.subheading2,
-                            color = TDTheme.colors.onBackground,
-                        )
-                    }
-                }
-
-                MetadataRow(label = stringResource(R.string.status)) {
-                    TDText(
-                        text =
-                        if (task.isCompleted) {
-                            stringResource(
-                                UiKitR.string.status_completed,
-                            )
-                        } else {
-                            stringResource(UiKitR.string.status_pending)
-                        },
-                        style = TDTheme.typography.subheading2,
-                        color = if (task.isCompleted) TDTheme.colors.darkGreen else TDTheme.colors.gray,
-                    )
                 }
             }
 

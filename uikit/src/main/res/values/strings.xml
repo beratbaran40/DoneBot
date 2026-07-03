@@ -26,6 +26,10 @@
     <string name="allows_the_app_to_display_notifications">Allows the app to display notifications</string>
     <string name="status_completed">Completed</string>
     <string name="status_pending">Pending</string>
+    <string name="task_completion_pending_title">Not completed yet</string>
+    <string name="task_completion_pending_action">Mark as done</string>
+    <string name="task_completion_undo_hint">Tap to undo</string>
+    <string name="task_completion_cd">Toggle task completion</string>
     <string name="notify_me_at">Notify me at %1$s</string>
     <string name="notify_hint">I will notify you when clock hits!</string>
     <string name="overlay_notification_reminder">Reminder</string>

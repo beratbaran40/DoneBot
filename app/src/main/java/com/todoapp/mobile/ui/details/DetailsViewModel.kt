@@ -11,6 +11,7 @@ import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.domain.repository.PendingPhotoRepository
 import com.todoapp.mobile.domain.repository.TaskRepository
+import com.todoapp.mobile.domain.usecase.SetTaskCompletionUseCase
 import com.todoapp.mobile.navigation.NavigationEffect
 import com.todoapp.mobile.ui.common.taskform.taskFormType
 import com.todoapp.mobile.ui.details.DetailsContract.UiAction
@@ -37,6 +38,7 @@ class DetailsViewModel
 constructor(
     private val taskRepository: TaskRepository,
     private val pendingPhotoRepository: PendingPhotoRepository,
+    private val setTaskCompletion: SetTaskCompletionUseCase,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
@@ -114,6 +116,7 @@ constructor(
             isAllDay = task.isAllDay,
             taskType = taskFormType(task.subtasks.isNotEmpty(), task.recurrence),
             subtaskDrafts = drafts,
+            isCompleted = task.isCompleted,
         )
     }
 
@@ -124,6 +127,7 @@ constructor(
             UiAction.OnConfirmDiscard -> confirmDiscard()
             UiAction.OnDismissDiscardDialog -> updateSuccessState { it.copy(showDiscardDialog = false) }
             UiAction.OnSaveChanges -> saveChanges()
+            UiAction.OnToggleComplete -> toggleComplete()
             is UiAction.OnTaskTitleEdit -> updateTitle(uiAction.title)
             is UiAction.OnTaskDescriptionEdit -> updateDescription(uiAction.description)
             is UiAction.OnTaskDateEdit -> updateDate(uiAction.date)
@@ -361,6 +365,30 @@ constructor(
 
     private fun deselectDialogDate() {
         updateSuccessState { it.copy(dialogSelectedDate = null) }
+    }
+
+    /**
+     * Toggles whole-task completion immediately (independent of the Save flow). The detail screen
+     * isn't reactive (one-shot [loadTask]) so the flip is optimistic; [originalTask] is kept in sync
+     * up-front so a later Save preserves completion, and both are reverted if the write fails.
+     */
+    private fun toggleComplete() {
+        val current = _uiState.value as? UiState.Success ?: return
+        val task = originalTask ?: return
+        val newValue = !current.isCompleted
+        // Not routed through updateSuccessState: completion must never mark the edit form dirty.
+        _uiState.update { (it as? UiState.Success)?.copy(isCompleted = newValue) ?: it }
+        originalTask = task.copy(isCompleted = newValue)
+        viewModelScope.launch {
+            try {
+                setTaskCompletion(task, completed = newValue)
+            } catch (e: IOException) {
+                Log.e("DetailsViewModel", "Failed to toggle completion", e)
+                originalTask = task
+                _uiState.update { (it as? UiState.Success)?.copy(isCompleted = current.isCompleted) ?: it }
+                _uiEffect.trySend(UiEffect.ShowToast(R.string.changes_not_saved))
+            }
+        }
     }
 
     private fun saveChanges() {

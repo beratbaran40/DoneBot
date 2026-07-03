@@ -24,6 +24,7 @@ object GroupTaskDetailContract {
         val assigneeUserId: Long?,
         val isAssignedToMe: Boolean,
         val canDelete: Boolean,
+        val canComplete: Boolean = false,
         val photoUrls: List<String> = emptyList(),
         val locationName: String? = null,
         val locationAddress: String? = null,

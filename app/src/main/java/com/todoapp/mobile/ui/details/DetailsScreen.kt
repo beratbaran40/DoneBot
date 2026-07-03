@@ -58,6 +58,7 @@ import com.todoapp.uikit.components.TDCategoryPicker
 import com.todoapp.uikit.components.TDCompactOutlinedTextField
 import com.todoapp.uikit.components.TDDatePickerDialog
 import com.todoapp.uikit.components.TDPickerField
+import com.todoapp.uikit.components.TDTaskCompletionCard
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDWheelTimePicker
 import com.todoapp.uikit.extensions.collectWithLifecycle
@@ -211,6 +212,15 @@ private fun DetailsSuccessContent(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Spacer(Modifier.height(8.dp))
+
+                // Completion toggle only for one-time tasks: routines complete per-day from the
+                // list surfaces, and staged tasks derive completion from their steps.
+                if (uiState.taskType == TaskFormType.ONE_TIME) {
+                    TDTaskCompletionCard(
+                        isCompleted = uiState.isCompleted,
+                        onToggle = { onAction(UiAction.OnToggleComplete) },
+                    )
+                }
 
                 Column(
                     modifier =
@@ -530,6 +540,19 @@ private fun DetailsSuccessPreview_Rich() {
                 selectedRecurrence = com.todoapp.mobile.domain.model.Recurrence.YEARLY,
                 reminderOffsetMinutes = 1440L,
                 isAllDay = true,
+            ),
+        ) {}
+    }
+}
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun DetailsSuccessPreview_Completed() {
+    TDTheme {
+        DetailsSuccessContent(
+            DetailsPreviewData.successState(
+                taskTitle = "Call the dentist",
+                isCompleted = true,
             ),
         ) {}
     }

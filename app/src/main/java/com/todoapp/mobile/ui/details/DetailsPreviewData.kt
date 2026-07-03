@@ -28,6 +28,7 @@ object DetailsPreviewData {
         isAllDay: Boolean = false,
         taskType: TaskFormType = TaskFormType.ONE_TIME,
         subtaskDrafts: List<SubtaskDraft> = emptyList(),
+        isCompleted: Boolean = false,
     ) = UiState.Success(
         isDirty = isDirty,
         isSaving = isSaving,
@@ -46,5 +47,6 @@ object DetailsPreviewData {
         isAllDay = isAllDay,
         taskType = taskType,
         subtaskDrafts = subtaskDrafts,
+        isCompleted = isCompleted,
     )
 }

@@ -182,6 +182,11 @@ constructor(
     private fun toggleComplete() {
         val current = _uiState.value as? UiState.Success ?: return
         val previousTask = current.task
+        // Same rule as the group overview list: only the assignee or an admin may complete.
+        if (!previousTask.canComplete) {
+            _uiEffect.trySend(UiEffect.ShowToast(context.getString(R.string.only_assignee_can_complete)))
+            return
+        }
         val newCompleted = !previousTask.isCompleted
         // Optimistic flip; same pattern as GroupDetailViewModel.handleTaskChecked.
         _uiState.value = current.copy(task = previousTask.copy(isCompleted = newCompleted))
@@ -348,6 +353,7 @@ constructor(
             assigneeUserId = assignee?.userId,
             isAssignedToMe = isAssignedToMe,
             canDelete = isAssignedToMe || currentUserRole == "ADMIN",
+            canComplete = isAssignedToMe || currentUserRole == "ADMIN",
             photoUrls = photoUrls,
             locationName = locationName,
             locationAddress = locationAddress,
