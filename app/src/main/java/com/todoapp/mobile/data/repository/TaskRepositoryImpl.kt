@@ -165,28 +165,67 @@ constructor(
     ) = withContext(ioDispatcher) {
         val epochDay = date.toEpochDay()
         if (completed) {
+            // Mark completed and queue a push. Re-marks a not-yet-pushed uncomplete (PENDING_DELETE) as a
+            // live completion again.
             dailyCompletionDao.upsert(
                 TaskDailyCompletionEntity(
                     taskId = taskId,
                     date = epochDay,
                     completedAt = System.currentTimeMillis(),
+                    syncStatus = SyncStatus.PENDING_CREATE,
                 ),
             )
         } else {
-            dailyCompletionDao.delete(taskId, epochDay)
+            when (dailyCompletionDao.get(taskId, epochDay)?.syncStatus) {
+                // Never reached the server (or no row): drop it locally, nothing to tell the server.
+                null, SyncStatus.PENDING_CREATE -> dailyCompletionDao.delete(taskId, epochDay)
+                // Was synced: soft-delete so the uncomplete (completed=false) still reaches the server.
+                // Hidden from the observe queries so the UI shows it unchecked immediately.
+                else -> dailyCompletionDao.upsert(
+                    TaskDailyCompletionEntity(
+                        taskId = taskId,
+                        date = epochDay,
+                        completedAt = System.currentTimeMillis(),
+                        syncStatus = SyncStatus.PENDING_DELETE,
+                    ),
+                )
+            }
         }
-        runCatching {
-            val task = localDataSource.getTaskById(taskId) ?: return@runCatching
-            val remoteId = task.remoteId ?: return@runCatching
-            todoApi.setTaskDailyCompletion(
-                remoteId,
-                com.todoapp.mobile.data.model.network.request.TaskDailyCompletionRequest(
-                    date = epochDay,
-                    completed = completed,
-                ),
-            )
-        }.onFailure { Log.w("setDailyCompletion", "remote sync failed: ${it.message}") }
+        // Best-effort immediate push; pushPendingDailyCompletions() replays any failure durably.
+        runCatching { pushDailyCompletion(taskId, epochDay, completed) }
         Unit
+    }
+
+    // Pushes a single day's completion state and, on success, settles the local row (SYNCED for a
+    // completion, hard-delete for an uncomplete). A 404 (task gone) leaves the row for FK-cascade cleanup
+    // when the parent task is tombstoned. Idempotent, so the immediate call and the replay can't conflict.
+    private suspend fun pushDailyCompletion(taskId: Long, epochDay: Long, completed: Boolean) {
+        val remoteId = localDataSource.getTaskById(taskId)?.remoteId ?: return
+        com.todoapp.mobile.common
+            .handleEmptyRequest {
+                todoApi.setTaskDailyCompletion(
+                    remoteId,
+                    com.todoapp.mobile.data.model.network.request.TaskDailyCompletionRequest(
+                        date = epochDay,
+                        completed = completed,
+                    ),
+                )
+            }.onSuccess {
+                if (completed) {
+                    dailyCompletionDao.markSynced(taskId, epochDay)
+                } else {
+                    dailyCompletionDao.delete(taskId, epochDay)
+                }
+            }
+    }
+
+    // Replays every pending completion/uncompletion whose immediate push failed. Runs inside the sync mutex
+    // (called from pushPendingTasks), after task pushes so any FK-cascaded rows are already gone.
+    private suspend fun pushPendingDailyCompletions() {
+        dailyCompletionDao.getPending().forEach { row ->
+            val completed = row.syncStatus != SyncStatus.PENDING_DELETE
+            runCatching { pushDailyCompletion(row.taskId, row.date, completed) }
+        }
     }
 
     override suspend fun setRoutineFinished(
@@ -645,18 +684,30 @@ constructor(
         runCatching {
             val response = todoApi.getTaskDailyCompletions(from, to)
             val items = response.body()?.data?.items ?: return
-            // Map remoteId → localId once
             val all = localDataSource.observeAll().first()
             val remoteToLocal = all.mapNotNull { e -> e.remoteId?.let { it to e.id } }.toMap()
-            val entities = items.mapNotNull { item ->
+
+            // Rows with a pending local change are the source of truth until their push lands — never let
+            // the server snapshot overwrite or delete them.
+            val pendingKeys = dailyCompletionDao.getPending().map { it.taskId to it.date }.toSet()
+
+            val serverEntities = items.mapNotNull { item ->
                 val localId = remoteToLocal[item.taskId] ?: return@mapNotNull null
-                TaskDailyCompletionEntity(
-                    taskId = localId,
-                    date = item.date,
-                    completedAt = item.completedAt,
-                )
+                TaskDailyCompletionEntity(taskId = localId, date = item.date, completedAt = item.completedAt)
             }
-            if (entities.isNotEmpty()) dailyCompletionDao.upsertAll(entities)
+            val serverKeys = serverEntities.map { it.taskId to it.date }.toSet()
+
+            val toUpsert = serverEntities.filter { (it.taskId to it.date) !in pendingKeys }
+            if (toUpsert.isNotEmpty()) dailyCompletionDao.upsertAll(toUpsert)
+
+            // Full window reconciliation: a SYNCED local row the server no longer has was uncompleted on
+            // another device — delete it so the checkbox clears here too. Pending rows are left alone.
+            dailyCompletionDao.getSyncedInWindow(from, to).forEach { local ->
+                val key = local.taskId to local.date
+                if (key !in serverKeys && key !in pendingKeys) {
+                    dailyCompletionDao.delete(local.taskId, local.date)
+                }
+            }
         }.onFailure { Log.w("syncDailyCompletions", "failed: ${it.message}") }
     }
 
@@ -937,6 +988,8 @@ constructor(
                 }
             }
         }
+        // Replay any daily-completion toggles whose immediate push failed, inside the same mutex.
+        pushPendingDailyCompletions()
         return if (retryable.isEmpty()) Result.success(Unit) else Result.failure(retryable.first())
     }
 

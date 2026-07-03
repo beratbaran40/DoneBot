@@ -15,10 +15,14 @@ interface TaskDailyCompletionDao {
     @Query("DELETE FROM task_daily_completions WHERE task_id = :taskId AND date = :date")
     suspend fun delete(taskId: Long, date: Long)
 
-    @Query("SELECT * FROM task_daily_completions WHERE date = :date")
+    // Hide PENDING_DELETE rows: a locally-uncompleted instance whose completed=false hasn't reached the
+    // server yet must read as not-completed in the UI, not as still-checked.
+    @Query("SELECT * FROM task_daily_completions WHERE date = :date AND sync_status != 'PENDING_DELETE'")
     fun observeForDate(date: Long): Flow<List<TaskDailyCompletionEntity>>
 
-    @Query("SELECT * FROM task_daily_completions WHERE date BETWEEN :start AND :end")
+    @Query(
+        "SELECT * FROM task_daily_completions WHERE date BETWEEN :start AND :end AND sync_status != 'PENDING_DELETE'",
+    )
     fun observeRange(start: Long, end: Long): Flow<List<TaskDailyCompletionEntity>>
 
     @Query("DELETE FROM task_daily_completions")
@@ -26,4 +30,16 @@ interface TaskDailyCompletionDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(entities: List<TaskDailyCompletionEntity>)
+
+    @Query("SELECT * FROM task_daily_completions WHERE task_id = :taskId AND date = :date")
+    suspend fun get(taskId: Long, date: Long): TaskDailyCompletionEntity?
+
+    @Query("SELECT * FROM task_daily_completions WHERE sync_status != 'SYNCED'")
+    suspend fun getPending(): List<TaskDailyCompletionEntity>
+
+    @Query("SELECT * FROM task_daily_completions WHERE sync_status = 'SYNCED' AND date BETWEEN :start AND :end")
+    suspend fun getSyncedInWindow(start: Long, end: Long): List<TaskDailyCompletionEntity>
+
+    @Query("UPDATE task_daily_completions SET sync_status = 'SYNCED' WHERE task_id = :taskId AND date = :date")
+    suspend fun markSynced(taskId: Long, date: Long)
 }
