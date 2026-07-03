@@ -450,19 +450,26 @@ constructor(
     override suspend fun delete(task: Task) {
         val entity = localDataSource.getTaskById(task.id) ?: return
         cancelRecurringAlarmIfNeeded(entity.id, entity.toDomain())
-        if (entity.syncStatus != SyncStatus.SYNCED) {
+        // Branch on remoteId, NOT syncStatus. A PENDING_UPDATE/PENDING_DELETE row still carries a remoteId,
+        // so the task exists on the server and must be deleted there. The old `syncStatus != SYNCED` check
+        // deleted such a row locally-only, leaving the server copy intact; the next pull then re-inserted
+        // it as SYNCED — a deleted task resurrecting. remoteId == null means it never reached the server.
+        val remoteId = entity.remoteId
+        if (remoteId == null) {
             localDataSource.delete(entity)
             return
-        }
-        val remoteId = checkNotNull(entity.remoteId) {
-            "SYNCED task ${entity.id} is missing remoteId"
         }
         remoteDataSource
             .deleteTask(remoteId)
             .onSuccess {
                 localDataSource.delete(entity)
-            }.onFailure {
-                localDataSource.update(entity.copy(syncStatus = SyncStatus.PENDING_DELETE))
+            }.onFailure { error ->
+                // Already gone on the server -> treat as a successful delete (shares K1's 404 tombstone).
+                if (error is DomainException.NotFound) {
+                    localDataSource.delete(entity)
+                } else {
+                    localDataSource.update(entity.copy(syncStatus = SyncStatus.PENDING_DELETE))
+                }
             }
     }
 
