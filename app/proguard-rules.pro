@@ -47,6 +47,16 @@
 -keep class com.google.android.libraries.identity.googleid.** { *; }
 -dontwarn com.google.android.gms.**
 
+# --- Log hygiene (§1.7) ---
+# Strip chatty verbose/debug/info logcat calls from release so nothing reaches an on-device
+# `adb logcat`. Warn/error are kept for post-mortem diagnostics; the PII audit confirmed they
+# carry no tokens/emails. Safe because every stripped call site passes side-effect-free args.
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+}
+
 # --- Compose Navigation type-safe routes (Screen) ---
 # AppDestination.route = Screen.X::class.qualifiedName (RUNTIME reflection), but the live nav
 # route (dest.route) = the kotlinx.serialization serialName, a COMPILE-TIME string = the original

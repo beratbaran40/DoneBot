@@ -21,7 +21,12 @@ class CrashlyticsTree : Timber.Tree() {
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
         val crashlytics = FirebaseCrashlytics.getInstance()
         tag?.let { crashlytics.setCustomKey(KEY_LAST_TAG, it) }
-        crashlytics.log("${priorityLabel(priority)}/${tag ?: "App"}: $message")
+        // Scrub PII (emails / bearer tokens / JWTs) before the message leaves the device as a
+        // Crashlytics breadcrumb. Defense-in-depth: nothing logs raw PII today, but this makes a
+        // future careless `Timber.e("... $email")` safe by default. See redactLogMessage below.
+        crashlytics.log("${priorityLabel(priority)}/${tag ?: "App"}: ${redactLogMessage(message)}")
+        // recordException(t) still forwards the throwable's own message/stack. The audit found no
+        // PII-carrying throwables; framework exception messages are safe to record as non-fatals.
         if (t != null && priority >= Log.ERROR) {
             crashlytics.recordException(t)
         }
@@ -38,3 +43,18 @@ class CrashlyticsTree : Timber.Tree() {
         const val KEY_LAST_TAG = "last_log_tag"
     }
 }
+
+private val EMAIL_REGEX = Regex("""[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}""")
+private val BEARER_REGEX = Regex("""(?i)Bearer\s+[A-Za-z0-9._\-]+""")
+private val JWT_REGEX = Regex("""eyJ[A-Za-z0-9._\-]{10,}""")
+
+/**
+ * Masks personally-identifiable / secret values in a log message so they never reach Crashlytics.
+ * Pure and side-effect-free so it can be unit-tested on the JVM without Firebase.
+ *
+ * Bearer is replaced before the bare-JWT pass so "Bearer eyJ..." collapses to a single redaction.
+ */
+internal fun redactLogMessage(message: String): String = message
+    .replace(BEARER_REGEX, "Bearer [redacted]")
+    .replace(JWT_REGEX, "[token]")
+    .replace(EMAIL_REGEX, "[email]")

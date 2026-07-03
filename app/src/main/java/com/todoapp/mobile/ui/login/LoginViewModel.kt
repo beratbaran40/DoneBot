@@ -55,10 +55,6 @@ constructor(
     private val _navEffect = Channel<NavigationEffect>(Channel.BUFFERED)
     val navEffect = _navEffect.receiveAsFlow()
 
-    init {
-        Log.d("LoginViewModel", "redirectAfterLogin = $redirectAfterLogin")
-    }
-
     fun onAction(uiAction: UiAction) {
         when (uiAction) {
             is UiAction.OnEmailChange -> onEmailChange(uiAction.value)

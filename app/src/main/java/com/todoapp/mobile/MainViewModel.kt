@@ -121,6 +121,7 @@ constructor(
         }
 
         // Tag every crash report with the signed-in user so Crashlytics groups issues per account.
+        // The id is the internal pseudonymous user id — never email/token/PII (see §1.7 log hygiene).
         // observeUser emits the persisted user on startup, the new user on login/register, and null
         // on logout — so a single collector keeps the userId correct across the whole session.
         viewModelScope.launch {

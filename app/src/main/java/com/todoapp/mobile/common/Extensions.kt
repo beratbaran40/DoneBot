@@ -1,7 +1,6 @@
 package com.todoapp.mobile.common
 
 import android.database.sqlite.SQLiteException
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import com.todoapp.mobile.data.model.network.response.BaseResponse
@@ -15,6 +14,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
 import retrofit2.HttpException
 import retrofit2.Response
+import timber.log.Timber
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
@@ -40,13 +40,13 @@ suspend fun <T> handleRequest(request: suspend () -> Response<BaseResponse<T?>>)
 
         if (response.isSuccessful.not()) {
             val errorBody = response.errorBody()?.string()
-            Log.d("error", errorBody.toString())
+            Timber.tag("HttpError").d(errorBody.toString())
             val parsed =
                 errorBody?.let {
                     runCatching { Json.decodeFromString<ErrorResponse>(it) }.getOrNull()
                 }
             val message = parsed?.message ?: response.message() ?: "Something went wrong"
-            Log.d("error", message)
+            Timber.tag("HttpError").d(message)
             parsed?.errorCode?.toOAuthAccountException()?.let { return Result.failure(it) }
             return when (response.code()) {
                 404 -> Result.failure(DomainException.NotFound())
@@ -66,7 +66,7 @@ suspend fun <T> handleRequest(request: suspend () -> Response<BaseResponse<T?>>)
         Result.success(data)
     } catch (t: Throwable) {
         if (t is CancellationException) throw t
-        Log.e("HANDLE_REQUEST", "Original exception: ${t.javaClass.simpleName}: ${t.message}", t)
+        Timber.tag("HttpError").w(t, "Original exception: ${t.javaClass.simpleName}: ${t.message}")
         Result.failure(DomainException.fromThrowable(t))
     }
 }
@@ -80,12 +80,12 @@ suspend fun handleEmptyRequest(request: suspend () -> Response<BaseResponse<Unit
         val response = request()
         if (response.isSuccessful) return Result.success(Unit)
         val errorBody = response.errorBody()?.string()
-        Log.d("error", errorBody.toString())
+        Timber.tag("HttpError").d(errorBody.toString())
         val message = errorBody
             ?.let { runCatching { Json.decodeFromString<ErrorResponse>(it).message }.getOrNull() }
             ?: response.message()
             ?: "Something went wrong"
-        Log.d("error", message)
+        Timber.tag("HttpError").d(message)
         when (response.code()) {
             404 -> Result.failure(DomainException.NotFound())
             401, 403 -> Result.failure(DomainException.Unauthorized())
@@ -93,7 +93,7 @@ suspend fun handleEmptyRequest(request: suspend () -> Response<BaseResponse<Unit
         }
     } catch (t: Throwable) {
         if (t is CancellationException) throw t
-        Log.e("HANDLE_REQUEST", "Original exception: ${t.javaClass.simpleName}: ${t.message}", t)
+        Timber.tag("HttpError").w(t, "Original exception: ${t.javaClass.simpleName}: ${t.message}")
         Result.failure(DomainException.fromThrowable(t))
     }
 }
