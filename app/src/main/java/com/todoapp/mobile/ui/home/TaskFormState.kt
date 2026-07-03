@@ -7,6 +7,7 @@ import com.todoapp.mobile.domain.model.TaskCategory
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.UUID
 
 @Stable
 data class TaskFormState(
@@ -39,6 +40,10 @@ data class TaskFormState(
     val locationAddress: String? = null,
     val locationLat: Double? = null,
     val locationLng: Double? = null,
+    // Idempotency key for the eventual create. Minted once per fresh form (a new TaskFormState) and kept
+    // stable across edits (copy) so a double-tap or a silent OkHttp connection-retry of the POST dedups to
+    // a single server task (the backend dedups on clientTaskId). See Y6.
+    val clientTaskId: String = UUID.randomUUID().toString(),
 ) {
     companion object {
         fun smartDefault(today: LocalDate, now: LocalTime, lastReminderOffset: Long?): TaskFormState {

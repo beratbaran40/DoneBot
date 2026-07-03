@@ -514,6 +514,7 @@ constructor(
                     locationAddress = form.locationAddress,
                     locationLat = form.locationLat,
                     locationLng = form.locationLng,
+                    clientTaskId = form.clientTaskId,
                 )
             if (form.selectedGroupId != null) {
                 groupRepository.createGroupTask(form.selectedGroupId, task)

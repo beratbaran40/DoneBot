@@ -6,6 +6,7 @@ import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.ui.home.PendingPhoto
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.UUID
 
 object CreationHubContract {
     enum class Step { HUB_ROOT, TASK_TYPE, TASK_CORE }
@@ -52,6 +53,10 @@ object CreationHubContract {
         val placeholderIndex: Int = 0,
         val titleError: Boolean = false,
         val isSaving: Boolean = false,
+        // Idempotency key for the group create. Minted once per creation session (this VM is recreated per
+        // screen visit) and reused on retry after a failed save, so a double-tap or a silent OkHttp
+        // connection-retry of the POST dedups to a single group task. See Y6.
+        val clientTaskId: String = UUID.randomUUID().toString(),
         // Group task (only meaningful when taskType == GROUP).
         val adminGroups: List<GroupOption> = emptyList(),
         val selectedGroupLocalId: Long? = null,

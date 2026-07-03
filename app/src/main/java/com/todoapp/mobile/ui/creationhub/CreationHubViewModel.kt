@@ -328,6 +328,7 @@ constructor(
                 locationAddress = s.locationAddress,
                 locationLat = s.locationLat,
                 locationLng = s.locationLng,
+                clientTaskId = s.clientTaskId,
                 // No recurrence / category / subtasks — group tasks are a flat, assignable task.
             )
             groupRepository.createGroupTask(
