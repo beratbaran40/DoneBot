@@ -21,8 +21,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
@@ -133,7 +135,11 @@ fun TDGoodbyeDialog(
             tonalElevation = 8.dp,
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
+                // verticalScroll keeps the avatar, copy, type-to-confirm field and buttons all
+                // reachable when the dialog is taller than a short landscape viewport.
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 AvatarWithHalo(

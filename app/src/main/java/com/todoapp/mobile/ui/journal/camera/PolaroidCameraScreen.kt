@@ -1,5 +1,6 @@
 package com.todoapp.mobile.ui.journal.camera
 
+import android.content.pm.ActivityInfo
 import android.graphics.Bitmap
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -48,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.example.uikit.R
 import com.todoapp.mobile.R.string
+import com.todoapp.mobile.ui.common.LockScreenOrientation
 import com.todoapp.mobile.ui.journal.camera.PolaroidCameraContract.UiAction
 import com.todoapp.mobile.ui.journal.camera.PolaroidCameraContract.UiEffect
 import com.todoapp.uikit.components.TDButton
@@ -65,6 +67,11 @@ fun PolaroidCameraScreen(
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
+
+    // The Polaroid camera is a portrait-only skeuomorphic experience (vertical print eject, 1:1
+    // viewfinder). Lock it so rotating the device can't squash the body or blow the print up.
+    LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+
     uiEffect.collectWithLifecycle { effect ->
         when (effect) {
             is UiEffect.NavigateBackWithPhoto -> onPhotoSaved(effect.path)

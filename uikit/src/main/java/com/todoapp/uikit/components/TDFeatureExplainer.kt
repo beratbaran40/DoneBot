@@ -10,7 +10,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -38,10 +41,14 @@ fun TDFeatureExplainer(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Column(
+            // widthIn stops the card stretching edge-to-edge on wide/landscape screens; verticalScroll
+            // lets long bullet lists scroll instead of clipping below a short landscape viewport.
             modifier = modifier
-                .padding(horizontal = 24.dp)
+                .padding(24.dp)
+                .widthIn(max = 400.dp)
                 .clip(RoundedCornerShape(20.dp))
                 .background(TDTheme.colors.background)
+                .verticalScroll(rememberScrollState())
                 .padding(24.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
