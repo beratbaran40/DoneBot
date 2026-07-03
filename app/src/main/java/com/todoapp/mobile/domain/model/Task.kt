@@ -14,6 +14,10 @@ data class Task(
     val remoteId: Long? = null,
     /** Client-generated idempotency key (UUID) for create dedup; null until the first local insert. §4.12 */
     val clientTaskId: String? = null,
+    // True when the local row hasn't reached the server yet (syncStatus != SYNCED). The UI only
+    // surfaces a "not synced" hint for signed-in users — a guest's tasks are local-only, never
+    // "pending sync" — so the badge is gated on auth state at the call site, not here.
+    val isPendingSync: Boolean = false,
     val title: String,
     val description: String?,
     val date: LocalDate,

@@ -50,6 +50,7 @@ object HomeContract {
             val expandedSubtasks: List<Subtask> = emptyList(),
             val isTermsConsentDialogOpen: Boolean = false,
             val isRefreshing: Boolean = false,
+            val isSignedIn: Boolean = false,
         ) : UiState
 
         data class Error(

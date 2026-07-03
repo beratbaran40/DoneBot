@@ -43,6 +43,7 @@ fun TaskEntity.toDomain(): Task = Task(
     locationName = locationName,
     locationAddress = locationAddress,
     finishedOn = finishedOn?.toLocalDate(),
+    isPendingSync = syncStatus != SyncStatus.SYNCED,
 )
 
 fun Task.toEntity(syncStatus: SyncStatus = SyncStatus.SYNCED): TaskEntity {

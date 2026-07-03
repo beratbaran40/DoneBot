@@ -78,6 +78,7 @@ fun TDTaskCardWithCheckbox(
     subtaskExpanded: Boolean = false,
     onSubtaskExpandToggle: (() -> Unit)? = null,
     subtaskContent: (@Composable () -> Unit)? = null,
+    isPendingSync: Boolean = false,
 ) {
     var showConfetti by remember { mutableStateOf(false) }
     var prevChecked by remember { mutableStateOf(isChecked) }
@@ -218,9 +219,30 @@ fun TDTaskCardWithCheckbox(
                     }
                     val resolvedOverdueLabel =
                         overdueLabel?.takeIf { isOverdue && !isChecked && it.isNotBlank() }
-                    if (resolvedOverdueLabel != null || !categoryLabel.isNullOrBlank() || !locationLabel.isNullOrBlank()) {
+                    val hasMetaChips = resolvedOverdueLabel != null ||
+                        !categoryLabel.isNullOrBlank() ||
+                        !locationLabel.isNullOrBlank()
+                    if (hasMetaChips || isPendingSync) {
                         Spacer(Modifier.height(6.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (isPendingSync) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(TDTheme.colors.pendingGray.copy(alpha = 0.18f))
+                                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_refresh),
+                                        contentDescription = stringResource(R.string.cd_sync_pending),
+                                        tint = TDTheme.colors.darkPending,
+                                        modifier = Modifier.size(12.dp),
+                                    )
+                                }
+                                if (hasMetaChips) {
+                                    Spacer(Modifier.width(6.dp))
+                                }
+                            }
                             if (resolvedOverdueLabel != null) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
@@ -435,6 +457,19 @@ private fun TDTaskCardCheckedPreview() {
         taskText = "Buy a cat food",
         taskDescription = "1kg",
         onCheckBoxClick = {},
+    )
+}
+
+@TDPreviewForm
+@Composable
+private fun TDTaskCardPendingSyncPreview() {
+    TDTaskCardWithCheckbox(
+        isChecked = false,
+        taskText = "Draft the quarterly report",
+        taskDescription = "Sales section first",
+        onCheckBoxClick = {},
+        categoryLabel = "Work",
+        isPendingSync = true,
     )
 }
 

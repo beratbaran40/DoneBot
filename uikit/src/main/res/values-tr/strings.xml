@@ -77,4 +77,5 @@
     <string name="cd_collapse_subtasks">Alt görevleri daralt</string>
     <string name="cd_state_completed">Tamamlandı</string>
     <string name="cd_state_pending">Bekliyor</string>
+    <string name="cd_sync_pending">Henüz eşitlenmedi — bu cihazda kayıtlı</string>
 </resources>

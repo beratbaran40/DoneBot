@@ -79,4 +79,5 @@
     <string name="cd_collapse_subtasks">Collapse subtasks</string>
     <string name="cd_state_completed">Completed</string>
     <string name="cd_state_pending">Pending</string>
+    <string name="cd_sync_pending">Not synced yet — saved on this device</string>
 </resources>

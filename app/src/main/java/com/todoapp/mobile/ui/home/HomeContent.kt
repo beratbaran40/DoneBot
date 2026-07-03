@@ -261,6 +261,7 @@ fun HomeContent(
                 }
             HomeTaskList(
                 tasks = visibleTasks,
+                isSignedIn = uiState.isSignedIn,
                 lazyListState = lazyListState,
                 reorderableLazyListState = reorderableLazyListState,
                 hapticFeedback = hapticFeedback,

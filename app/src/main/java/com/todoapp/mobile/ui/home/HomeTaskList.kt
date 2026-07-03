@@ -63,6 +63,7 @@ import sh.calvin.reorderable.ReorderableLazyListState
 @Composable
 fun HomeTaskList(
     tasks: List<Task>,
+    isSignedIn: Boolean = false,
     lazyListState: LazyListState,
     reorderableLazyListState: ReorderableLazyListState,
     hapticFeedback: HapticFeedback,
@@ -258,6 +259,7 @@ fun HomeTaskList(
                                         taskDescription = displayDescription,
                                         isChecked = task.isCompleted,
                                         onCheckBoxClick = { onTaskCheck(task) },
+                                        isPendingSync = task.isPendingSync && isSignedIn,
                                         isDragging = isDragging,
                                         isAnyDragging = isAnyDragging,
                                         shape =
@@ -298,6 +300,7 @@ fun HomeTaskList(
                                     taskDescription = displayDescription,
                                     isChecked = task.isCompleted,
                                     onCheckBoxClick = { onTaskCheck(task) },
+                                    isPendingSync = task.isPendingSync && isSignedIn,
                                     isDragging = isDragging,
                                     isAnyDragging = isAnyDragging,
                                     categoryLabel = categoryLabelFor(task),

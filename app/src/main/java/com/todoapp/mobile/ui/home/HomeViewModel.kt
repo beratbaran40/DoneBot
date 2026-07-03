@@ -808,6 +808,9 @@ constructor(
                             isSuggestDismissedToday = dismissedDay == tick.todayEpoch,
                             dayMode = tick.mode,
                             isEndOfDayMoment = tick.isEndOfDay,
+                            // A cached user means a real account — a guest has none, so its local-only
+                            // tasks must never show the "not synced" hint (they never sync). See §5.5.
+                            isSignedIn = user != null,
                         )
                     }
                 }
@@ -819,6 +822,7 @@ constructor(
                             isSuggestCardDismissedToday = aux.isSuggestDismissedToday,
                             dayMode = aux.dayMode,
                             isEndOfDayMoment = aux.isEndOfDayMoment,
+                            isSignedIn = aux.isSignedIn,
                         )
                     }
                 }
@@ -903,6 +907,7 @@ constructor(
         val isSuggestDismissedToday: Boolean,
         val dayMode: com.todoapp.mobile.domain.model.DayMode,
         val isEndOfDayMoment: Boolean,
+        val isSignedIn: Boolean,
     )
 
     private data class AuxTick(
