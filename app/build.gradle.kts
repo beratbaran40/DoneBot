@@ -148,6 +148,15 @@ android {
         compose = true
         buildConfig = true
     }
+
+    testOptions {
+        // Pure-JVM unit tests: stubbed android.jar methods (android.util.Log.*, etc.) return
+        // default values instead of throwing "Method ... not mocked".
+        unitTests.isReturnDefaultValues = true
+    }
+
+    // MigrationTestHelper reads the exported Room schema JSONs from androidTest assets.
+    sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
 }
 
 // Compose compiler metrics/reports — gated behind `-PcomposeCompilerReports=true`.
@@ -209,11 +218,20 @@ dependencies {
     implementation(libs.androidx.hilt.common)
     implementation(libs.androidx.hilt.work)
 
+    // Unit tests (JVM host)
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.turbine)
+    testImplementation(libs.kotlinx.coroutines.test)
+
+    // Instrumented tests (device/emulator)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.room.testing)
+    androidTestImplementation(libs.androidx.work.testing)
+
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
