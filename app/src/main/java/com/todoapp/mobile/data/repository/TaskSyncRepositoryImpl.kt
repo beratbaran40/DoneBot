@@ -1,6 +1,7 @@
 package com.todoapp.mobile.data.repository
 
 import android.content.Context
+import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
@@ -11,6 +12,7 @@ import com.todoapp.mobile.data.worker.SyncWorker
 import com.todoapp.mobile.domain.repository.TaskSyncRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import timber.log.Timber
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class TaskSyncRepositoryImpl
@@ -32,6 +34,7 @@ constructor(
         val sync =
             OneTimeWorkRequestBuilder<SyncWorker>()
                 .setConstraints(constraints)
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, BACKOFF_SECONDS, TimeUnit.SECONDS)
                 .build()
 
         // KEEP (not REPLACE): REPLACE cancels an already-running SyncWorker mid-flight, which can leave a
@@ -64,11 +67,13 @@ constructor(
         val sync =
             OneTimeWorkRequestBuilder<SyncWorker>()
                 .setConstraints(constraints)
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, BACKOFF_SECONDS, TimeUnit.SECONDS)
                 .build()
 
         val fetch =
             OneTimeWorkRequestBuilder<FetchTasksWorker>()
                 .setConstraints(constraints)
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, BACKOFF_SECONDS, TimeUnit.SECONDS)
                 .build()
 
         // KEEP (not REPLACE): never cancel an in-flight sync chain. The repository-level mutex serializes
@@ -87,5 +92,11 @@ constructor(
         const val SYNC_WORK = "sync_work"
         const val FETCH_WORK = "fetch_work"
         private const val FETCH_COOLDOWN_MS = 60_000L
+
+        // Make the intent explicit: on a retryable failure the worker backs off exponentially from
+        // 30s (WorkManager's default is already exponential, but relying on a documented value keeps
+        // the retry cadence visible and tunable). Terminal failures (e.g. NotFound) are not retried —
+        // that decision lives in TaskRepositoryImpl.isRetryable, in lockstep with SyncWorker.
+        private const val BACKOFF_SECONDS = 30L
     }
 }
