@@ -763,10 +763,11 @@ constructor(
         task.timeStart
     }
 
-    override suspend fun syncRemoteTasksWithLocal(): Result<Unit> =
+    override suspend fun syncRemoteTasksWithLocal(): Result<Unit> {
         // Serialize against the push. SYNC_WORK and FETCH_WORK are separate WorkManager unique chains, so
         // without this a standalone push can interleave with this pull's non-atomic reconcile block.
-        syncMutex.withLock { reconcileRemoteIntoLocal() }
+        return syncMutex.withLock { reconcileRemoteIntoLocal() }
+    }
 
     private suspend fun reconcileRemoteIntoLocal(): Result<Unit> {
         val remoteTasks =
@@ -996,10 +997,11 @@ constructor(
     // Mirrors SyncWorker's retry set exactly. Keep in lockstep: repo reports "retryable" => the worker
     // retries (capped); repo reports success/terminal => the worker stops. NotFound is deliberately NOT
     // retryable — a permanently-gone row is tombstoned in place (syncTask), never re-pushed.
-    private fun isRetryable(error: Throwable): Boolean =
-        error is DomainException.NoInternet ||
+    private fun isRetryable(error: Throwable): Boolean {
+        return error is DomainException.NoInternet ||
             error is DomainException.Server ||
             error is DomainException.Unauthorized
+    }
 
     override suspend fun syncTask(taskEntity: TaskEntity): Result<Unit> = when (taskEntity.syncStatus) {
         SyncStatus.SYNCED -> Result.success(Unit)
