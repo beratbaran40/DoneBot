@@ -23,9 +23,17 @@ class ChatRepositoryImpl @Inject constructor(
 
     override suspend fun getMessages(): List<ChatMessage> = chatMessageDao.getAll().map(::toDomain)
 
-    override suspend fun appendUserMessage(content: String): Long = chatMessageDao.insert(ChatMessageEntity(role = ROLE_USER, content = content))
+    override suspend fun appendUserMessage(content: String): Long {
+        val id = chatMessageDao.insert(ChatMessageEntity(role = ROLE_USER, content = content))
+        chatMessageDao.pruneToLast(CHAT_RETENTION)
+        return id
+    }
 
-    override suspend fun appendAssistantMessage(content: String): Long = chatMessageDao.insert(ChatMessageEntity(role = ROLE_MODEL, content = content))
+    override suspend fun appendAssistantMessage(content: String): Long {
+        val id = chatMessageDao.insert(ChatMessageEntity(role = ROLE_MODEL, content = content))
+        chatMessageDao.pruneToLast(CHAT_RETENTION)
+        return id
+    }
 
     override suspend fun clear() = chatMessageDao.deleteAll()
 
@@ -58,5 +66,9 @@ class ChatRepositoryImpl @Inject constructor(
     companion object {
         const val ROLE_USER = "user"
         const val ROLE_MODEL = "model"
+
+        // Keep the last N chat rows on disk. >= ChatMessageDao.observeAll()'s 500-row display cap, so
+        // pruning is invisible to the UI while bounding lifetime table growth. §7.16.
+        private const val CHAT_RETENTION = 500
     }
 }

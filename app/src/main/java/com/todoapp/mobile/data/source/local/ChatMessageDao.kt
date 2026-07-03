@@ -28,6 +28,19 @@ interface ChatMessageDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(message: ChatMessageEntity): Long
 
+    // Retention: keep only the most-recent [keep] rows so chat_messages can't grow unbounded across
+    // the app's lifetime. [keep] is chosen >= the observeAll() display cap, so pruning never removes
+    // a message the UI can still show, and it stays far above the send-time last-10-turns window.
+    @Query(
+        """
+        DELETE FROM chat_messages
+        WHERE id NOT IN (
+            SELECT id FROM chat_messages ORDER BY created_at DESC, id DESC LIMIT :keep
+        )
+        """,
+    )
+    suspend fun pruneToLast(keep: Int)
+
     @Query("DELETE FROM chat_messages")
     suspend fun deleteAll()
 }
