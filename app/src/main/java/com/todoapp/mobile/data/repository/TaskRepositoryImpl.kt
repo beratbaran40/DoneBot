@@ -884,15 +884,33 @@ constructor(
         finishedOn == other.finishedOn
 
     override suspend fun syncLocalTasksToServer(): Result<Unit> = withContext(ioDispatcher) {
+        // Push every pending row before giving up. A single poisoned row (e.g. a permanent 4xx) must not
+        // abort the whole batch: SyncWorker's failure short-circuits the FETCH_WORK chain that runs the
+        // pull, so one stuck row used to freeze push AND pull on this device until a data wipe. Collect
+        // retryable failures and surface only one at the end (so WorkManager retries the transient case);
+        // terminal failures (e.g. NotFound, already tombstoned in syncTask) are logged and dropped per-row.
         val nonSyncedTasks = findNonSyncedTasks()
+        val retryable = mutableListOf<Throwable>()
         nonSyncedTasks.forEach { taskEntity ->
-            syncTask(taskEntity).onFailure {
-                Log.e("syncLocalTasksToServer", it.message ?: "Unknown error")
-                return@withContext Result.failure(it)
+            syncTask(taskEntity).onFailure { error ->
+                if (isRetryable(error)) {
+                    Log.e("syncLocalTasksToServer", "retryable failure on task ${taskEntity.id}", error)
+                    retryable += error
+                } else {
+                    Log.e("syncLocalTasksToServer", "dropping poisoned task ${taskEntity.id}", error)
+                }
             }
         }
-        Result.success(Unit)
+        if (retryable.isEmpty()) Result.success(Unit) else Result.failure(retryable.first())
     }
+
+    // Mirrors SyncWorker's retry set exactly. Keep in lockstep: repo reports "retryable" => the worker
+    // retries (capped); repo reports success/terminal => the worker stops. NotFound is deliberately NOT
+    // retryable — a permanently-gone row is tombstoned in place (syncTask), never re-pushed.
+    private fun isRetryable(error: Throwable): Boolean =
+        error is DomainException.NoInternet ||
+            error is DomainException.Server ||
+            error is DomainException.Unauthorized
 
     override suspend fun syncTask(taskEntity: TaskEntity): Result<Unit> = when (taskEntity.syncStatus) {
         SyncStatus.SYNCED -> Result.success(Unit)
@@ -964,8 +982,15 @@ constructor(
             onSuccess = {
                 runCatching { localDataSource.delete(taskEntity) }
             },
-            onFailure = {
-                Result.failure(it)
+            onFailure = { error ->
+                // Already gone on the server (another device/chat deleted it, or our own DELETE committed
+                // before the response timed out). A 404 here IS a successful delete — tombstone locally so
+                // it stops blocking the push queue instead of failing forever.
+                if (error is DomainException.NotFound) {
+                    runCatching { localDataSource.delete(taskEntity) }
+                } else {
+                    Result.failure(error)
+                }
             },
         )
     }
@@ -992,8 +1017,14 @@ constructor(
                     writeBackSubtasks(taskEntity.id, remoteTask.subtasks)
                 }
             },
-            onFailure = {
-                Result.failure(it)
+            onFailure = { error ->
+                // We hold a pending edit for a task that was deleted elsewhere. Re-POSTing would resurrect
+                // a task another device/user deleted, so tombstone the local row instead of retrying.
+                if (error is DomainException.NotFound) {
+                    runCatching { localDataSource.delete(taskEntity) }
+                } else {
+                    Result.failure(error)
+                }
             },
         )
     }
