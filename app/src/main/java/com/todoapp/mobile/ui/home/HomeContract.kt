@@ -49,6 +49,7 @@ object HomeContract {
             val expandedStagedTaskId: Long? = null,
             val expandedSubtasks: List<Subtask> = emptyList(),
             val isTermsConsentDialogOpen: Boolean = false,
+            val isRefreshing: Boolean = false,
         ) : UiState
 
         data class Error(
@@ -107,6 +108,8 @@ object HomeContract {
         data object OnFinishRoutineDialogDismiss : UiAction
 
         data object OnRetry : UiAction
+
+        data object OnPullToRefresh : UiAction
 
         data class OnDialogDateSelect(
             val date: LocalDate,

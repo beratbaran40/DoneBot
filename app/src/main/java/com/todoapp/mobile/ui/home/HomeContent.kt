@@ -168,10 +168,11 @@ fun HomeContent(
     }
 
     PullToRefreshBox(
-        isRefreshing = false,
+        isRefreshing = uiState.isRefreshing,
         onRefresh = {
             currentHintRes = hints.random()
             showHint = true
+            onAction(UiAction.OnPullToRefresh)
         },
         state = pullState,
         indicator = {

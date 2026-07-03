@@ -118,6 +118,7 @@ constructor(
     fun onAction(uiAction: UiAction) {
         when (uiAction) {
             is UiAction.OnRetry -> retry()
+            is UiAction.OnPullToRefresh -> refreshFromPull()
             is UiAction.OnDateSelect -> changeSelectedDate(uiAction)
             is UiAction.OnTaskCreate -> createTask()
             is UiAction.OnTaskCheck -> checkTask(uiAction)
@@ -277,6 +278,20 @@ constructor(
     private fun retry() {
         _uiState.value = UiState.Loading
         loadInitialData()
+    }
+
+    private fun refreshFromPull() {
+        // Pull-to-refresh should pull *server* state (off-device edits from DoneBot on web or another
+        // device), so force past the 60s sync cooldown. fetchTasks is fire-and-forget (it enqueues the
+        // sync worker); the reactive Room flow powering Home re-emits when the sync lands. Hold the
+        // spinner for a short beat so the gesture feels acknowledged even though the write is async.
+        updateSuccessState { it.copy(isRefreshing = true) }
+        taskSyncRepository.resetCooldown()
+        taskSyncRepository.fetchTasks(force = true)
+        viewModelScope.launch {
+            delay(REFRESH_SPINNER_MIN_MS)
+            updateSuccessState { it.copy(isRefreshing = false) }
+        }
     }
 
     private fun navigateToFilteredTasks(isCompleted: Boolean) {
@@ -1095,6 +1110,7 @@ constructor(
 
     companion object {
         private const val LOADING_DELAY = 100L
+        private const val REFRESH_SPINNER_MIN_MS = 900L
         private const val AUX_TICK_MILLIS = 60_000L
         private const val UNDO_DELAY_MS = 5000L
 
