@@ -667,3 +667,23 @@ private fun Preview_FinishEarlyDialog() {
         )
     }
 }
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun Preview_ManySessions() {
+    TDTheme {
+        PomodoroContent(
+            uiState =
+            UiState(
+                min = 24,
+                second = 57,
+                mode = PomodoroMode.Focus.toUiMode(),
+                totalSessionSeconds = 25L * 60L,
+                totalSessions = 29, // 15 focus rounds -> 29 phases; verifies the dots wrap
+                currentSessionIndex = 14,
+                isRunning = true,
+            ),
+            onAction = {},
+        )
+    }
+}
