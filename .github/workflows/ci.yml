@@ -1,0 +1,92 @@
+name: CI
+
+# Runs on every PR and on pushes to main. NO secrets are used here — the build is
+# CI-tolerant: google-services.json is committed, MAPS_API_KEY defaults to "" when absent,
+# and the release signingConfig is skipped when keystore.properties is missing (unsigned AAB).
+# This keeps the workflow safe to run on fork PRs. Signed-release automation lives elsewhere.
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+# Cancel superseded runs on the same ref (e.g. rapid pushes to a PR branch).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # §3.6 AAB size budget. Current release AAB ≈ 16.78 MiB → 20 MiB leaves ~19% headroom.
+  # Single source of truth; raise deliberately when a real feature justifies it.
+  AAB_MAX_BYTES: "20971520"   # 20 * 1024 * 1024
+
+jobs:
+  # ── Quality gate: lint + static analysis + unit tests + debug build. Zero secrets. ──
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # JDK 21 is REQUIRED. JDK 24 crashes Gradle with "Type T not present" (reproduced);
+      # Temurin 21 matches the project's intended local JetBrains Runtime 21. Bytecode stays 17.
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      # Handles dependency + wrapper caching (Gradle User Home). Does NOT cache the project
+      # configuration-cache dir, so there is no stale cross-run reuse.
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # One invocation, --continue so lint + tests + build all report before the job fails.
+      # detektMain is the type-resolution task ('check' does NOT include detekt → call it explicitly).
+      # Fans out to both :app and :uikit (both apply ktlint + detekt).
+      - name: ktlint + detekt + unit tests + debug build
+        run: ./gradlew ktlintCheck detektMain test assembleDebug --continue --stacktrace
+
+  # ── §3.6 AAB size budget. Builds an UNSIGNED release bundle (no keystore) and checks bytes. ──
+  size-budget:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Unsigned is fine: signingConfig is only wired when keystore.properties exists, so this
+      # runs secretless (fork-safe). --no-configuration-cache: the config cache is sensitive to
+      # keystore/local.properties presence and a one-shot bundle gains nothing from it.
+      - name: Build release bundle (unsigned)
+        run: ./gradlew :app:bundleRelease --no-configuration-cache --stacktrace
+
+      # Advisory: reports the size to the run summary and only fails when over budget. Promote to
+      # a required status check once the number is trusted.
+      - name: Enforce AAB size budget
+        run: |
+          AAB=app/build/outputs/bundle/release/app-release.aab
+          if [ ! -f "$AAB" ]; then echo "::error::AAB not found at $AAB"; exit 1; fi
+          SIZE=$(stat -c%s "$AAB")
+          SIZE_MIB=$(awk "BEGIN { printf \"%.2f\", $SIZE/1048576 }")
+          BUDGET_MIB=$(awk "BEGIN { printf \"%.2f\", $AAB_MAX_BYTES/1048576 }")
+          echo "AAB size: ${SIZE} B (${SIZE_MIB} MiB) — budget ${AAB_MAX_BYTES} B (${BUDGET_MIB} MiB)"
+          {
+            echo "### 📦 AAB size budget"
+            echo ""
+            echo "| Metric | Value |"
+            echo "| --- | --- |"
+            echo "| Release AAB | ${SIZE_MIB} MiB |"
+            echo "| Budget | ${BUDGET_MIB} MiB |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$SIZE" -gt "$AAB_MAX_BYTES" ]; then
+            echo "::error::Release AAB ${SIZE_MIB} MiB exceeds budget ${BUDGET_MIB} MiB"
+            echo "| Status | ❌ OVER BUDGET |" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "| Status | ✅ within budget |" >> "$GITHUB_STEP_SUMMARY"
