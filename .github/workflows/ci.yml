@@ -42,8 +42,12 @@ jobs:
       # One invocation, --continue so lint + tests + build all report before the job fails.
       # detektMain is the type-resolution task ('check' does NOT include detekt → call it explicitly).
       # Fans out to both :app and :uikit (both apply ktlint + detekt).
+      # testDebugUnitTest, NOT `test`: the release unit-test variant pulls in :app:compileReleaseKotlin,
+      # which OOMs the Kotlin daemon on the ~7 GB hosted runner when it runs alongside detekt + tests.
+      # The release compile path is already exercised by the size-budget job's bundleRelease, so nothing
+      # is lost. --max-workers=2 caps concurrent task JVMs so peak memory fits the runner.
       - name: ktlint + detekt + unit tests + debug build
-        run: ./gradlew ktlintCheck detektMain test assembleDebug --continue --stacktrace
+        run: ./gradlew ktlintCheck detektMain testDebugUnitTest assembleDebug --continue --max-workers=2 --stacktrace
 
   # ── §3.6 AAB size budget. Builds an UNSIGNED release bundle (no keystore) and checks bytes. ──
   size-budget:
