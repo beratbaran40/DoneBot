@@ -253,6 +253,13 @@ constructor(
             .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: pendingPhoto clearAll failed") }
         runCatching { chatRepository.clear() }
             .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: chat clear failed") }
+        // Chat prompt + draft live in DataStore (survive clearUser). Left behind, user A's blocked prompt
+        // auto-resends in user B's session and A's unsent draft shows to B — a cross-account leak. Both keys
+        // delete-on-empty-string, so "" removes them. (§7.12)
+        runCatching { dataStoreHelper.setPendingChatPrompt("") }
+            .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: pendingChatPrompt clear failed") }
+        runCatching { dataStoreHelper.setChatDraft("") }
+            .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: chatDraft clear failed") }
         // Journal entries are intentionally NOT wiped here. Unlike tasks/groups/chat (which re-sync or are
         // stateless on the backend), the journal is local-only with no backend copy; a ForceLogout from a
         // failed token refresh must never destroy the owner's diary. Per-user isolation is handled by
