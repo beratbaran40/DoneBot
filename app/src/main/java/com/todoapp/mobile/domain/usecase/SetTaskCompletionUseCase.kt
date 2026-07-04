@@ -21,6 +21,7 @@ class SetTaskCompletionUseCase
 @Inject
 constructor(
     private val taskRepository: TaskRepository,
+    private val analyticsHelper: com.todoapp.mobile.domain.analytics.AnalyticsHelper,
 ) {
     suspend operator fun invoke(
         task: Task,
@@ -38,5 +39,6 @@ constructor(
                 isCompleted = completed,
             )
         }
+        if (completed) analyticsHelper.logTaskCompleted()
     }
 }

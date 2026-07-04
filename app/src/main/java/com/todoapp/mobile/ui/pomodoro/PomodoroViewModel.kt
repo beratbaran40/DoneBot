@@ -27,6 +27,7 @@ class PomodoroViewModel
 constructor(
     private val pomodoroRepository: PomodoroRepository,
     private val engine: PomodoroEngine,
+    private val analyticsHelper: com.todoapp.mobile.domain.analytics.AnalyticsHelper,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PomodoroContract.UiState())
     val uiState = _uiState.asStateFlow()
@@ -201,7 +202,10 @@ constructor(
     private suspend fun onSessionFinished() {
         sessionQueue.getOrNull(currentSessionIndex)?.let { finished ->
             when (finished.mode) {
-                PomodoroMode.Focus -> totalFocusSeconds += finished.durationSeconds
+                PomodoroMode.Focus -> {
+                    totalFocusSeconds += finished.durationSeconds
+                    analyticsHelper.logPomodoroCompleted(finished.durationSeconds / 60)
+                }
                 PomodoroMode.ShortBreak,
                 PomodoroMode.LongBreak,
                 -> totalBreakSeconds += finished.durationSeconds

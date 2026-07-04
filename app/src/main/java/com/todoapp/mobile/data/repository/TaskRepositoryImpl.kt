@@ -67,6 +67,7 @@ constructor(
     private val dailyCompletionDao: TaskDailyCompletionDao,
     private val alarmScheduler: AlarmScheduler,
     private val dailyPlanPreferences: DailyPlanPreferences,
+    private val analyticsHelper: com.todoapp.mobile.domain.analytics.AnalyticsHelper,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : TaskRepository {
     private val taskPhotoUrls = kotlinx.coroutines.flow.MutableStateFlow<Map<Long, List<String>>>(emptyMap())
@@ -429,6 +430,7 @@ constructor(
             )
         }
         scheduleRecurringAlarmIfNeeded(localId, task)
+        analyticsHelper.logTaskCreated(hasDue = !task.isAllDay, recurrence = task.recurrence.name)
 
         remoteDataSource
             .addTask(taskWithKey)
@@ -463,6 +465,7 @@ constructor(
                 },
             )
         }
+        analyticsHelper.logTaskCreated(hasDue = !task.isAllDay, recurrence = task.recurrence.name)
 
         remoteDataSource
             .addTask(taskWithKey)

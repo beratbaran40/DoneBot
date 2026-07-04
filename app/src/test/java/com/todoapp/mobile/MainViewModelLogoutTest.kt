@@ -82,6 +82,7 @@ class MainViewModelLogoutTest {
             pendingPhotoRepository = pendingPhotoRepository,
             chatRepository = chatRepository,
             journalRepository = journalRepository,
+            analyticsHelper = mockk(relaxed = true),
         )
     }
 

@@ -1,10 +1,12 @@
 package com.todoapp.mobile.domain.usecase
 
+import com.todoapp.mobile.domain.analytics.AnalyticsHelper
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.domain.repository.TaskRepository
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import java.time.LocalDate
@@ -17,7 +19,8 @@ import java.time.LocalTime
  */
 class SetTaskCompletionUseCaseTest {
     private val repository = mockk<TaskRepository>(relaxed = true)
-    private val useCase = SetTaskCompletionUseCase(repository)
+    private val analyticsHelper = mockk<AnalyticsHelper>(relaxed = true)
+    private val useCase = SetTaskCompletionUseCase(repository, analyticsHelper)
 
     @Test
     fun `completing a recurring task hits the per-day path, never the base row`() = runTest {
@@ -45,6 +48,20 @@ class SetTaskCompletionUseCaseTest {
 
         coVerify(exactly = 1) { repository.updateTaskCompletion(id = 3L, isCompleted = true) }
         coVerify(exactly = 0) { repository.setInstanceCompletion(any(), any(), any()) }
+    }
+
+    @Test
+    fun `completing a task logs the task_completed analytics event`() = runTest {
+        useCase(task(id = 3L, recurrence = Recurrence.NONE), completed = true)
+
+        verify(exactly = 1) { analyticsHelper.logTaskCompleted() }
+    }
+
+    @Test
+    fun `un-completing a task does not log task_completed`() = runTest {
+        useCase(task(id = 7L, recurrence = Recurrence.DAILY), completed = false)
+
+        verify(exactly = 0) { analyticsHelper.logTaskCompleted() }
     }
 
     private companion object {

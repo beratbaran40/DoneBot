@@ -54,6 +54,7 @@ class TaskRepositoryImplTest {
         dailyCompletionDao = mockk(relaxed = true),
         alarmScheduler = mockk(relaxed = true),
         dailyPlanPreferences = mockk(relaxed = true),
+        analyticsHelper = mockk(relaxed = true),
         ioDispatcher = Dispatchers.Unconfined,
     )
 

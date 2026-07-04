@@ -57,6 +57,7 @@ constructor(
     private val pendingPhotoRepository: PendingPhotoRepository,
     private val chatRepository: ChatRepository,
     private val journalRepository: JournalRepository,
+    private val analyticsHelper: com.todoapp.mobile.domain.analytics.AnalyticsHelper,
 ) : ViewModel() {
     private val _uiEffect = Channel<UiEffect>()
     val uiEffect = _uiEffect.receiveAsFlow()
@@ -206,8 +207,15 @@ constructor(
         _pendingDeepLink.value = null
     }
 
+    private var lastLoggedRoute: String? = null
+
     fun updateCurrentRoute(route: String?, args: RouteArgs? = null) {
         currentRouteTracker.update(route = route, args = args)
+        // screen_view (§7.17). Dedupe consecutive same-route reports (config change / recomposition).
+        if (route != null && route != lastLoggedRoute) {
+            lastLoggedRoute = route
+            analyticsHelper.logScreenView(route)
+        }
     }
 
     sealed interface DeepLink {

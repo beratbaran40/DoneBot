@@ -40,6 +40,7 @@ constructor(
     private val dataStoreHelper: DataStoreHelper,
     private val taskSyncRepository: TaskSyncRepository,
     private val chatRepository: ChatRepository,
+    private val analyticsHelper: com.todoapp.mobile.domain.analytics.AnalyticsHelper,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     private val redirectAfterRegister: String? = savedStateHandle.toRoute<Screen.Register>().redirectAfterRegister
@@ -177,6 +178,7 @@ constructor(
             sessionPreferences.setRefreshToken(registerResponseData.refreshToken)
             dataStoreHelper.setUser(registerResponseData.user)
             dataStoreHelper.setFirstLoginPermissionPromptPending(true)
+            analyticsHelper.logSignUp()
 
             userRepository
                 .syncPendingFcmToken()

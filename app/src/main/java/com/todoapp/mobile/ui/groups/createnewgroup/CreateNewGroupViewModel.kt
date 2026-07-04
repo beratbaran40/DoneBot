@@ -24,6 +24,7 @@ class CreateNewGroupViewModel
 constructor(
     private val groupRepository: GroupRepository,
     private val userRepository: UserRepository,
+    private val analyticsHelper: com.todoapp.mobile.domain.analytics.AnalyticsHelper,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(UiState(isUserAuthenticated = false))
     val uiState = _uiState.asStateFlow()
@@ -90,6 +91,7 @@ constructor(
                         uiState.value.groupDescription.orEmpty(),
                     ),
                 ).onSuccess {
+                    analyticsHelper.logGroupCreated()
                     _navEffect.send(NavigationEffect.Back)
                 }.onFailure {
                     _uiState.update { it.copy(error = "Something went wrong. Try again later.") }

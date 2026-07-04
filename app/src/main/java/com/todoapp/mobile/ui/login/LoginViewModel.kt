@@ -41,6 +41,7 @@ constructor(
     private val dataStoreHelper: DataStoreHelper,
     private val taskSyncRepository: TaskSyncRepository,
     private val chatRepository: ChatRepository,
+    private val analyticsHelper: com.todoapp.mobile.domain.analytics.AnalyticsHelper,
     savedStateHandle: SavedStateHandle,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
@@ -183,6 +184,7 @@ constructor(
             sessionPreferences.setExpiresAt(loginResponseData.expiresIn)
             dataStoreHelper.setUser(userData = loginResponseData.user)
             dataStoreHelper.setFirstLoginPermissionPromptPending(true)
+            analyticsHelper.logLogin()
 
             taskSyncRepository.fetchTasks(force = true)
 

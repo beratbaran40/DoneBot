@@ -41,6 +41,7 @@ class LoginViewModelTest {
             dataStoreHelper = dataStoreHelper,
             taskSyncRepository = taskSyncRepository,
             chatRepository = chatRepository,
+            analyticsHelper = mockk(relaxed = true),
             // toRoute<Screen.Login>() is inline+reified, so it cannot be mocked — feed a real handle.
             savedStateHandle = SavedStateHandle(mapOf("redirectAfterLogin" to null)),
             context = context,

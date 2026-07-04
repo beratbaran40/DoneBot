@@ -43,6 +43,7 @@ class ChatViewModel @Inject constructor(
     private val intentClassifier: LocalIntentClassifier,
     private val taskSyncRepository: TaskSyncRepository,
     private val sessionPreferences: SessionPreferences,
+    private val analyticsHelper: com.todoapp.mobile.domain.analytics.AnalyticsHelper,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<ChatContract.UiState>(ChatContract.UiState.Loading)
     val uiState: StateFlow<ChatContract.UiState> = _uiState.asStateFlow()
@@ -203,6 +204,7 @@ class ChatViewModel @Inject constructor(
             if (localMatch != null) {
                 Timber.tag(METRICS_TAG).i("local_intent_hit:%s", localMatch.intent.name)
                 chatRepository.appendAssistantMessage(localMatch.response)
+                analyticsHelper.logChatMessageSent(localIntent = true, refused = false, roundTrips = 0)
                 _uiState.update { latest ->
                     when (latest) {
                         is ChatContract.UiState.Ready -> latest.copy(
@@ -402,6 +404,7 @@ class ChatViewModel @Inject constructor(
         val totalMs = (System.nanoTime() - turnStartNs) / NS_PER_MS
         val refused = REFUSAL_PREFIXES.any { replyText.startsWith(it, ignoreCase = true) }
         if (refused) refusalCount++
+        analyticsHelper.logChatMessageSent(localIntent = false, refused = refused, roundTrips = roundTripCount)
         Timber.tag(METRICS_TAG).i(
             "turn rt=%d ms=%d refused=%s refusalTotal=%d",
             roundTripCount,
