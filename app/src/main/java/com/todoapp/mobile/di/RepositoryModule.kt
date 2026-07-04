@@ -178,4 +178,10 @@ abstract class RepositoryModule {
     abstract fun bindTelemetryPreferences(
         impl: com.todoapp.mobile.data.repository.TelemetryPreferencesImpl,
     ): com.todoapp.mobile.domain.repository.TelemetryPreferences
+
+    @Binds
+    @Singleton
+    abstract fun bindCrashAnalyticsPreferences(
+        impl: com.todoapp.mobile.data.repository.CrashAnalyticsPreferencesImpl,
+    ): com.todoapp.mobile.domain.repository.CrashAnalyticsPreferences
 }

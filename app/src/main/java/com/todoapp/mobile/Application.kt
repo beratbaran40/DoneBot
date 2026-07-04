@@ -11,6 +11,7 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.work.Configuration
 import com.google.android.libraries.places.api.Places
+import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.perf.FirebasePerformance
 import com.todoapp.mobile.data.log.CrashlyticsTree
@@ -21,6 +22,7 @@ import com.todoapp.mobile.data.perf.StartupColdStartTrace
 import com.todoapp.mobile.di.IoDispatcher
 import com.todoapp.mobile.domain.alarm.RescheduleAllAlarmsUseCase
 import com.todoapp.mobile.domain.engine.PomodoroEngine
+import com.todoapp.mobile.domain.repository.CrashAnalyticsPreferences
 import com.todoapp.mobile.domain.repository.SecretPreferences
 import com.todoapp.mobile.domain.repository.TelemetryPreferences
 import com.todoapp.mobile.domain.security.SecretModeEndEvent
@@ -62,6 +64,9 @@ class Application :
     @Inject
     lateinit var telemetryPreferences: TelemetryPreferences
 
+    @Inject
+    lateinit var crashAnalyticsPreferences: CrashAnalyticsPreferences
+
     override val workManagerConfiguration: Configuration
         get() =
             Configuration
@@ -75,6 +80,8 @@ class Application :
         initCrashReporting()
         runCatching { initPerformanceMonitoring() }
             .onFailure { Timber.tag("AppInit").w(it, "initPerformanceMonitoring failed") }
+        runCatching { initCrashAnalyticsGating() }
+            .onFailure { Timber.tag("AppInit").w(it, "initCrashAnalyticsGating failed") }
         // Cold-start hot path: onCreate runs before any UI. An unhandled throw from a single init
         // (Firebase App Check on odd Play-Services states, notification-channel creation) would crash
         // the app on launch with no screen shown. Guard each so one failure can't block startup.
@@ -99,7 +106,10 @@ class Application :
      */
     private fun initCrashReporting() {
         FirebaseCrashlytics.getInstance().apply {
-            setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG)
+            // Debug force-off (test crashes must not pollute prod). In release we do NOT set collection
+            // here — the natively-persisted flag stands and initCrashAnalyticsGating() reconciles it with
+            // the user's §7.3 opt-out off the startup hot path, so a prior opt-out isn't clobbered each launch.
+            if (BuildConfig.DEBUG) setCrashlyticsCollectionEnabled(false)
             setCustomKey("build_type", if (BuildConfig.DEBUG) "debug" else "release")
             setCustomKey("version_name", BuildConfig.VERSION_NAME)
             setCustomKey("version_code", BuildConfig.VERSION_CODE)
@@ -125,6 +135,24 @@ class Application :
                 runCatching {
                     FirebasePerformance.getInstance().isPerformanceCollectionEnabled = !BuildConfig.DEBUG && optedIn
                 }.onFailure { Timber.tag("AppInit").w(it, "perf collection toggle failed") }
+            }
+        }
+    }
+
+    /**
+     * §7.3 telemetry opt-out. Crashlytics + Analytics collection follow the persisted opt-out
+     * ([CrashAnalyticsPreferences], default true) AND-ed with !debug. Both Firebase collection flags
+     * persist natively across launches, so this reactive collector reconciles them off the startup hot
+     * path (no blocking DataStore read in onCreate) and re-applies the user's choice whenever it changes.
+     */
+    private fun initCrashAnalyticsGating() {
+        ProcessLifecycleOwner.get().lifecycleScope.launch(ioDispatcher) {
+            crashAnalyticsPreferences.observe().collect { allowed ->
+                val effective = allowed && !BuildConfig.DEBUG
+                runCatching {
+                    FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(effective)
+                    FirebaseAnalytics.getInstance(this@Application).setAnalyticsCollectionEnabled(effective)
+                }.onFailure { Timber.tag("AppInit").w(it, "crash/analytics collection toggle failed") }
             }
         }
     }

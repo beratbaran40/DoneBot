@@ -453,6 +453,34 @@ private fun SettingsContent(
             )
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                TDText(
+                    text = stringResource(R.string.settings_crash_analytics_title),
+                    style = TDTheme.typography.heading6,
+                    color = TDTheme.colors.onBackground,
+                )
+                TDText(
+                    text = stringResource(R.string.settings_crash_analytics_description),
+                    style = TDTheme.typography.subheading2,
+                    color = TDTheme.colors.gray,
+                )
+            }
+            Switch(
+                checked = uiState.crashAnalyticsEnabled,
+                onCheckedChange = { onAction(UiAction.OnCrashAnalyticsToggle(it)) },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = TDTheme.colors.white,
+                    checkedTrackColor = TDTheme.colors.pendingGray,
+                ),
+            )
+        }
+
         SectionHeader(R.string.settings_section_accessibility)
 
         Row(

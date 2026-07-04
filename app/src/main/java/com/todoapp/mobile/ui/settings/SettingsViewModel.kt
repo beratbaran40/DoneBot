@@ -14,6 +14,7 @@ import com.todoapp.mobile.domain.alarm.AlarmType
 import com.todoapp.mobile.domain.alarm.buildDailyPlanAlarmItem
 import com.todoapp.mobile.domain.constants.DailyPlanDefaults
 import com.todoapp.mobile.domain.repository.AuthRepository
+import com.todoapp.mobile.domain.repository.CrashAnalyticsPreferences
 import com.todoapp.mobile.domain.repository.DailyPlanPreferences
 import com.todoapp.mobile.domain.repository.JournalBiometricPreferences
 import com.todoapp.mobile.domain.repository.JournalRepository
@@ -70,6 +71,7 @@ constructor(
     private val journalBiometricPreferences: JournalBiometricPreferences,
     private val journalRepository: JournalRepository,
     private val telemetryPreferences: TelemetryPreferences,
+    private val crashAnalyticsPreferences: CrashAnalyticsPreferences,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(UiState())
@@ -156,6 +158,11 @@ constructor(
                 _uiState.update { it.copy(sharePerformanceDiagnostics = enabled) }
             }
         }
+        viewModelScope.launch {
+            crashAnalyticsPreferences.observe().collect { enabled ->
+                _uiState.update { it.copy(crashAnalyticsEnabled = enabled) }
+            }
+        }
     }
 
     fun checkPermission(context: Context) {
@@ -239,6 +246,8 @@ constructor(
                 viewModelScope.launch { journalBiometricPreferences.set(action.enabled) }
             is UiAction.OnSharePerformanceDiagnosticsToggle ->
                 viewModelScope.launch { telemetryPreferences.set(action.enabled) }
+            is UiAction.OnCrashAnalyticsToggle ->
+                viewModelScope.launch { crashAnalyticsPreferences.set(action.enabled) }
             UiAction.OnDeleteAccountClick ->
                 _uiState.update { it.copy(showDeleteAccountDialog = true) }
             UiAction.OnDeleteAccountDismiss ->

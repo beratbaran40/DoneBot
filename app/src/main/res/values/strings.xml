@@ -1001,6 +1001,8 @@
     <string name="settings_journal_biometric_protection_description">Require fingerprint to unlock when opening Journal</string>
     <string name="settings_share_performance_diagnostics_title">Share performance diagnostics</string>
     <string name="settings_share_performance_diagnostics_description">Send anonymous app performance data to help improve DoneBot</string>
+    <string name="settings_crash_analytics_title">Share usage &amp; crash data</string>
+    <string name="settings_crash_analytics_description">Send anonymous crash reports and usage analytics to help fix bugs and improve DoneBot</string>
     <string name="journal_locked_message">Authenticate to open your journal</string>
     <string name="journal_action_change_mood">Change mood</string>
     <string name="journal_action_clear_mood_cd">Clear mood</string>

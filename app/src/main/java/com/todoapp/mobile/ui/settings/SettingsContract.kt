@@ -28,6 +28,7 @@ object SettingsContract {
         val reduceMotionEnabled: Boolean = false,
         val journalBiometricProtected: Boolean = false,
         val sharePerformanceDiagnostics: Boolean = false,
+        val crashAnalyticsEnabled: Boolean = true,
         val showDeleteAccountDialog: Boolean = false,
         val isDeletingAccount: Boolean = false,
         val displayName: String = "",
@@ -84,6 +85,8 @@ object SettingsContract {
         data class OnJournalBiometricProtectionToggle(val enabled: Boolean) : UiAction
 
         data class OnSharePerformanceDiagnosticsToggle(val enabled: Boolean) : UiAction
+
+        data class OnCrashAnalyticsToggle(val enabled: Boolean) : UiAction
 
         data object OnDeleteAccountClick : UiAction
 

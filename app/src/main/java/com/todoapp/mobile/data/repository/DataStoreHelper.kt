@@ -203,6 +203,22 @@ constructor(
     }
 
     /**
+     * Whether the user allows anonymous crash reporting + product analytics (§7.3). Default true
+     * (opt-out): unlike perf ([observePerfCollectionEnabled], opt-in), crash/usage telemetry stays on for
+     * users who never open Settings and is suppressed only when they flip it off. The app pushes this to
+     * the FirebaseCrashlytics + FirebaseAnalytics collection flags on every change.
+     */
+    fun observeCrashAnalyticsEnabled(): Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[CRASH_ANALYTICS_ENABLED] ?: true
+    }
+
+    suspend fun setCrashAnalyticsEnabled(value: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[CRASH_ANALYTICS_ENABLED] = value
+        }
+    }
+
+    /**
      * One-shot guard for the pre-v20 journal orphan claim. Set to true after the existing
      * (unscoped) journal entries have been assigned to a logged-in owner exactly once, so the
      * backfill never re-runs and a later different user can't re-claim them.
@@ -235,5 +251,6 @@ constructor(
         private val JOURNAL_BIOMETRIC_PROTECTED = booleanPreferencesKey("journal_biometric_protection")
         private val JOURNAL_ORPHANS_CLAIMED = booleanPreferencesKey("journal_orphans_claimed")
         private val PERF_COLLECTION_ENABLED = booleanPreferencesKey("perf_collection_enabled")
+        private val CRASH_ANALYTICS_ENABLED = booleanPreferencesKey("crash_analytics_enabled")
     }
 }
