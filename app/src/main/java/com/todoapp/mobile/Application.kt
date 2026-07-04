@@ -65,6 +65,7 @@ class Application :
 
     override fun onCreate() {
         super<Application>.onCreate()
+        if (BuildConfig.DEBUG) configureStrictMode()
         initCrashReporting()
         // Cold-start hot path: onCreate runs before any UI. An unhandled throw from a single init
         // (Firebase App Check on odd Play-Services states, notification-channel creation) would crash
@@ -126,6 +127,17 @@ class Application :
         .Builder(this)
         .okHttpClient { okHttpClient }
         .crossfade(true)
+        .memoryCache {
+            coil.memory.MemoryCache.Builder(this)
+                .maxSizePercent(0.20)
+                .build()
+        }
+        .diskCache {
+            coil.disk.DiskCache.Builder()
+                .directory(cacheDir.resolve("image_cache"))
+                .maxSizeBytes(50L * 1024 * 1024)
+                .build()
+        }
         .build()
 
     override fun onStop(owner: LifecycleOwner) {
@@ -139,6 +151,21 @@ class Application :
         super.onDestroy(owner)
         pomodoroEngine.shutdown()
         networkMonitor.shutdown()
+    }
+
+    // §3.7 Memory-pressure breadcrumb: in release CrashlyticsTree forwards WARN+ to Crashlytics, so
+    // an eventual OOM / low-memory kill has a visible trim trail. Coil's ImageLoader already self-trims
+    // its caches on these callbacks; on the most aggressive levels we also drop its memory cache.
+    // Trim-level constants are API-34-deprecated but the callback still fires with them on-device.
+    @Suppress("DEPRECATION")
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) {
+            Timber.tag("Memory").w("onTrimMemory level=%d", level)
+        }
+        if (level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL) {
+            coil.Coil.imageLoader(this).memoryCache?.clear()
+        }
     }
 
     private fun createNotificationChannel() {
