@@ -238,11 +238,9 @@
     <string name="email_placeholder">isim@ornek.com</string>
     <string name="or_continue_with">VEYA ŞU YOLLA DEVAM ET</string>
     <string name="google">Google ile giriş yap</string>
-    <string name="terms_consent_title">Gizlilik ve Koşullar</string>
     <string name="terms_consent_prefix">"Devam ederek "</string>
     <string name="terms_consent_connector">" ve "</string>
     <string name="terms_consent_suffix">\'nı kabul etmiş olursunuz.</string>
-    <string name="terms_consent_continue">Devam</string>
     <string name="dont_have_an_account">Hesabınız yok mu? </string>
     <string name="register">Kayıt Ol</string>
     <string name="register_password_strength_WEAK">Şifreniz çok zayıf</string>

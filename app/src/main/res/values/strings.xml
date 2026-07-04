@@ -233,11 +233,9 @@
     <string name="email_placeholder">name@example.com</string>
     <string name="or_continue_with">OR CONTINUE WITH</string>
     <string name="google">Sign in with Google</string>
-    <string name="terms_consent_title">Privacy &amp; Terms</string>
     <string name="terms_consent_prefix">"By continuing, you accept our "</string>
     <string name="terms_consent_connector">" and "</string>
     <string name="terms_consent_suffix">.</string>
-    <string name="terms_consent_continue">Continue</string>
     <string name="dont_have_an_account">Don\'t have an account? </string>
     <string name="register">Register</string>
     <string name="register_password_strength_WEAK">Your password is too weak</string>

@@ -19,7 +19,6 @@ object HomePreviewData {
         isSheetOpen: Boolean = false,
         isDeleteDialogOpen: Boolean = false,
         isFinishRoutineDialogOpen: Boolean = false,
-        isTermsConsentDialogOpen: Boolean = false,
         isSecretModeEnabled: Boolean = true,
         taskTitle: String = "",
         dialogSelectedDate: LocalDate? = null,
@@ -48,7 +47,6 @@ object HomePreviewData {
         isSheetOpen = isSheetOpen,
         isDeleteDialogOpen = isDeleteDialogOpen,
         isFinishRoutineDialogOpen = isFinishRoutineDialogOpen,
-        isTermsConsentDialogOpen = isTermsConsentDialogOpen,
         isSecretModeEnabled = isSecretModeEnabled,
         taskFormState =
         TaskFormState(

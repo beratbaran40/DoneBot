@@ -104,21 +104,6 @@ constructor(
     }
 
     /**
-     * One-time guard for the post-signup Terms/Privacy consent dialog. Set to true only on a
-     * successful registration (never on login), read once on Home, and cleared when the user taps
-     * "Continue" so the dialog is shown to new users exactly once.
-     */
-    fun observeTermsConsentPending(): Flow<Boolean> = dataStore.data.map { preferences ->
-        preferences[TERMS_CONSENT_PENDING] ?: false
-    }
-
-    suspend fun setTermsConsentPending(value: Boolean) {
-        dataStore.edit { preferences ->
-            preferences[TERMS_CONSENT_PENDING] = value
-        }
-    }
-
-    /**
      * Last reminder offset (minutes) the user picked when creating a task.
      * Used as a smart default for the next AddTaskSheet open. Negative
      * sentinel (-1) means "no reminder"; null means never set.
@@ -226,7 +211,6 @@ constructor(
         private val IS_LOGGED_IN = booleanPreferencesKey("is_logged_in")
         private val FIRST_LOGIN_PERMISSION_PROMPT_PENDING =
             booleanPreferencesKey("first_login_permission_prompt_pending")
-        private val TERMS_CONSENT_PENDING = booleanPreferencesKey("terms_consent_pending")
         private val LAST_USED_REMINDER_OFFSET = longPreferencesKey("last_used_reminder_offset")
         private val SUGGEST_CARD_DISMISSED_DAY = longPreferencesKey("suggest_card_dismissed_day")
         private val CHAT_DRAFT = stringPreferencesKey("chat_draft")

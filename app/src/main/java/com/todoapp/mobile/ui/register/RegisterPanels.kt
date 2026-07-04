@@ -19,6 +19,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
+import com.todoapp.mobile.ui.auth.AuthConsentFooter
 import com.todoapp.mobile.ui.register.RegisterContract.UiAction
 import com.todoapp.mobile.ui.register.RegisterContract.UiState
 import com.todoapp.uikit.components.TDButton
@@ -157,6 +158,9 @@ internal fun RegisterFormPanel(
             modifier = Modifier.fillMaxWidth(),
         ) { onAction(UiAction.OnGoogleSignInTap) }
     }
+
+    Spacer(Modifier.height(16.dp))
+    AuthConsentFooter()
 
     Spacer(Modifier.height(16.dp))
     Row(
