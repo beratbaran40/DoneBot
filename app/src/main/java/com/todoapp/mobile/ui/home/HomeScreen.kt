@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -13,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import com.todoapp.mobile.data.perf.StartupColdStartTrace
 import com.todoapp.mobile.ui.home.HomeContract.UiAction
 import com.todoapp.mobile.ui.home.HomeContract.UiEffect
 import com.todoapp.mobile.ui.home.HomeContract.UiState
@@ -33,6 +35,12 @@ fun HomeScreen(
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         onAction(UiAction.RefreshPermissions)
+    }
+
+    // §3.10 Stop the cold-start → first-content trace once Home first reaches Success
+    // (idempotent; no-op when perf collection is off).
+    LaunchedEffect(uiState is UiState.Success) {
+        if (uiState is UiState.Success) StartupColdStartTrace.stop()
     }
 
     uiEffect.collectWithLifecycle {

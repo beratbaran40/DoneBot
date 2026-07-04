@@ -19,6 +19,7 @@ import com.todoapp.mobile.domain.repository.JournalBiometricPreferences
 import com.todoapp.mobile.domain.repository.JournalRepository
 import com.todoapp.mobile.domain.repository.LanguageRepository
 import com.todoapp.mobile.domain.repository.SecretPreferences
+import com.todoapp.mobile.domain.repository.TelemetryPreferences
 import com.todoapp.mobile.domain.repository.ThemeRepository
 import com.todoapp.mobile.domain.repository.UserRepository
 import com.todoapp.mobile.domain.security.SecretModeConditionFactory
@@ -68,6 +69,7 @@ constructor(
     private val userRepository: UserRepository,
     private val journalBiometricPreferences: JournalBiometricPreferences,
     private val journalRepository: JournalRepository,
+    private val telemetryPreferences: TelemetryPreferences,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(UiState())
@@ -147,6 +149,11 @@ constructor(
         viewModelScope.launch {
             journalBiometricPreferences.observe().collect { enabled ->
                 _uiState.update { it.copy(journalBiometricProtected = enabled) }
+            }
+        }
+        viewModelScope.launch {
+            telemetryPreferences.observe().collect { enabled ->
+                _uiState.update { it.copy(sharePerformanceDiagnostics = enabled) }
             }
         }
     }
@@ -230,6 +237,8 @@ constructor(
             is UiAction.OnReduceMotionToggle -> toggleReduceMotion(action.enabled)
             is UiAction.OnJournalBiometricProtectionToggle ->
                 viewModelScope.launch { journalBiometricPreferences.set(action.enabled) }
+            is UiAction.OnSharePerformanceDiagnosticsToggle ->
+                viewModelScope.launch { telemetryPreferences.set(action.enabled) }
             UiAction.OnDeleteAccountClick ->
                 _uiState.update { it.copy(showDeleteAccountDialog = true) }
             UiAction.OnDeleteAccountDismiss ->

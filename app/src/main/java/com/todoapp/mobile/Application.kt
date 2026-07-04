@@ -12,14 +12,17 @@ import androidx.lifecycle.lifecycleScope
 import androidx.work.Configuration
 import com.google.android.libraries.places.api.Places
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.google.firebase.perf.FirebasePerformance
 import com.todoapp.mobile.data.log.CrashlyticsTree
 import com.todoapp.mobile.data.network.NetworkMonitor
 import com.todoapp.mobile.data.notification.NotificationService
 import com.todoapp.mobile.data.notification.PomodoroNotificationChannels
+import com.todoapp.mobile.data.perf.StartupColdStartTrace
 import com.todoapp.mobile.di.IoDispatcher
 import com.todoapp.mobile.domain.alarm.RescheduleAllAlarmsUseCase
 import com.todoapp.mobile.domain.engine.PomodoroEngine
 import com.todoapp.mobile.domain.repository.SecretPreferences
+import com.todoapp.mobile.domain.repository.TelemetryPreferences
 import com.todoapp.mobile.domain.security.SecretModeEndEvent
 import com.todoapp.mobile.domain.usecase.security.OnSecretModeEventUseCase
 import dagger.hilt.android.HiltAndroidApp
@@ -56,6 +59,9 @@ class Application :
     @IoDispatcher
     lateinit var ioDispatcher: CoroutineDispatcher
 
+    @Inject
+    lateinit var telemetryPreferences: TelemetryPreferences
+
     override val workManagerConfiguration: Configuration
         get() =
             Configuration
@@ -67,6 +73,8 @@ class Application :
         super<Application>.onCreate()
         if (BuildConfig.DEBUG) configureStrictMode()
         initCrashReporting()
+        runCatching { initPerformanceMonitoring() }
+            .onFailure { Timber.tag("AppInit").w(it, "initPerformanceMonitoring failed") }
         // Cold-start hot path: onCreate runs before any UI. An unhandled throw from a single init
         // (Firebase App Check on odd Play-Services states, notification-channel creation) would crash
         // the app on launch with no screen shown. Guard each so one failure can't block startup.
@@ -100,6 +108,24 @@ class Application :
             Timber.plant(Timber.DebugTree())
         } else {
             Timber.plant(CrashlyticsTree())
+        }
+    }
+
+    /**
+     * Firebase Performance (§3.10). Consent-gated: the manifest default is OFF and collection follows
+     * the persisted opt-in ([TelemetryPreferences], default false) — never on in debug. Collecting the
+     * preference keeps the SDK's collection flag in sync with the Settings toggle at runtime (the initial
+     * emission applies the stored choice at startup). The cold-start trace starts here and is stopped
+     * from Home; it records nothing while collection is off or if Home is never reached.
+     */
+    private fun initPerformanceMonitoring() {
+        StartupColdStartTrace.start()
+        ProcessLifecycleOwner.get().lifecycleScope.launch(ioDispatcher) {
+            telemetryPreferences.observe().collect { optedIn ->
+                runCatching {
+                    FirebasePerformance.getInstance().isPerformanceCollectionEnabled = !BuildConfig.DEBUG && optedIn
+                }.onFailure { Timber.tag("AppInit").w(it, "perf collection toggle failed") }
+            }
         }
     }
 

@@ -7,6 +7,7 @@ import com.todoapp.mobile.data.model.network.request.ChatHistoryTurn
 import com.todoapp.mobile.data.model.network.request.ChatMessageRequest
 import com.todoapp.mobile.data.model.network.request.ChatReportRequest
 import com.todoapp.mobile.data.model.network.response.ChatMessageResponseData
+import com.todoapp.mobile.data.perf.firebaseTrace
 import com.todoapp.mobile.data.source.local.ChatMessageDao
 import com.todoapp.mobile.data.source.remote.api.ToDoApi
 import com.todoapp.mobile.domain.model.ChatMessage
@@ -41,10 +42,12 @@ class ChatRepositoryImpl @Inject constructor(
         prompt: String,
         locale: String,
         history: List<ChatHistoryTurn>,
-    ): Result<ChatMessageResponseData> = handleRequest {
-        todoApi.sendChatMessage(
-            ChatMessageRequest(prompt = prompt, locale = locale, history = history),
-        )
+    ): Result<ChatMessageResponseData> = firebaseTrace("chat_round_trip") {
+        handleRequest {
+            todoApi.sendChatMessage(
+                ChatMessageRequest(prompt = prompt, locale = locale, history = history),
+            )
+        }
     }
 
     override suspend fun reportMessage(content: String, reason: String?): Result<Unit> = handleEmptyRequest {

@@ -187,6 +187,22 @@ constructor(
     }
 
     /**
+     * Whether the user opted in to sharing anonymous performance diagnostics (§3.10). Default false
+     * (opt-in): perf collection stays off until the user flips the Settings toggle. Single source of
+     * truth that [com.todoapp.mobile.domain.repository.TelemetryPreferences] exposes and the app pushes
+     * to FirebasePerformance on every change.
+     */
+    fun observePerfCollectionEnabled(): Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[PERF_COLLECTION_ENABLED] ?: false
+    }
+
+    suspend fun setPerfCollectionEnabled(value: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PERF_COLLECTION_ENABLED] = value
+        }
+    }
+
+    /**
      * One-shot guard for the pre-v20 journal orphan claim. Set to true after the existing
      * (unscoped) journal entries have been assigned to a logged-in owner exactly once, so the
      * backfill never re-runs and a later different user can't re-claim them.
@@ -218,5 +234,6 @@ constructor(
         private val REDUCE_MOTION = booleanPreferencesKey("accessibility_reduce_motion")
         private val JOURNAL_BIOMETRIC_PROTECTED = booleanPreferencesKey("journal_biometric_protection")
         private val JOURNAL_ORPHANS_CLAIMED = booleanPreferencesKey("journal_orphans_claimed")
+        private val PERF_COLLECTION_ENABLED = booleanPreferencesKey("perf_collection_enabled")
     }
 }

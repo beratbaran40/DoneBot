@@ -172,4 +172,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindJournalRepository(impl: JournalRepositoryImpl): JournalRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindTelemetryPreferences(
+        impl: com.todoapp.mobile.data.repository.TelemetryPreferencesImpl,
+    ): com.todoapp.mobile.domain.repository.TelemetryPreferences
 }

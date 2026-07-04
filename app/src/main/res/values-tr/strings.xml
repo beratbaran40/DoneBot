@@ -1000,6 +1000,8 @@
     <!-- Günlük polish (Round 2): biyometrik + uzun bas menüsü -->
     <string name="settings_journal_biometric_protection_title">Günlüğü biyometrik ile koru</string>
     <string name="settings_journal_biometric_protection_description">Günlüğü açarken parmak izi iste</string>
+    <string name="settings_share_performance_diagnostics_title">Performans teşhisini paylaş</string>
+    <string name="settings_share_performance_diagnostics_description">DoneBot\'u geliştirmeye yardımcı olmak için anonim uygulama performans verisi gönder</string>
     <string name="journal_locked_message">Günlüğü açmak için doğrula</string>
     <string name="journal_action_change_mood">Ruh halini değiştir</string>
     <string name="journal_action_clear_mood_cd">Ruh halini temizle</string>
