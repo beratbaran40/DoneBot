@@ -926,7 +926,9 @@ constructor(
      * "remote wins" is gated purely on the local sync status. A null [local] means no remoteId
      * match: adopt a matching PENDING_CREATE row (idempotency dedup, §4.12) or insert fresh.
      */
-    private fun reconcileRemote(
+    // internal (not private) only so TaskRepositoryImplTest can pin this pure conflict-resolution
+    // rule directly; it is not part of the TaskRepository interface. (§7.2)
+    internal fun reconcileRemote(
         incoming: TaskEntity,
         local: TaskEntity?,
         pendingCreateBySignature: Map<String, TaskEntity>,

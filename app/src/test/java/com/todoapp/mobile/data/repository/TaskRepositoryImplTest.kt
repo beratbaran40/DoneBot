@@ -1,6 +1,8 @@
 package com.todoapp.mobile.data.repository
 
+import android.util.Log
 import com.todoapp.mobile.common.DomainException
+import com.todoapp.mobile.data.model.entity.SubtaskEntity
 import com.todoapp.mobile.data.model.entity.SyncStatus
 import com.todoapp.mobile.data.model.entity.TaskEntity
 import com.todoapp.mobile.data.source.local.datasource.TaskLocalDataSource
@@ -8,21 +10,40 @@ import com.todoapp.mobile.data.source.remote.datasource.TaskRemoteDataSource
 import com.todoapp.mobile.domain.model.Task
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import java.time.LocalDate
 import java.time.LocalTime
 
 /**
  * Characterization tests pinning the §7.2 sync invariants that were bug-fixed on 2026-07-03/04.
- * All collaborators are mocked, so TaskRepositoryImpl instantiates on the plain JVM (the two methods
- * under test touch no android.util.Log, hence no Robolectric needed).
+ * All collaborators are mocked, so TaskRepositoryImpl instantiates on the plain JVM; android.util.Log
+ * is only reached on the push path and is statically mocked below.
  */
 class TaskRepositoryImplTest {
     private val localDataSource = mockk<TaskLocalDataSource>(relaxed = true)
     private val remoteDataSource = mockk<TaskRemoteDataSource>(relaxed = true)
+
+    @Before
+    fun setUp() {
+        mockkStatic(Log::class)
+        every { Log.e(any(), any(), any<Throwable>()) } returns 0
+    }
+
+    @After
+    fun tearDown() {
+        unmockkStatic(Log::class)
+    }
 
     private fun repository() = TaskRepositoryImpl(
         remoteDataSource = remoteDataSource,
@@ -126,6 +147,137 @@ class TaskRepositoryImplTest {
         coVerify(exactly = 0) { localDataSource.update(any()) }
     }
 
+    // --- staged parent completion: snapshot the done steps on complete, restore them on un-complete ---
+
+    @Test
+    fun `completing a staged parent marks only the undone steps done`() = runTest {
+        val steps = listOf(
+            subtask(id = 101L, done = true),
+            subtask(id = 102L, done = false),
+            subtask(id = 103L, done = false),
+        )
+        coEvery { localDataSource.getTaskById(10L) } returns taskEntity(id = 10L, syncStatus = SyncStatus.SYNCED)
+        coEvery { localDataSource.getSubtasks(10L) } returns steps
+
+        repository().updateTaskCompletion(id = 10L, isCompleted = true)
+
+        coVerify(exactly = 1) { localDataSource.updateSubtask(match { it.id == 102L && it.isCompleted }) }
+        coVerify(exactly = 1) { localDataSource.updateSubtask(match { it.id == 103L && it.isCompleted }) }
+        coVerify(exactly = 0) { localDataSource.updateSubtask(match { it.id == 101L }) }
+    }
+
+    @Test
+    fun `un-completing a staged parent restores the pre-completion snapshot`() = runTest {
+        val repo = repository()
+        val partial = listOf(
+            subtask(id = 101L, done = true),
+            subtask(id = 102L, done = false),
+            subtask(id = 103L, done = false),
+        )
+        coEvery { localDataSource.getTaskById(10L) } returns taskEntity(id = 10L, syncStatus = SyncStatus.SYNCED)
+        coEvery { localDataSource.getSubtasks(10L) } returns partial
+        repo.updateTaskCompletion(id = 10L, isCompleted = true) // snapshots {101}, marks 102/103 done
+
+        coEvery { localDataSource.getSubtasks(10L) } returns partial.map { it.copy(isCompleted = true) }
+        repo.updateTaskCompletion(id = 10L, isCompleted = false) // restore: only 101 stays done
+
+        coVerify { localDataSource.updateSubtask(match { it.id == 102L && !it.isCompleted }) }
+        coVerify { localDataSource.updateSubtask(match { it.id == 103L && !it.isCompleted }) }
+    }
+
+    // --- reconcileRemote: server overwrites local only when local is SYNCED and differs (§5.5) ---
+
+    @Test
+    fun `reconcile overwrites a SYNCED local row when the server copy differs`() {
+        val local = taskEntity(id = 1L, remoteId = 50L, syncStatus = SyncStatus.SYNCED)
+        val incoming = local.copy(title = "edited on another device")
+        val toInsert = mutableListOf<TaskEntity>()
+        val toUpdate = mutableListOf<TaskEntity>()
+
+        repository().reconcileRemote(incoming, local, emptyMap(), emptyMap(), mutableSetOf(), toInsert, toUpdate)
+
+        assertEquals(1, toUpdate.size)
+        assertEquals(1L, toUpdate.first().id) // keeps the local id/order
+        assertEquals("edited on another device", toUpdate.first().title)
+        assertEquals(0, toInsert.size)
+    }
+
+    @Test
+    fun `reconcile leaves a locally-edited pending row untouched`() {
+        val local = taskEntity(id = 1L, remoteId = 50L, syncStatus = SyncStatus.PENDING_UPDATE)
+        val incoming = local.copy(title = "server version", syncStatus = SyncStatus.SYNCED)
+        val toInsert = mutableListOf<TaskEntity>()
+        val toUpdate = mutableListOf<TaskEntity>()
+
+        repository().reconcileRemote(incoming, local, emptyMap(), emptyMap(), mutableSetOf(), toInsert, toUpdate)
+
+        assertEquals(0, toUpdate.size)
+        assertEquals(0, toInsert.size)
+    }
+
+    @Test
+    fun `reconcile is a no-op when a SYNCED local row already matches the server`() {
+        val local = taskEntity(id = 1L, remoteId = 50L, syncStatus = SyncStatus.SYNCED)
+        val toInsert = mutableListOf<TaskEntity>()
+        val toUpdate = mutableListOf<TaskEntity>()
+
+        repository().reconcileRemote(local.copy(), local, emptyMap(), emptyMap(), mutableSetOf(), toInsert, toUpdate)
+
+        assertEquals(0, toUpdate.size)
+        assertEquals(0, toInsert.size)
+    }
+
+    @Test
+    fun `reconcile inserts a brand-new server row with no local match`() {
+        val incoming = taskEntity(id = 77L, remoteId = 88L, syncStatus = SyncStatus.SYNCED)
+        val toInsert = mutableListOf<TaskEntity>()
+        val toUpdate = mutableListOf<TaskEntity>()
+
+        repository().reconcileRemote(incoming, null, emptyMap(), emptyMap(), mutableSetOf(), toInsert, toUpdate)
+
+        assertEquals(1, toInsert.size)
+        assertEquals(0L, toInsert.first().id) // id reset so Room autogenerates
+        assertEquals(0, toUpdate.size)
+    }
+
+    @Test
+    fun `reconcile promotes a matching pending-create row instead of inserting a duplicate`() {
+        val incoming = taskEntity(id = 77L, remoteId = 88L, syncStatus = SyncStatus.SYNCED).copy(clientTaskId = "uuid-1")
+        val pending = taskEntity(id = 5L, syncStatus = SyncStatus.PENDING_CREATE).copy(clientTaskId = "uuid-1")
+        val promoted = mutableSetOf<Long>()
+        val toInsert = mutableListOf<TaskEntity>()
+        val toUpdate = mutableListOf<TaskEntity>()
+
+        repository().reconcileRemote(incoming, null, emptyMap(), mapOf("uuid-1" to pending), promoted, toInsert, toUpdate)
+
+        assertEquals(1, toUpdate.size)
+        assertEquals(5L, toUpdate.first().id) // promoted onto the local pending row's id
+        assertEquals(0, toInsert.size)
+        assertTrue(promoted.contains(5L))
+    }
+
+    // --- pushPendingTasks: one poisoned row must not freeze the batch (surface only retryable) ---
+
+    @Test
+    fun `push keeps going past a poisoned row and surfaces the retryable failure`() = runTest {
+        val poisoned = taskEntity(id = 1L, syncStatus = SyncStatus.PENDING_CREATE).copy(title = "poison")
+        val retryable = taskEntity(id = 2L, syncStatus = SyncStatus.PENDING_CREATE).copy(title = "retry")
+        every { localDataSource.observeAll() } returns flowOf(listOf(poisoned, retryable))
+        coEvery { localDataSource.getSubtasks(any()) } returns emptyList()
+        coEvery { remoteDataSource.addTask(match { it.title == "poison" }) } returns
+            Result.failure(DomainException.NotFound())
+        coEvery { remoteDataSource.addTask(match { it.title == "retry" }) } returns
+            Result.failure(DomainException.Server("boom"))
+
+        val result = repository().syncLocalTasksToServer()
+
+        // both rows attempted (the poisoned NotFound did not abort the batch)
+        coVerify(exactly = 1) { remoteDataSource.addTask(match { it.title == "poison" }) }
+        coVerify(exactly = 1) { remoteDataSource.addTask(match { it.title == "retry" }) }
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull() is DomainException.Server) // retryable surfaced, poisoned dropped
+    }
+
     private companion object {
         fun taskEntity(
             id: Long,
@@ -142,6 +294,16 @@ class TaskRepositoryImplTest {
             isCompleted = isCompleted,
             remoteId = remoteId,
             syncStatus = syncStatus,
+            id = id,
+        )
+
+        fun subtask(
+            id: Long,
+            done: Boolean,
+        ) = SubtaskEntity(
+            title = "step",
+            parentTaskId = 10L,
+            isCompleted = done,
             id = id,
         )
 
