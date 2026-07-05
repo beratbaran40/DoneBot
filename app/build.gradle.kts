@@ -106,6 +106,13 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            // Bundle native debug symbols so Play can symbolicate native crash/ANR stack traces
+            // (from third-party .so libs). Without this Play shows the "native code, no debug
+            // symbols" upload warning. FULL = full symbol table (best traces; only in the AAB,
+            // not shipped to devices, so no install-size cost).
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
             // Sign with the release key when keystore.properties is present; never fall back to the
             // debug key for a release build (Play rejects debug-signed uploads).
             if (keystorePropsFile.exists()) {
