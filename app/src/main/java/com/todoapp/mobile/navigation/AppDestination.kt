@@ -239,6 +239,13 @@ sealed class AppDestination(
         hasInfoDialog = true,
     )
 
+    data object BlockedUsers : AppDestination(
+        title = R.string.blocked_users_title,
+        route = Screen.BlockedUsers::class.requiredRoute(),
+        icon = null,
+        selectedIcon = null,
+    )
+
     data object AlarmSounds : AppDestination(
         title = R.string.alarm_sounds,
         route = Screen.AlarmSounds::class.requiredRoute(),
@@ -318,6 +325,7 @@ sealed class AppDestination(
                 Invitations,
                 AlarmSounds,
                 Licenses,
+                BlockedUsers,
                 Journal,
                 // JournalEntry, PolaroidCamera and AvatarCrop intentionally NOT listed — they hide
                 // the topbar so they can render their own floating chrome over a full-bleed surface

@@ -9,6 +9,7 @@ import com.todoapp.mobile.data.model.network.request.CreateGroupRequest
 import com.todoapp.mobile.data.model.network.request.GroupTaskRequest
 import com.todoapp.mobile.data.model.network.request.GroupTaskUpdateRequest
 import com.todoapp.mobile.data.model.network.request.InviteMemberRequest
+import com.todoapp.mobile.data.model.network.request.ReportContentRequest
 import com.todoapp.mobile.data.model.network.request.TransferOwnershipRequest
 import com.todoapp.mobile.data.model.network.request.UpdateGroupRequest
 
@@ -36,6 +37,11 @@ interface GroupRemoteDataSource {
     suspend fun removeMember(
         id: Long,
         userId: Long,
+    ): Result<Unit>
+
+    suspend fun reportContent(
+        groupId: Long,
+        request: ReportContentRequest,
     ): Result<Unit>
 
     suspend fun leaveGroup(id: Long): Result<Unit>

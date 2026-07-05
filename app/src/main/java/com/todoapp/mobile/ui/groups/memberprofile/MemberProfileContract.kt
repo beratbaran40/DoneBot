@@ -24,6 +24,9 @@ object MemberProfileContract {
             val member: MemberUiItem,
             val pendingRemoval: Boolean = false,
             val showConfirmDialog: Boolean = false,
+            val isBlocked: Boolean = false,
+            val showReportDialog: Boolean = false,
+            val isCurrentUserAdmin: Boolean = false,
         ) : UiState
 
         data class Error(
@@ -39,6 +42,14 @@ object MemberProfileContract {
         data object OnDismissDialog : UiAction
 
         data object OnUndoRemove : UiAction
+
+        data object OnReportTap : UiAction
+
+        data object OnReportConfirm : UiAction
+
+        data object OnReportDismiss : UiAction
+
+        data object OnBlockToggle : UiAction
     }
 
     sealed interface UiEffect {

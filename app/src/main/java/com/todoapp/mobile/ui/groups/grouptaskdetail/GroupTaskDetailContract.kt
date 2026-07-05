@@ -110,6 +110,10 @@ object GroupTaskDetailContract {
             val photoId: Long,
         ) : UiAction
 
+        data class OnPhotoReport(
+            val relativeUrl: String,
+        ) : UiAction
+
         data class OnEditLocationPicked(
             val name: String,
             val address: String,

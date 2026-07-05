@@ -131,6 +131,10 @@ object GroupDetailContract {
             val userId: Long,
         ) : UiAction
 
+        data class OnMemberTap(
+            val userId: Long,
+        ) : UiAction
+
         data class OnTaskTapped(
             val taskId: Long,
         ) : UiAction

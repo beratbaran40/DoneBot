@@ -18,6 +18,7 @@ import com.todoapp.mobile.domain.model.GroupActivity
 import com.todoapp.mobile.domain.model.GroupMember
 import com.todoapp.mobile.domain.model.GroupTask
 import com.todoapp.mobile.domain.model.Task
+import com.todoapp.mobile.domain.repository.BlockedUsersPreferences
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.LanguageRepository
 import com.todoapp.mobile.domain.repository.UserRepository
@@ -63,6 +64,7 @@ constructor(
     private val groupRepository: GroupRepository,
     private val userRepository: UserRepository,
     private val languageRepository: LanguageRepository,
+    private val blockedUsersPreferences: BlockedUsersPreferences,
     savedStateHandle: SavedStateHandle,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
@@ -124,6 +126,14 @@ constructor(
             is UiAction.OnGroupTaskFormAction -> handleTaskFormAction(action.action)
             UiAction.OnInviteTap -> _navEffect.trySend(NavigationEffect.Navigate(Screen.InviteMember(groupId)))
             is UiAction.OnRemoveMemberTap -> removeMember(action.userId)
+            is UiAction.OnMemberTap -> {
+                val isAdmin = (_uiState.value as? UiState.Success)?.currentUserRole?.uppercase() == "ADMIN"
+                _navEffect.trySend(
+                    NavigationEffect.Navigate(
+                        Screen.MemberProfile(groupId, action.userId, isCurrentUserAdmin = isAdmin),
+                    ),
+                )
+            }
             is UiAction.OnTaskTapped ->
                 _navEffect.trySend(
                     NavigationEffect.Navigate(
@@ -197,6 +207,8 @@ constructor(
 
             val currentUserRole = members.find { it.userId == currentUserId }?.role?.uppercase().orEmpty()
             val membersById = members.associateBy { it.userId }
+            val blockedUserIds = blockedUsersPreferences.getBlockedIds()
+            val visibleMembers = members.filter { it.userId !in blockedUserIds }
             val previousState = _uiState.value as? UiState.Success
 
             _uiState.value =
@@ -204,11 +216,11 @@ constructor(
                     groupId = groupId,
                     groupName = detail.name,
                     description = detail.description,
-                    memberCount = members.size,
+                    memberCount = visibleMembers.size,
                     completedCount = tasks.count { it.isCompleted },
                     pendingCount = tasks.count { !it.isCompleted },
                     tasks = tasks.map { it.toUiItem(currentUserRole, membersById) },
-                    members = members.map { it.toUiItem(currentUserId) },
+                    members = visibleMembers.map { it.toUiItem(currentUserId) },
                     activities = activities.map { it.toUiItem() },
                     currentUserRole = currentUserRole,
                     selectedTab = previousState?.selectedTab ?: 0,

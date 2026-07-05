@@ -64,6 +64,8 @@ object SettingsContract {
 
         data object OnNavigateToSecretModeSettings : UiAction
 
+        data object OnNavigateToBlockedUsers : UiAction
+
         data object OnNavigateToProfile : UiAction
 
         data object OnLogoutClick : UiAction

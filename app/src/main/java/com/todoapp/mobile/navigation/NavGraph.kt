@@ -682,6 +682,11 @@ fun NavGraph(
                 com.todoapp.mobile.ui.licenses.LicensesScreen()
             }
         }
+        composable<Screen.BlockedUsers> {
+            ResponsiveContainer {
+                com.todoapp.mobile.ui.blockedusers.BlockedUsersScreen()
+            }
+        }
 
         composable<Screen.ChangePassword> {
             val viewModel: ChangePasswordViewModel = hiltViewModel()

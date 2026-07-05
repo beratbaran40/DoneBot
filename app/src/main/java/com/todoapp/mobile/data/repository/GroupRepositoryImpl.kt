@@ -17,6 +17,7 @@ import com.todoapp.mobile.data.model.network.data.GroupSummaryDataList
 import com.todoapp.mobile.data.model.network.request.CreateGroupRequest
 import com.todoapp.mobile.data.model.network.request.GroupTaskUpdateRequest
 import com.todoapp.mobile.data.model.network.request.InviteMemberRequest
+import com.todoapp.mobile.data.model.network.request.ReportContentRequest
 import com.todoapp.mobile.data.model.network.request.TransferOwnershipRequest
 import com.todoapp.mobile.data.model.network.request.UpdateGroupRequest
 import com.todoapp.mobile.data.source.local.datasource.GroupActivityLocalDataSource
@@ -562,6 +563,22 @@ constructor(
     ): Result<Unit> = groupRemoteDataSource
         .removeMember(groupId, userId)
         .onSuccess { invalidateGroupCache(groupId) }
+
+    override suspend fun reportContent(
+        groupId: Long,
+        targetType: String,
+        targetUserId: Long?,
+        targetRef: String?,
+        reason: String?,
+    ): Result<Unit> = groupRemoteDataSource.reportContent(
+        groupId,
+        ReportContentRequest(
+            targetType = targetType,
+            targetUserId = targetUserId,
+            targetRef = targetRef,
+            reason = reason,
+        ),
+    )
 
     override suspend fun leaveGroup(groupId: Long): Result<Unit> = groupRemoteDataSource
         .leaveGroup(groupId)

@@ -56,6 +56,7 @@ fun TaskPhotosSection(
     onDelete: (Long) -> Unit,
     pendingUploads: List<PendingPhoto> = emptyList(),
     onCancelPending: (Int) -> Unit = {},
+    onReport: ((String) -> Unit)? = null,
 ) {
     var cropSource by remember { mutableStateOf<String?>(null) }
     val picker =
@@ -68,6 +69,7 @@ fun TaskPhotosSection(
         }
     var viewerUrl by remember { mutableStateOf<String?>(null) }
     var viewerPhotoId by remember { mutableStateOf<Long?>(null) }
+    var viewerRelativeUrl by remember { mutableStateOf<String?>(null) }
 
     Column {
         Row(
@@ -105,6 +107,7 @@ fun TaskPhotosSection(
                     onLongPress = {
                         viewerUrl = url
                         viewerPhotoId = photoId
+                        viewerRelativeUrl = relativeUrl
                     },
                 )
             }
@@ -124,6 +127,7 @@ fun TaskPhotosSection(
             onDismiss = {
                 viewerUrl = null
                 viewerPhotoId = null
+                viewerRelativeUrl = null
             },
             onDelete =
             viewerPhotoId?.let {
@@ -131,7 +135,19 @@ fun TaskPhotosSection(
                     onDelete(it)
                     viewerUrl = null
                     viewerPhotoId = null
+                    viewerRelativeUrl = null
                 }
+            },
+            onReport =
+            if (onReport != null) {
+                {
+                    viewerRelativeUrl?.let(onReport)
+                    viewerUrl = null
+                    viewerPhotoId = null
+                    viewerRelativeUrl = null
+                }
+            } else {
+                null
             },
         )
     }
@@ -153,6 +169,7 @@ private fun PhotoViewerDialog(
     url: String,
     onDismiss: () -> Unit,
     onDelete: (() -> Unit)?,
+    onReport: (() -> Unit)? = null,
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -182,8 +199,8 @@ private fun PhotoViewerDialog(
                 )
             }
 
-            // Solid-red Delete button at the bottom (prominent, thumb-friendly)
-            if (onDelete != null) {
+            // Report / Delete actions at the bottom (prominent, thumb-friendly)
+            if (onReport != null || onDelete != null) {
                 Box(
                     modifier =
                     Modifier
@@ -191,34 +208,64 @@ private fun PhotoViewerDialog(
                         .padding(horizontal = 24.dp, vertical = 32.dp),
                     contentAlignment = Alignment.BottomCenter,
                 ) {
-                    Row(
-                        modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(56.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(TDTheme.colors.crossRed)
-                            .clickable(onClick = onDelete)
-                            .padding(horizontal = 24.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        Icon(
-                            painter = painterResource(com.example.uikit.R.drawable.ic_delete),
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(22.dp),
-                        )
-                        Spacer(modifier = Modifier.padding(horizontal = 6.dp))
-                        TDText(
-                            text = stringResource(R.string.delete),
-                            style = TDTheme.typography.subheading2,
-                            color = Color.White,
-                        )
+                        if (onReport != null) {
+                            PhotoActionButton(
+                                iconRes = com.example.uikit.R.drawable.ic_error,
+                                label = stringResource(R.string.report_photo),
+                                background = TDTheme.colors.pendingGray,
+                                onClick = onReport,
+                            )
+                        }
+                        if (onDelete != null) {
+                            PhotoActionButton(
+                                iconRes = com.example.uikit.R.drawable.ic_delete,
+                                label = stringResource(R.string.delete),
+                                background = TDTheme.colors.crossRed,
+                                onClick = onDelete,
+                            )
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun PhotoActionButton(
+    iconRes: Int,
+    label: String,
+    background: Color,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier =
+        Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(background)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 24.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(22.dp),
+        )
+        Spacer(modifier = Modifier.padding(horizontal = 6.dp))
+        TDText(
+            text = label,
+            style = TDTheme.typography.subheading2,
+            color = Color.White,
+        )
     }
 }
 

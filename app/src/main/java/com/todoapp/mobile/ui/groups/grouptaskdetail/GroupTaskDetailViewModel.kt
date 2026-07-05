@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.todoapp.mobile.R
 import com.todoapp.mobile.common.error.toUserMessage
+import com.todoapp.mobile.data.model.network.request.ReportTargetType
 import com.todoapp.mobile.domain.model.GroupMember
 import com.todoapp.mobile.domain.model.GroupTask
 import com.todoapp.mobile.domain.repository.GroupRepository
@@ -81,6 +82,7 @@ constructor(
             is UiAction.OnEditAssigneeChange -> updateSuccess { it.copy(editAssigneeId = action.userId) }
             is UiAction.OnPhotoPicked -> uploadPhoto(action.bytes, action.mimeType)
             is UiAction.OnPhotoDelete -> deletePhoto(action.photoId)
+            is UiAction.OnPhotoReport -> reportPhoto(action.relativeUrl)
             is UiAction.OnEditLocationPicked ->
                 updateSuccess {
                     it.copy(
@@ -120,6 +122,18 @@ constructor(
                 .deleteTaskPhoto(taskId, photoId)
                 .onSuccess { loadTask(force = true) }
                 .onFailure { _uiEffect.trySend(UiEffect.ShowToast(it.toUserMessage(context))) }
+        }
+    }
+
+    private fun reportPhoto(relativeUrl: String) {
+        viewModelScope.launch {
+            groupRepository
+                .reportContent(groupId, ReportTargetType.PHOTO, targetRef = relativeUrl)
+                .onSuccess {
+                    _uiEffect.trySend(UiEffect.ShowToast(context.getString(R.string.report_success_toast)))
+                }.onFailure {
+                    _uiEffect.trySend(UiEffect.ShowToast(context.getString(R.string.report_failed_toast)))
+                }
         }
     }
 

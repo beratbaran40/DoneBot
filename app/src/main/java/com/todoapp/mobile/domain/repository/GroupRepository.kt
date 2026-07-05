@@ -51,6 +51,14 @@ interface GroupRepository {
         userId: Long,
     ): Result<Unit>
 
+    suspend fun reportContent(
+        groupId: Long,
+        targetType: String,
+        targetUserId: Long? = null,
+        targetRef: String? = null,
+        reason: String? = null,
+    ): Result<Unit>
+
     suspend fun leaveGroup(groupId: Long): Result<Unit>
 
     suspend fun transferOwnership(

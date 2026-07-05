@@ -45,6 +45,7 @@ import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDUndoSnackbar
+import com.todoapp.uikit.extensions.ObscuredTouchGuard
 import com.todoapp.uikit.extensions.collectWithLifecycle
 import com.todoapp.uikit.theme.TDTheme
 
@@ -135,12 +136,34 @@ private fun MemberProfileSuccessContent(
             MemberInfoCard(member = uiState.member)
             Spacer(modifier = Modifier.height(32.dp))
             TDButton(
-                text = stringResource(com.todoapp.mobile.R.string.remove_from_group),
-                type = TDButtonType.CANCEL,
+                text = stringResource(com.todoapp.mobile.R.string.report_user),
+                type = TDButtonType.SECONDARY,
                 fullWidth = true,
-                isEnable = !uiState.pendingRemoval,
-                onClick = { onAction(UiAction.OnRemoveTap) },
+                onClick = { onAction(UiAction.OnReportTap) },
             )
+            Spacer(modifier = Modifier.height(12.dp))
+            TDButton(
+                text = stringResource(
+                    if (uiState.isBlocked) {
+                        com.todoapp.mobile.R.string.unblock_user
+                    } else {
+                        com.todoapp.mobile.R.string.block_user
+                    },
+                ),
+                type = TDButtonType.SECONDARY,
+                fullWidth = true,
+                onClick = { onAction(UiAction.OnBlockToggle) },
+            )
+            if (uiState.isCurrentUserAdmin) {
+                Spacer(modifier = Modifier.height(12.dp))
+                TDButton(
+                    text = stringResource(com.todoapp.mobile.R.string.remove_from_group),
+                    type = TDButtonType.CANCEL,
+                    fullWidth = true,
+                    isEnable = !uiState.pendingRemoval,
+                    onClick = { onAction(UiAction.OnRemoveTap) },
+                )
+            }
             Spacer(modifier = Modifier.height(80.dp))
         }
 
@@ -173,6 +196,7 @@ private fun MemberProfileSuccessContent(
             containerColor = TDTheme.colors.background,
             textContentColor = TDTheme.colors.onBackground,
             text = {
+                ObscuredTouchGuard()
                 TDText(
                     text = stringResource(com.todoapp.mobile.R.string.remove_member_message),
                     style = TDTheme.typography.subheading1,
@@ -189,6 +213,44 @@ private fun MemberProfileSuccessContent(
             },
             dismissButton = {
                 TextButton(onClick = { onAction(UiAction.OnDismissDialog) }) {
+                    TDText(
+                        text = stringResource(com.todoapp.mobile.R.string.cancel),
+                        color = TDTheme.colors.onBackground,
+                    )
+                }
+            },
+        )
+    }
+
+    if (uiState.showReportDialog) {
+        AlertDialog(
+            onDismissRequest = { onAction(UiAction.OnReportDismiss) },
+            title = {
+                TDText(
+                    text = stringResource(com.todoapp.mobile.R.string.report_user_title),
+                    style = TDTheme.typography.heading3,
+                    color = TDTheme.colors.onBackground,
+                )
+            },
+            containerColor = TDTheme.colors.background,
+            textContentColor = TDTheme.colors.onBackground,
+            text = {
+                TDText(
+                    text = stringResource(com.todoapp.mobile.R.string.report_user_message),
+                    style = TDTheme.typography.subheading1,
+                    color = TDTheme.colors.onBackground,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { onAction(UiAction.OnReportConfirm) }) {
+                    TDText(
+                        text = stringResource(com.todoapp.mobile.R.string.report_confirm_button),
+                        color = TDTheme.colors.crossRed,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onAction(UiAction.OnReportDismiss) }) {
                     TDText(
                         text = stringResource(com.todoapp.mobile.R.string.cancel),
                         color = TDTheme.colors.onBackground,
@@ -374,6 +436,51 @@ private fun MemberProfilePendingRemovalPreview() {
                 ),
                 pendingRemoval = true,
             ),
+            onAction = {},
+        )
+    }
+}
+
+private fun sampleMember() = MemberUiItem(
+    userId = 1,
+    firstName = "John",
+    lastName = "Doe",
+    email = "john@example.com",
+    avatarUrl = null,
+    role = "MEMBER",
+    joinedAt = "Jan 12, 2024",
+    displayName = "John Doe",
+    initials = "JD",
+)
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun MemberProfileAdminPreview() {
+    TDTheme {
+        MemberProfileContent(
+            uiState = MemberProfileContract.UiState.Success(member = sampleMember(), isCurrentUserAdmin = true),
+            onAction = {},
+        )
+    }
+}
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun MemberProfileBlockedPreview() {
+    TDTheme {
+        MemberProfileContent(
+            uiState = MemberProfileContract.UiState.Success(member = sampleMember(), isBlocked = true),
+            onAction = {},
+        )
+    }
+}
+
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun MemberProfileReportDialogPreview() {
+    TDTheme {
+        MemberProfileContent(
+            uiState = MemberProfileContract.UiState.Success(member = sampleMember(), showReportDialog = true),
             onAction = {},
         )
     }

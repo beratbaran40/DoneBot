@@ -52,7 +52,7 @@ constructor(
             UiAction.OnScreenResumed -> loadMembers()
             is UiAction.OnMemberTap ->
                 _navEffect.trySend(
-                    NavigationEffect.Navigate(Screen.MemberProfile(groupId, action.userId)),
+                    NavigationEffect.Navigate(Screen.MemberProfile(groupId, action.userId, isCurrentUserAdmin = true)),
                 )
             is UiAction.OnRemoveMemberTap -> removeMember(action.userId)
         }

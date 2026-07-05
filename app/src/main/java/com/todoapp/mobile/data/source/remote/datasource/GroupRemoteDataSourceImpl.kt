@@ -12,6 +12,7 @@ import com.todoapp.mobile.data.model.network.request.CreateGroupRequest
 import com.todoapp.mobile.data.model.network.request.GroupTaskRequest
 import com.todoapp.mobile.data.model.network.request.GroupTaskUpdateRequest
 import com.todoapp.mobile.data.model.network.request.InviteMemberRequest
+import com.todoapp.mobile.data.model.network.request.ReportContentRequest
 import com.todoapp.mobile.data.model.network.request.TransferOwnershipRequest
 import com.todoapp.mobile.data.model.network.request.UpdateGroupRequest
 import com.todoapp.mobile.data.model.network.response.ErrorResponse
@@ -67,6 +68,11 @@ constructor(
         id: Long,
         userId: Long,
     ): Result<Unit> = handleEmptyRequest { todoApi.removeMember(id, userId) }
+
+    override suspend fun reportContent(
+        groupId: Long,
+        request: ReportContentRequest,
+    ): Result<Unit> = handleEmptyRequest { todoApi.reportContent(groupId, request) }
 
     override suspend fun leaveGroup(id: Long): Result<Unit> = handleEmptyRequest { todoApi.leaveGroup(id) }
 

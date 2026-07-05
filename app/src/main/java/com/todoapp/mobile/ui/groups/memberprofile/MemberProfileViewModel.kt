@@ -6,7 +6,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.todoapp.mobile.R
+import com.todoapp.mobile.data.model.network.request.ReportTargetType
 import com.todoapp.mobile.domain.model.GroupMember
+import com.todoapp.mobile.domain.repository.BlockedUsersPreferences
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.navigation.NavigationEffect
 import com.todoapp.mobile.navigation.Screen
@@ -35,12 +37,14 @@ class MemberProfileViewModel
 @Inject
 constructor(
     private val groupRepository: GroupRepository,
+    private val blockedUsersPreferences: BlockedUsersPreferences,
     savedStateHandle: SavedStateHandle,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val route = savedStateHandle.toRoute<Screen.MemberProfile>()
     private val groupId = route.groupId
     private val userId = route.userId
+    private val isCurrentUserAdmin = route.isCurrentUserAdmin
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState = _uiState.asStateFlow()
@@ -72,6 +76,13 @@ constructor(
                 pendingUserId = null
                 updateSuccessState { it.copy(pendingRemoval = false) }
             }
+            UiAction.OnReportTap -> updateSuccessState { it.copy(showReportDialog = true) }
+            UiAction.OnReportDismiss -> updateSuccessState { it.copy(showReportDialog = false) }
+            UiAction.OnReportConfirm -> {
+                updateSuccessState { it.copy(showReportDialog = false) }
+                reportMember()
+            }
+            UiAction.OnBlockToggle -> toggleBlock()
         }
     }
 
@@ -94,13 +105,44 @@ constructor(
                 .onSuccess { members ->
                     val member = members.find { it.userId == userId }
                     if (member != null) {
-                        _uiState.value = UiState.Success(member.toUiItem())
+                        _uiState.value = UiState.Success(
+                            member = member.toUiItem(),
+                            isBlocked = blockedUsersPreferences.isBlocked(userId),
+                            isCurrentUserAdmin = isCurrentUserAdmin,
+                        )
                     } else {
                         _uiState.value = UiState.Error(context.getString(R.string.member_not_found))
                     }
                 }.onFailure {
                     _uiState.value = UiState.Error(context.getString(R.string.failed_to_load_member))
                 }
+        }
+    }
+
+    private fun reportMember() {
+        viewModelScope.launch {
+            groupRepository
+                .reportContent(groupId, ReportTargetType.MEMBER, targetUserId = userId)
+                .onSuccess {
+                    _uiEffect.trySend(UiEffect.ShowToast(context.getString(R.string.report_success_toast)))
+                }.onFailure {
+                    _uiEffect.trySend(UiEffect.ShowToast(context.getString(R.string.report_failed_toast)))
+                }
+        }
+    }
+
+    private fun toggleBlock() {
+        val current = _uiState.value as? UiState.Success ?: return
+        viewModelScope.launch {
+            if (current.isBlocked) {
+                blockedUsersPreferences.unblock(userId)
+                updateSuccessState { it.copy(isBlocked = false) }
+                _uiEffect.trySend(UiEffect.ShowToast(context.getString(R.string.user_unblocked_toast)))
+            } else {
+                blockedUsersPreferences.block(userId, current.member.displayName)
+                updateSuccessState { it.copy(isBlocked = true) }
+                _uiEffect.trySend(UiEffect.ShowToast(context.getString(R.string.user_blocked_toast)))
+            }
         }
     }
 

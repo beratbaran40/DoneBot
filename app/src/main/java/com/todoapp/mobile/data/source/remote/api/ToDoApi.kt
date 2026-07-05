@@ -27,6 +27,7 @@ import com.todoapp.mobile.data.model.network.request.InviteMemberRequest
 import com.todoapp.mobile.data.model.network.request.LoginRequest
 import com.todoapp.mobile.data.model.network.request.RefreshTokenRequest
 import com.todoapp.mobile.data.model.network.request.RegisterRequest
+import com.todoapp.mobile.data.model.network.request.ReportContentRequest
 import com.todoapp.mobile.data.model.network.request.ResetPasswordRequest
 import com.todoapp.mobile.data.model.network.request.TaskRequest
 import com.todoapp.mobile.data.model.network.request.TransferOwnershipRequest
@@ -198,6 +199,12 @@ interface ToDoApi {
     suspend fun removeMember(
         @Path("groupId") id: Long,
         @Path("userId") userId: Long,
+    ): Response<BaseResponse<Unit?>>
+
+    @POST("family-groups/{groupId}/reports")
+    suspend fun reportContent(
+        @Path("groupId") groupId: Long,
+        @Body request: ReportContentRequest,
     ): Response<BaseResponse<Unit?>>
 
     @POST("family-groups/{groupId}/leave")

@@ -2,6 +2,7 @@ package com.todoapp.mobile.ui.groups.groupdetail
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -80,6 +81,7 @@ fun GroupDetailMembersTab(
                 member = member,
                 isAdmin = uiState.currentUserRole == "ADMIN",
                 onRemove = { onAction(UiAction.OnRemoveMemberTap(member.userId)) },
+                onClick = { onAction(UiAction.OnMemberTap(member.userId)) },
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -93,6 +95,7 @@ private fun MemberCard(
     member: GroupMemberUiItem,
     isAdmin: Boolean,
     onRemove: () -> Unit,
+    onClick: () -> Unit,
 ) {
     Column(
         modifier =
@@ -104,6 +107,7 @@ private fun MemberCard(
             ).fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(TDTheme.colors.background)
+            .then(if (!member.isCurrentUser) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(16.dp),
     ) {
         Row(

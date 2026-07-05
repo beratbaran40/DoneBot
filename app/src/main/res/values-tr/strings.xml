@@ -412,6 +412,26 @@
     <string name="manage_members">Üyeleri Yönet</string>
     <string name="member_profile">Üye Profili</string>
     <string name="remove_from_group">Gruptan Çıkar</string>
+
+    <!-- UGC moderasyonu: içerik raporlama & kullanıcı engelleme (§6.18) -->
+    <string name="report_user">Kullanıcıyı bildir</string>
+    <string name="block_user">Kullanıcıyı engelle</string>
+    <string name="unblock_user">Engeli kaldır</string>
+    <string name="report_user_title">Bu üye bildirilsin mi?</string>
+    <string name="report_user_message">Ekibimiz bu üyeyi uygunsuz veya taciz edici davranış açısından inceleyecek. Üyeye bildirim gitmez.</string>
+    <string name="report_photo">Fotoğrafı bildir</string>
+    <string name="report_photo_title">Bu fotoğraf bildirilsin mi?</string>
+    <string name="report_photo_message">Ekibimiz bu fotoğrafı uygunsuz içerik açısından inceleyecek. Kimseye bildirim gitmez.</string>
+    <string name="report_confirm_button">Bildir</string>
+    <string name="report_success_toast">Teşekkürler — bildirimin alındı.</string>
+    <string name="report_failed_toast">Bildirim gönderilemedi. Lütfen tekrar dene.</string>
+    <string name="user_blocked_toast">Kullanıcı engellendi. Bu cihazda gruplarda artık görünmeyecek.</string>
+    <string name="user_unblocked_toast">Kullanıcının engeli kaldırıldı.</string>
+    <string name="blocked_users_title">Engellenen kullanıcılar</string>
+    <string name="blocked_users_empty">Henüz kimseyi engellemedin. Engellenen üyeler bu cihazda grup üye listelerinden gizlenir.</string>
+    <string name="blocked_user_fallback">Engellenen kullanıcı</string>
+    <string name="unblock">Engeli kaldır</string>
+    <string name="settings_blocked_users">Engellenen kullanıcılar</string>
     <string name="remove_member_title">Üyeyi Kaldır</string>
     <string name="remove_member_message">Bu üyeyi gruptan kaldırmak istediğine emin misin?</string>
     <string name="member_not_found">Üye bulunamadı</string>

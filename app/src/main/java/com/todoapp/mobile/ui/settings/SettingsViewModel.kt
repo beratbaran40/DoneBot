@@ -229,6 +229,7 @@ constructor(
             is UiAction.OnDisableSecretModeTap -> disableSecretMode()
             is UiAction.OnDailyPlanTimeChange -> updateDailyPlanTime(action.time)
             is UiAction.OnNavigateToSecretModeSettings -> navigateToSecretModeSettings()
+            UiAction.OnNavigateToBlockedUsers -> _navEffect.trySend(NavigationEffect.Navigate(Screen.BlockedUsers))
             UiAction.OnNavigateToProfile -> _navEffect.trySend(NavigationEffect.Navigate(Screen.Profile))
             UiAction.OnNavigateToPlanYourDay -> navigateToDailyPlanSettings()
             UiAction.OnNavigateToPomodoroSettings -> navigateToPomodoroSettings()

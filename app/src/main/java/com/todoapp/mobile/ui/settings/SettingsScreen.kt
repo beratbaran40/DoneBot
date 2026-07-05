@@ -57,6 +57,7 @@ import com.todoapp.mobile.ui.permissions.rememberCameraPermissionRequest
 import com.todoapp.mobile.ui.settings.SettingsContract.UiAction
 import com.todoapp.mobile.ui.settings.SettingsContract.UiState
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.extensions.ObscuredTouchGuard
 import com.todoapp.uikit.theme.TDTheme
 import java.time.LocalTime
 
@@ -112,6 +113,7 @@ private fun SettingsContent(
                 )
             },
             text = {
+                ObscuredTouchGuard()
                 TDText(
                     text = stringResource(R.string.logout_dialog_message),
                     style = TDTheme.typography.subheading1,
@@ -316,6 +318,26 @@ private fun SettingsContent(
         ) {
             TDText(
                 text = stringResource(R.string.privacy_security),
+                style = TDTheme.typography.heading6,
+                color = TDTheme.colors.onBackground,
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Icon(
+                painter = painterResource(com.example.uikit.R.drawable.ic_arrow_forward),
+                contentDescription = null,
+                tint = TDTheme.colors.onBackground,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clickable { onAction(UiAction.OnNavigateToBlockedUsers) },
+        ) {
+            TDText(
+                text = stringResource(R.string.settings_blocked_users),
                 style = TDTheme.typography.heading6,
                 color = TDTheme.colors.onBackground,
             )

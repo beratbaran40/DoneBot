@@ -34,6 +34,9 @@ interface Screen {
     data object Invitations : Screen
 
     @Serializable
+    data object BlockedUsers : Screen
+
+    @Serializable
     data object AlarmSounds : Screen
 
     @Serializable
@@ -140,6 +143,7 @@ interface Screen {
     data class MemberProfile(
         val groupId: Long,
         val userId: Long,
+        val isCurrentUserAdmin: Boolean = false,
     ) : Screen
 
     @Serializable

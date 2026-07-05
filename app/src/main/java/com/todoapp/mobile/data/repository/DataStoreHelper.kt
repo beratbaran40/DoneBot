@@ -231,6 +231,41 @@ constructor(
         }
     }
 
+    /**
+     * Device-local map of blocked users (id -> display name) for §6.18 UGC moderation. Blocking is
+     * client-side: a blocked member is hidden from group member lists on this device. The name is
+     * kept so the "Blocked users" management screen can show who was blocked — blocked members are
+     * hidden everywhere else, so their profile is no longer reachable to unblock from. Stored as a
+     * JSON string (DataStore has no map key type).
+     */
+    fun observeBlockedUsers(): Flow<Map<Long, String>> = dataStore.data.map { preferences ->
+        decodeBlocked(preferences[BLOCKED_USERS])
+    }
+
+    suspend fun blockUser(userId: Long, displayName: String) {
+        dataStore.edit { preferences ->
+            val current = decodeBlocked(preferences[BLOCKED_USERS])
+            preferences[BLOCKED_USERS] = encodeBlocked(current + (userId to displayName))
+        }
+    }
+
+    suspend fun unblockUser(userId: Long) {
+        dataStore.edit { preferences ->
+            val current = decodeBlocked(preferences[BLOCKED_USERS])
+            preferences[BLOCKED_USERS] = encodeBlocked(current - userId)
+        }
+    }
+
+    private fun decodeBlocked(raw: String?): Map<Long, String> {
+        if (raw.isNullOrBlank()) return emptyMap()
+        return runCatching { json.decodeFromString<Map<String, String>>(raw) }
+            .getOrDefault(emptyMap())
+            .mapNotNull { (key, value) -> key.toLongOrNull()?.let { it to value } }
+            .toMap()
+    }
+
+    private fun encodeBlocked(map: Map<Long, String>): String = json.encodeToString(map.mapKeys { it.key.toString() })
+
     companion object {
         private val json =
             Json {
@@ -252,5 +287,6 @@ constructor(
         private val JOURNAL_ORPHANS_CLAIMED = booleanPreferencesKey("journal_orphans_claimed")
         private val PERF_COLLECTION_ENABLED = booleanPreferencesKey("perf_collection_enabled")
         private val CRASH_ANALYTICS_ENABLED = booleanPreferencesKey("crash_analytics_enabled")
+        private val BLOCKED_USERS = stringPreferencesKey("blocked_users")
     }
 }

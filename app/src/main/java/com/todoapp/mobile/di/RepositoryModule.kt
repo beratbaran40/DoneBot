@@ -184,4 +184,10 @@ abstract class RepositoryModule {
     abstract fun bindCrashAnalyticsPreferences(
         impl: com.todoapp.mobile.data.repository.CrashAnalyticsPreferencesImpl,
     ): com.todoapp.mobile.domain.repository.CrashAnalyticsPreferences
+
+    @Binds
+    @Singleton
+    abstract fun bindBlockedUsersPreferences(
+        impl: com.todoapp.mobile.data.repository.BlockedUsersPreferencesImpl,
+    ): com.todoapp.mobile.domain.repository.BlockedUsersPreferences
 }
