@@ -20,6 +20,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -29,6 +30,7 @@ import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.previews.TDPreviewDialog
 import com.todoapp.uikit.theme.TDTheme
 import com.todoapp.uikit.theme.timePickerColors
+import com.todoapp.uikit.util.deviceUses24HourClock
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
@@ -42,6 +44,7 @@ fun TDTimePickerDialog(
     selectedTime: LocalTime?,
     onTimeChange: (LocalTime) -> Unit,
     isError: Boolean = false,
+    is24Hour: Boolean = deviceUses24HourClock(LocalContext.current),
 ) {
     var isPickerOpen by rememberSaveable { mutableStateOf(false) }
     val currentTime = Calendar.getInstance()
@@ -49,7 +52,7 @@ fun TDTimePickerDialog(
         rememberTimePickerState(
             initialHour = currentTime.get(Calendar.HOUR_OF_DAY),
             initialMinute = currentTime.get(Calendar.MINUTE),
-            is24Hour = true,
+            is24Hour = is24Hour,
         )
     Column(
         modifier = modifier,
@@ -60,7 +63,7 @@ fun TDTimePickerDialog(
             value =
             selectedTime?.format(
                 DateTimeFormatter.ofPattern(
-                    "HH:mm",
+                    if (is24Hour) "HH:mm" else "h:mm a",
                 ),
             ) ?: placeholder,
             onClick = { isPickerOpen = true },
@@ -176,6 +179,24 @@ private fun TDTimePickerErrorPreview() {
                 selectedTime = LocalTime.of(8, 0),
                 onTimeChange = {},
                 isError = true,
+            )
+        }
+    }
+}
+
+@TDPreview
+@Composable
+private fun TDTimePicker12hPreview() {
+    TDTheme {
+        Column(
+            modifier = Modifier.padding(16.dp),
+        ) {
+            TDTimePickerDialog(
+                title = "Set Time",
+                placeholder = "HH:MM",
+                selectedTime = LocalTime.of(14, 30),
+                onTimeChange = {},
+                is24Hour = false,
             )
         }
     }

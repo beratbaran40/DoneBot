@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -20,6 +21,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
+import com.todoapp.mobile.common.deviceTimeFormatter
 import com.todoapp.mobile.ui.planyourday.PlanYourDayContract.UiAction
 import com.todoapp.mobile.ui.planyourday.PlanYourDayContract.UiEffect
 import com.todoapp.mobile.ui.planyourday.PlanYourDayContract.UiState
@@ -42,6 +44,7 @@ fun PlanYourDayScreen(
     onNavigateBack: () -> Unit,
 ) {
     val context = LocalContext.current
+    val timeFormatter = remember(context) { deviceTimeFormatter(context) }
 
     uiEffect.collectWithLifecycle { effect ->
         when (effect) {
@@ -107,7 +110,7 @@ fun PlanYourDayScreen(
 
         TDButton(
             modifier = Modifier.fillMaxWidth(),
-            text = stringResource(R.string.notify_me_at, uiState.displayTime),
+            text = stringResource(R.string.notify_me_at, uiState.selectedTime.format(timeFormatter)),
             type = TDButtonType.PRIMARY,
             size = TDButtonSize.MEDIUM,
             fullWidth = true,

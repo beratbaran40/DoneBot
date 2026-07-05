@@ -13,6 +13,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -22,9 +23,10 @@ import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
 /**
- * Single-select pill chip (reminder offset, recurrence frequency, …). Selected = filled `primary` +
- * `onPrimary` label; unselected = outlined. Both states are contrast-safe in light AND dark — do not
- * swap the selected fill for a light tint (e.g. `lightPurple`): a light label would wash out in dark.
+ * Single-select pill chip (reminder offset, recurrence frequency, …). Selected fill/label default to
+ * `primary`/`onPrimary`; override via [selectedContainerColor] / [selectedContentColor] — the task
+ * form passes `pendingGray` + `white`. Unselected = outlined. Keep the selected fill a MID tone with
+ * a high-contrast label — never a light tint (e.g. `lightPurple`), whose label washes out in dark.
  */
 @Composable
 fun TDChoiceChip(
@@ -33,13 +35,15 @@ fun TDChoiceChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     leadingIcon: Painter? = null,
+    selectedContainerColor: Color = TDTheme.colors.primary,
+    selectedContentColor: Color = TDTheme.colors.onPrimary,
 ) {
-    val contentColor = if (selected) TDTheme.colors.onPrimary else TDTheme.colors.onBackground
+    val contentColor = if (selected) selectedContentColor else TDTheme.colors.onBackground
     Surface(
         onClick = onClick,
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
-        color = if (selected) TDTheme.colors.primary else TDTheme.colors.background,
+        color = if (selected) selectedContainerColor else TDTheme.colors.background,
         border = if (selected) null else BorderStroke(1.dp, TDTheme.colors.lightGray),
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
@@ -115,6 +119,32 @@ private fun TDChoiceChipWithIconPreview() {
                 selected = false,
                 onClick = {},
                 leadingIcon = painterResource(R.drawable.ic_globe),
+            )
+        }
+    }
+}
+
+@TDPreview
+@Composable
+private fun TDChoiceChipPendingPreview() {
+    TDTheme {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            TDChoiceChip(
+                label = "Zamanında",
+                selected = true,
+                onClick = {},
+                selectedContainerColor = TDTheme.colors.pendingGray,
+                selectedContentColor = TDTheme.colors.white,
+            )
+            TDChoiceChip(
+                label = "15 dk",
+                selected = false,
+                onClick = {},
+                selectedContainerColor = TDTheme.colors.pendingGray,
+                selectedContentColor = TDTheme.colors.white,
             )
         }
     }

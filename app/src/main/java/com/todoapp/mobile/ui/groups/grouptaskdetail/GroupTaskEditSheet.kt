@@ -31,11 +31,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.mobile.common.deviceTimeFormatter
+import com.todoapp.mobile.ui.common.taskform.rememberTimeFieldPlaceholder
 import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract
 import com.todoapp.mobile.ui.groups.grouptaskdetail.GroupTaskDetailContract.UiAction
 import com.todoapp.mobile.ui.groups.grouptaskdetail.GroupTaskDetailContract.UiState
@@ -47,14 +50,16 @@ import com.todoapp.uikit.components.TDPickerField
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDWheelTimePickerDialog
 import com.todoapp.uikit.theme.TDTheme
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun GroupTaskEditSheet(
     state: UiState.Success,
     onAction: (UiAction) -> Unit,
 ) {
-    val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
+    val context = LocalContext.current
+    val timeFormatter = remember(context) { deviceTimeFormatter(context) }
+    val startTimePlaceholder = rememberTimeFieldPlaceholder(isStart = true)
+    val endTimePlaceholder = rememberTimeFieldPlaceholder(isStart = false)
     var showStartPicker by remember { mutableStateOf(false) }
     var showEndPicker by remember { mutableStateOf(false) }
 
@@ -134,7 +139,7 @@ fun GroupTaskEditSheet(
                     TDPickerField(
                         title = stringResource(com.todoapp.mobile.R.string.set_time),
                         value = state.editTimeStart?.format(timeFormatter)
-                            ?: stringResource(com.todoapp.mobile.R.string.starts),
+                            ?: startTimePlaceholder,
                         onClick = { showStartPicker = true },
                         leadingIcon = {
                             Icon(
@@ -151,7 +156,7 @@ fun GroupTaskEditSheet(
                     TDPickerField(
                         title = "",
                         value = state.editTimeEnd?.format(timeFormatter)
-                            ?: stringResource(com.todoapp.mobile.R.string.ends),
+                            ?: endTimePlaceholder,
                         onClick = { showEndPicker = true },
                         leadingIcon = {
                             Icon(

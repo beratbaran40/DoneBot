@@ -487,6 +487,9 @@ constructor(
                 timeEnd = form.taskTimeEnd ?: timeStart,
                 isCompleted = false,
                 isSecret = form.isTaskSecret,
+                // Y6: carry a stable idempotency key so a timeout-then-retry dedups
+                // server-side instead of creating a duplicate group task (mirrors Home/CreationHub).
+                clientTaskId = form.clientTaskId,
             )
         val pendingPhotos = form.pendingPhotos
         viewModelScope.launch {

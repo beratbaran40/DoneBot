@@ -145,6 +145,8 @@ fun TaskReminderChips(
                     label = stringResource(option.labelRes),
                     selected = selected == option.minutes,
                     onClick = { onSelect(option.minutes) },
+                    selectedContainerColor = TDTheme.colors.pendingGray,
+                    selectedContentColor = TDTheme.colors.white,
                 )
             }
         }
@@ -169,6 +171,8 @@ fun TaskFrequencyChips(
                     selected = selected == option.recurrence,
                     onClick = { onSelect(option.recurrence) },
                     leadingIcon = painterResource(option.iconRes),
+                    selectedContainerColor = TDTheme.colors.pendingGray,
+                    selectedContentColor = TDTheme.colors.white,
                 )
             }
         }

@@ -23,11 +23,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
+import com.todoapp.mobile.common.deviceTimeFormatter
 import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.ui.common.categoryOptions
 import com.todoapp.mobile.ui.common.components.SecretCheckbox
@@ -206,6 +208,8 @@ private fun TimeRow(
     time: LocalTime?,
     onClick: () -> Unit,
 ) {
+    val context = LocalContext.current
+    val timeFormatter = remember(context) { deviceTimeFormatter(context) }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -222,7 +226,7 @@ private fun TimeRow(
             modifier = Modifier.weight(1f),
         )
         TDText(
-            text = time?.toString() ?: "--:--",
+            text = time?.format(timeFormatter) ?: "--:--",
             style = TDTheme.typography.regularTextStyle.copy(fontWeight = FontWeight.SemiBold),
             color = TDTheme.colors.darkPending,
         )

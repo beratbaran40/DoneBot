@@ -12,9 +12,6 @@ object PlanYourDayContract {
     ) {
         val hasChanges: Boolean
             get() = selectedTime != (savedTime ?: LocalTime.of(9, 0))
-
-        val displayTime: String
-            get() = "%02d:%02d".format(selectedTime.hour, selectedTime.minute)
     }
 
     sealed interface UiAction {

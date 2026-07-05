@@ -30,7 +30,7 @@ internal fun AuthConsentFooter(modifier: Modifier = Modifier) {
         TextLinkStyles(
             style =
             SpanStyle(
-                color = TDTheme.colors.primary,
+                color = TDTheme.colors.pendingGray,
                 textDecoration = TextDecoration.Underline,
             ),
         )

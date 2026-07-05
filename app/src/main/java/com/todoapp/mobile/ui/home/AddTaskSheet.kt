@@ -43,10 +43,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.mobile.common.deviceTimeFormatter
 import com.todoapp.mobile.domain.constants.DailyPlanDefaults
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.TaskCategory
@@ -54,6 +56,7 @@ import com.todoapp.mobile.ui.common.categoryOptions
 import com.todoapp.mobile.ui.common.recurrenceExplainer
 import com.todoapp.mobile.ui.common.recurrenceOptions
 import com.todoapp.mobile.ui.common.reminderOffsetOptions
+import com.todoapp.mobile.ui.common.taskform.rememberTimeFieldPlaceholder
 import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonSize
 import com.todoapp.uikit.components.TDCategoryPicker
@@ -67,7 +70,6 @@ import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDWheelTimePickerDialog
 import com.todoapp.uikit.theme.TDTheme
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 @Composable
 internal fun AddTaskSheet(
@@ -75,7 +77,10 @@ internal fun AddTaskSheet(
     onAction: (TaskFormUiAction) -> Unit,
     availableGroups: List<HomeContract.GroupSelectionItem> = emptyList(),
 ) {
-    val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
+    val context = LocalContext.current
+    val timeFormatter = remember(context) { deviceTimeFormatter(context) }
+    val startTimePlaceholder = rememberTimeFieldPlaceholder(isStart = true)
+    val endTimePlaceholder = rememberTimeFieldPlaceholder(isStart = false)
     var showStartTimePicker by remember { mutableStateOf(false) }
     var showEndTimePicker by remember { mutableStateOf(false) }
 
@@ -157,7 +162,7 @@ internal fun AddTaskSheet(
                         title = stringResource(com.todoapp.mobile.R.string.set_time),
                         value =
                         formState.taskTimeStart?.format(timeFormatter)
-                            ?: stringResource(com.todoapp.mobile.R.string.starts),
+                            ?: startTimePlaceholder,
                         onClick = { showStartTimePicker = true },
                         isError = formState.timeErrorRes != null,
                         supportingText = formState.timeErrorRes?.let { stringResource(it) },
@@ -177,7 +182,7 @@ internal fun AddTaskSheet(
                         title = "",
                         value =
                         formState.taskTimeEnd?.format(timeFormatter)
-                            ?: stringResource(com.todoapp.mobile.R.string.ends),
+                            ?: endTimePlaceholder,
                         onClick = { showEndTimePicker = true },
                         isError = formState.timeErrorRes != null,
                         leadingIcon = {

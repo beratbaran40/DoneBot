@@ -29,15 +29,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.uikit.R
 import com.todoapp.mobile.BuildConfig
+import com.todoapp.mobile.common.deviceTimeFormatter
 import com.todoapp.mobile.ui.common.components.AssigneeUi
 import com.todoapp.mobile.ui.common.components.GroupTaskAssigneeSelector
 import com.todoapp.mobile.ui.common.components.PrioritySelector
+import com.todoapp.mobile.ui.common.taskform.rememberTimeFieldPlaceholder
 import com.todoapp.mobile.ui.home.ExistingPhoto
 import com.todoapp.mobile.ui.home.PendingPhotosRow
 import com.todoapp.mobile.ui.home.TaskFormState
@@ -50,7 +53,6 @@ import com.todoapp.uikit.components.TDPickerField
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDWheelTimePickerDialog
 import com.todoapp.uikit.theme.TDTheme
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun GroupAddTaskSheet(
@@ -60,7 +62,9 @@ fun GroupAddTaskSheet(
     onAction: (TaskFormUiAction) -> Unit,
     submitLabel: String = stringResource(com.todoapp.mobile.R.string.create_task),
 ) {
-    val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
+    val context = LocalContext.current
+    val timeFormatter = remember(context) { deviceTimeFormatter(context) }
+    val startTimePlaceholder = rememberTimeFieldPlaceholder(isStart = true)
     var showStartTimePicker by remember { mutableStateOf(false) }
 
     Column(
@@ -123,7 +127,7 @@ fun GroupAddTaskSheet(
             title = stringResource(com.todoapp.mobile.R.string.set_time),
             value =
             formState.taskTimeStart?.format(timeFormatter)
-                ?: stringResource(com.todoapp.mobile.R.string.starts),
+                ?: startTimePlaceholder,
             onClick = { showStartTimePicker = true },
             isError = formState.timeErrorRes != null,
             supportingText = formState.timeErrorRes?.let { stringResource(it) },

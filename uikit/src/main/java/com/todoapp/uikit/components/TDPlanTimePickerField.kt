@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -39,10 +40,9 @@ import com.example.uikit.R
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 import com.todoapp.uikit.theme.timePickerColors
+import com.todoapp.uikit.util.deviceUses24HourClock
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-
-private val HH_MM: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,9 +52,11 @@ fun TDPlanTimePickerField(
     subtitle: String,
     time: LocalTime,
     onTimeChange: (LocalTime) -> Unit,
+    is24Hour: Boolean = deviceUses24HourClock(LocalContext.current),
 ) {
     var isDialogOpen by rememberSaveable { mutableStateOf(false) }
     val (initialHour, initialMinute) = remember(time) { time.hour to time.minute }
+    val timeFormatter = remember(is24Hour) { DateTimeFormatter.ofPattern(if (is24Hour) "HH:mm" else "h:mm a") }
 
     Column(
         modifier = modifier,
@@ -108,7 +110,7 @@ fun TDPlanTimePickerField(
                     modifier = Modifier.size(16.dp),
                 )
                 Text(
-                    text = time.format(HH_MM),
+                    text = time.format(timeFormatter),
                     style = MaterialTheme.typography.titleSmall,
                     color = TDTheme.colors.onBackground,
                 )
@@ -122,7 +124,7 @@ fun TDPlanTimePickerField(
                         rememberTimePickerState(
                             initialHour = initialHour,
                             initialMinute = initialMinute,
-                            is24Hour = true,
+                            is24Hour = is24Hour,
                         )
 
                     Surface(

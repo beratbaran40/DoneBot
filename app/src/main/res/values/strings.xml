@@ -82,6 +82,10 @@
     <string name="when_do_you_want_to_get_notified">When do you want to get notified?</string>
     <string name="starts">Starts</string>
     <string name="ends">Ends</string>
+    <!-- Task time-field placeholder: label + device 12/24-hour format mask, e.g. "Starts · HH:MM" -->
+    <string name="time_mask_24h">HH:MM</string>
+    <string name="time_mask_12h">H:MM AM</string>
+    <string name="time_placeholder_with_mask">%1$s · %2$s</string>
     <string name="description">Task Description</string>
     <string name="create_task">Create Task</string>
     <string name="update_task">Update Task</string>

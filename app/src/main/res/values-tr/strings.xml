@@ -82,6 +82,10 @@
     <string name="when_do_you_want_to_get_notified">Ne zaman bildirim almak istiyorsun?</string>
     <string name="starts">Başlangıç</string>
     <string name="ends">Bitiş</string>
+    <!-- Görev saat alanı placeholder'ı: etiket + cihaz 12/24 saat format maskesi, örn. "Başlangıç · SS:DD" -->
+    <string name="time_mask_24h">SS:DD</string>
+    <string name="time_mask_12h">S:DD ÖÖ</string>
+    <string name="time_placeholder_with_mask">%1$s · %2$s</string>
     <string name="description">Görev Açıklaması</string>
     <string name="create_task">Görev Oluştur</string>
     <string name="update_task">Görevi Güncelle</string>

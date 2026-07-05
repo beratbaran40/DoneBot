@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.todoapp.mobile.R
+import com.todoapp.mobile.common.deviceTimePattern
 import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.data.model.network.request.ReportTargetType
 import com.todoapp.mobile.domain.model.GroupMember
@@ -382,7 +383,7 @@ constructor(
         val diff = timestamp - now
         return when {
             diff < TimeUnit.HOURS.toMillis(24) && diff > 0 -> {
-                val sdf = SimpleDateFormat("h:mm a", Locale.getDefault())
+                val sdf = SimpleDateFormat(deviceTimePattern(context), Locale.getDefault())
                 context.getString(R.string.due_prefix) + " " + sdf.format(Date(timestamp))
             }
             diff <= 0 && diff > -TimeUnit.HOURS.toMillis(24) -> context.getString(R.string.due_today)
