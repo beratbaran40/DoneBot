@@ -60,6 +60,7 @@ import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDFamilyGroupCard
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDUndoSnackbar
+import com.todoapp.uikit.extensions.ObscuredTouchGuard
 import com.todoapp.uikit.theme.TDTheme
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -268,7 +269,10 @@ private fun GroupsContent(
             titleContentColor = TDTheme.colors.onBackground,
             containerColor = TDTheme.colors.background,
             textContentColor = TDTheme.colors.gray,
-            text = { Text(stringResource(com.todoapp.mobile.R.string.delete_group_warning)) },
+            text = {
+                ObscuredTouchGuard()
+                Text(stringResource(com.todoapp.mobile.R.string.delete_group_warning))
+            },
             confirmButton = {
                 TextButton(onClick = { onAction(UiAction.OnDeleteGroupDialogConfirm) }) {
                     Text(

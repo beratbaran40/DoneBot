@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.todoapp.mobile.R.string
+import com.todoapp.mobile.ui.common.SecureScreenEffect
 import com.todoapp.mobile.ui.journal.ORDERED_MOODS
 import com.todoapp.mobile.ui.journal.entry.JournalEntryContract.UiAction
 import com.todoapp.mobile.ui.journal.entry.JournalEntryContract.UiEffect
@@ -66,6 +67,7 @@ fun JournalEntryScreen(
     uiEffect: Flow<UiEffect>,
     onAction: (UiAction) -> Unit,
 ) {
+    SecureScreenEffect()
     val context = LocalContext.current
     val requestCamera = rememberCameraPermissionRequest(
         onGranted = { onAction(UiAction.OnPolaroidCameraClicked) },

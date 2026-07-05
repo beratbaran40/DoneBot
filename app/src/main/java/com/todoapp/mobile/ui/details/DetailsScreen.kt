@@ -61,6 +61,7 @@ import com.todoapp.uikit.components.TDPickerField
 import com.todoapp.uikit.components.TDTaskCompletionCard
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDWheelTimePicker
+import com.todoapp.uikit.extensions.ObscuredTouchGuard
 import com.todoapp.uikit.extensions.collectWithLifecycle
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.flow.Flow
@@ -107,6 +108,7 @@ fun DetailsScreen(
                             )
                         },
                         text = {
+                            ObscuredTouchGuard()
                             TDText(
                                 text = stringResource(R.string.details_discard_message),
                                 style = TDTheme.typography.regularTextStyle,

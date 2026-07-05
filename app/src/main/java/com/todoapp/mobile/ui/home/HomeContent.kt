@@ -57,6 +57,7 @@ import com.todoapp.uikit.components.TDMonthlyDatePicker
 import com.todoapp.uikit.components.TDStatisticCard
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDUndoSnackbar
+import com.todoapp.uikit.extensions.ObscuredTouchGuard
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -443,7 +444,10 @@ fun HomeContent(
                 titleContentColor = TDTheme.colors.onBackground,
                 containerColor = TDTheme.colors.background,
                 textContentColor = TDTheme.colors.gray,
-                text = { Text(stringResource(com.todoapp.mobile.R.string.delete_task_message)) },
+                text = {
+                    ObscuredTouchGuard()
+                    Text(stringResource(com.todoapp.mobile.R.string.delete_task_message))
+                },
                 confirmButton = {
                     TextButton(onClick = { onAction(UiAction.OnDeleteDialogConfirm) }) {
                         Text(

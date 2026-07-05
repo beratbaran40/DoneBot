@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.uikit.R.drawable
+import com.todoapp.uikit.extensions.ObscuredTouchGuard
 import com.todoapp.uikit.previews.TDPreviewDialog
 import com.todoapp.uikit.theme.TDTheme
 
@@ -127,6 +128,7 @@ fun TDGoodbyeDialog(
             dismissOnClickOutside = !isProcessing,
         ),
     ) {
+        ObscuredTouchGuard()
         Surface(
             modifier = modifier
                 .widthIn(min = 280.dp, max = 360.dp),

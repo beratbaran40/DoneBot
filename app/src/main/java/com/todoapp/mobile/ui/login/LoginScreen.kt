@@ -8,6 +8,7 @@ import androidx.lifecycle.Lifecycle
 import com.todoapp.mobile.R
 import com.todoapp.mobile.data.auth.GoogleSignInManager
 import com.todoapp.mobile.ui.auth.AuthScaffold
+import com.todoapp.mobile.ui.common.SecureScreenEffect
 import com.todoapp.mobile.ui.login.LoginContract.UiAction
 import com.todoapp.mobile.ui.login.LoginContract.UiEffect
 import com.todoapp.mobile.ui.login.LoginContract.UiState
@@ -21,6 +22,7 @@ fun LoginScreen(
     uiEffect: Flow<UiEffect>,
     onAction: (UiAction) -> Unit,
 ) {
+    SecureScreenEffect()
     val context = LocalContext.current
 
     uiEffect.collectWithLifecycle(minActiveState = Lifecycle.State.CREATED) {

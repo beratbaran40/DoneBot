@@ -38,6 +38,7 @@ import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDInfoCard
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.extensions.ObscuredTouchGuard
 import com.todoapp.uikit.extensions.collectWithLifecycle
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
@@ -55,6 +56,7 @@ fun TransferOwnershipScreen(viewModel: TransferOwnershipViewModel = hiltViewMode
         }
     }
 
+    ObscuredTouchGuard()
     TransferOwnershipContent(
         uiState = uiState,
         onAction = viewModel::onAction,

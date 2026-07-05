@@ -27,6 +27,7 @@ import com.todoapp.mobile.R
 import com.todoapp.mobile.ui.changepassword.ChangePasswordContract.UiAction
 import com.todoapp.mobile.ui.changepassword.ChangePasswordContract.UiEffect
 import com.todoapp.mobile.ui.changepassword.ChangePasswordContract.UiState
+import com.todoapp.mobile.ui.common.SecureScreenEffect
 import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDCompactOutlinedTextField
 import com.todoapp.uikit.components.TDText
@@ -42,6 +43,7 @@ fun ChangePasswordScreen(
     uiEffect: Flow<UiEffect>,
     onAction: (UiAction) -> Unit,
 ) {
+    SecureScreenEffect()
     val context = LocalContext.current
     uiEffect.collectWithLifecycle {
         when (it) {

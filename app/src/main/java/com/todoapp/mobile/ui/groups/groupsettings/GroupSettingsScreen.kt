@@ -41,6 +41,7 @@ import com.todoapp.mobile.ui.groups.groupsettings.GroupSettingsContract.UiAction
 import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.extensions.ObscuredTouchGuard
 import com.todoapp.uikit.extensions.collectWithLifecycle
 import com.todoapp.uikit.theme.TDTheme
 
@@ -240,7 +241,10 @@ private fun GroupSettingsContent(
             titleContentColor = TDTheme.colors.onBackground,
             containerColor = TDTheme.colors.background,
             textContentColor = TDTheme.colors.gray,
-            text = { Text(stringResource(com.todoapp.mobile.R.string.leave_group_message)) },
+            text = {
+                ObscuredTouchGuard()
+                Text(stringResource(com.todoapp.mobile.R.string.leave_group_message))
+            },
             confirmButton = {
                 TextButton(onClick = { onAction(UiAction.OnLeaveConfirm) }) {
                     Text(
@@ -267,7 +271,10 @@ private fun GroupSettingsContent(
             titleContentColor = TDTheme.colors.onBackground,
             containerColor = TDTheme.colors.background,
             textContentColor = TDTheme.colors.gray,
-            text = { Text(stringResource(com.todoapp.mobile.R.string.leave_group_owner_message)) },
+            text = {
+                ObscuredTouchGuard()
+                Text(stringResource(com.todoapp.mobile.R.string.leave_group_owner_message))
+            },
             confirmButton = {
                 TextButton(onClick = { onAction(UiAction.OnTransferPromptConfirm) }) {
                     Text(

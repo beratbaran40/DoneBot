@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import com.example.uikit.R
 import com.todoapp.mobile.R.string
+import com.todoapp.mobile.ui.common.SecureScreenEffect
 import com.todoapp.mobile.ui.journal.JournalContract.UiAction
 import com.todoapp.mobile.ui.journal.JournalContract.UiEffect
 import com.todoapp.mobile.ui.journal.JournalContract.UiState
@@ -48,6 +49,7 @@ fun JournalScreen(
     uiEffect: Flow<UiEffect>,
     onAction: (UiAction) -> Unit,
 ) {
+    SecureScreenEffect()
     val context = LocalContext.current
     uiEffect.collectWithLifecycle { effect ->
         when (effect) {

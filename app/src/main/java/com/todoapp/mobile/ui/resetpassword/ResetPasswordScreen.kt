@@ -24,6 +24,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
+import com.todoapp.mobile.ui.common.SecureScreenEffect
 import com.todoapp.mobile.ui.resetpassword.ResetPasswordContract.UiAction
 import com.todoapp.mobile.ui.resetpassword.ResetPasswordContract.UiEffect
 import com.todoapp.mobile.ui.resetpassword.ResetPasswordContract.UiState
@@ -42,6 +43,7 @@ fun ResetPasswordScreen(
     uiEffect: Flow<UiEffect>,
     onAction: (UiAction) -> Unit,
 ) {
+    SecureScreenEffect()
     val context = LocalContext.current
     uiEffect.collectWithLifecycle {
         when (it) {

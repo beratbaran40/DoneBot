@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
 import com.todoapp.mobile.domain.security.SecretModeReopenOption
 import com.todoapp.mobile.domain.security.SecretModeReopenOptions
+import com.todoapp.mobile.ui.common.SecureScreenEffect
 import com.todoapp.mobile.ui.settings.SettingsContract.UiAction
 import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonType
@@ -64,6 +65,7 @@ fun SecretModeSettingsScreen(
     onAction: (UiAction) -> Unit,
     uiEffect: Flow<SettingsContract.UiEffect> = emptyFlow(),
 ) {
+    SecureScreenEffect()
     val context = LocalContext.current
     uiEffect.collectWithLifecycle { effect ->
         when (effect) {

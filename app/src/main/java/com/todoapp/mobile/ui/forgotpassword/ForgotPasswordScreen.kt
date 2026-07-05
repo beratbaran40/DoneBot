@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
 import com.todoapp.mobile.ui.auth.AuthScaffold
+import com.todoapp.mobile.ui.common.SecureScreenEffect
 import com.todoapp.mobile.ui.forgotpassword.ForgotPasswordContract.UiAction
 import com.todoapp.mobile.ui.forgotpassword.ForgotPasswordContract.UiEffect
 import com.todoapp.mobile.ui.forgotpassword.ForgotPasswordContract.UiState
@@ -36,6 +37,7 @@ fun ForgotPasswordScreen(
     uiEffect: Flow<UiEffect>,
     onAction: (UiAction) -> Unit,
 ) {
+    SecureScreenEffect()
     val context = LocalContext.current
     uiEffect.collectWithLifecycle {
         when (it) {

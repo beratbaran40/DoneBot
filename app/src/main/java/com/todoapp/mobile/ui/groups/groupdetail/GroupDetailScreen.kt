@@ -33,6 +33,7 @@ import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract.UiAction
 import com.todoapp.mobile.ui.home.TaskFormUiAction
 import com.todoapp.uikit.components.TDScreenWithSheet
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.extensions.ObscuredTouchGuard
 import com.todoapp.uikit.extensions.collectWithLifecycle
 import com.todoapp.uikit.theme.TDTheme
 
@@ -65,7 +66,10 @@ fun GroupDetailScreen(viewModel: GroupDetailViewModel = hiltViewModel()) {
         AlertDialog(
             onDismissRequest = { viewModel.onAction(UiAction.OnDeleteTaskDismiss) },
             title = { Text(stringResource(R.string.delete_task_title)) },
-            text = { Text(stringResource(R.string.delete_task_message)) },
+            text = {
+                ObscuredTouchGuard()
+                Text(stringResource(R.string.delete_task_message))
+            },
             titleContentColor = TDTheme.colors.onBackground,
             containerColor = TDTheme.colors.background,
             textContentColor = TDTheme.colors.gray,
