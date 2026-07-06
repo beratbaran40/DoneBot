@@ -74,3 +74,14 @@ secrets.xml
 # Session reports / scratch docs (local-only)
 SESSION_*.md
 BUG_HUNT_*.md
+
+# App Screenshots
+Activity.png
+Calender.png
+Chatbot.png
+DoneBot Feature Graphic.png
+Groups.png
+Home - Dark.png
+Home- Light.png
+Onboarding.png
+Pomodoro.png
