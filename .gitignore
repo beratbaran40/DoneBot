@@ -75,14 +75,18 @@ secrets.xml
 SESSION_*.md
 BUG_HUNT_*.md
 
-# App Screenshots
-Activity.png
-Calender.png
-Chatbot.png
-DoneBot Feature Graphic.png
-Groups.png
-Home - Dark.png
-Home- Light.png
-Onboarding.png
-Pomodoro.png
-Donebot Feature Graphic TR.png
+# App Screenshots — loose root exports + Play Store source sets (local only).
+# Root-anchored on purpose: unanchored names would also swallow the tracked
+# README copies under .github/assets/ (core.ignorecase matches ChatBot.png ⇄ chatbot.png).
+/Activity.png
+/Calender.png
+/Chatbot.png
+/DoneBot Feature Graphic.png
+/Groups.png
+/Home - Dark.png
+/Home- Light.png
+/Onboarding.png
+/Pomodoro.png
+/Donebot Feature Graphic TR.png
+/DoneBot Play Store Uygulama Görselleri/
+/DoneBot Play Store Uygulama Görselleri TR/
