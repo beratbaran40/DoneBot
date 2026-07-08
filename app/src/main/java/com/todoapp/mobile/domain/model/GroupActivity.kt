@@ -11,4 +11,5 @@ data class GroupActivity(
     val description: String,
     val timestamp: Long,
     val taskTitle: String?,
+    val targetName: String?,
 )

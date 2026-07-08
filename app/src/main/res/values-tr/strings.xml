@@ -502,6 +502,18 @@
     <string name="first_invite_later">Daha sonra</string>
     <string name="pending_invites_section">Davet edilenler</string>
     <string name="invite_pending_chip">Bekliyor</string>
+    <!-- Grup aktivite akışı cümleleri — aktörsüz (aktör adı satırın başlığında).
+         type + taskTitle + targetName alanlarından kurulur; eski kayıtlar backend metnine düşer. -->
+    <string name="group_activity_task_created">“%1$s” görevini oluşturdu</string>
+    <string name="group_activity_task_updated">“%1$s” görevini güncelledi</string>
+    <string name="group_activity_task_deleted">“%1$s” görevini sildi</string>
+    <string name="group_activity_task_completed">“%1$s” görevini tamamladı</string>
+    <string name="group_activity_task_assigned">“%1$s” görevini %2$s kişisine atadı</string>
+    <string name="group_activity_task_unassigned">“%1$s” görevinin atamasını kaldırdı</string>
+    <string name="group_activity_member_added">Gruba katıldı</string>
+    <string name="group_activity_member_left">Gruptan ayrıldı</string>
+    <string name="group_activity_member_removed">%1$s kişisini gruptan çıkardı</string>
+    <string name="group_activity_ownership_transferred">Grup sahipliğini %1$s kişisine devretti</string>
     <string name="group_deleted_success">Grup silindi</string>
     <string name="error_generic">Bir şeyler ters gitti. Lütfen tekrar deneyin.</string>
     <string name="due_today">Bugün bitiyor</string>

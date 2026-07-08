@@ -24,7 +24,7 @@ import com.todoapp.mobile.data.source.local.converter.StringListConverter
 import com.todoapp.mobile.data.source.local.datasource.GroupDao
 
 @Database(
-    version = 26,
+    version = 27,
     entities = [
         TaskEntity::class,
         SubtaskEntity::class,
@@ -66,6 +66,8 @@ import com.todoapp.mobile.data.source.local.datasource.GroupDao
         AutoMigration(from = 24, to = 25),
         // 25→26 is a MANUAL migration (MIGRATION_25_26 in Migrations.kt): it must dedup duplicate
         // remote_id group rows BEFORE creating the unique index, which an auto-migration cannot do.
+        // Adds group_activities.target_name (nullable) — purely additive.
+        AutoMigration(from = 26, to = 27),
     ],
 )
 @TypeConverters(AppDatabase.SyncStatusConverter::class, StringListConverter::class)

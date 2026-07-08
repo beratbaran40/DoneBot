@@ -775,6 +775,7 @@ constructor(
         description = description,
         timestamp = timestamp,
         taskTitle = taskTitle,
+        targetName = targetName,
     )
 
     private companion object {

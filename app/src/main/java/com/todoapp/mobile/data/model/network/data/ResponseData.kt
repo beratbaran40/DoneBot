@@ -124,6 +124,9 @@ data class GroupActivityData(
     @SerialName("description") val description: String,
     @SerialName("timestamp") val timestamp: Long,
     @SerialName("taskTitle") val taskTitle: String? = null,
+    // Backend ≥ V18; defaulted so older backends still deserialize. Carries the person the
+    // action was done TO (assignee / removed member / new owner) for client-side localization.
+    @SerialName("targetName") val targetName: String? = null,
 )
 
 @Serializable

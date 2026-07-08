@@ -12,6 +12,7 @@ fun GroupActivityEntity.toDomain(): GroupActivity = GroupActivity(
     description = description,
     timestamp = timestamp,
     taskTitle = taskTitle,
+    targetName = targetName,
 )
 
 fun GroupActivityData.toEntity(localGroupId: Long): GroupActivityEntity = GroupActivityEntity(
@@ -23,4 +24,5 @@ fun GroupActivityData.toEntity(localGroupId: Long): GroupActivityEntity = GroupA
     description = description,
     timestamp = timestamp,
     taskTitle = taskTitle,
+    targetName = targetName,
 )

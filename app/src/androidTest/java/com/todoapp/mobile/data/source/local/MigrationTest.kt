@@ -83,6 +83,27 @@ class MigrationTest {
     }
 
     @Test
+    fun `migrate 25 to 27 chains the manual dedup with the additive activity column`() {
+        helper.createDatabase(TEST_DB, 25).apply {
+            execSQL(
+                "INSERT INTO `groups` (id, name, description, remote_id, created_at, order_index) " +
+                    "VALUES (1, 'Fam', '', 42, 0, 0)",
+            )
+            execSQL(
+                "INSERT INTO group_activities (id, remote_id, local_group_id, type, actor_name, description, timestamp) " +
+                    "VALUES (1, 7, 1, 'MEMBER_ADDED', 'Ayşe', 'Ayşe joined the group', 0)",
+            )
+            close()
+        }
+        // 25→26 is manual (dedup + unique index); 26→27 (target_name) is discovered from @Database.
+        val db = helper.runMigrationsAndValidate(TEST_DB, 27, true, MIGRATION_25_26)
+        db.query("SELECT target_name FROM group_activities WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertTrue(cursor.isNull(0)) // legacy rows carry no structured target → English fallback
+        }
+    }
+
+    @Test
     fun `migrate 12 to 13 backfills recurrence from the daily category`() {
         helper.createDatabase(TEST_DB, 12).apply {
             execSQL(

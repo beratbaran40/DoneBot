@@ -29,4 +29,5 @@ data class GroupActivityEntity(
     @ColumnInfo(name = "description") val description: String,
     @ColumnInfo(name = "timestamp") val timestamp: Long,
     @ColumnInfo(name = "task_title") val taskTitle: String? = null,
+    @ColumnInfo(name = "target_name") val targetName: String? = null,
 )

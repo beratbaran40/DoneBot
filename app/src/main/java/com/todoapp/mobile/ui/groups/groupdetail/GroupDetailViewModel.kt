@@ -806,10 +806,31 @@ constructor(
             actorName = actorName,
             actorAvatarUrl = actorAvatarUrl,
             actorInitials = initials.uppercase(),
-            description = description,
+            description = localizedActivityText() ?: description,
             relativeTime = formatRelativeTime(timestamp),
             taskTitle = taskTitle,
         )
+    }
+
+    // Builds the feed sentence from the structured fields (type + taskTitle + targetName) in the
+    // app locale. Sentences are actor-less on purpose — the actor name is already the row's header
+    // line. Returns null (→ fall back to the backend's pre-rendered English description) for
+    // unknown types and legacy rows that predate the structured targetName field.
+    private fun GroupActivity.localizedActivityText(): String? {
+        val ctx = localizedContext()
+        taskTitleSentences[type]?.let { res -> return taskTitle?.let { ctx.getString(res, it) } }
+        targetNameSentences[type]?.let { res -> return targetName?.let { ctx.getString(res, it) } }
+        return when (type) {
+            "TASK_ASSIGNED" ->
+                if (taskTitle != null && targetName != null) {
+                    ctx.getString(R.string.group_activity_task_assigned, taskTitle, targetName)
+                } else {
+                    null
+                }
+            "MEMBER_ADDED" -> ctx.getString(R.string.group_activity_member_added)
+            "MEMBER_LEFT" -> ctx.getString(R.string.group_activity_member_left)
+            else -> null
+        }
     }
 
     private fun formatTimestamp(timestamp: Long): String {
@@ -870,5 +891,20 @@ constructor(
     private companion object {
         const val UNDO_DELAY_MS = 5000L
         const val KEY_FIRST_INVITE_CONSUMED = "first_invite_consumed"
+
+        // Activity types whose sentence takes the task title as its single argument…
+        val taskTitleSentences = mapOf(
+            "TASK_CREATED" to R.string.group_activity_task_created,
+            "TASK_UPDATED" to R.string.group_activity_task_updated,
+            "TASK_DELETED" to R.string.group_activity_task_deleted,
+            "TASK_COMPLETED" to R.string.group_activity_task_completed,
+            "TASK_UNASSIGNED" to R.string.group_activity_task_unassigned,
+        )
+
+        // …and those taking the target person's name (assignee-style types are handled inline).
+        val targetNameSentences = mapOf(
+            "MEMBER_REMOVED" to R.string.group_activity_member_removed,
+            "OWNERSHIP_TRANSFERRED" to R.string.group_activity_ownership_transferred,
+        )
     }
 }

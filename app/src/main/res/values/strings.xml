@@ -498,6 +498,18 @@
     <string name="first_invite_later">Maybe later</string>
     <string name="pending_invites_section">Invited</string>
     <string name="invite_pending_chip">Pending</string>
+    <!-- Group activity feed sentences — actor-less (the actor name is the row's header line).
+         Built from type + taskTitle + targetName; legacy rows fall back to the backend text. -->
+    <string name="group_activity_task_created">Created task “%1$s”</string>
+    <string name="group_activity_task_updated">Updated “%1$s”</string>
+    <string name="group_activity_task_deleted">Deleted “%1$s”</string>
+    <string name="group_activity_task_completed">Completed “%1$s”</string>
+    <string name="group_activity_task_assigned">Assigned “%1$s” to %2$s</string>
+    <string name="group_activity_task_unassigned">Unassigned “%1$s”</string>
+    <string name="group_activity_member_added">Joined the group</string>
+    <string name="group_activity_member_left">Left the group</string>
+    <string name="group_activity_member_removed">Removed %1$s from the group</string>
+    <string name="group_activity_ownership_transferred">Transferred ownership to %1$s</string>
     <string name="group_deleted_success">Group deleted</string>
     <string name="error_generic">Something went wrong. Please try again.</string>
     <string name="due_today">Due Today</string>
