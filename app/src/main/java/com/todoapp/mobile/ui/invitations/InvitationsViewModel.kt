@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.todoapp.mobile.R
 import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.domain.model.Invitation
+import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.InvitationRepository
 import com.todoapp.mobile.navigation.NavigationEffect
 import com.todoapp.mobile.navigation.Screen
@@ -26,6 +27,7 @@ import javax.inject.Inject
 @HiltViewModel
 class InvitationsViewModel @Inject constructor(
     private val repository: InvitationRepository,
+    private val groupRepository: GroupRepository,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
@@ -122,6 +124,10 @@ class InvitationsViewModel @Inject constructor(
             val item = repository.pending.value.firstOrNull { it.id == id }
             repository.accept(id)
                 .onSuccess { groupId ->
+                    // Accept itself writes nothing locally, and the Groups list's 60s summary
+                    // cache would otherwise serve stale data on return — pull the joined group
+                    // into Room through the race-safe sync so the list is correct immediately.
+                    viewModelScope.launch { groupRepository.getGroups(force = true) }
                     _effect.trySend(UiEffect.ShowToast(R.string.invitation_accepted_toast))
                     _navEffect.trySend(
                         NavigationEffect.Navigate(
