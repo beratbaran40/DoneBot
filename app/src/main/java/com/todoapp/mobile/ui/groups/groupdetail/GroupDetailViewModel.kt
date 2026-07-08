@@ -256,7 +256,7 @@ constructor(
                     // First-invite dialog is UI-owned: preserve through the RESUMED-triggered
                     // reloads, seed only on the very first Success after creation.
                     isFirstInviteDialogOpen = previousState?.isFirstInviteDialogOpen ?: firstInviteSeed,
-                    firstInviteEmail = previousState?.firstInviteEmail ?: "",
+                    firstInviteEmail = previousState?.firstInviteEmail.orEmpty(),
                     firstInviteErrorRes = previousState?.firstInviteErrorRes,
                     isFirstInviteSending = previousState?.isFirstInviteSending ?: false,
                 )
