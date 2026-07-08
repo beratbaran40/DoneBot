@@ -2,9 +2,16 @@ package com.todoapp.mobile.data.model.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "groups")
+// remote_id is unique so a re-synced backend group can never materialize as a second local row
+// (SQLite treats NULLs as distinct, so unsynced rows are unaffected). Paired with
+// GroupDao.insertIgnoring as the floor beneath the repository's sync mutex.
+@Entity(
+    tableName = "groups",
+    indices = [Index(value = ["remote_id"], unique = true)],
+)
 data class GroupEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
     @ColumnInfo(name = "name") val name: String,

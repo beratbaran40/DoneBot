@@ -61,7 +61,9 @@ constructor(
     private var pendingDeleteJob: Job? = null
 
     init {
-        fetchRemoteGroups()
+        // No fetch here: GroupScreen's repeatOnLifecycle(RESUMED) fires OnScreenResumed on first
+        // composition too (two-pane included), so an init fetch would just double the network call
+        // and widen the sync race window.
         observeLocalGroups()
     }
 

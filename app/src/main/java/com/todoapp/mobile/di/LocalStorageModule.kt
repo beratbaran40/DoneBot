@@ -18,6 +18,7 @@ import com.todoapp.mobile.data.source.local.GroupMemberDao
 import com.todoapp.mobile.data.source.local.GroupTaskDao
 import com.todoapp.mobile.data.source.local.JournalEntryDao
 import com.todoapp.mobile.data.source.local.MIGRATION_12_13
+import com.todoapp.mobile.data.source.local.MIGRATION_25_26
 import com.todoapp.mobile.data.source.local.PomodoroDao
 import com.todoapp.mobile.data.source.local.SubtaskDao
 import com.todoapp.mobile.data.source.local.TaskDao
@@ -54,7 +55,7 @@ object LocalStorageModule {
             AppDatabase::class.java,
             DB_NAME,
         )
-        .addMigrations(MIGRATION_12_13)
+        .addMigrations(MIGRATION_12_13, MIGRATION_25_26)
         .build()
 
     @Provides

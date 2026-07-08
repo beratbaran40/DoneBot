@@ -38,6 +38,51 @@ class MigrationTest {
     }
 
     @Test
+    fun `migrate 25 to 26 dedups duplicate remote groups and keeps the oldest row`() {
+        helper.createDatabase(TEST_DB, 25).apply {
+            // Two rows for the same backend group (the pre-v26 sync race) + one unsynced row.
+            execSQL(
+                "INSERT INTO `groups` (id, name, description, remote_id, created_at, order_index) " +
+                    "VALUES (1, 'Fam', '', 42, 0, 0)",
+            )
+            execSQL(
+                "INSERT INTO `groups` (id, name, description, remote_id, created_at, order_index) " +
+                    "VALUES (2, 'Fam', '', 42, 0, 1)",
+            )
+            execSQL(
+                "INSERT INTO `groups` (id, name, description, remote_id, created_at, order_index) " +
+                    "VALUES (3, 'Offline', '', NULL, 0, 2)",
+            )
+            // One member on the doomed duplicate (id=2), one on the kept row (id=1).
+            execSQL(
+                "INSERT INTO group_members (id, user_id, local_group_id, display_name, email, role, joined_at) " +
+                    "VALUES (1, 9, 2, 'Ayşe', 'a@x.com', 'MEMBER', 0)",
+            )
+            execSQL(
+                "INSERT INTO group_members (id, user_id, local_group_id, display_name, email, role, joined_at) " +
+                    "VALUES (2, 9, 1, 'Ayşe', 'a@x.com', 'MEMBER', 0)",
+            )
+            close()
+        }
+        // Validates the new unique index against 26.json too.
+        val db = helper.runMigrationsAndValidate(TEST_DB, 26, true, MIGRATION_25_26)
+        db.query("SELECT id FROM `groups` WHERE remote_id = 42").use { cursor ->
+            assertEquals(1, cursor.count)
+            assertTrue(cursor.moveToFirst())
+            assertEquals(1L, cursor.getLong(0))
+        }
+        db.query("SELECT COUNT(*) FROM `groups`").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(2, cursor.getInt(0)) // kept remote row + untouched NULL-remote_id row
+        }
+        db.query("SELECT id FROM group_members").use { cursor ->
+            assertEquals(1, cursor.count) // the doomed row's member is purged (FKs are off in onUpgrade)
+            assertTrue(cursor.moveToFirst())
+            assertEquals(2L, cursor.getLong(0))
+        }
+    }
+
+    @Test
     fun `migrate 12 to 13 backfills recurrence from the daily category`() {
         helper.createDatabase(TEST_DB, 12).apply {
             execSQL(

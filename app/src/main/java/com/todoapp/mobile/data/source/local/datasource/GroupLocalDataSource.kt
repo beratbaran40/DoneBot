@@ -6,7 +6,10 @@ import kotlinx.coroutines.flow.Flow
 interface GroupLocalDataSource {
     fun observeAll(): Flow<List<GroupEntity>>
 
-    suspend fun insert(group: GroupEntity)
+    /** Insert honoring the unique remote_id index; returns -1 when an equal remote_id row exists. */
+    suspend fun insertIgnoring(group: GroupEntity): Long
+
+    suspend fun getByRemoteId(remoteId: Long): GroupEntity?
 
     suspend fun delete(group: GroupEntity)
 

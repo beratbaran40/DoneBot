@@ -24,7 +24,7 @@ import com.todoapp.mobile.data.source.local.converter.StringListConverter
 import com.todoapp.mobile.data.source.local.datasource.GroupDao
 
 @Database(
-    version = 25,
+    version = 26,
     entities = [
         TaskEntity::class,
         SubtaskEntity::class,
@@ -64,6 +64,8 @@ import com.todoapp.mobile.data.source.local.datasource.GroupDao
         AutoMigration(from = 23, to = 24),
         // Y3: adds task_daily_completions.sync_status (NOT NULL DEFAULT 'SYNCED') — purely additive.
         AutoMigration(from = 24, to = 25),
+        // 25→26 is a MANUAL migration (MIGRATION_25_26 in Migrations.kt): it must dedup duplicate
+        // remote_id group rows BEFORE creating the unique index, which an auto-migration cannot do.
     ],
 )
 @TypeConverters(AppDatabase.SyncStatusConverter::class, StringListConverter::class)

@@ -11,9 +11,9 @@ constructor(
 ) : GroupLocalDataSource {
     override fun observeAll(): Flow<List<GroupEntity>> = groupDao.getAllGroups()
 
-    override suspend fun insert(group: GroupEntity) {
-        groupDao.insert(group)
-    }
+    override suspend fun insertIgnoring(group: GroupEntity): Long = groupDao.insertIgnoring(group)
+
+    override suspend fun getByRemoteId(remoteId: Long): GroupEntity? = groupDao.getByRemoteId(remoteId)
 
     override suspend fun delete(group: GroupEntity) {
         groupDao.delete(group)

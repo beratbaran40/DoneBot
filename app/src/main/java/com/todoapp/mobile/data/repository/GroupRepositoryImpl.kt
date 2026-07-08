@@ -38,6 +38,8 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -57,6 +59,11 @@ constructor(
     private val todoApi: com.todoapp.mobile.data.source.remote.api.ToDoApi,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : GroupRepository {
+    // Single-flights every local write keyed on remote_id (sync loop + createGroup): concurrent
+    // getGroups callers (VM resume, pull-to-refresh, FCM force refresh on its own scope) must not
+    // interleave check-then-insert on the same group.
+    private val groupsSyncMutex = Mutex()
+
     @Volatile private var cachedGroups: GroupSummaryDataList? = null
 
     @Volatile private var groupsCachedAt: Long = 0L
@@ -71,8 +78,15 @@ constructor(
     override suspend fun createGroup(request: CreateGroupRequest): Result<GroupData> = groupRemoteDataSource
         .createGroup(request)
         .onSuccess { remote ->
-            val entity = remote.toEntity()
-            groupLocalDataSource.insert(withInitializedOrder(entity))
+            // Insert-if-absent under the sync mutex: a concurrent getGroups sync may have already
+            // persisted this group from the summaries payload (which also carries role/counts —
+            // fresher than this create response), so never overwrite and never double-insert.
+            groupsSyncMutex.withLock {
+                val entity = remote.toEntity()
+                if (entity.remoteId?.let { groupLocalDataSource.getByRemoteId(it) } == null) {
+                    groupLocalDataSource.insertIgnoring(withInitializedOrder(entity))
+                }
+            }
             invalidateGroupsCache()
         }
 
@@ -88,9 +102,11 @@ constructor(
             .getGroups()
             .onSuccess { result ->
                 val entities =
-                    result.groups.map { summary ->
-                        summary.toEntity()
-                    }
+                    result.groups
+                        .distinctBy { it.id } // defense: a backend payload repeating a group must not fan out locally
+                        .map { summary ->
+                            summary.toEntity()
+                        }
                 syncRemoteGroupsWithLocal(entities)
                 cachedGroups = result
                 groupsCachedAt = System.currentTimeMillis()
@@ -201,13 +217,16 @@ constructor(
         )
     }
 
-    private suspend fun syncRemoteGroupsWithLocal(remoteEntities: List<GroupEntity>) {
-        val local = groupLocalDataSource.getAllGroupsOrdered().first()
-
+    // Serialized (mutex) + keyed on a fresh remote_id lookup per row. The previous shared-snapshot
+    // "find or insert" raced: screen resume, pull-to-refresh, and FCM force refreshes run this
+    // concurrently, and two callers could both miss a brand-new group (e.g. a just-accepted invite)
+    // and insert it twice. The unique index on groups.remote_id (+ insertIgnoring) is the floor
+    // beneath this lock.
+    private suspend fun syncRemoteGroupsWithLocal(remoteEntities: List<GroupEntity>) = groupsSyncMutex.withLock {
         remoteEntities.forEach { remote ->
-            val existing = local.find { it.remoteId == remote.remoteId }
+            val existing = remote.remoteId?.let { groupLocalDataSource.getByRemoteId(it) }
             if (existing == null) {
-                groupLocalDataSource.insert(withInitializedOrder(remote))
+                groupLocalDataSource.insertIgnoring(withInitializedOrder(remote))
             } else {
                 groupLocalDataSource.update(
                     existing.copy(
