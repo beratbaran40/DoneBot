@@ -1,0 +1,15 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:height="24dp" android:viewportHeight="24" android:viewportWidth="24" android:width="24dp">
+
+    <!-- Person peeking from behind the envelope's top edge (the invitee). Filled — stroke-2
+         features this small blob together; solid silhouettes stay legible at the 22dp call site. -->
+    <path android:fillColor="#000000" android:pathData="M6,3.1A1.5,1.5 0 1 0 9,3.1A1.5,1.5 0 1 0 6,3.1Z"/>
+    <path android:fillColor="#000000" android:pathData="M4.3,8C4.3,6.2 5.7,5.1 7.5,5.1C9.3,5.1 10.7,6.2 10.7,8Z"/>
+
+    <!-- Envelope (scaled-down ic_mail construction: rounded body + flap polyline). -->
+    <path android:fillColor="#00000000" android:pathData="M4.5,9.4H14.5A1.5,1.5 0 0 1 16,10.9V18.1A1.5,1.5 0 0 1 14.5,19.6H4.5A1.5,1.5 0 0 1 3,18.1V10.9A1.5,1.5 0 0 1 4.5,9.4Z" android:strokeColor="#000000" android:strokeLineCap="round" android:strokeLineJoin="round" android:strokeWidth="2"/>
+    <path android:fillColor="#00000000" android:pathData="M3.6,10.7L8.5,13.6C9.1,13.95 9.9,13.95 10.5,13.6L15.4,10.7" android:strokeColor="#000000" android:strokeLineCap="round" android:strokeLineJoin="round" android:strokeWidth="2"/>
+
+    <!-- Hourglass badge, bottom-right (waiting). Filled bowtie pinching at the waist. Glyphs never
+         touch each other — the icon is tinted one color at the call site, so separation is spatial. -->
+    <path android:fillColor="#000000" android:pathData="M17.6,15.8H22.8V16.8H17.6Z M18.3,16.7H22.1L20.2,19.75Z M20.2,19.75L22.1,22.8H18.3Z M17.6,22.7H22.8V23.7H17.6Z"/>
+</vector>

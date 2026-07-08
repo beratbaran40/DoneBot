@@ -67,10 +67,10 @@ private fun PendingInviteRow(invite: PendingInviteUiItem) {
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(UiKitR.drawable.ic_mail),
+                painter = painterResource(UiKitR.drawable.ic_mail_invite_pending),
                 contentDescription = null,
                 tint = TDTheme.colors.darkPending,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(22.dp),
             )
         }
         Spacer(modifier = Modifier.width(12.dp))
