@@ -64,6 +64,11 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # The release build packages FULL native debug symbols (app/build.gradle.kts pins
+      # ndkVersion) — make sure that exact NDK exists on the runner; no-op when preinstalled.
+      - name: Install pinned NDK
+        run: yes 2>/dev/null | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;27.2.12479018" > /dev/null
+
       # Unsigned is fine: signingConfig is only wired when keystore.properties exists, so this
       # runs secretless (fork-safe). --no-configuration-cache: the config cache is sensitive to
       # keystore/local.properties presence and a one-shot bundle gains nothing from it.

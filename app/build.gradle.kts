@@ -44,6 +44,12 @@ android {
         version = release(36)
     }
 
+    // Pinned so release builds actually package native debug symbols (debugSymbolLevel FULL below):
+    // without an installed NDK, AGP silently skips symbol extraction and every locally-built AAB
+    // uploads with Play's "contains native code / no debug symbols" warning. r27c is an LTS release;
+    // CI installs the same version (see .github/workflows/ci.yml size-budget job).
+    ndkVersion = "27.2.12479018"
+
     defaultConfig {
         ksp {
             arg("room.schemaLocation", "$projectDir/schemas")
@@ -51,7 +57,7 @@ android {
         applicationId = "com.todoapp.mobile"
         minSdk = 26
         targetSdk = 36
-        versionCode = 3
+        versionCode = 4
         versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
