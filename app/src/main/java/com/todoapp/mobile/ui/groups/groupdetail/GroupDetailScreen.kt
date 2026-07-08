@@ -7,12 +7,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
+import androidx.compose.material3.TabIndicatorScope
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -26,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.lerp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -39,6 +42,8 @@ import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.extensions.ObscuredTouchGuard
 import com.todoapp.uikit.extensions.collectWithLifecycle
 import com.todoapp.uikit.theme.TDTheme
+import kotlin.math.ceil
+import kotlin.math.floor
 
 @Composable
 fun GroupDetailScreen(viewModel: GroupDetailViewModel = hiltViewModel()) {
@@ -194,36 +199,11 @@ private fun GroupDetailSuccessContent(
         )
 
     Column(modifier = Modifier.fillMaxSize()) {
-        SecondaryTabRow(
-            selectedTabIndex = uiState.selectedTab,
-            modifier = Modifier.fillMaxWidth(),
-            containerColor = TDTheme.colors.background,
-            contentColor = TDTheme.colors.pendingGray,
-            indicator = {
-                TabRowDefaults.SecondaryIndicator(
-                    modifier = Modifier.tabIndicatorOffset(uiState.selectedTab),
-                    color = TDTheme.colors.darkPending,
-                )
-            },
-        ) {
-            tabs.forEachIndexed { index, title ->
-                Tab(
-                    selected = uiState.selectedTab == index,
-                    onClick = { onAction(UiAction.OnTabSelected(index)) },
-                    text = {
-                        TDText(
-                            text = title,
-                            style = TDTheme.typography.subheading1,
-                            color = if (uiState.selectedTab == index) TDTheme.colors.darkPending else TDTheme.colors.gray,
-                        )
-                    },
-                )
-            }
-        }
-
         // Tabs are also horizontally swipeable (tester feedback: the tab row reads as a pager).
         // Two-way sync with the VM-owned selectedTab: tab tap → state → animateScrollToPage;
         // swipe settles → OnTabSelected (a same-value copy dedupes in the StateFlow, so no loop).
+        // The indicator + tab tint read the pager DIRECTLY (not selectedTab) so both ride the
+        // finger mid-swipe instead of springing after settle.
         val pagerState = rememberPagerState(initialPage = uiState.selectedTab) { GroupDetailContract.TAB_COUNT }
         LaunchedEffect(uiState.selectedTab) {
             if (pagerState.currentPage != uiState.selectedTab) {
@@ -233,6 +213,31 @@ private fun GroupDetailSuccessContent(
         LaunchedEffect(pagerState) {
             snapshotFlow { pagerState.settledPage }.collect { page ->
                 onAction(UiAction.OnTabSelected(page))
+            }
+        }
+        // Tint flips at the pager's direction-commit threshold — a few recompositions per swipe,
+        // not per-frame (the per-frame tracking lives in the indicator's measure lambda).
+        val visualTab = pagerState.targetPage
+
+        SecondaryTabRow(
+            selectedTabIndex = uiState.selectedTab,
+            modifier = Modifier.fillMaxWidth(),
+            containerColor = TDTheme.colors.background,
+            contentColor = TDTheme.colors.pendingGray,
+            indicator = { PagerTrackingIndicator(pagerState) },
+        ) {
+            tabs.forEachIndexed { index, title ->
+                Tab(
+                    selected = uiState.selectedTab == index,
+                    onClick = { onAction(UiAction.OnTabSelected(index)) },
+                    text = {
+                        TDText(
+                            text = title,
+                            style = TDTheme.typography.subheading1,
+                            color = if (visualTab == index) TDTheme.colors.darkPending else TDTheme.colors.gray,
+                        )
+                    },
+                )
             }
         }
 
@@ -253,6 +258,31 @@ private fun GroupDetailSuccessContent(
             }
         }
     }
+}
+
+// Positions the indicator from the pager's LIVE scroll position (currentPage + offset fraction)
+// instead of the settled tab index, so the line rides the finger during a swipe and glides through
+// intermediate tabs on a tap-driven animateScrollToPage. Reading pagerState inside the measure
+// lambda is snapshot-aware → Compose relayouts it every scroll frame without recomposing the row.
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TabIndicatorScope.PagerTrackingIndicator(pagerState: PagerState) {
+    TabRowDefaults.SecondaryIndicator(
+        color = TDTheme.colors.darkPending,
+        modifier = Modifier.tabIndicatorLayout { measurable, constraints, tabPositions ->
+            val position = (pagerState.currentPage + pagerState.currentPageOffsetFraction)
+                .coerceIn(0f, (tabPositions.size - 1).toFloat())
+            val fromTab = tabPositions[floor(position).toInt()]
+            val toTab = tabPositions[ceil(position).toInt()]
+            val fraction = position - floor(position)
+            val width = lerp(fromTab.width, toTab.width, fraction).roundToPx()
+            val left = lerp(fromTab.left, toTab.left, fraction).roundToPx()
+            val placeable = measurable.measure(constraints.copy(minWidth = width, maxWidth = width))
+            layout(constraints.maxWidth, constraints.maxHeight) {
+                placeable.place(left, maxOf(constraints.maxHeight - placeable.height, 0))
+            }
+        },
+    )
 }
 
 @Composable
