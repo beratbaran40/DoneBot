@@ -279,6 +279,7 @@
     <string name="error_no_internet">No internet connection. Check your Wi-Fi or mobile data.</string>
     <string name="error_session_expired">Your session has expired. Please sign in again.</string>
     <string name="error_server_busy">The server is busy right now. Please try again in a few minutes.</string>
+    <string name="error_server_unreachable">Can\'t reach the server right now. It may be waking up — try again in a minute.</string>
     <string name="error_not_found">We couldn\'t find what you were looking for.</string>
     <string name="delete_task_title">Delete task?</string>
     <string name="task_deleted">Task deleted</string>
@@ -832,6 +833,7 @@
     <string name="chat_error_offline">You\'re offline. Reconnect and try again.</string>
     <string name="chat_error_rate_limited">Slow down — DoneBot\'s quota is full for now. Wait a minute and try again.</string>
     <string name="chat_error_server_unavailable">DoneBot\'s AI is taking a short break. Please try again in a moment.</string>
+    <string name="chat_error_server_waking">DoneBot\'s server is waking up — this can take a minute. Hang tight and try again.</string>
     <string name="chat_retry">Retry</string>
     <string name="chat_dismiss">Dismiss</string>
     <string name="chat_loop_overflow">I got stuck looking things up. Try asking again in a different way.</string>

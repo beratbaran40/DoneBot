@@ -46,7 +46,9 @@ object NetworkModule {
     @Provides
     @Singleton
     @Named("token")
-    fun provideTokenRetrofit(): Retrofit {
+    fun provideTokenRetrofit(
+        @Named("plain") plainOkHttpClient: OkHttpClient,
+    ): Retrofit {
         val json =
             Json {
                 ignoreUnknownKeys = true
@@ -56,9 +58,28 @@ object NetworkModule {
         return Retrofit
             .Builder()
             .baseUrl(com.todoapp.mobile.BuildConfig.BASE_URL)
+            .client(plainOkHttpClient)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
     }
+
+    // Bare client for token refresh + backend warm-up pings. Deliberately NO AuthInterceptor (it
+    // would attach the stale Bearer to /auth/refresh — refresh isn't in its noAuthPaths) and NO
+    // TokenRefreshAuthenticator (a 401 on the refresh call itself would re-enter authenticate()
+    // while the outer call already holds the non-reentrant refresh Mutex inside runBlocking —
+    // a deadlocked OkHttp thread). Without an explicit client the token Retrofit used OkHttp
+    // defaults (10s, no call timeout), which silently killed refreshes during cold backend wakes.
+    // Timeouts are shorter than the main client's because authenticate() blocks an OkHttp thread.
+    @Provides
+    @Singleton
+    @Named("plain")
+    fun providePlainOkHttpClient(): OkHttpClient = OkHttpClient
+        .Builder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .callTimeout(60, TimeUnit.SECONDS)
+        .build()
 
     @Provides
     @Singleton

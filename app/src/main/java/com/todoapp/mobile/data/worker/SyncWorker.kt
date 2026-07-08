@@ -31,6 +31,7 @@ constructor(
                     when (throwable) {
                         is DomainException.NoInternet,
                         is DomainException.Server,
+                        is DomainException.ServerUnreachable,
                         is DomainException.Unauthorized,
                         -> {
                             if (runAttemptCount <= MAX_ATTEMPT) {

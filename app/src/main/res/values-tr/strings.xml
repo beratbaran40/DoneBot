@@ -284,6 +284,7 @@
     <string name="error_no_internet">İnternet bağlantısı yok. Wi-Fi veya mobil verini kontrol et.</string>
     <string name="error_session_expired">Oturumunun süresi doldu. Lütfen tekrar giriş yap.</string>
     <string name="error_server_busy">Sunucu şu an meşgul. Lütfen birkaç dakika sonra tekrar dene.</string>
+    <string name="error_server_unreachable">Sunucuya şu an ulaşılamıyor. Uyanıyor olabilir — bir dakika sonra tekrar dene.</string>
     <string name="error_not_found">Aradığın şeyi bulamadık.</string>
     <string name="delete_task_title">Görev silinsin mi?</string>
     <string name="task_deleted">Görev silindi</string>
@@ -833,6 +834,7 @@
     <string name="chat_error_offline">Çevrimdışısın. Bağlanıp tekrar dene.</string>
     <string name="chat_error_rate_limited">Yavaşla — DoneBot\'un kotası şimdilik dolu. Bir dakika bekle ve tekrar dene.</string>
     <string name="chat_error_server_unavailable">DoneBot\'un yapay zekâsı kısa bir mola verdi. Lütfen birazdan tekrar dene.</string>
+    <string name="chat_error_server_waking">DoneBot\'un sunucusu uyanıyor — bu bir dakika sürebilir. Biraz bekle ve tekrar dene.</string>
     <string name="chat_retry">Tekrar dene</string>
     <string name="chat_dismiss">Kapat</string>
     <string name="chat_loop_overflow">Bilgi ararken takıldım. Sorunu farklı şekilde sormayı dene.</string>

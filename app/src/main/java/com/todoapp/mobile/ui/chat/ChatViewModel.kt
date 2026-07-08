@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.todoapp.mobile.common.DomainException
 import com.todoapp.mobile.data.ai.LocalIntentClassifier
 import com.todoapp.mobile.data.model.network.request.ChatHistoryTurn
+import com.todoapp.mobile.data.network.BackendWarmUp
 import com.todoapp.mobile.data.network.NetworkMonitor
 import com.todoapp.mobile.data.repository.DataStoreHelper
 import com.todoapp.mobile.domain.model.ChatMessage
@@ -44,6 +45,7 @@ class ChatViewModel @Inject constructor(
     private val taskSyncRepository: TaskSyncRepository,
     private val sessionPreferences: SessionPreferences,
     private val analyticsHelper: com.todoapp.mobile.domain.analytics.AnalyticsHelper,
+    private val backendWarmUp: BackendWarmUp,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<ChatContract.UiState>(ChatContract.UiState.Loading)
     val uiState: StateFlow<ChatContract.UiState> = _uiState.asStateFlow()
@@ -62,6 +64,10 @@ class ChatViewModel @Inject constructor(
     private var lastSendElapsedMs: Long = 0L
 
     init {
+        // Separate launch: the ping can block for seconds on a cold backend and must never delay
+        // rendering the persisted conversation. Covers "app foregrounded long ago, chat opened now"
+        // (the Application-level onStart ping may already be stale by the time the user gets here).
+        viewModelScope.launch { backendWarmUp.pingIfStale() }
         viewModelScope.launch {
             val initial = chatRepository.getMessages()
             val savedDraft = dataStoreHelper.observeChatDraft().first()
@@ -363,6 +369,21 @@ class ChatViewModel @Inject constructor(
             is DomainException.NoInternet -> {
                 Timber.tag(LOG_TAG).w(error, "Network error")
                 setError(ChatContract.ChatError.OFFLINE, lastFailedPrompt = prompt)
+            }
+            is DomainException.ServerUnreachable -> {
+                // Device online + server silent = cold start / deploy window / genuine server hang.
+                // Only blame the user's connection when the device is actually offline.
+                Timber.tag(LOG_TAG).w(
+                    error,
+                    "Server unreachable (neverReached=%s)",
+                    error.requestNeverReachedServer,
+                )
+                val kind = if (networkMonitor.isOnline.value) {
+                    ChatContract.ChatError.SERVER_WAKING
+                } else {
+                    ChatContract.ChatError.OFFLINE
+                }
+                setError(kind, lastFailedPrompt = prompt)
             }
             is DomainException.Unauthorized -> {
                 // OkHttp auth-refresh path will normally rotate the token; if it

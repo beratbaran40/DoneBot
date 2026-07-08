@@ -22,6 +22,9 @@ fun Throwable.toUserMessageRes(): Int = when (this) {
     is DomainException.NoInternet -> R.string.error_no_internet
     is DomainException.Unauthorized -> R.string.error_session_expired
     is DomainException.NotFound -> R.string.error_not_found
+    // Timeout / connect refusal / edge 5xx while the device itself is online — honest about the
+    // server (possibly a cold start or deploy window) instead of blaming the user's connection.
+    is DomainException.ServerUnreachable -> R.string.error_server_unreachable
     is DomainException.Server -> R.string.error_server_busy
     is DomainException.Database -> R.string.error_generic
     // Raw network failure that reached the UI before the data layer wrapped it in a DomainException.

@@ -15,7 +15,8 @@ import kotlinx.serialization.json.Json
 import retrofit2.HttpException
 import retrofit2.Response
 import timber.log.Timber
-import java.net.SocketTimeoutException
+import java.io.InterruptedIOException
+import java.net.ConnectException
 import java.net.UnknownHostException
 
 fun <T> MutableList<T>.move(
@@ -51,6 +52,16 @@ suspend fun <T> handleRequest(request: suspend () -> Response<BaseResponse<T?>>)
             return when (response.code()) {
                 404 -> Result.failure(DomainException.NotFound())
                 401, 403 -> Result.failure(DomainException.Unauthorized())
+                // A 5xx whose body is not our JSON envelope comes from an intermediary (Render's edge
+                // during a cold start / deploy window) — Spring never saw the request, so retrying can't
+                // double-process it. The backend's own 503s (e.g. vertex_unavailable) DO parse and must
+                // stay Server so message-marker matching keeps working.
+                502, 503, 504 ->
+                    if (parsed == null) {
+                        Result.failure(DomainException.ServerUnreachable(message, requestNeverReachedServer = true))
+                    } else {
+                        Result.failure(DomainException.Server(message))
+                    }
                 else -> Result.failure(DomainException.Server(message))
             }
         }
@@ -81,14 +92,22 @@ suspend fun handleEmptyRequest(request: suspend () -> Response<BaseResponse<Unit
         if (response.isSuccessful) return Result.success(Unit)
         val errorBody = response.errorBody()?.string()
         Timber.tag("HttpError").d(errorBody.toString())
-        val message = errorBody
-            ?.let { runCatching { Json.decodeFromString<ErrorResponse>(it).message }.getOrNull() }
-            ?: response.message()
-            ?: "Something went wrong"
+        val parsed =
+            errorBody?.let {
+                runCatching { Json.decodeFromString<ErrorResponse>(it) }.getOrNull()
+            }
+        val message = parsed?.message ?: response.message() ?: "Something went wrong"
         Timber.tag("HttpError").d(message)
         when (response.code()) {
             404 -> Result.failure(DomainException.NotFound())
             401, 403 -> Result.failure(DomainException.Unauthorized())
+            // Same edge-vs-backend split as handleRequest: non-envelope 5xx = intermediary, safe to retry.
+            502, 503, 504 ->
+                if (parsed == null) {
+                    Result.failure(DomainException.ServerUnreachable(message, requestNeverReachedServer = true))
+                } else {
+                    Result.failure(DomainException.Server(message))
+                }
             else -> Result.failure(DomainException.Server(message))
         }
     } catch (t: Throwable) {
@@ -113,6 +132,19 @@ sealed class DomainException(
         message: String,
     ) : DomainException(message)
 
+    // The server didn't produce a usable response while the device's own connectivity is (as far as
+    // we can tell) fine: TCP refusal, a timeout, or a 5xx minted by an intermediary (Render's edge
+    // while the instance wakes or a deploy swaps containers). Distinct from NoInternet (device
+    // offline) and Server (the backend answered with an error of its own).
+    class ServerUnreachable(
+        message: String,
+        // true only when the request provably never reached the backend (connect refused, or an edge
+        // 502/503/504 whose body isn't our JSON envelope) — the only shapes safe to auto-retry.
+        // Timeouts are false: the server may have finished processing after the client gave up waiting,
+        // so an automatic resend could double-run whatever the request did.
+        val requestNeverReachedServer: Boolean,
+    ) : DomainException(message)
+
     // The email belongs to an existing account that only signs in via a social provider
     // (no password). `provider` is "google"/null. Routed by errorCode, not HTTP status.
     class OAuthAccountExists(
@@ -131,15 +163,31 @@ sealed class DomainException(
         private const val HTTP_STATUS_UNAUTHORIZED = 401
         private const val HTTP_STATUS_FORBIDDEN = 403
         private const val HTTP_STATUS_NOT_FOUND = 404
+        private const val HTTP_STATUS_BAD_GATEWAY = 502
+        private const val HTTP_STATUS_SERVICE_UNAVAILABLE = 503
+        private const val HTTP_STATUS_GATEWAY_TIMEOUT = 504
 
         fun fromThrowable(t: Throwable): DomainException = when (t) {
-            is UnknownHostException,
-            is SocketTimeoutException,
-            -> NoInternet()
+            // DNS resolution failed — overwhelmingly "device offline", not "backend down".
+            is UnknownHostException -> NoInternet()
+
+            // TCP connect refused/failed: the request never left for the server, so it's safe to auto-retry.
+            is ConnectException -> ServerUnreachable(t.message ?: "Cannot reach server", requestNeverReachedServer = true)
+
+            // Covers SocketTimeoutException (a subclass) and OkHttp's callTimeout InterruptedIOException.
+            // OkHttp throws the same SocketTimeoutException type for connect-, read- and TLS-phase
+            // timeouts and its message differs by transport/JDK, so no timeout is ever treated as
+            // "provably unprocessed" — the server may have finished the work after we stopped waiting.
+            is InterruptedIOException -> ServerUnreachable(t.message ?: "Server is not responding", requestNeverReachedServer = false)
 
             is HttpException -> when (t.code()) {
                 HTTP_STATUS_UNAUTHORIZED, HTTP_STATUS_FORBIDDEN -> Unauthorized()
                 HTTP_STATUS_NOT_FOUND -> NotFound()
+                // Near-dead path (endpoints return Response<T>, so non-2xx doesn't throw). Unlike
+                // handleRequest we can't inspect the body here to prove the 5xx came from the edge
+                // rather than the backend, so never mark it safe to auto-retry.
+                HTTP_STATUS_BAD_GATEWAY, HTTP_STATUS_SERVICE_UNAVAILABLE, HTTP_STATUS_GATEWAY_TIMEOUT ->
+                    ServerUnreachable("Server unavailable", requestNeverReachedServer = false)
                 else -> Server("Server error")
             }
 

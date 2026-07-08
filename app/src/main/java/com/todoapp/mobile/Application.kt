@@ -15,6 +15,7 @@ import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.perf.FirebasePerformance
 import com.todoapp.mobile.data.log.CrashlyticsTree
+import com.todoapp.mobile.data.network.BackendWarmUp
 import com.todoapp.mobile.data.network.NetworkMonitor
 import com.todoapp.mobile.data.notification.NotificationService
 import com.todoapp.mobile.data.notification.PomodoroNotificationChannels
@@ -56,6 +57,9 @@ class Application :
 
     @Inject
     lateinit var networkMonitor: NetworkMonitor
+
+    @Inject
+    lateinit var backendWarmUp: BackendWarmUp
 
     @Inject
     @IoDispatcher
@@ -193,6 +197,14 @@ class Application :
                 .build()
         }
         .build()
+
+    // Every cold launch AND background→foreground return warms the backend before the user reaches
+    // an online surface (chat, sync) — exactly the moments a spun-down/deploying instance would
+    // otherwise greet the first real request with a timeout. Self-throttled inside BackendWarmUp.
+    override fun onStart(owner: LifecycleOwner) {
+        super.onStart(owner)
+        owner.lifecycleScope.launch { backendWarmUp.pingIfStale() }
+    }
 
     override fun onStop(owner: LifecycleOwner) {
         super.onStop(owner)

@@ -57,6 +57,14 @@ class SyncWorkerTest {
     }
 
     @Test
+    fun `retries a cold-start ServerUnreachable within max attempts`() = runBlocking {
+        val repository = mockk<TaskRepository>()
+        coEvery { repository.syncLocalTasksToServer() } returns
+            Result.failure(DomainException.ServerUnreachable("timeout", requestNeverReachedServer = false))
+        assertEquals(ListenableWorker.Result.retry(), workerFor(repository, attempt = 1).doWork())
+    }
+
+    @Test
     fun `fails after exhausting max attempts`() = runBlocking {
         val repository = mockk<TaskRepository>()
         coEvery { repository.syncLocalTasksToServer() } returns Result.failure(DomainException.Server("boom"))

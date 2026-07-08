@@ -30,6 +30,7 @@ constructor(
                 when (throwable) {
                     is DomainException.NoInternet,
                     is DomainException.Server,
+                    is DomainException.ServerUnreachable,
                     -> Result.retry()
                     else -> Result.failure()
                 }

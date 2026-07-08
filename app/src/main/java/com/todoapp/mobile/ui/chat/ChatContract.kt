@@ -26,7 +26,13 @@ object ChatContract {
         LOOP_OVERFLOW,
         RATE_LIMITED,
         NOT_AUTHENTICATED,
+
+        // Backend reachable but Vertex is down (503 with the vertex_unavailable marker).
         SERVER_UNAVAILABLE,
+
+        // Device is online but the server never produced a response (cold start / deploy window /
+        // timeout). Distinct from SERVER_UNAVAILABLE: here the backend itself didn't answer.
+        SERVER_WAKING,
     }
 
     sealed interface UiAction {

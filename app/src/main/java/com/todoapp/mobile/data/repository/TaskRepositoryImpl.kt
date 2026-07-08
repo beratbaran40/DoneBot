@@ -1007,12 +1007,14 @@ constructor(
         return if (retryable.isEmpty()) Result.success(Unit) else Result.failure(retryable.first())
     }
 
-    // Mirrors SyncWorker's retry set exactly. Keep in lockstep: repo reports "retryable" => the worker
-    // retries (capped); repo reports success/terminal => the worker stops. NotFound is deliberately NOT
-    // retryable — a permanently-gone row is tombstoned in place (syncTask), never re-pushed.
+    // Mirrors SyncWorker's retry set exactly (NoInternet/Server/ServerUnreachable/Unauthorized). Keep in
+    // lockstep: repo reports "retryable" => the worker retries (capped); repo reports success/terminal =>
+    // the worker stops. NotFound is deliberately NOT retryable — a permanently-gone row is tombstoned in
+    // place (syncTask), never re-pushed.
     private fun isRetryable(error: Throwable): Boolean {
         return error is DomainException.NoInternet ||
             error is DomainException.Server ||
+            error is DomainException.ServerUnreachable ||
             error is DomainException.Unauthorized
     }
 
