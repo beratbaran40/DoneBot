@@ -3,6 +3,8 @@ package com.todoapp.mobile.ui.chat
 import android.os.SystemClock
 import com.todoapp.mobile.common.DomainException
 import com.todoapp.mobile.data.ai.LocalIntentClassifier
+import com.todoapp.mobile.data.model.network.response.ChatMessageResponseData
+import com.todoapp.mobile.data.model.network.response.ChatTurnMeta
 import com.todoapp.mobile.data.network.BackendWarmUp
 import com.todoapp.mobile.data.network.NetworkMonitor
 import com.todoapp.mobile.data.repository.DataStoreHelper
@@ -19,7 +21,9 @@ import io.mockk.unmockkStatic
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -144,5 +148,122 @@ class ChatViewModelTest {
         advanceUntilIdle()
 
         coVerify(exactly = 1) { backendWarmUp.pingIfStale(any()) }
+    }
+
+    // ---- Bounded auto-retry chain (only for provably-unprocessed failures) ----
+
+    private fun neverReached() = DomainException.ServerUnreachable("edge 502", requestNeverReachedServer = true)
+
+    private fun successResponse() = ChatMessageResponseData(
+        text = "Done!",
+        meta = ChatTurnMeta(roundTrips = 1, refused = false, serverMs = 42),
+    )
+
+    @Test
+    fun `persistent connect-refusal auto-retries 3 times then goes quiet`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        coEvery { chatRepository.sendMessage(any(), any(), any()) } returns Result.failure(neverReached())
+        val viewModel = buildViewModel()
+        advanceUntilIdle()
+
+        viewModel.sendPrompt("Anything overdue?")
+        advanceUntilIdle()
+
+        // Initial send + 3 auto-attempts (5s/15s/30s), then the chain stops for good.
+        coVerify(exactly = 4) { chatRepository.sendMessage(any(), any(), any()) }
+        val state = viewModel.readyState()
+        assertEquals(ChatContract.ChatError.SERVER_WAKING, state.error)
+        assertEquals(0, state.autoRetrySecondsRemaining)
+        assertEquals("Anything overdue?", state.lastFailedPrompt)
+    }
+
+    @Test
+    fun `countdown ticks down before the next attempt`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        coEvery { chatRepository.sendMessage(any(), any(), any()) } returns Result.failure(neverReached())
+        val viewModel = buildViewModel()
+        advanceUntilIdle()
+
+        viewModel.sendPrompt("Anything overdue?")
+        runCurrent()
+        assertEquals(5, viewModel.readyState().autoRetrySecondsRemaining)
+
+        advanceTimeBy(2_050)
+        runCurrent()
+        assertEquals(3, viewModel.readyState().autoRetrySecondsRemaining)
+    }
+
+    @Test
+    fun `rate limit mid-chain takes over and stops the auto-retry`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        coEvery { chatRepository.sendMessage(any(), any(), any()) } returnsMany listOf(
+            Result.failure(neverReached()),
+            Result.failure(DomainException.Server("DoneBot is very busy (quota reached). [vertex_quota] Retry in 30s")),
+        )
+        val viewModel = buildViewModel()
+        advanceUntilIdle()
+
+        viewModel.sendPrompt("Anything overdue?")
+        advanceUntilIdle()
+
+        // The second (auto) attempt hit the quota — its cooldown takes over; no third attempt.
+        coVerify(exactly = 2) { chatRepository.sendMessage(any(), any(), any()) }
+        val state = viewModel.readyState()
+        assertEquals(ChatContract.ChatError.RATE_LIMITED, state.error)
+        assertEquals(0, state.autoRetrySecondsRemaining)
+    }
+
+    @Test
+    fun `dismissing the banner mid-countdown cancels the chain`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        coEvery { chatRepository.sendMessage(any(), any(), any()) } returns Result.failure(neverReached())
+        val viewModel = buildViewModel()
+        advanceUntilIdle()
+
+        viewModel.sendPrompt("Anything overdue?")
+        runCurrent()
+        viewModel.onAction(ChatContract.UiAction.OnDismissError)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { chatRepository.sendMessage(any(), any(), any()) }
+        val state = viewModel.readyState()
+        assertEquals(null, state.error)
+        assertEquals(0, state.autoRetrySecondsRemaining)
+    }
+
+    @Test
+    fun `success on the second attempt clears the error and resets the chain`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        coEvery { chatRepository.sendMessage(any(), any(), any()) } returnsMany listOf(
+            Result.failure(neverReached()),
+            Result.success(successResponse()),
+        )
+        val viewModel = buildViewModel()
+        advanceUntilIdle()
+
+        viewModel.sendPrompt("Anything overdue?")
+        advanceUntilIdle()
+
+        coVerify(exactly = 2) { chatRepository.sendMessage(any(), any(), any()) }
+        coVerify(exactly = 1) { chatRepository.appendAssistantMessage("Done!") }
+        val state = viewModel.readyState()
+        assertEquals(null, state.error)
+        assertEquals(0, state.autoRetrySecondsRemaining)
+        assertFalse(state.isThinking)
+    }
+
+    @Test
+    fun `a new user prompt supersedes the pending chain`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        val prompts = mutableListOf<String>()
+        coEvery { chatRepository.sendMessage(capture(prompts), any(), any()) } returnsMany listOf(
+            Result.failure(neverReached()),
+            Result.success(successResponse()),
+        )
+        val viewModel = buildViewModel()
+        advanceUntilIdle()
+
+        viewModel.sendPrompt("first prompt")
+        runCurrent()
+        viewModel.sendPrompt("second prompt")
+        advanceUntilIdle()
+
+        // The old chain never fires: exactly one send per prompt, in order.
+        assertEquals(listOf("first prompt", "second prompt"), prompts)
+        assertEquals(null, viewModel.readyState().error)
     }
 }

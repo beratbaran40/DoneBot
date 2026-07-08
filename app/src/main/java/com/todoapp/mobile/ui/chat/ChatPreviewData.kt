@@ -59,6 +59,10 @@ internal object ChatPreviewData {
         lastFailedPrompt = "Anything overdue?",
     )
 
+    val serverWakingRetryingReady: ChatContract.UiState.Ready = serverWakingReady.copy(
+        autoRetrySecondsRemaining = 12,
+    )
+
     val guestLimitedReady: ChatContract.UiState.Ready = ChatContract.UiState.Ready(
         messages = sampleMessages.take(2),
         error = ChatContract.ChatError.NOT_AUTHENTICATED,

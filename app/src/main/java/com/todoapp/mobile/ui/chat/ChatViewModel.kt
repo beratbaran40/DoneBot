@@ -62,6 +62,8 @@ class ChatViewModel @Inject constructor(
     private var sendJob: Job? = null
     private var refusalCount: Int = 0
     private var lastSendElapsedMs: Long = 0L
+    private var autoRetryJob: Job? = null
+    private var autoRetryAttempt: Int = 0
 
     init {
         // Separate launch: the ping can block for seconds on a cold backend and must never delay
@@ -134,9 +136,16 @@ class ChatViewModel @Inject constructor(
     private fun cancelSend() {
         if (sendJob?.isActive != true) return
         sendJob?.cancel()
+        // Stop must kill the whole auto-retry chain, not just the in-flight request — otherwise a
+        // cancelled auto-attempt would just be replaced by the next scheduled one.
+        cancelAutoRetryChain()
         _uiState.update { current ->
             when (current) {
-                is ChatContract.UiState.Ready -> current.copy(isThinking = false, toolInFlight = null)
+                is ChatContract.UiState.Ready -> current.copy(
+                    isThinking = false,
+                    toolInFlight = null,
+                    autoRetrySecondsRemaining = 0,
+                )
                 else -> current
             }
         }
@@ -164,6 +173,7 @@ class ChatViewModel @Inject constructor(
 
     private fun dismissError() {
         cooldownJob?.cancel()
+        cancelAutoRetryChain()
         // Dismissing the guest "sign in" banner means "forget it" — drop any pending prompt
         // so it won't auto-fire on a later, unrelated login.
         viewModelScope.launch { dataStoreHelper.setPendingChatPrompt("") }
@@ -172,6 +182,7 @@ class ChatViewModel @Inject constructor(
                 is ChatContract.UiState.Ready -> current.copy(
                     error = null,
                     rateLimitCooldownSecondsRemaining = 0,
+                    autoRetrySecondsRemaining = 0,
                     lastFailedPrompt = null,
                 )
                 else -> current
@@ -189,6 +200,8 @@ class ChatViewModel @Inject constructor(
             return
         }
         lastSendElapsedMs = now
+        // A new user-initiated prompt supersedes any pending auto-retry of an older one.
+        cancelAutoRetryChain()
         if (!networkMonitor.isOnline.value) {
             _uiState.value = current.copy(draft = "")
             setError(ChatContract.ChatError.OFFLINE, lastFailedPrompt = prompt)
@@ -200,6 +213,7 @@ class ChatViewModel @Inject constructor(
             error = null,
             lastFailedPrompt = null,
             rateLimitCooldownSecondsRemaining = 0,
+            autoRetrySecondsRemaining = 0,
         )
         cooldownJob?.cancel()
         draftSaveJob?.cancel()
@@ -255,11 +269,15 @@ class ChatViewModel @Inject constructor(
             setError(ChatContract.ChatError.OFFLINE, lastFailedPrompt = prompt)
             return
         }
+        // Manual Retry jumps the queue: kill the scheduled auto-attempt and give the user a fresh
+        // auto-retry budget (a deliberate tap is a stronger signal than the chain's own schedule).
+        cancelAutoRetryChain()
         cooldownJob?.cancel()
         _uiState.value = current.copy(
             isThinking = true,
             error = null,
             rateLimitCooldownSecondsRemaining = 0,
+            autoRetrySecondsRemaining = 0,
             lastFailedPrompt = null,
         )
         sendJob = viewModelScope.launch {
@@ -321,6 +339,7 @@ class ChatViewModel @Inject constructor(
         chatRepository
             .sendMessage(prompt = prompt, locale = locale, history = history)
             .onSuccess { response ->
+                autoRetryAttempt = 0
                 chatRepository.appendAssistantMessage(response.text)
                 logTurnSummary(response.meta.roundTrips, turnStartNs, response.text)
                 if (response.meta.roundTrips > 1) {
@@ -384,6 +403,15 @@ class ChatViewModel @Inject constructor(
                     ChatContract.ChatError.OFFLINE
                 }
                 setError(kind, lastFailedPrompt = prompt)
+                // Auto-resend ONLY when the request provably never reached the backend (connect
+                // refusal / edge 5xx) — a timed-out request may have been fully processed, and
+                // resending it would double-run the turn's Vertex call and tool writes.
+                if (kind == ChatContract.ChatError.SERVER_WAKING &&
+                    error.requestNeverReachedServer &&
+                    autoRetryAttempt < AUTO_RETRY_DELAYS_MS.size
+                ) {
+                    scheduleAutoRetry(prompt)
+                }
             }
             is DomainException.Unauthorized -> {
                 // OkHttp auth-refresh path will normally rotate the token; if it
@@ -441,6 +469,10 @@ class ChatViewModel @Inject constructor(
         retryAfterSeconds: Int? = null,
     ) {
         cooldownJob?.cancel()
+        // Any new error state takes over from a pending auto-retry — the two countdowns
+        // (rate-limit cooldown vs auto-retry) are mutually exclusive by construction. The
+        // ServerUnreachable branch reschedules AFTER this call when a chain should continue.
+        autoRetryJob?.cancel()
         val cooldownSec = if (error == ChatContract.ChatError.RATE_LIMITED) {
             (retryAfterSeconds ?: RATE_LIMIT_COOLDOWN_SECONDS)
                 .coerceIn(MIN_DYNAMIC_COOLDOWN_SECONDS, MAX_DYNAMIC_COOLDOWN_SECONDS)
@@ -457,6 +489,7 @@ class ChatViewModel @Inject constructor(
                     error = error,
                     lastFailedPrompt = lastFailedPrompt,
                     rateLimitCooldownSecondsRemaining = cooldownSec,
+                    autoRetrySecondsRemaining = 0,
                     toolInFlight = null,
                 )
                 else -> current
@@ -472,6 +505,70 @@ class ChatViewModel @Inject constructor(
         val seconds = match.groupValues[1].toDoubleOrNull() ?: return null
         if (seconds <= 0) return null
         return seconds.toInt() + RETRY_AFTER_PADDING_SECONDS
+    }
+
+    /**
+     * Bounded auto-resend for SERVER_WAKING failures whose request provably never reached the
+     * backend. Schedule: 5s / 15s / 30s, then the chain goes quiet and the banner's manual Retry
+     * remains. Pure virtual-time countdown (no SystemClock anchor): 30s of delay drift is
+     * irrelevant for a banner, and it keeps the chain fully deterministic under runTest.
+     */
+    private fun scheduleAutoRetry(prompt: String) {
+        val delayMs = AUTO_RETRY_DELAYS_MS[autoRetryAttempt]
+        autoRetryAttempt++
+        Timber.tag(METRICS_TAG).i("auto_retry scheduled attempt=%d delayMs=%d", autoRetryAttempt, delayMs)
+        autoRetryJob?.cancel()
+        autoRetryJob = viewModelScope.launch {
+            var remainingSec = (delayMs / MS_PER_SEC).toInt()
+            updateAutoRetryCountdown(remainingSec)
+            while (remainingSec > 0) {
+                delay(COOLDOWN_TICK_MS)
+                remainingSec--
+                updateAutoRetryCountdown(remainingSec)
+            }
+            fireAutoRetry(prompt)
+        }
+    }
+
+    private fun fireAutoRetry(prompt: String) {
+        val current = _uiState.value as? ChatContract.UiState.Ready ?: return
+        // The world may have changed during the countdown (user sent something else, dismissed the
+        // banner, a different error took over) — fire only if this exact failure is still current.
+        if (current.isThinking) return
+        if (current.error != ChatContract.ChatError.SERVER_WAKING || current.lastFailedPrompt != prompt) return
+        if (!networkMonitor.isOnline.value) {
+            setError(ChatContract.ChatError.OFFLINE, lastFailedPrompt = prompt)
+            return
+        }
+        Timber.tag(METRICS_TAG).i("auto_retry firing attempt=%d", autoRetryAttempt)
+        _uiState.update { latest ->
+            when (latest) {
+                is ChatContract.UiState.Ready -> latest.copy(
+                    isThinking = true,
+                    error = null,
+                    lastFailedPrompt = null,
+                    autoRetrySecondsRemaining = 0,
+                )
+                else -> latest
+            }
+        }
+        sendJob = viewModelScope.launch {
+            executeSendInternal(prompt)
+        }
+    }
+
+    private fun updateAutoRetryCountdown(remainingSec: Int) {
+        _uiState.update { current ->
+            when (current) {
+                is ChatContract.UiState.Ready -> current.copy(autoRetrySecondsRemaining = remainingSec)
+                else -> current
+            }
+        }
+    }
+
+    private fun cancelAutoRetryChain() {
+        autoRetryJob?.cancel()
+        autoRetryAttempt = 0
     }
 
     private fun startCooldownTicker() {
@@ -494,6 +591,7 @@ class ChatViewModel @Inject constructor(
 
     private fun clearHistory() {
         cooldownJob?.cancel()
+        cancelAutoRetryChain()
         viewModelScope.launch {
             chatRepository.clear()
             dataStoreHelper.setPendingChatPrompt("")
@@ -504,6 +602,7 @@ class ChatViewModel @Inject constructor(
                         isThinking = false,
                         lastFailedPrompt = null,
                         rateLimitCooldownSecondsRemaining = 0,
+                        autoRetrySecondsRemaining = 0,
                         toolInFlight = null,
                     )
                     else -> current
@@ -538,6 +637,10 @@ class ChatViewModel @Inject constructor(
             "Üzgünüm, sadece bu uygulamadaki",
         )
         private val RATE_LIMIT_MARKERS = listOf("429", "rate limit", "quota")
+
+        // Auto-resend schedule for provably-unprocessed SERVER_WAKING failures. Spans ~50s in
+        // total — roughly one Render deploy/boot window — before going quiet.
+        private val AUTO_RETRY_DELAYS_MS = listOf(5_000L, 15_000L, 30_000L)
 
         // Backend embeds this token in the 503 reason (ChatService.vertexUnavailableMessage) so we can
         // tell a Vertex outage apart from a generic server error without reading the numeric HTTP status.

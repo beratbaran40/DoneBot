@@ -15,6 +15,9 @@ object ChatContract {
             val error: ChatError? = null,
             val lastFailedPrompt: String? = null,
             val rateLimitCooldownSecondsRemaining: Int = 0,
+            // Seconds until the next automatic resend of lastFailedPrompt (SERVER_WAKING only;
+            // 0 = no auto-retry pending). Mutually exclusive with the rate-limit cooldown.
+            val autoRetrySecondsRemaining: Int = 0,
             val toolInFlight: String? = null,
         ) : UiState
     }

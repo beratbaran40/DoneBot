@@ -186,6 +186,7 @@ private fun ChatReadyContent(
                 error = error,
                 lastFailedPrompt = state.lastFailedPrompt,
                 cooldownSecondsRemaining = state.rateLimitCooldownSecondsRemaining,
+                autoRetrySecondsRemaining = state.autoRetrySecondsRemaining,
                 onAction = onAction,
             )
         }

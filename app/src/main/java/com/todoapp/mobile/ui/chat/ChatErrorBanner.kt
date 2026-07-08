@@ -25,20 +25,26 @@ internal fun ChatErrorBanner(
     error: ChatContract.ChatError,
     lastFailedPrompt: String?,
     cooldownSecondsRemaining: Int,
+    autoRetrySecondsRemaining: Int,
     onAction: (ChatContract.UiAction) -> Unit,
 ) {
-    val message = stringResource(
-        when (error) {
-            ChatContract.ChatError.GENERIC -> R.string.chat_error_generic
-            ChatContract.ChatError.BLOCKED -> R.string.chat_error_blocked
-            ChatContract.ChatError.OFFLINE -> R.string.chat_error_offline
-            ChatContract.ChatError.LOOP_OVERFLOW -> R.string.chat_loop_overflow
-            ChatContract.ChatError.RATE_LIMITED -> R.string.chat_error_rate_limited
-            ChatContract.ChatError.NOT_AUTHENTICATED -> R.string.chat_error_guest_limited
-            ChatContract.ChatError.SERVER_UNAVAILABLE -> R.string.chat_error_server_unavailable
-            ChatContract.ChatError.SERVER_WAKING -> R.string.chat_error_server_waking
-        },
-    )
+    val message = if (error == ChatContract.ChatError.SERVER_WAKING && autoRetrySecondsRemaining > 0) {
+        // An auto-resend is scheduled — show the live countdown instead of the static message.
+        stringResource(R.string.chat_error_server_waking_retrying_format, autoRetrySecondsRemaining)
+    } else {
+        stringResource(
+            when (error) {
+                ChatContract.ChatError.GENERIC -> R.string.chat_error_generic
+                ChatContract.ChatError.BLOCKED -> R.string.chat_error_blocked
+                ChatContract.ChatError.OFFLINE -> R.string.chat_error_offline
+                ChatContract.ChatError.LOOP_OVERFLOW -> R.string.chat_loop_overflow
+                ChatContract.ChatError.RATE_LIMITED -> R.string.chat_error_rate_limited
+                ChatContract.ChatError.NOT_AUTHENTICATED -> R.string.chat_error_guest_limited
+                ChatContract.ChatError.SERVER_UNAVAILABLE -> R.string.chat_error_server_unavailable
+                ChatContract.ChatError.SERVER_WAKING -> R.string.chat_error_server_waking
+            },
+        )
+    }
     // SERVER_WAKING is a transient "hang tight" state, not a failure the user caused — warn in
     // yellow/orange instead of the red used by every real error.
     val containerColor: Color
@@ -112,6 +118,7 @@ private fun ChatErrorBannerOfflinePreview() {
             error = ChatContract.ChatError.OFFLINE,
             lastFailedPrompt = "What's on my list today?",
             cooldownSecondsRemaining = 0,
+            autoRetrySecondsRemaining = 0,
             onAction = {},
         )
     }
@@ -125,6 +132,21 @@ private fun ChatErrorBannerServerWakingPreview() {
             error = ChatContract.ChatError.SERVER_WAKING,
             lastFailedPrompt = "What's on my list today?",
             cooldownSecondsRemaining = 0,
+            autoRetrySecondsRemaining = 0,
+            onAction = {},
+        )
+    }
+}
+
+@TDPreview
+@Composable
+private fun ChatErrorBannerServerWakingRetryingPreview() {
+    TDTheme {
+        ChatErrorBanner(
+            error = ChatContract.ChatError.SERVER_WAKING,
+            lastFailedPrompt = "What's on my list today?",
+            cooldownSecondsRemaining = 0,
+            autoRetrySecondsRemaining = 12,
             onAction = {},
         )
     }
@@ -138,6 +160,7 @@ private fun ChatErrorBannerRateLimitedCooldownPreview() {
             error = ChatContract.ChatError.RATE_LIMITED,
             lastFailedPrompt = "What's on my list today?",
             cooldownSecondsRemaining = 12,
+            autoRetrySecondsRemaining = 0,
             onAction = {},
         )
     }
@@ -151,6 +174,7 @@ private fun ChatErrorBannerGuestPreview() {
             error = ChatContract.ChatError.NOT_AUTHENTICATED,
             lastFailedPrompt = null,
             cooldownSecondsRemaining = 0,
+            autoRetrySecondsRemaining = 0,
             onAction = {},
         )
     }
