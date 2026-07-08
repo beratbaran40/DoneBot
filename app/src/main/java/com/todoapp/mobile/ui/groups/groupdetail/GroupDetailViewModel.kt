@@ -14,6 +14,7 @@ import androidx.navigation.toRoute
 import com.todoapp.mobile.R
 import com.todoapp.mobile.common.deviceTimePattern
 import com.todoapp.mobile.common.error.toUserMessage
+import com.todoapp.mobile.data.model.network.data.GroupInvitationData
 import com.todoapp.mobile.domain.model.GroupActivity
 import com.todoapp.mobile.domain.model.GroupMember
 import com.todoapp.mobile.domain.model.GroupTask
@@ -65,11 +66,16 @@ constructor(
     private val userRepository: UserRepository,
     private val languageRepository: LanguageRepository,
     private val blockedUsersPreferences: BlockedUsersPreferences,
-    savedStateHandle: SavedStateHandle,
+    private val savedStateHandle: SavedStateHandle,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val route = savedStateHandle.toRoute<Screen.GroupDetail>()
     private val groupId = route.groupId
+
+    // The route's showFirstInvite is one-shot: consume it through SavedStateHandle so a process
+    // death after the user dismissed the dialog doesn't resurrect it from the route arguments.
+    private val firstInviteSeed: Boolean =
+        route.showFirstInvite && savedStateHandle.get<Boolean>(KEY_FIRST_INVITE_CONSUMED) != true
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState = _uiState.asStateFlow()
@@ -88,6 +94,7 @@ constructor(
 
     init {
         viewModelScope.launch { appLocale = languageRepository.getCurrentLanguage().toLocale() }
+        if (route.showFirstInvite) savedStateHandle[KEY_FIRST_INVITE_CONSUMED] = true
         loadGroupData()
     }
 
@@ -125,6 +132,18 @@ constructor(
             UiAction.OnGroupTaskCreate -> createGroupTask()
             is UiAction.OnGroupTaskFormAction -> handleTaskFormAction(action.action)
             UiAction.OnInviteTap -> _navEffect.trySend(NavigationEffect.Navigate(Screen.InviteMember(groupId)))
+            is UiAction.OnFirstInviteEmailChange ->
+                updateSuccessState { it.copy(firstInviteEmail = action.value, firstInviteErrorRes = null) }
+            UiAction.OnFirstInviteSend -> sendFirstInvite()
+            UiAction.OnFirstInviteDismiss ->
+                updateSuccessState {
+                    it.copy(
+                        isFirstInviteDialogOpen = false,
+                        firstInviteEmail = "",
+                        firstInviteErrorRes = null,
+                        isFirstInviteSending = false,
+                    )
+                }
             is UiAction.OnRemoveMemberTap -> removeMember(action.userId)
             is UiAction.OnMemberTap -> {
                 val isAdmin = (_uiState.value as? UiState.Success)?.currentUserRole?.uppercase() == "ADMIN"
@@ -221,9 +240,10 @@ constructor(
                     pendingCount = tasks.count { !it.isCompleted },
                     tasks = tasks.map { it.toUiItem(currentUserRole, membersById) },
                     members = visibleMembers.map { it.toUiItem(currentUserId) },
+                    pendingInvites = detail.pendingInvitations.map { it.toUiItem() },
                     activities = activities.map { it.toUiItem() },
                     currentUserRole = currentUserRole,
-                    selectedTab = previousState?.selectedTab ?: 0,
+                    selectedTab = previousState?.selectedTab ?: route.initialTab,
                     taskFilter = previousState?.taskFilter ?: GroupDetailContract.TaskFilter.ALL,
                     statusFilter = previousState?.statusFilter ?: GroupDetailContract.GroupTaskStatusFilter.ALL,
                     timeFilter = previousState?.timeFilter ?: GroupDetailContract.GroupTaskTimeFilter.ALL,
@@ -233,6 +253,12 @@ constructor(
                     pendingDeleteTaskId = previousState?.pendingDeleteTaskId,
                     pendingAssignTaskId = previousState?.pendingAssignTaskId,
                     isRefreshing = false,
+                    // First-invite dialog is UI-owned: preserve through the RESUMED-triggered
+                    // reloads, seed only on the very first Success after creation.
+                    isFirstInviteDialogOpen = previousState?.isFirstInviteDialogOpen ?: firstInviteSeed,
+                    firstInviteEmail = previousState?.firstInviteEmail ?: "",
+                    firstInviteErrorRes = previousState?.firstInviteErrorRes,
+                    isFirstInviteSending = previousState?.isFirstInviteSending ?: false,
                 )
         }
     }
@@ -283,6 +309,41 @@ constructor(
                         )
                     }
                     _uiEffect.trySend(UiEffect.ShowToast(context.getString(R.string.failed_to_update_task)))
+                }
+        }
+    }
+
+    /**
+     * Send path of the first-invite dialog. Mirrors InviteMemberViewModel's flow but stays inline
+     * (validation error is rendered inside the dialog, not a separate screen). inviteMember
+     * invalidates the cached group detail on success, so the follow-up loadGroupData() refetches a
+     * fresh members + pending-invites list without force.
+     */
+    private fun sendFirstInvite() {
+        val state = _uiState.value as? UiState.Success ?: return
+        if (state.isFirstInviteSending) return
+        val email = state.firstInviteEmail.trim()
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            updateSuccessState { it.copy(firstInviteErrorRes = R.string.email_error) }
+            return
+        }
+        updateSuccessState { it.copy(isFirstInviteSending = true, firstInviteErrorRes = null) }
+        viewModelScope.launch {
+            groupRepository
+                .inviteMember(groupId, email)
+                .onSuccess {
+                    updateSuccessState {
+                        it.copy(
+                            isFirstInviteDialogOpen = false,
+                            firstInviteEmail = "",
+                            isFirstInviteSending = false,
+                        )
+                    }
+                    _uiEffect.trySend(UiEffect.ShowToast(context.getString(R.string.invite_sent)))
+                    loadGroupData()
+                }.onFailure { error ->
+                    updateSuccessState { it.copy(isFirstInviteSending = false) }
+                    _uiEffect.trySend(UiEffect.ShowToast(error.toUserMessage(context)))
                 }
         }
     }
@@ -723,6 +784,15 @@ constructor(
         )
     }
 
+    private fun GroupInvitationData.toUiItem(): GroupDetailContract.PendingInviteUiItem {
+        val sdf = SimpleDateFormat("d MMM yyyy", appLocale)
+        return GroupDetailContract.PendingInviteUiItem(
+            id = id,
+            email = inviteeEmail,
+            invitedAt = sdf.format(Date(createdAt)),
+        )
+    }
+
     private fun GroupActivity.toUiItem(): GroupActivityUiItem {
         val initials =
             actorName
@@ -799,5 +869,6 @@ constructor(
 
     private companion object {
         const val UNDO_DELAY_MS = 5000L
+        const val KEY_FIRST_INVITE_CONSUMED = "first_invite_consumed"
     }
 }

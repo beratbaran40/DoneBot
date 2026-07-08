@@ -9,6 +9,7 @@ import com.todoapp.mobile.navigation.NavigationEffect
 import com.todoapp.mobile.navigation.Screen
 import com.todoapp.mobile.ui.groups.createnewgroup.CreateNewGroupContract.UiAction
 import com.todoapp.mobile.ui.groups.createnewgroup.CreateNewGroupContract.UiState
+import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -90,9 +91,23 @@ constructor(
                         uiState.value.groupName,
                         uiState.value.groupDescription.orEmpty(),
                     ),
-                ).onSuccess {
+                ).onSuccess { created ->
                     analyticsHelper.logGroupCreated()
-                    _navEffect.send(NavigationEffect.Back)
+                    // Land on the fresh group's Members tab with the one-shot first-invite dialog
+                    // open (tester feedback: creation should flow straight into adding a member).
+                    // popUpTo drops this screen from the stack, so back = the Groups list.
+                    _navEffect.send(
+                        NavigationEffect.Navigate(
+                            Screen.GroupDetail(
+                                groupId = created.id,
+                                groupName = created.name,
+                                initialTab = GroupDetailContract.TAB_MEMBERS,
+                                showFirstInvite = true,
+                            ),
+                            popUpTo = Screen.CreateNewGroup,
+                            isInclusive = true,
+                        ),
+                    )
                 }.onFailure {
                     _uiState.update { it.copy(error = "Something went wrong. Try again later.") }
                 }

@@ -71,6 +71,22 @@ data class GroupData(
     val updatedAt: Long,
     @SerialName("members")
     val members: List<GroupMemberData>,
+    // Outgoing PENDING invites embedded in the detail payload (backend ≥ the pending-invites
+    // deploy). Defaulted so responses from an older backend still deserialize.
+    @SerialName("pendingInvitations")
+    val pendingInvitations: List<GroupInvitationData> = emptyList(),
+)
+
+@Serializable
+data class GroupInvitationData(
+    @SerialName("id")
+    val id: Long,
+    @SerialName("inviteeEmail")
+    val inviteeEmail: String,
+    @SerialName("status")
+    val status: String = "PENDING",
+    @SerialName("createdAt")
+    val createdAt: Long = 0L,
 )
 
 @Serializable

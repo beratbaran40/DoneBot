@@ -87,10 +87,10 @@ fun GroupsTwoPane(
             GroupScreen(
                 uiState = uiState,
                 onAction = onAction,
-                onGroupSelect = { groupId, groupName ->
+                onGroupSelect = { groupId, groupName, initialTab ->
                     selectedGroupId = groupId
                     detailNavController.navigate(
-                        Screen.GroupDetail(groupId = groupId, groupName = groupName),
+                        Screen.GroupDetail(groupId = groupId, groupName = groupName, initialTab = initialTab),
                     ) {
                         popUpTo(DetailPanePlaceholder) { inclusive = false }
                         launchSingleTop = true

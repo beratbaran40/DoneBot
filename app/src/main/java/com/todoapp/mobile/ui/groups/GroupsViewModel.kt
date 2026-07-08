@@ -88,7 +88,11 @@ constructor(
                 action.remoteId.let { remoteId ->
                     _navEffect.trySend(
                         NavigationEffect.Navigate(
-                            Screen.GroupDetail(groupId = remoteId, groupName = action.groupName),
+                            Screen.GroupDetail(
+                                groupId = remoteId,
+                                groupName = action.groupName,
+                                initialTab = action.initialTab,
+                            ),
                         ),
                     )
                 }

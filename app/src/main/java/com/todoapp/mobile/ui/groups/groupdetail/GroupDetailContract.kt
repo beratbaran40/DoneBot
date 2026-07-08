@@ -5,6 +5,12 @@ import com.todoapp.mobile.ui.home.TaskFormState
 import com.todoapp.mobile.ui.home.TaskFormUiAction
 
 object GroupDetailContract {
+    // Tab indices shared by the tab row, the pager, and initialTab route/navigation call sites.
+    const val TAB_OVERVIEW = 0
+    const val TAB_MEMBERS = 1
+    const val TAB_ACTIVITY = 2
+    const val TAB_COUNT = 3
+
     @Immutable
     data class GroupTaskUiItem(
         val id: Long,
@@ -40,6 +46,15 @@ object GroupDetailContract {
         val isCurrentUser: Boolean,
     )
 
+    // Outgoing invitation that hasn't been accepted yet — rendered in the Members tab so admins
+    // can see who they already invited (tester feedback: "davet edilenler gösterilmiyor").
+    @Immutable
+    data class PendingInviteUiItem(
+        val id: Long,
+        val email: String,
+        val invitedAt: String,
+    )
+
     @Immutable
     data class GroupActivityUiItem(
         val id: Long,
@@ -65,8 +80,9 @@ object GroupDetailContract {
             val pendingCount: Int,
             val tasks: List<GroupTaskUiItem>,
             val members: List<GroupMemberUiItem>,
+            val pendingInvites: List<PendingInviteUiItem> = emptyList(),
             val activities: List<GroupActivityUiItem>,
-            val selectedTab: Int = 0,
+            val selectedTab: Int = TAB_OVERVIEW,
             val taskFilter: TaskFilter = TaskFilter.ALL,
             val statusFilter: GroupTaskStatusFilter = GroupTaskStatusFilter.ALL,
             val timeFilter: GroupTaskTimeFilter = GroupTaskTimeFilter.ALL,
@@ -78,6 +94,13 @@ object GroupDetailContract {
             val undoDeleteTaskId: Long? = null,
             val pendingAssignTaskId: Long? = null,
             val isRefreshing: Boolean = false,
+            // First-invite dialog (shown once right after group creation). UI-owned fields —
+            // they MUST be carried through loadGroupData's previousState preserve-list, or the
+            // RESUMED-triggered reload wipes the open dialog and the typed email.
+            val isFirstInviteDialogOpen: Boolean = false,
+            val firstInviteEmail: String = "",
+            val firstInviteErrorRes: Int? = null,
+            val isFirstInviteSending: Boolean = false,
         ) : UiState
 
         data class Error(
@@ -126,6 +149,14 @@ object GroupDetailContract {
         ) : UiAction
 
         data object OnInviteTap : UiAction
+
+        data class OnFirstInviteEmailChange(
+            val value: String,
+        ) : UiAction
+
+        data object OnFirstInviteSend : UiAction
+
+        data object OnFirstInviteDismiss : UiAction
 
         data class OnRemoveMemberTap(
             val userId: Long,

@@ -48,6 +48,8 @@ object GroupsContract {
         data class OnGroupTap(
             val remoteId: Long,
             val groupName: String,
+            // GroupDetailContract.TAB_* — lets the members stat box land directly on Members.
+            val initialTab: Int = 0,
         ) : UiAction
 
         data class OnMoveGroup(

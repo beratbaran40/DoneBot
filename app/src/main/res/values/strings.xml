@@ -494,6 +494,10 @@
     <string name="invite_member_email_hint">member@example.com</string>
     <string name="group_settings_saved">Group settings saved</string>
     <string name="invite_sent">Invite sent successfully</string>
+    <string name="first_invite_dialog_title">Add the first member to %1$s</string>
+    <string name="first_invite_later">Maybe later</string>
+    <string name="pending_invites_section">Invited</string>
+    <string name="invite_pending_chip">Pending</string>
     <string name="group_deleted_success">Group deleted</string>
     <string name="error_generic">Something went wrong. Please try again.</string>
     <string name="due_today">Due Today</string>

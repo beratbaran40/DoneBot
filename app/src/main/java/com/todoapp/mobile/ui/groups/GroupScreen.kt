@@ -55,6 +55,7 @@ import com.example.uikit.R
 import com.todoapp.mobile.common.move
 import com.todoapp.mobile.ui.groups.GroupsContract.UiAction
 import com.todoapp.mobile.ui.groups.GroupsContract.UiState
+import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract
 import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDFamilyGroupCard
@@ -69,12 +70,13 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 fun GroupScreen(
     uiState: UiState,
     onAction: (UiAction) -> Unit,
-    onGroupSelect: ((Long, String) -> Unit)? = null,
+    onGroupSelect: ((Long, String, Int) -> Unit)? = null,
 ) {
     // In the two-pane layout the host passes onGroupSelect to drive the detail pane; otherwise a
-    // group tap navigates full-screen via OnGroupTap (phone / single-pane behaviour).
-    val openGroup: (Long, String) -> Unit =
-        onGroupSelect ?: { id, name -> onAction(UiAction.OnGroupTap(id, name)) }
+    // group tap navigates full-screen via OnGroupTap (phone / single-pane behaviour). The Int is
+    // the initial tab (GroupDetailContract.TAB_*): the members stat box lands on Members directly.
+    val openGroup: (Long, String, Int) -> Unit =
+        onGroupSelect ?: { id, name, initialTab -> onAction(UiAction.OnGroupTap(id, name, initialTab)) }
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
@@ -100,7 +102,7 @@ fun GroupScreen(
 private fun GroupsContent(
     uiState: UiState.Success,
     onAction: (UiAction) -> Unit,
-    openGroup: (Long, String) -> Unit,
+    openGroup: (Long, String, Int) -> Unit,
 ) {
     val hapticFeedback = LocalHapticFeedback.current
     val lazyListState = rememberLazyListState()
@@ -171,7 +173,10 @@ private fun GroupsContent(
                                 tasksIcon = R.drawable.ic_sand_clock,
                                 avatarUrl = group.avatarUrl,
                                 onViewDetailsClick = {
-                                    group.remoteId?.let { openGroup(it, group.name) }
+                                    group.remoteId?.let { openGroup(it, group.name, GroupDetailContract.TAB_OVERVIEW) }
+                                },
+                                onMembersClick = {
+                                    group.remoteId?.let { openGroup(it, group.name, GroupDetailContract.TAB_MEMBERS) }
                                 },
                                 onDeleteClick = { onAction(UiAction.OnDeleteGroupTap(group.id)) },
                                 isDragging = isDragging,
@@ -222,7 +227,7 @@ private fun GroupsContent(
                                         },
                                     ).clickable(
                                         onClick = {
-                                            group.remoteId?.let { openGroup(it, group.name) }
+                                            group.remoteId?.let { openGroup(it, group.name, GroupDetailContract.TAB_OVERVIEW) }
                                         },
                                     ),
                             )

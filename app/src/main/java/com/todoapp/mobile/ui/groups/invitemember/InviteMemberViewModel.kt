@@ -6,6 +6,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.todoapp.mobile.R
 import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.navigation.NavigationEffect
@@ -53,7 +54,7 @@ constructor(
     private fun sendInvite() {
         val email = _uiState.value.email.trim()
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            _uiState.update { it.copy(emailError = "Please enter a valid email address") }
+            _uiState.update { it.copy(emailError = context.getString(R.string.email_error)) }
             return
         }
         viewModelScope.launch {
@@ -62,7 +63,7 @@ constructor(
                 .inviteMember(groupId, email)
                 .onSuccess {
                     _uiState.update { it.copy(isLoading = false, isSent = true, email = "") }
-                    _uiEffect.trySend(UiEffect.ShowToast("Invite sent successfully"))
+                    _uiEffect.trySend(UiEffect.ShowToast(context.getString(R.string.invite_sent)))
                     _navEffect.trySend(NavigationEffect.Back)
                 }.onFailure {
                     _uiState.update { it.copy(isLoading = false) }
@@ -72,6 +73,6 @@ constructor(
     }
 
     private fun shareLink() {
-        _uiEffect.trySend(UiEffect.ShowToast("Share link feature coming soon"))
+        _uiEffect.trySend(UiEffect.ShowToast(context.getString(R.string.share_link_coming_soon)))
     }
 }

@@ -86,6 +86,10 @@ fun GroupDetailMembersTab(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
+        if (uiState.pendingInvites.isNotEmpty()) {
+            item { GroupDetailPendingInvitesSection(invites = uiState.pendingInvites) }
+        }
+
         item { Spacer(modifier = Modifier.height(16.dp)) }
     }
 }
@@ -215,6 +219,7 @@ private fun GroupDetailMembersTabAdminPreview() {
                 pendingCount = 3,
                 tasks = mockGroupTasks,
                 members = mockGroupMembers,
+                pendingInvites = mockPendingInvites,
                 activities = mockGroupActivities,
                 selectedTab = 1,
                 currentUserRole = "ADMIN",

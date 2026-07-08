@@ -498,6 +498,10 @@
     <string name="invite_member_email_hint">uye@ornek.com</string>
     <string name="group_settings_saved">Grup ayarları kaydedildi</string>
     <string name="invite_sent">Davet başarıyla gönderildi</string>
+    <string name="first_invite_dialog_title">%1$s grubuna ilk üyesini ekle</string>
+    <string name="first_invite_later">Daha sonra</string>
+    <string name="pending_invites_section">Davet edilenler</string>
+    <string name="invite_pending_chip">Bekliyor</string>
     <string name="group_deleted_success">Grup silindi</string>
     <string name="error_generic">Bir şeyler ters gitti. Lütfen tekrar deneyin.</string>
     <string name="due_today">Bugün bitiyor</string>

@@ -185,6 +185,20 @@ val mockGroupMembers =
         ),
     )
 
+val mockPendingInvites =
+    listOf(
+        GroupDetailContract.PendingInviteUiItem(
+            id = 1L,
+            email = "dave@example.com",
+            invitedAt = "6 Jul 2026",
+        ),
+        GroupDetailContract.PendingInviteUiItem(
+            id = 2L,
+            email = "esra@example.com",
+            invitedAt = "8 Jul 2026",
+        ),
+    )
+
 val mockGroupActivities =
     listOf(
         GroupDetailContract.GroupActivityUiItem(

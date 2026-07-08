@@ -116,6 +116,12 @@ interface Screen {
     data class GroupDetail(
         val groupId: Long,
         val groupName: String,
+        // 0=Overview, 1=Members, 2=Activity (GroupDetailContract.TAB_*). Defaulted so every
+        // existing call site keeps compiling and old deep links stay valid.
+        val initialTab: Int = 0,
+        // One-shot: opens the first-invite dialog right after group creation. Only seeds the
+        // FIRST Success state — a dismissed dialog must not resurrect on resume/process death.
+        val showFirstInvite: Boolean = false,
     ) : Screen
 
     @Serializable

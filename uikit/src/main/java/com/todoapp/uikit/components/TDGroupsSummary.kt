@@ -8,6 +8,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -57,6 +58,9 @@ fun TDFamilyGroupCard(
     isAnyDragging: Boolean = false,
     onViewDetailsClick: () -> Unit = {},
     onDeleteClick: () -> Unit = {},
+    // Distinct target for the members stat box (e.g. jump straight to the Members tab).
+    // Null keeps the box inert so existing call sites are unaffected.
+    onMembersClick: (() -> Unit)? = null,
 ) {
     val initials =
         name
@@ -205,6 +209,7 @@ fun TDFamilyGroupCard(
                             value = "$memberCount",
                             label = stringResource(R.string.group_card_members_label),
                             modifier = Modifier.weight(1f),
+                            onClick = onMembersClick,
                         )
                         StatBox(
                             iconRes = tasksIcon,
@@ -264,23 +269,32 @@ private fun StatBox(
     value: String,
     label: String,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
 ) {
     val isDark = TDTheme.isDark
     val statBoxShape = RoundedCornerShape(12.dp)
     Surface(
         modifier =
-        modifier.then(
-            if (isDark) {
-                Modifier.border(1.dp, TDTheme.colors.lightGray.copy(alpha = 0.2f), statBoxShape)
-            } else {
-                Modifier.neumorphicShadow(
-                    lightShadow = TDTheme.colors.white.copy(alpha = 0.85f),
-                    darkShadow = TDTheme.colors.darkPending.copy(alpha = 0.15f),
-                    cornerRadius = 12.dp,
-                    elevation = 4.dp,
-                )
-            },
-        ),
+        modifier
+            .then(
+                if (isDark) {
+                    Modifier.border(1.dp, TDTheme.colors.lightGray.copy(alpha = 0.2f), statBoxShape)
+                } else {
+                    Modifier.neumorphicShadow(
+                        lightShadow = TDTheme.colors.white.copy(alpha = 0.85f),
+                        darkShadow = TDTheme.colors.darkPending.copy(alpha = 0.15f),
+                        cornerRadius = 12.dp,
+                        elevation = 4.dp,
+                    )
+                },
+            ).then(
+                // clip first so the ripple stays inside the rounded shape
+                if (onClick != null) {
+                    Modifier.clip(statBoxShape).clickable(onClick = onClick)
+                } else {
+                    Modifier
+                },
+            ),
         shape = statBoxShape,
         color = TDTheme.colors.lightPending,
         tonalElevation = 0.dp,
