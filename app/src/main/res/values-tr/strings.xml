@@ -215,7 +215,7 @@
     <string name="authentication_failed">Kimlik Doğrulama Başarısız</string>
     <string name="biometric_authentication">Biyometrik Kimlik Doğrulama</string>
     <string name="log_in_using_your_biometric_credential">Biyometrik kimlik bilgilerinizle giriş yapın</string>
-    <string name="privacy_security"><![CDATA[Gizlilik ve Güvenlik]]></string>
+    <string name="privacy_security"><![CDATA[Gizli Mod ayarları]]></string>
     <string name="the_time_of_reopening_for_secret_mode">Gizli modun yeniden açılma süresi</string>
     <string name="save">Kaydet</string>
     <string name="disable_secret_mode">Gizli Modu Devre Dışı Bırak</string>
@@ -563,6 +563,7 @@
     <string name="settings_section_personalization">Kişiselleştirme</string>
     <string name="settings_section_productivity">Üretkenlik</string>
     <string name="settings_section_privacy_security">Gizlilik ve Güvenlik</string>
+    <string name="settings_section_data">Veri</string>
     <string name="settings_section_accessibility">Erişilebilirlik</string>
     <string name="settings_section_about">Hakkında</string>
     <string name="settings_section_danger_zone">Tehlikeli Alan</string>

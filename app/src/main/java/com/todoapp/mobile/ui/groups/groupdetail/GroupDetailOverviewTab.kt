@@ -184,14 +184,14 @@ private fun GroupTasksEmptyState() {
         modifier =
         Modifier
             .fillMaxWidth()
-            .padding(vertical = 48.dp),
+            .padding(vertical = 64.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Icon(
             painter = painterResource(UiKitR.drawable.ic_no_group_task),
             contentDescription = null,
-            modifier = Modifier.size(120.dp),
+            modifier = Modifier.size(144.dp),
             tint = TDTheme.colors.lightGray,
         )
         TDText(
@@ -323,6 +323,7 @@ private fun matchesTimeFilter(
             val weekStart = today.with(DayOfWeek.MONDAY)
             !date.isBefore(weekStart) && !date.isAfter(weekStart.plusDays(WEEK_LAST_DAY_OFFSET))
         }
+
         GroupTaskTimeFilter.THIS_MONTH -> date.year == today.year && date.month == today.month
         GroupTaskTimeFilter.ALL -> true
     }

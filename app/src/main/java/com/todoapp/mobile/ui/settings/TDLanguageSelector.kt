@@ -50,7 +50,7 @@ fun LanguageSelector(
                 .background(TDTheme.colors.background)
                 .border(
                     width = 1.dp,
-                    color = TDTheme.colors.gray,
+                    color = TDTheme.colors.lightGray,
                     shape = RoundedCornerShape(12.dp),
                 ),
         ) {
@@ -85,7 +85,7 @@ private fun LanguageItem(
             .background(
                 if (selected) TDTheme.colors.pendingGray else Color.Transparent,
             ).clickable { onClick() }
-            .padding(12.dp),
+            .padding(10.dp),
         contentAlignment = Alignment.Center,
     ) {
         Icon(

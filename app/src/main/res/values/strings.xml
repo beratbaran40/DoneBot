@@ -210,7 +210,7 @@
     <string name="authentication_failed">Authentication Failed</string>
     <string name="biometric_authentication">Biometric Authentication</string>
     <string name="log_in_using_your_biometric_credential">Log in using your biometric credential</string>
-    <string name="privacy_security"><![CDATA[Privacy & Security]]></string>
+    <string name="privacy_security"><![CDATA[Private Mode settings]]></string>
     <string name="the_time_of_reopening_for_secret_mode">The time of reopening for secret mode</string>
     <string name="save">Save</string>
     <string name="disable_secret_mode">Disable Secret Mode</string>
@@ -562,6 +562,7 @@
     <string name="settings_section_personalization">Personalization</string>
     <string name="settings_section_productivity">Productivity</string>
     <string name="settings_section_privacy_security">Privacy &amp; Security</string>
+    <string name="settings_section_data">Data</string>
     <string name="settings_section_accessibility">Accessibility</string>
     <string name="settings_section_about">About</string>
     <string name="settings_section_danger_zone">Danger Zone</string>
