@@ -457,7 +457,7 @@
     <string name="group_time_today">Today</string>
     <string name="group_time_this_week">This week</string>
     <string name="group_time_this_month">This month</string>
-    <string name="group_time_all">All</string>
+    <string name="group_time_all">All time</string>
     <string name="assigned_to_me">Assigned to Me</string>
     <string name="invite">Invite</string>
     <string name="remove">Remove</string>

@@ -14,7 +14,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,7 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -60,7 +58,6 @@ import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract.UiState
 import com.todoapp.mobile.ui.home.SecretOrNormalPhotoBanner
 import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonType
-import com.todoapp.uikit.components.TDChoiceChip
 import com.todoapp.uikit.components.TDPriorityBadge
 import com.todoapp.uikit.components.TDTaskCardWithCheckbox
 import com.todoapp.uikit.components.TDText
@@ -113,14 +110,11 @@ fun GroupDetailOverviewTab(
                     },
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                GroupTimeFilterRow(
-                    selected = uiState.timeFilter,
-                    onSelected = { onAction(UiAction.OnTimeFilterSelected(it)) },
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                TaskFilterRow(
-                    selectedFilter = uiState.taskFilter,
-                    onFilterSelected = { onAction(UiAction.OnTaskFilterSelected(it)) },
+                GroupDetailOverviewFilterRow(
+                    taskFilter = uiState.taskFilter,
+                    timeFilter = uiState.timeFilter,
+                    onTaskFilterSelected = { onAction(UiAction.OnTaskFilterSelected(it)) },
+                    onTimeFilterSelected = { onAction(UiAction.OnTimeFilterSelected(it)) },
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -309,35 +303,6 @@ private fun GroupStatCard(
     }
 }
 
-@Composable
-private fun GroupTimeFilterRow(
-    selected: GroupTaskTimeFilter,
-    onSelected: (GroupTaskTimeFilter) -> Unit,
-) {
-    val options =
-        listOf(
-            GroupTaskTimeFilter.TODAY to R.string.group_time_today,
-            GroupTaskTimeFilter.THIS_WEEK to R.string.group_time_this_week,
-            GroupTaskTimeFilter.THIS_MONTH to R.string.group_time_this_month,
-            GroupTaskTimeFilter.ALL to R.string.group_time_all,
-        )
-    Row(
-        modifier =
-        Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        options.forEach { (filter, labelRes) ->
-            TDChoiceChip(
-                label = stringResource(labelRes),
-                selected = selected == filter,
-                onClick = { onSelected(filter) },
-            )
-        }
-    }
-}
-
 private const val MEMBERS_TAB_INDEX = 1
 
 private fun toggleStatus(
@@ -365,54 +330,6 @@ private fun matchesTimeFilter(
 }
 
 private const val WEEK_LAST_DAY_OFFSET = 6L
-
-@Composable
-private fun TaskFilterRow(
-    selectedFilter: TaskFilter,
-    onFilterSelected: (TaskFilter) -> Unit,
-) {
-    Row(
-        modifier =
-        Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        FilterChip(
-            text = stringResource(R.string.all),
-            selected = selectedFilter == TaskFilter.ALL,
-            onClick = { onFilterSelected(TaskFilter.ALL) },
-        )
-        FilterChip(
-            text = stringResource(R.string.assigned_to_me),
-            selected = selectedFilter == TaskFilter.ASSIGNED_TO_ME,
-            onClick = { onFilterSelected(TaskFilter.ASSIGNED_TO_ME) },
-        )
-    }
-}
-
-@Composable
-private fun FilterChip(
-    text: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    Box(
-        modifier =
-        Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(if (selected) TDTheme.colors.darkPending else TDTheme.colors.lightPending)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-    ) {
-        TDText(
-            text = text,
-            style = TDTheme.typography.subheading3,
-            color = if (selected) TDTheme.colors.background else TDTheme.colors.onBackground,
-        )
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
