@@ -48,6 +48,7 @@ internal fun lightColors(
     lightGray: Color = Color(0xFFC0C0C0),
     warmContainer: Color = Color(0xFFFFE2CD),
     purpleContainer: Color = Color(0xFFECE7FF),
+    settingsCard: Color = Color(0xFFFFFFFF),
     polaroid: PolaroidColors = polaroidColors(),
 ): TDColor = TDColor(
     infoCardBgColor = infoCardBgColor,
@@ -90,6 +91,7 @@ internal fun lightColors(
     lightPurple = lightPurple,
     warmContainer = warmContainer,
     purpleContainer = purpleContainer,
+    settingsCard = settingsCard,
     polaroid = polaroid,
 )
 
@@ -134,6 +136,7 @@ internal fun darkColors(
     lightGray: Color = Color(0xFF444444),
     warmContainer: Color = Color(0xFF3A2A1E),
     purpleContainer: Color = Color(0xFF2B2F5E),
+    settingsCard: Color = Color(0xFF212229),
     polaroid: PolaroidColors = polaroidColors(),
 ): TDColor =
     TDColor(
@@ -177,6 +180,7 @@ internal fun darkColors(
         lightPurple = lightPurple,
         warmContainer = warmContainer,
         purpleContainer = purpleContainer,
+        settingsCard = settingsCard,
         polaroid = polaroid,
     )
 
@@ -222,5 +226,6 @@ data class TDColor(
     val lightGray: Color,
     val warmContainer: Color,
     val purpleContainer: Color,
+    val settingsCard: Color,
     val polaroid: PolaroidColors,
 )
