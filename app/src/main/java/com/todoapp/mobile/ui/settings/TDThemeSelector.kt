@@ -50,7 +50,7 @@ fun ThemeSelector(
                 .background(TDTheme.colors.background)
                 .border(
                     width = 1.dp,
-                    color = TDTheme.colors.gray,
+                    color = TDTheme.colors.lightGray,
                     shape = RoundedCornerShape(12.dp),
                 ),
         ) {
@@ -93,7 +93,7 @@ private fun ThemeItem(
                 },
             )
             .clickable { onClick() }
-            .padding(12.dp),
+            .padding(10.dp),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
