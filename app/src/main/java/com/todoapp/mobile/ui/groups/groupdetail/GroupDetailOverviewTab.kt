@@ -87,7 +87,7 @@ fun GroupDetailOverviewTab(
                 if (uiState.description.isNotBlank()) {
                     TDText(
                         text = uiState.description,
-                        style = TDTheme.typography.heading6,
+                        style = TDTheme.typography.subheading1,
                         color = TDTheme.colors.gray,
                         modifier =
                         Modifier
@@ -191,13 +191,12 @@ private fun GroupTasksEmptyState() {
         Icon(
             painter = painterResource(UiKitR.drawable.ic_no_group_task),
             contentDescription = null,
-            modifier = Modifier.size(64.dp),
+            modifier = Modifier.size(120.dp),
             tint = TDTheme.colors.lightGray,
         )
-        Spacer(modifier = Modifier.height(16.dp))
         TDText(
             text = stringResource(R.string.no_tasks_yet),
-            style = TDTheme.typography.subheading2,
+            style = TDTheme.typography.subheading1,
             color = TDTheme.colors.gray,
         )
     }
