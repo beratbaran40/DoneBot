@@ -90,7 +90,7 @@ fun GroupDetailOverviewTab(
                 if (uiState.description.isNotBlank()) {
                     TDText(
                         text = uiState.description,
-                        style = TDTheme.typography.subheading2,
+                        style = TDTheme.typography.heading6,
                         color = TDTheme.colors.gray,
                         modifier =
                         Modifier
@@ -195,7 +195,7 @@ private fun GroupTasksEmptyState() {
         verticalArrangement = Arrangement.Center,
     ) {
         Icon(
-            painter = painterResource(UiKitR.drawable.ic_tasks_done),
+            painter = painterResource(UiKitR.drawable.ic_no_group_task),
             contentDescription = null,
             modifier = Modifier.size(64.dp),
             tint = TDTheme.colors.lightGray,
