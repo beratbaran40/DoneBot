@@ -530,7 +530,7 @@ private fun ChatInputPill(
                     enabled = true,
                     singleLine = false,
                     maxLines = MAX_INPUT_LINES,
-                    cursorBrush = SolidColor(TDTheme.colors.purple),
+                    cursorBrush = SolidColor(TDTheme.colors.pendingGray),
                     textStyle = TDTheme.typography.regularTextStyle.copy(color = TDTheme.colors.onBackground),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                     keyboardActions = KeyboardActions(
@@ -619,7 +619,7 @@ private fun StopButton(
         modifier = Modifier
             .size(48.dp)
             .clip(CircleShape)
-            .background(TDTheme.colors.purple)
+            .background(TDTheme.colors.pendingGray)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
