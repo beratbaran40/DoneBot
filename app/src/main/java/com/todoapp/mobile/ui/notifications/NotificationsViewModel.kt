@@ -45,6 +45,7 @@ class NotificationsViewModel @Inject constructor(
     val navEffect = _navEffect.receiveAsFlow()
 
     private var pendingDeleteJob: Job? = null
+    private var pendingMarkAllJob: Job? = null
 
     init {
         observeRepository()
@@ -53,12 +54,22 @@ class NotificationsViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        val pendingId = (_uiState.value as? UiState.Success)?.undoDeleteNotificationId ?: return
-        if (pendingDeleteJob?.isActive != true) return
+        val state = _uiState.value as? UiState.Success ?: return
+        val flushDeleteId = state.undoDeleteNotificationId.takeIf { pendingDeleteJob?.isActive == true }
+        val flushMarkAll = state.pendingMarkAllRead && pendingMarkAllJob?.isActive == true
         pendingDeleteJob?.cancel()
+        pendingMarkAllJob?.cancel()
+        if (flushDeleteId == null && !flushMarkAll) return
         CoroutineScope(SupervisorJob()).launch {
-            repository.delete(pendingId).onFailure {
-                Timber.e(it, "Failed to flush pending notification delete")
+            flushDeleteId?.let { id ->
+                repository.delete(id).onFailure {
+                    Timber.e(it, "Failed to flush pending notification delete")
+                }
+            }
+            if (flushMarkAll) {
+                repository.markAllRead().onFailure {
+                    Timber.e(it, "Failed to flush pending mark-all-read")
+                }
             }
         }
     }
@@ -67,7 +78,8 @@ class NotificationsViewModel @Inject constructor(
         when (action) {
             UiAction.OnRetry -> load(force = true)
             UiAction.OnPullToRefresh -> load(force = true)
-            UiAction.OnMarkAllRead -> markAllRead()
+            UiAction.OnMarkAllRead -> scheduleMarkAllRead()
+            UiAction.OnUndoMarkAllRead -> undoMarkAllRead()
             is UiAction.OnItemTap -> handleTap(action.notification)
             is UiAction.OnDeleteNotification -> scheduleDelete(action.notification)
             UiAction.OnUndoDelete -> undoDelete()
@@ -117,15 +129,28 @@ class NotificationsViewModel @Inject constructor(
         }
     }
 
-    private fun markAllRead() {
+    private fun scheduleMarkAllRead() {
+        val state = _uiState.value as? UiState.Success ?: return
+        if (state.pendingMarkAllRead || state.items.none { !it.isRead }) return
+        updateSuccess { it.copy(pendingMarkAllRead = true) }
+        pendingMarkAllJob = viewModelScope.launch {
+            delay(UNDO_WINDOW_MS)
+            updateSuccess { it.copy(pendingMarkAllRead = false) }
+            commitMarkAllRead()
+        }
+    }
+
+    private fun undoMarkAllRead() {
+        pendingMarkAllJob?.cancel()
+        pendingMarkAllJob = null
+        updateSuccess { it.copy(pendingMarkAllRead = false) }
+    }
+
+    private fun commitMarkAllRead() {
         viewModelScope.launch {
-            repository.markAllRead()
-                .onSuccess {
-                    _effect.trySend(UiEffect.ShowToast(R.string.notifications_mark_all_succeeded))
-                }
-                .onFailure {
-                    _effect.trySend(UiEffect.ShowToast(R.string.notifications_mark_all_failed))
-                }
+            repository.markAllRead().onFailure {
+                _effect.trySend(UiEffect.ShowToast(R.string.notifications_mark_all_failed))
+            }
         }
     }
 
@@ -134,7 +159,7 @@ class NotificationsViewModel @Inject constructor(
         flushPendingDelete()
         updateSuccess { it.copy(undoDeleteNotificationId = notification.id) }
         pendingDeleteJob = viewModelScope.launch {
-            delay(UNDO_DELETE_WINDOW_MS)
+            delay(UNDO_WINDOW_MS)
             updateSuccess { it.copy(undoDeleteNotificationId = null) }
             commitDelete(notification.id)
         }
@@ -197,7 +222,7 @@ class NotificationsViewModel @Inject constructor(
     }
 
     private companion object {
-        const val UNDO_DELETE_WINDOW_MS = 5_000L
+        const val UNDO_WINDOW_MS = 5_000L
     }
 
     private fun navTargetFor(n: Notification): Screen? {

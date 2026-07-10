@@ -553,6 +553,7 @@
     <string name="notifications_header_title">Your Summary</string>
     <string name="notifications_delete_failed">Couldn\'t delete the notification</string>
     <string name="notifications_deleted">Notification deleted</string>
+    <string name="notifications_undo_mark_all">Undo</string>
     <string name="invitations_title">Invitations</string>
     <string name="invitations_empty">No pending invitations</string>
     <string name="invitations_invited_by">Invited by %1$s</string>

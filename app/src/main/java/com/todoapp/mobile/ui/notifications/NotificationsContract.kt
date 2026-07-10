@@ -12,6 +12,7 @@ object NotificationsContract {
             val items: List<Notification>,
             val isRefreshing: Boolean = false,
             val undoDeleteNotificationId: Long? = null,
+            val pendingMarkAllRead: Boolean = false,
         ) : UiState
 
         data class Error(val message: String) : UiState
@@ -21,6 +22,7 @@ object NotificationsContract {
         data object OnRetry : UiAction
         data object OnPullToRefresh : UiAction
         data object OnMarkAllRead : UiAction
+        data object OnUndoMarkAllRead : UiAction
         data class OnItemTap(val notification: Notification) : UiAction
         data class OnDeleteNotification(val notification: Notification) : UiAction
         data object OnUndoDelete : UiAction

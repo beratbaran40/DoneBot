@@ -49,7 +49,11 @@ fun NotificationsScreen(
     }
 
     val visibleItems = (uiState as? UiState.Success)
-        ?.let { state -> state.items.filterNot { it.id == state.undoDeleteNotificationId } }
+        ?.let { state ->
+            state.items
+                .filterNot { it.id == state.undoDeleteNotificationId }
+                .let { list -> if (state.pendingMarkAllRead) list.map { it.copy(isRead = true) } else list }
+        }
         .orEmpty()
 
     Box(
@@ -61,7 +65,9 @@ fun NotificationsScreen(
             if (uiState is UiState.Success && visibleItems.isNotEmpty()) {
                 NotificationsHeader(
                     hasUnread = visibleItems.any { !it.isRead },
+                    showMarkAllUndo = uiState.pendingMarkAllRead,
                     onMarkAllRead = { onAction(UiAction.OnMarkAllRead) },
+                    onUndoMarkAllRead = { onAction(UiAction.OnUndoMarkAllRead) },
                 )
             }
             when (uiState) {

@@ -1,5 +1,10 @@
 package com.todoapp.mobile.ui.notifications
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -31,7 +36,9 @@ import com.todoapp.uikit.theme.TDTheme
 @Composable
 internal fun NotificationsHeader(
     hasUnread: Boolean,
+    showMarkAllUndo: Boolean,
     onMarkAllRead: () -> Unit,
+    onUndoMarkAllRead: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -59,7 +66,16 @@ internal fun NotificationsHeader(
             )
         }
         Spacer(Modifier.width(12.dp))
-        NotificationsMarkAllReadPill(enabled = hasUnread, onClick = onMarkAllRead)
+        Column(horizontalAlignment = Alignment.End) {
+            NotificationsMarkAllReadPill(enabled = hasUnread, onClick = onMarkAllRead)
+            AnimatedVisibility(
+                visible = showMarkAllUndo,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+            ) {
+                NotificationsUndoMarkAllText(onClick = onUndoMarkAllRead)
+            }
+        }
     }
 }
 
@@ -92,13 +108,44 @@ private fun NotificationsMarkAllReadPill(enabled: Boolean, onClick: () -> Unit) 
     }
 }
 
+@Composable
+private fun NotificationsUndoMarkAllText(onClick: () -> Unit) {
+    TDText(
+        text = stringResource(R.string.notifications_undo_mark_all),
+        style = TDTheme.typography.subheading3,
+        color = TDTheme.colors.darkPending,
+        maxLines = 1,
+        modifier = Modifier
+            .padding(top = 2.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+    )
+}
+
 @TDPreview
 @Composable
 private fun NotificationsHeaderPreview() {
     TDTheme {
         Column(modifier = Modifier.background(TDTheme.colors.background)) {
-            NotificationsHeader(hasUnread = true, onMarkAllRead = {})
-            NotificationsHeader(hasUnread = false, onMarkAllRead = {})
+            NotificationsHeader(
+                hasUnread = true,
+                showMarkAllUndo = false,
+                onMarkAllRead = {},
+                onUndoMarkAllRead = {},
+            )
+            NotificationsHeader(
+                hasUnread = false,
+                showMarkAllUndo = true,
+                onMarkAllRead = {},
+                onUndoMarkAllRead = {},
+            )
+            NotificationsHeader(
+                hasUnread = false,
+                showMarkAllUndo = false,
+                onMarkAllRead = {},
+                onUndoMarkAllRead = {},
+            )
         }
     }
 }

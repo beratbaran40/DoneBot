@@ -83,6 +83,7 @@ class NotificationsPreviewProvider : PreviewParameterProvider<NotificationsContr
                 NotificationsContract.UiState.Success(items = sample, isRefreshing = true),
                 NotificationsContract.UiState.Success(items = sample.map { it.copy(isRead = true) }),
                 NotificationsContract.UiState.Success(items = sample, undoDeleteNotificationId = 1),
+                NotificationsContract.UiState.Success(items = sample, pendingMarkAllRead = true),
             )
         }
 }
