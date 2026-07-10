@@ -58,6 +58,17 @@ class NotificationRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun delete(id: Long): Result<Unit> {
+        val before = _notifications.value
+        if (before.none { it.id == id }) return Result.success(Unit)
+        _notifications.update { list -> list.filterNot { it.id == id } }
+        _unreadCount.value = _notifications.value.count { !it.isRead }
+        return remote.delete(id).onFailure {
+            _notifications.value = before
+            _unreadCount.value = before.count { !it.isRead }
+        }
+    }
+
     override suspend fun fetchUnreadCount(): Result<Int> = remote.unreadCount().map { data ->
         val count = data.count.toInt().coerceAtLeast(0)
         _unreadCount.value = count

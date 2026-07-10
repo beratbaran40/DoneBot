@@ -11,6 +11,7 @@ interface NotificationRemoteDataSource {
     suspend fun list(limit: Int, before: Long?): Result<NotificationListData>
     suspend fun markRead(id: Long): Result<Unit>
     suspend fun markAllRead(): Result<Unit>
+    suspend fun delete(id: Long): Result<Unit>
     suspend fun unreadCount(): Result<UnreadCountData>
 }
 
@@ -22,6 +23,8 @@ class NotificationRemoteDataSourceImpl @Inject constructor(
     override suspend fun markRead(id: Long): Result<Unit> = handleEmptyRequest { api.markNotificationRead(id) }
 
     override suspend fun markAllRead(): Result<Unit> = handleEmptyRequest { api.markAllNotificationsRead() }
+
+    override suspend fun delete(id: Long): Result<Unit> = handleEmptyRequest { api.deleteNotification(id) }
 
     override suspend fun unreadCount(): Result<UnreadCountData> = handleRequest { api.getUnreadNotificationCount() }
 }

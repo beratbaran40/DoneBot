@@ -268,6 +268,11 @@ interface ToDoApi {
     @PUT("notifications/read-all")
     suspend fun markAllNotificationsRead(): Response<BaseResponse<Unit?>>
 
+    @DELETE("notifications/{id}")
+    suspend fun deleteNotification(
+        @Path("id") id: Long,
+    ): Response<BaseResponse<Unit?>>
+
     @GET("notifications/unread-count")
     suspend fun getUnreadNotificationCount(): Response<BaseResponse<UnreadCountData?>>
 

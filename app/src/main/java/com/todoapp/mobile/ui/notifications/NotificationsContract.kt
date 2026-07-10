@@ -21,6 +21,8 @@ object NotificationsContract {
         data object OnPullToRefresh : UiAction
         data object OnMarkAllRead : UiAction
         data class OnItemTap(val notification: Notification) : UiAction
+        data class OnDeleteNotification(val notification: Notification) : UiAction
+        data class OnAcceptInvitation(val notification: Notification) : UiAction
     }
 
     sealed interface UiEffect {

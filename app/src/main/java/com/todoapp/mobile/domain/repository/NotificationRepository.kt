@@ -13,5 +13,7 @@ interface NotificationRepository {
 
     suspend fun markAllRead(): Result<Unit>
 
+    suspend fun delete(id: Long): Result<Unit>
+
     suspend fun fetchUnreadCount(): Result<Int>
 }

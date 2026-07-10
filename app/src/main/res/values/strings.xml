@@ -549,6 +549,9 @@
     <string name="notifications_empty">You\'re all caught up</string>
     <string name="notifications_mark_all_read">Mark all as read</string>
     <string name="notifications_mark_all_failed">Couldn\'t mark notifications as read</string>
+    <string name="notifications_header_overline">UPDATES</string>
+    <string name="notifications_header_title">Your Summary</string>
+    <string name="notifications_delete_failed">Couldn\'t delete the notification</string>
     <string name="invitations_title">Invitations</string>
     <string name="invitations_empty">No pending invitations</string>
     <string name="invitations_invited_by">Invited by %1$s</string>
@@ -600,6 +603,7 @@
     <string name="settings_exact_alarms_description">Allow this app to fire reminders at the precise time you set.</string>
     <string name="settings_exact_alarms_status_enabled">Exact reminders are enabled.</string>
     <string name="notifications_section_today">Today</string>
+    <string name="notifications_section_yesterday">Yesterday</string>
     <string name="notifications_section_earlier">Earlier</string>
     <string name="notifications_mark_all_succeeded">All notifications marked as read</string>
     <string name="notifications_empty_subtitle">New activity from your groups will appear here.</string>
@@ -782,7 +786,7 @@
 
     <string name="notifications_info_title">Notifications</string>
     <string name="notifications_info_description">Recent alerts from DoneBot — task reminders, group invites, and shared activity. Tap one to jump to its source.</string>
-    <string name="notifications_info_bullet_1">Unread items show a red dot</string>
+    <string name="notifications_info_bullet_1">Unread items stand out with a colored stripe and bold title</string>
     <string name="notifications_info_bullet_2">Cleared items disappear after a while</string>
 
     <string name="invitations_info_title">Invitations</string>

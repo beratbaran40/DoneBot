@@ -7,6 +7,7 @@ import com.todoapp.mobile.R
 import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.domain.model.Notification
 import com.todoapp.mobile.domain.model.NotificationType
+import com.todoapp.mobile.domain.repository.InvitationRepository
 import com.todoapp.mobile.domain.repository.NotificationRepository
 import com.todoapp.mobile.navigation.NavigationEffect
 import com.todoapp.mobile.navigation.Screen
@@ -26,6 +27,7 @@ import javax.inject.Inject
 @HiltViewModel
 class NotificationsViewModel @Inject constructor(
     private val repository: NotificationRepository,
+    private val invitationRepository: InvitationRepository,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
@@ -48,6 +50,8 @@ class NotificationsViewModel @Inject constructor(
             UiAction.OnPullToRefresh -> load(force = true)
             UiAction.OnMarkAllRead -> markAllRead()
             is UiAction.OnItemTap -> handleTap(action.notification)
+            is UiAction.OnDeleteNotification -> deleteNotification(action.notification)
+            is UiAction.OnAcceptInvitation -> acceptInvitation(action.notification)
         }
     }
 
@@ -97,6 +101,33 @@ class NotificationsViewModel @Inject constructor(
                 }
                 .onFailure {
                     _effect.trySend(UiEffect.ShowToast(R.string.notifications_mark_all_failed))
+                }
+        }
+    }
+
+    private fun deleteNotification(notification: Notification) {
+        viewModelScope.launch {
+            repository.delete(notification.id).onFailure {
+                _effect.trySend(UiEffect.ShowToast(R.string.notifications_delete_failed))
+            }
+        }
+    }
+
+    private fun acceptInvitation(notification: Notification) {
+        viewModelScope.launch {
+            val invitationId = notification.payload["invitationId"]?.toLongOrNull()
+            if (invitationId == null) {
+                _effect.trySend(UiEffect.ShowToast(R.string.invitation_action_failed))
+                return@launch
+            }
+            invitationRepository.accept(invitationId)
+                .onSuccess {
+                    _effect.trySend(UiEffect.ShowToast(R.string.invitation_accepted_toast))
+                    if (!notification.isRead) repository.markRead(notification.id)
+                    repository.refresh(force = true)
+                }
+                .onFailure {
+                    _effect.trySend(UiEffect.ShowToast(R.string.invitation_action_failed))
                 }
         }
     }

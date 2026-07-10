@@ -548,8 +548,11 @@
     <string name="error_task_end_before_start">Bitiş saati başlangıç saatinden sonra olmalıdır</string>
     <string name="notifications_title">Bildirimler</string>
     <string name="notifications_empty">Yeni bildirim yok</string>
-    <string name="notifications_mark_all_read">Tümünü okundu olarak işaretle</string>
+    <string name="notifications_mark_all_read">Tümünü okundu işaretle</string>
     <string name="notifications_mark_all_failed">Bildirimler okundu olarak işaretlenemedi</string>
+    <string name="notifications_header_overline">GÜNCELLEMELER</string>
+    <string name="notifications_header_title">Özetiniz</string>
+    <string name="notifications_delete_failed">Bildirim silinemedi</string>
     <string name="invitations_title">Davetler</string>
     <string name="invitations_empty">Bekleyen davet yok</string>
     <string name="invitations_invited_by">Davet eden: %1$s</string>
@@ -601,6 +604,7 @@
     <string name="settings_exact_alarms_description">Hatırlatmaların belirlediğin zamanda tam olarak çalışmasına izin ver.</string>
     <string name="settings_exact_alarms_status_enabled">Tam zamanlı hatırlatıcılar etkin.</string>
     <string name="notifications_section_today">Bugün</string>
+    <string name="notifications_section_yesterday">Dün</string>
     <string name="notifications_section_earlier">Daha önce</string>
     <string name="notifications_mark_all_succeeded">Tüm bildirimler okundu olarak işaretlendi</string>
     <string name="notifications_empty_subtitle">Gruplarındaki yeni etkinlikler burada görünecek.</string>
@@ -783,7 +787,7 @@
 
     <string name="notifications_info_title">Bildirimler</string>
     <string name="notifications_info_description">DoneBot\'tan gelen son uyarılar — görev hatırlatıcıları, grup davetleri ve paylaşılan aktivite. Birine dokun, kaynağına atla.</string>
-    <string name="notifications_info_bullet_1">Okunmamış olanlarda kırmızı nokta vardır</string>
+    <string name="notifications_info_bullet_1">Okunmamışlar renkli şerit ve kalın başlıkla öne çıkar</string>
     <string name="notifications_info_bullet_2">Temizlenenler bir süre sonra kaybolur</string>
 
     <string name="invitations_info_title">Davetler</string>
