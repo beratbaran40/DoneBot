@@ -16,12 +16,17 @@ import com.todoapp.mobile.ui.notifications.NotificationsContract.UiEffect
 import com.todoapp.mobile.ui.notifications.NotificationsContract.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -39,9 +44,23 @@ class NotificationsViewModel @Inject constructor(
     private val _navEffect = Channel<NavigationEffect>()
     val navEffect = _navEffect.receiveAsFlow()
 
+    private var pendingDeleteJob: Job? = null
+
     init {
         observeRepository()
         load(force = false)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        val pendingId = (_uiState.value as? UiState.Success)?.undoDeleteNotificationId ?: return
+        if (pendingDeleteJob?.isActive != true) return
+        pendingDeleteJob?.cancel()
+        CoroutineScope(SupervisorJob()).launch {
+            repository.delete(pendingId).onFailure {
+                Timber.e(it, "Failed to flush pending notification delete")
+            }
+        }
     }
 
     fun onAction(action: UiAction) {
@@ -50,7 +69,8 @@ class NotificationsViewModel @Inject constructor(
             UiAction.OnPullToRefresh -> load(force = true)
             UiAction.OnMarkAllRead -> markAllRead()
             is UiAction.OnItemTap -> handleTap(action.notification)
-            is UiAction.OnDeleteNotification -> deleteNotification(action.notification)
+            is UiAction.OnDeleteNotification -> scheduleDelete(action.notification)
+            UiAction.OnUndoDelete -> undoDelete()
             is UiAction.OnAcceptInvitation -> acceptInvitation(action.notification)
         }
     }
@@ -58,11 +78,12 @@ class NotificationsViewModel @Inject constructor(
     private fun observeRepository() {
         viewModelScope.launch {
             repository.notifications.collect { items ->
-                val current = _uiState.value
-                if (current is UiState.Success) {
-                    _uiState.update { UiState.Success(items, isRefreshing = current.isRefreshing) }
-                } else if (items.isNotEmpty()) {
-                    _uiState.update { UiState.Success(items) }
+                _uiState.update { state ->
+                    when {
+                        state is UiState.Success -> state.copy(items = items)
+                        items.isNotEmpty() -> UiState.Success(items)
+                        else -> state
+                    }
                 }
             }
         }
@@ -70,22 +91,25 @@ class NotificationsViewModel @Inject constructor(
 
     private fun load(force: Boolean) {
         viewModelScope.launch {
-            val current = _uiState.value
-            if (current is UiState.Success) {
-                _uiState.update { current.copy(isRefreshing = true) }
-            } else {
-                _uiState.update { UiState.Loading }
+            _uiState.update { state ->
+                if (state is UiState.Success) state.copy(isRefreshing = true) else UiState.Loading
             }
             repository.refresh(force = force)
                 .onSuccess {
                     val items = repository.notifications.value
-                    _uiState.update { UiState.Success(items, isRefreshing = false) }
+                    _uiState.update { state ->
+                        if (state is UiState.Success) {
+                            state.copy(items = items, isRefreshing = false)
+                        } else {
+                            UiState.Success(items)
+                        }
+                    }
                 }
                 .onFailure { e ->
-                    if (current is UiState.Success) {
-                        _uiState.update { current.copy(isRefreshing = false) }
-                    } else {
-                        _uiState.update {
+                    _uiState.update { state ->
+                        if (state is UiState.Success) {
+                            state.copy(isRefreshing = false)
+                        } else {
                             UiState.Error(e.toUserMessage(context))
                         }
                     }
@@ -105,12 +129,44 @@ class NotificationsViewModel @Inject constructor(
         }
     }
 
-    private fun deleteNotification(notification: Notification) {
+    private fun scheduleDelete(notification: Notification) {
+        if (_uiState.value !is UiState.Success) return
+        flushPendingDelete()
+        updateSuccess { it.copy(undoDeleteNotificationId = notification.id) }
+        pendingDeleteJob = viewModelScope.launch {
+            delay(UNDO_DELETE_WINDOW_MS)
+            updateSuccess { it.copy(undoDeleteNotificationId = null) }
+            commitDelete(notification.id)
+        }
+    }
+
+    private fun undoDelete() {
+        pendingDeleteJob?.cancel()
+        pendingDeleteJob = null
+        updateSuccess { it.copy(undoDeleteNotificationId = null) }
+    }
+
+    /** A new swipe while a previous undo window is open commits the previous delete immediately. */
+    private fun flushPendingDelete() {
+        val previousId = (_uiState.value as? UiState.Success)?.undoDeleteNotificationId
+        if (previousId != null && pendingDeleteJob?.isActive == true) {
+            commitDelete(previousId)
+        }
+        pendingDeleteJob?.cancel()
+        pendingDeleteJob = null
+        updateSuccess { it.copy(undoDeleteNotificationId = null) }
+    }
+
+    private fun commitDelete(id: Long) {
         viewModelScope.launch {
-            repository.delete(notification.id).onFailure {
+            repository.delete(id).onFailure {
                 _effect.trySend(UiEffect.ShowToast(R.string.notifications_delete_failed))
             }
         }
+    }
+
+    private fun updateSuccess(transform: (UiState.Success) -> UiState.Success) {
+        _uiState.update { state -> if (state is UiState.Success) transform(state) else state }
     }
 
     private fun acceptInvitation(notification: Notification) {
@@ -138,6 +194,10 @@ class NotificationsViewModel @Inject constructor(
             val nav = navTargetFor(notification)
             if (nav != null) _navEffect.trySend(NavigationEffect.Navigate(nav))
         }
+    }
+
+    private companion object {
+        const val UNDO_DELETE_WINDOW_MS = 5_000L
     }
 
     private fun navTargetFor(n: Notification): Screen? {

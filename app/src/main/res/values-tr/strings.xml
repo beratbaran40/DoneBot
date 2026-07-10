@@ -553,6 +553,7 @@
     <string name="notifications_header_overline">GÜNCELLEMELER</string>
     <string name="notifications_header_title">Özetiniz</string>
     <string name="notifications_delete_failed">Bildirim silinemedi</string>
+    <string name="notifications_deleted">Bildirim silindi</string>
     <string name="invitations_title">Davetler</string>
     <string name="invitations_empty">Bekleyen davet yok</string>
     <string name="invitations_invited_by">Davet eden: %1$s</string>

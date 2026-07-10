@@ -11,6 +11,7 @@ object NotificationsContract {
         data class Success(
             val items: List<Notification>,
             val isRefreshing: Boolean = false,
+            val undoDeleteNotificationId: Long? = null,
         ) : UiState
 
         data class Error(val message: String) : UiState
@@ -22,6 +23,7 @@ object NotificationsContract {
         data object OnMarkAllRead : UiAction
         data class OnItemTap(val notification: Notification) : UiAction
         data class OnDeleteNotification(val notification: Notification) : UiAction
+        data object OnUndoDelete : UiAction
         data class OnAcceptInvitation(val notification: Notification) : UiAction
     }
 
