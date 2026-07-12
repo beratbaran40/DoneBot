@@ -140,7 +140,6 @@ class AccountSwitchIsolationTest {
     ) = JournalEntryEntity(
         title = title,
         content = "content",
-        mood = null,
         photoPaths = "",
         createdAt = 0L,
         updatedAt = 0L,

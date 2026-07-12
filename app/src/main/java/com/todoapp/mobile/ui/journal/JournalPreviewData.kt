@@ -1,7 +1,6 @@
 package com.todoapp.mobile.ui.journal
 
 import com.todoapp.mobile.domain.model.JournalEntry
-import com.todoapp.mobile.domain.model.JournalMood
 import com.todoapp.mobile.ui.journal.JournalContract.DateGroup
 import com.todoapp.mobile.ui.journal.JournalContract.GroupedSection
 import com.todoapp.mobile.ui.journal.JournalContract.UiState
@@ -14,7 +13,6 @@ internal object JournalPreviewData {
             id = 1,
             title = "A productive morning",
             content = "Started the day with a brisk walk and a fresh coffee. Felt energised through the entire focus session.",
-            mood = JournalMood.HAPPY,
             photoPaths = listOf("/sample/a.jpg", "/sample/b.jpg"),
             createdAt = now,
             updatedAt = now,
@@ -23,7 +21,6 @@ internal object JournalPreviewData {
             id = 2,
             title = null.toString(),
             content = "Quiet evening. Read a chapter and called mom.",
-            mood = JournalMood.NEUTRAL,
             photoPaths = emptyList(),
             createdAt = now - DAY_MS,
             updatedAt = now - DAY_MS,
@@ -32,7 +29,6 @@ internal object JournalPreviewData {
             id = 3,
             title = "Long week wrap",
             content = "Hectic days, but managed to ship the migration. Grateful for the team support.",
-            mood = JournalMood.GRATEFUL,
             photoPaths = listOf("/sample/c.jpg"),
             createdAt = now - 3 * DAY_MS,
             updatedAt = now - 3 * DAY_MS,
@@ -41,7 +37,6 @@ internal object JournalPreviewData {
             id = 4,
             title = "Doctor's visit",
             content = "Routine check, everything looked fine. Treated myself to ice cream after.",
-            mood = JournalMood.HAPPY,
             photoPaths = emptyList(),
             createdAt = now - 15 * DAY_MS,
             updatedAt = now - 15 * DAY_MS,
@@ -50,7 +45,6 @@ internal object JournalPreviewData {
             id = 5,
             title = "Old memory",
             content = "Found an old photo album. So many faces I had forgotten.",
-            mood = JournalMood.NEUTRAL,
             photoPaths = emptyList(),
             createdAt = now - 90 * DAY_MS,
             updatedAt = now - 90 * DAY_MS,
@@ -68,7 +62,6 @@ internal object JournalPreviewData {
                 GroupedSection(DateGroup.OLDER, listOf(list[4])),
             ),
             searchQuery = "",
-            activeMoodFilter = null,
             isRawListEmpty = false,
             isFilteredEmpty = false,
         )
@@ -77,7 +70,6 @@ internal object JournalPreviewData {
     fun emptyState(): UiState.Success = UiState.Success(
         sections = emptyList(),
         searchQuery = "",
-        activeMoodFilter = null,
         isRawListEmpty = true,
         isFilteredEmpty = true,
     )
@@ -85,7 +77,6 @@ internal object JournalPreviewData {
     fun filteredEmptyState(): UiState.Success = UiState.Success(
         sections = emptyList(),
         searchQuery = "vacation",
-        activeMoodFilter = JournalMood.SAD,
         isRawListEmpty = false,
         isFilteredEmpty = true,
     )

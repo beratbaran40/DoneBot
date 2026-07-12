@@ -72,7 +72,6 @@
     <string name="weekday_abbr_sat">Sat</string>
     <string name="weekday_abbr_sun">Sun</string>
     <!-- Journal feature -->
-    <string name="td_mood_selector_label_cd">Mood: %1$s</string>
     <string name="td_journal_card_photo_count">%1$d photos</string>
     <!-- Accessibility -->
     <string name="cd_expand_subtasks">Expand subtasks</string>

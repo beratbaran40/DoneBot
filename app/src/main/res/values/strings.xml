@@ -965,10 +965,10 @@
     <string name="nav_journal_title">Journal</string>
     <string name="fab_label_journal">Journal</string>
     <string name="journal_info_title">Your Journal</string>
-    <string name="journal_info_description">Capture your day in writing — moods, memories, and moments.</string>
+    <string name="journal_info_description">Capture your day in writing — memories and moments.</string>
     <string name="journal_info_bullet_1">Add titles, free-form text, and photos</string>
-    <string name="journal_info_bullet_2">Track your mood with quick emoji tags</string>
-    <string name="journal_info_bullet_3">Search past entries and filter by mood</string>
+    <string name="journal_info_bullet_2">Lock your journal behind biometric security</string>
+    <string name="journal_info_bullet_3">Search past entries anytime</string>
     <string name="journal_info_bullet_4">Everything stays on this device — never synced</string>
     <string name="journal_empty_title">No entries yet</string>
     <string name="journal_empty_subtitle">Write your first entry to look back on later</string>
@@ -976,7 +976,6 @@
     <string name="journal_filtered_empty_title">No matching entries</string>
     <string name="journal_filtered_empty_clear">Clear filters</string>
     <string name="journal_search_hint">Search entries</string>
-    <string name="journal_mood_filter_all">All</string>
     <string name="journal_load_error">Couldn\'t load your journal</string>
     <string name="journal_add_entry_cd">Add new entry</string>
     <string name="journal_card_content_description">Journal entry, %1$s</string>
@@ -984,13 +983,12 @@
     <string name="journal_entry_screen_title">Entry</string>
     <string name="journal_entry_new">New entry</string>
     <string name="journal_entry_info_title">Writing your entry</string>
-    <string name="journal_entry_info_description">Capture this moment — add a title, a few thoughts, your mood, and photos that matter.</string>
+    <string name="journal_entry_info_description">Capture this moment — add a title, a few thoughts, and photos that matter.</string>
     <string name="journal_entry_info_bullet_1">Title is optional — you can leave it blank</string>
     <string name="journal_entry_info_bullet_2">Photos are stored only on this device</string>
-    <string name="journal_entry_info_bullet_3">Tap Save to keep changes, back to discard</string>
+    <string name="journal_entry_info_bullet_3">Changes are saved automatically when you go back</string>
     <string name="journal_entry_title_hint">Title (optional)</string>
     <string name="journal_entry_content_hint">Write something…</string>
-    <string name="journal_entry_mood_label">How are you feeling?</string>
     <string name="journal_entry_photos_label">Photos</string>
     <string name="journal_entry_add_photo_cd">Add photo</string>
     <string name="journal_entry_remove_photo_cd">Remove photo</string>
@@ -1041,11 +1039,6 @@
     <string name="journal_date_this_week">This week</string>
     <string name="journal_date_this_month">This month</string>
     <string name="journal_date_older">Older</string>
-    <string name="journal_mood_happy">Happy</string>
-    <string name="journal_mood_neutral">Neutral</string>
-    <string name="journal_mood_sad">Sad</string>
-    <string name="journal_mood_grateful">Grateful</string>
-    <string name="journal_mood_anxious">Anxious</string>
     <!-- Journal polish (Round 2): biometric + long-press menu -->
     <string name="settings_journal_biometric_protection_title">Protect Journal with biometrics</string>
     <string name="settings_journal_biometric_protection_description">Require fingerprint to unlock when opening Journal</string>
@@ -1054,15 +1047,12 @@
     <string name="settings_crash_analytics_title">Share usage &amp; crash data</string>
     <string name="settings_crash_analytics_description">Send anonymous crash reports and usage analytics to help fix bugs and improve DoneBot</string>
     <string name="journal_locked_message">Authenticate to open your journal</string>
-    <string name="journal_action_change_mood">Change mood</string>
-    <string name="journal_action_clear_mood_cd">Clear mood</string>
     <string name="journal_action_edit">Edit</string>
     <string name="journal_action_delete">Delete</string>
     <string name="journal_action_delete_confirm_title">Delete this entry?</string>
     <string name="journal_action_delete_confirm_message">Photos attached will be removed too. This can\'t be undone.</string>
-    <string name="journal_mood_changed_toast">Mood updated</string>
     <!-- Journal Round 3: single field placeholder -->
-    <string name="journal_entry_placeholder">Bugün ne yaşadın? İlk satır başlık olur…</string>
+    <string name="journal_entry_placeholder">What happened today? The first line becomes the title…</string>
 
     <!-- Creation Hub -->
     <string name="creation_hub_title">Create</string>

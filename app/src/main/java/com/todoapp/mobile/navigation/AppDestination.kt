@@ -327,10 +327,11 @@ sealed class AppDestination(
                 Licenses,
                 BlockedUsers,
                 Journal,
-                // JournalEntry, PolaroidCamera and AvatarCrop intentionally NOT listed — they hide
-                // the topbar so they can render their own floating chrome over a full-bleed surface
-                // (paper background / skeuomorphic camera body / crop surface). Keeping the
-                // AppDestination objects in case future surfaces need their title resources.
+                JournalEntry,
+                // PolaroidCamera and AvatarCrop intentionally NOT listed — they hide the topbar so
+                // they can render their own floating chrome over a full-bleed surface (skeuomorphic
+                // camera body / crop surface). Keeping the AppDestination objects in case future
+                // surfaces need their title resources.
             )
     }
 }

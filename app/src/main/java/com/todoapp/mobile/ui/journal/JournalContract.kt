@@ -3,7 +3,6 @@ package com.todoapp.mobile.ui.journal
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import com.todoapp.mobile.domain.model.JournalEntry
-import com.todoapp.mobile.domain.model.JournalMood
 
 object JournalContract {
     enum class DateGroup { TODAY, YESTERDAY, THIS_WEEK, THIS_MONTH, OLDER }
@@ -23,7 +22,6 @@ object JournalContract {
         data class Success(
             val sections: List<GroupedSection>,
             val searchQuery: String,
-            val activeMoodFilter: JournalMood?,
             val isRawListEmpty: Boolean,
             val isFilteredEmpty: Boolean,
             val actionSheetEntry: JournalEntry? = null,
@@ -46,8 +44,6 @@ object JournalContract {
 
         data object OnDismissActionSheet : UiAction
 
-        data class OnQuickMoodChange(val mood: JournalMood?) : UiAction
-
         data object OnEditFromSheet : UiAction
 
         data object OnRequestDeleteFromSheet : UiAction
@@ -57,8 +53,6 @@ object JournalContract {
         data object OnDismissDelete : UiAction
 
         data class OnSearchQueryChange(val query: String) : UiAction
-
-        data class OnMoodFilterChange(val mood: JournalMood?) : UiAction
 
         data object OnClearFilters : UiAction
 

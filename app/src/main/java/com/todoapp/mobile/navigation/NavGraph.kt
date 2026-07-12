@@ -884,12 +884,23 @@ fun NavGraph(
                         }
                     }
             }
-            JournalEntryScreen(
-                uiState = uiState,
-                uiEffect = viewModel.uiEffect,
-                onAction = viewModel::onAction,
+            ResponsiveContainer {
+                JournalEntryScreen(
+                    uiState = uiState,
+                    uiEffect = viewModel.uiEffect,
+                    onAction = viewModel::onAction,
+                )
+            }
+            ScreenInfoDialog(
+                infoClicks = topBarViewModel.infoClicks,
+                titleRes = com.todoapp.mobile.R.string.journal_entry_info_title,
+                descriptionRes = com.todoapp.mobile.R.string.journal_entry_info_description,
+                bulletPointRes = listOf(
+                    com.todoapp.mobile.R.string.journal_entry_info_bullet_1,
+                    com.todoapp.mobile.R.string.journal_entry_info_bullet_2,
+                    com.todoapp.mobile.R.string.journal_entry_info_bullet_3,
+                ),
             )
-            // Info dialog rendered inside JournalEntryScreen — topbar is hidden for this route.
         }
 
         composable<Screen.PolaroidCamera> {

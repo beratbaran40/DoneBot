@@ -1,6 +1,5 @@
 package com.todoapp.mobile.ui.journal.entry
 
-import android.app.Activity
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -24,36 +23,27 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.core.view.WindowCompat
 import com.todoapp.mobile.R.string
 import com.todoapp.mobile.ui.common.SecureScreenEffect
-import com.todoapp.mobile.ui.journal.ORDERED_MOODS
 import com.todoapp.mobile.ui.journal.entry.JournalEntryContract.UiAction
 import com.todoapp.mobile.ui.journal.entry.JournalEntryContract.UiEffect
 import com.todoapp.mobile.ui.journal.entry.JournalEntryContract.UiState
-import com.todoapp.mobile.ui.journal.moodIndex
 import com.todoapp.mobile.ui.permissions.rememberCameraPermissionRequest
-import com.todoapp.uikit.components.TDFeatureExplainer
 import com.todoapp.uikit.components.TDLoadingBar
-import com.todoapp.uikit.components.TDMoodOption
-import com.todoapp.uikit.components.TDMoodSelector
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.extensions.collectWithLifecycle
 import com.todoapp.uikit.previews.TDPreviewForm
 import com.todoapp.uikit.theme.TDTheme
-import com.todoapp.uikit.theme.paperBackground
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import java.time.Instant
@@ -73,18 +63,6 @@ fun JournalEntryScreen(
         onGranted = { onAction(UiAction.OnPolaroidCameraClicked) },
     )
 
-    // The top bar matches the cream paper color in both themes, so keep the status-bar icons dark
-    // here (readable over the cream) regardless of theme, and restore the previous value on exit.
-    val view = LocalView.current
-    DisposableEffect(Unit) {
-        val controller = (view.context as? Activity)?.window?.let { WindowCompat.getInsetsController(it, view) }
-        val previous = controller?.isAppearanceLightStatusBars
-        controller?.isAppearanceLightStatusBars = true
-        onDispose {
-            if (previous != null) controller.isAppearanceLightStatusBars = previous
-        }
-    }
-
     uiEffect.collectWithLifecycle { effect ->
         when (effect) {
             is UiEffect.ShowToast ->
@@ -96,35 +74,15 @@ fun JournalEntryScreen(
         onAction(UiAction.OnBackPress)
     }
 
-    val handwriting = TDTheme.typography.journalHandwritingStyle
-
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .paperBackground(
-                textStyle = handwriting,
-                marginX = 32.dp,
-                headerLineWidth = 2.5.dp,
-                headerLineColor = TDTheme.colors.crossRed.copy(alpha = 0.55f),
-            ),
+            .background(TDTheme.colors.background),
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            JournalTopBar(
-                showInfo = uiState is UiState.Editing,
-                onBack = { onAction(UiAction.OnBackPress) },
-                onInfo = { onAction(UiAction.OnInfoClick) },
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-            ) {
-                when (uiState) {
-                    is UiState.Loading -> TDLoadingBar()
-                    is UiState.Error -> ErrorContent(messageRes = uiState.messageRes)
-                    is UiState.Editing -> EditingContent(state = uiState, onAction = onAction)
-                }
-            }
+        when (uiState) {
+            is UiState.Loading -> TDLoadingBar()
+            is UiState.Error -> ErrorContent(messageRes = uiState.messageRes)
+            is UiState.Editing -> EditingContent(state = uiState, onAction = onAction)
         }
         if (uiState is UiState.Editing) {
             FloatingNotebookButton(
@@ -148,19 +106,6 @@ fun JournalEntryScreen(
             com.todoapp.uikit.components.TDFullscreenImageViewer(
                 model = java.io.File(fullscreenPath),
                 onDismiss = { onAction(UiAction.OnDismissFullscreen) },
-            )
-        }
-        if (uiState.showInfoDialog) {
-            TDFeatureExplainer(
-                title = stringResource(string.journal_entry_info_title),
-                description = stringResource(string.journal_entry_info_description),
-                bulletPoints = listOf(
-                    stringResource(string.journal_entry_info_bullet_1),
-                    stringResource(string.journal_entry_info_bullet_2),
-                    stringResource(string.journal_entry_info_bullet_3),
-                ),
-                buttonText = stringResource(string.got_it),
-                onDismiss = { onAction(UiAction.OnDismissInfoDialog) },
             )
         }
     }
@@ -223,16 +168,6 @@ private fun EditingContent(
             .padding(start = 40.dp, end = 16.dp, top = 16.dp, bottom = 24.dp),
     ) {
         DateBanner(createdAt = state.createdAt, isNew = state.isNew)
-        Spacer(modifier = Modifier.height(8.dp))
-
-        TDMoodSelector(
-            options = ORDERED_MOODS.map { TDMoodOption(emoji = it.emoji, label = stringResource(it.labelRes)) },
-            selectedIndex = moodIndex(state.mood),
-            onSelect = { index ->
-                val newMood = if (index in ORDERED_MOODS.indices) ORDERED_MOODS[index].mood else null
-                onAction(UiAction.OnMoodSelect(newMood))
-            },
-        )
         Spacer(modifier = Modifier.height(20.dp))
 
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -240,17 +175,15 @@ private fun EditingContent(
                 TDText(
                     text = stringResource(string.journal_entry_placeholder),
                     style = handwriting,
-                    // Paper is cream in both themes, so use a muted dark ink (not the theme-adaptive gray).
-                    color = TDTheme.colors.black.copy(alpha = 0.4f),
+                    color = TDTheme.colors.onBackground.copy(alpha = 0.4f),
                 )
             }
             BasicTextField(
                 value = state.content,
                 onValueChange = { onAction(UiAction.OnContentChange(it)) },
-                // journalHandwritingStyle bakes onBackground (light in dark mode); the paper is always
-                // cream, so override to fixed dark ink so the writing stays readable in dark mode.
-                textStyle = handwriting.copy(color = TDTheme.colors.black),
-                cursorBrush = SolidColor(TDTheme.colors.crossRed),
+                // journalHandwritingStyle already bakes onBackground, so it stays readable in both themes.
+                textStyle = handwriting,
+                cursorBrush = SolidColor(TDTheme.colors.primary),
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -298,7 +231,7 @@ private fun ErrorContent(messageRes: Int) {
         TDText(
             text = stringResource(messageRes),
             style = TDTheme.typography.subheading1,
-            color = TDTheme.colors.black,
+            color = TDTheme.colors.onBackground,
         )
     }
 }
@@ -347,18 +280,6 @@ private fun JournalEntryErrorPreview() {
     TDTheme {
         JournalEntryScreen(
             uiState = UiState.Error(messageRes = string.journal_entry_load_error),
-            uiEffect = flowOf(),
-            onAction = {},
-        )
-    }
-}
-
-@TDPreviewForm
-@Composable
-private fun JournalEntryInfoDialogPreview() {
-    TDTheme {
-        JournalEntryScreen(
-            uiState = JournalEntryPreviewData.infoDialog(),
             uiEffect = flowOf(),
             onAction = {},
         )

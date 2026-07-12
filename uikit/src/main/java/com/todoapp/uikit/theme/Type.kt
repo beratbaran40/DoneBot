@@ -219,8 +219,8 @@ class TDTypography {
             )
 
     /**
-     * Body text aligned to the notebook-style paper background. The 28sp lineHeight matches
-     * the default `paperBackground` lineSpacing so every typed line rests on a paper rule.
+     * Body text used for the journal entry editor. The relaxed 28sp lineHeight gives the writing
+     * surface generous, handwriting-style breathing room between lines.
      */
     val journalHandwritingStyle: TextStyle
         @Composable
