@@ -624,6 +624,13 @@
     <string name="location_label">Konum</string>
     <string name="location_add_hint">Konum ekle</string>
     <string name="location_clear">Konumu temizle</string>
+    <string name="location_search_unavailable">Konum arama şu anda kullanılamıyor. Lütfen daha sonra tekrar dene.</string>
+    <string name="location_search_hint">Bir yer ara</string>
+    <string name="location_search_prompt">Konum eklemek için ara</string>
+    <string name="location_search_empty">Yer bulunamadı</string>
+    <string name="location_search_back">Geri</string>
+    <string name="location_search_clear_query">Aramayı temizle</string>
+    <string name="location_powered_by_google">Powered by Google</string>
     <string name="reminder_label">Hatırlat</string>
     <string name="reminder_none">Hatırlatma yok</string>
     <string name="reminder_on_time">Tam zamanında</string>

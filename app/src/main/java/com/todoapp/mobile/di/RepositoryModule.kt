@@ -1,6 +1,7 @@
 package com.todoapp.mobile.di
 
 import com.todoapp.mobile.data.engine.PomodoroEngineImpl
+import com.todoapp.mobile.data.location.PlaceSearchRepositoryImpl
 import com.todoapp.mobile.data.repository.AuthRepositoryImpl
 import com.todoapp.mobile.data.repository.ChatRepositoryImpl
 import com.todoapp.mobile.data.repository.GroupRepositoryImpl
@@ -33,6 +34,7 @@ import com.todoapp.mobile.data.source.remote.datasource.NotificationRemoteDataSo
 import com.todoapp.mobile.data.source.remote.datasource.TaskRemoteDataSource
 import com.todoapp.mobile.data.source.remote.datasource.TaskRemoteDataSourceImpl
 import com.todoapp.mobile.domain.engine.PomodoroEngine
+import com.todoapp.mobile.domain.location.PlaceSearchRepository
 import com.todoapp.mobile.domain.repository.AuthRepository
 import com.todoapp.mobile.domain.repository.ChatRepository
 import com.todoapp.mobile.domain.repository.GroupRepository
@@ -90,6 +92,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindThemeRepository(impl: ThemeRepositoryImpl): ThemeRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPlaceSearchRepository(impl: PlaceSearchRepositoryImpl): PlaceSearchRepository
 
     @Binds
     @Singleton

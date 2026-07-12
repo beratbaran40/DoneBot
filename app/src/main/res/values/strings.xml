@@ -623,6 +623,13 @@
     <string name="location_label">Location</string>
     <string name="location_add_hint">Add location</string>
     <string name="location_clear">Clear location</string>
+    <string name="location_search_unavailable">Location search is temporarily unavailable. Please try again later.</string>
+    <string name="location_search_hint">Search for a place</string>
+    <string name="location_search_prompt">Search to add a location</string>
+    <string name="location_search_empty">No places found</string>
+    <string name="location_search_back">Back</string>
+    <string name="location_search_clear_query">Clear search</string>
+    <string name="location_powered_by_google">Powered by Google</string>
     <string name="reminder_label">Remind me</string>
     <string name="reminder_none">No reminder</string>
     <string name="reminder_on_time">On time</string>
