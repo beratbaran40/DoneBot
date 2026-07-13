@@ -98,7 +98,7 @@ class LocationSearchViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching { getDetails(placeId) }
                 .onSuccess { place ->
-                    place ?: return@onSuccess
+                    if (place == null) return@onSuccess
                     _uiEffect.trySend(
                         LocationSearchContract.UiEffect.PlacePicked(
                             name = place.name,
