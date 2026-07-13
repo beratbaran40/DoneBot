@@ -7,13 +7,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.todoapp.mobile.ThemeViewModel
 import com.todoapp.mobile.domain.model.ThemePreference
-import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.PaletteKit
 
 @Composable
 fun ThemedApp() {
     val themeViewModel: ThemeViewModel = hiltViewModel()
     val themePreference by themeViewModel.themeFlow
         .collectAsStateWithLifecycle(initialValue = ThemePreference.SYSTEM_DEFAULT)
+    val palette by themeViewModel.paletteFlow
+        .collectAsStateWithLifecycle(initialValue = PaletteKit.ORIGINAL)
 
     val darkTheme =
         when (themePreference) {
@@ -22,7 +24,8 @@ fun ThemedApp() {
             ThemePreference.SYSTEM_DEFAULT -> isSystemInDarkTheme()
         }
 
-    TDTheme(darkTheme = darkTheme) {
-        ToDoApp()
-    }
+    // TDTheme is applied inside ToDoApp (per-branch: the splash directly, the main UI via
+    // ThemeChangeReveal, which swaps the theme through a top-down wipe). Passing the target theme
+    // down lets the reveal capture the old frame BEFORE the theme switches — see ThemeChangeReveal.
+    ToDoApp(darkTheme = darkTheme, palette = palette)
 }

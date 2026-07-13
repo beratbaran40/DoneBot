@@ -11,6 +11,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -123,6 +124,8 @@ import com.todoapp.mobile.ui.topbar.TopBarViewModel
 import com.todoapp.mobile.ui.webview.WebViewScreen
 import com.todoapp.mobile.ui.webview.WebViewViewModel
 import com.todoapp.uikit.extensions.collectWithLifecycle
+import com.todoapp.uikit.modifier.gridBackground
+import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.flow.Flow
 
@@ -682,6 +685,17 @@ fun NavGraph(
                 com.todoapp.mobile.ui.licenses.LicensesScreen()
             }
         }
+
+        composable<Screen.AppColors> {
+            val viewModel: com.todoapp.mobile.ui.appcolors.AppColorsViewModel = hiltViewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            ResponsiveContainer {
+                com.todoapp.mobile.ui.appcolors.AppColorsScreen(
+                    uiState = uiState,
+                    onAction = viewModel::onAction,
+                )
+            }
+        }
         composable<Screen.BlockedUsers> {
             ResponsiveContainer {
                 com.todoapp.mobile.ui.blockedusers.BlockedUsersScreen()
@@ -936,7 +950,10 @@ fun NavGraph(
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
-fun ToDoApp() {
+fun ToDoApp(
+    darkTheme: Boolean,
+    palette: PaletteKit,
+) {
     val bannerViewModel: BannerViewModel = hiltViewModel()
     val bannerState by bannerViewModel.uiState.collectAsStateWithLifecycle()
     val topBarViewModel: TopBarViewModel = hiltViewModel()
@@ -946,7 +963,9 @@ fun ToDoApp() {
     var splashDone by rememberSaveable { mutableStateOf(false) }
 
     if (isLoggedIn == null || !splashDone) {
-        TDSplashScreen(onAnimationComplete = { splashDone = true })
+        TDTheme(darkTheme = darkTheme, palette = palette) {
+            TDSplashScreen(onAnimationComplete = { splashDone = true })
+        }
         return
     }
 
@@ -976,45 +995,59 @@ fun ToDoApp() {
     // Bottom bar only for phones held in portrait; tablets (both orientations) and landscape get the rail.
     val useBottomBar = isPortrait && isCompactWidth
 
-    Scaffold(
-        modifier =
-        Modifier
-            .fillMaxSize()
-            .imePadding(),
-        // Material3 Scaffold's Surface paints containerColor over any background modifier; without this
-        // it falls back to the default (light) colorScheme and leaks through the side gutters that the
-        // centred ResponsiveContainer leaves on tablets / landscape. Set it to the themed background.
-        containerColor = TDTheme.colors.background,
-        bottomBar = { if (useBottomBar) TDBottomBar() },
-        topBar = {
-            Column {
-                BannerOverlay(
-                    bannerState,
-                    bannerViewModel::onAction,
-                    bannerViewModel.uiEffect,
-                )
-                NavigationEffectController(bannerViewModel.navEffect)
-                ShowTopBar(bannerState.isBannerActivated, topBarViewModel::onAction, topBarState)
-                NavigationEffectController(topBarViewModel.navEffect)
-            }
-        },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-    ) { padding ->
-        Row(
+    ThemeChangeReveal(targetDark = darkTheme, targetPalette = palette) {
+        Scaffold(
+            modifier =
             Modifier
                 .fillMaxSize()
-                .padding(padding),
-        ) {
-            if (!useBottomBar) TDNavigationRail()
-            NavGraph(
-                navController = LocalNavController.current,
-                modifier =
+                .imePadding(),
+            // Material3 Scaffold's Surface paints containerColor over any background modifier; without this
+            // it falls back to the default (light) colorScheme and leaks through the side gutters that the
+            // centred ResponsiveContainer leaves on tablets / landscape. Set it to the themed background.
+            containerColor = TDTheme.colors.background,
+            bottomBar = { if (useBottomBar) TDBottomBar() },
+            topBar = {
+                Column {
+                    BannerOverlay(
+                        bannerState,
+                        bannerViewModel::onAction,
+                        bannerViewModel.uiEffect,
+                    )
+                    NavigationEffectController(bannerViewModel.navEffect)
+                    ShowTopBar(bannerState.isBannerActivated, topBarViewModel::onAction, topBarState)
+                    NavigationEffectController(topBarViewModel.navEffect)
+                }
+            },
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        ) { padding ->
+            // Notion-style graph-paper grid painted app-wide, BEHIND the content Row. Must live inside
+            // the content lambda (not on the Scaffold modifier): Material3's Surface paints containerColor
+            // over any Scaffold-level background modifier, which would hide the grid.
+            Box(
                 Modifier
                     .fillMaxSize()
-                    .weight(1f),
-                startDestination = startDestination,
-                topBarViewModel = topBarViewModel,
-            )
+                    .gridBackground(
+                        baseColor = TDTheme.colors.background,
+                        lineColor = TDTheme.colors.gridLine,
+                    ),
+            ) {
+                Row(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                ) {
+                    if (!useBottomBar) TDNavigationRail()
+                    NavGraph(
+                        navController = LocalNavController.current,
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .weight(1f),
+                        startDestination = startDestination,
+                        topBarViewModel = topBarViewModel,
+                    )
+                }
+            }
         }
     }
 }
