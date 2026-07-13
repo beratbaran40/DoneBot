@@ -148,8 +148,14 @@
     <string name="activity_trend_up">↑ %1$d%% vs last week</string>
     <string name="activity_trend_down">↓ %1$d%% vs last week</string>
     <string name="activity_trend_flat">Same as last week</string>
-    <string name="activity_streak_label">%1$d-day streak 🔥</string>
-    <string name="activity_streak_none">No streak yet — complete a task today</string>
+    <string name="activity_health_title">Your productivity health</string>
+    <string name="activity_health_count">%1$s/%2$d</string>
+    <string name="activity_health_content_description">%1$s of %2$d hearts remaining</string>
+    <string name="activity_health_hint_earn">Complete a task today to earn ½ a heart</string>
+    <string name="activity_health_hint_full">All hearts full, keep it up!</string>
+    <string name="activity_health_hint_low">Your hearts are running low — complete a task</string>
+    <string name="activity_hearts_depleted_speech">Your task-completion streak ended. Pick up where you left off and complete tasks to win your hearts back.</string>
+    <string name="activity_hearts_depleted_button">Keep going</string>
     <string name="activity_best_day">Most productive: %1$s · %2$d tasks</string>
     <string name="activity_category_breakdown_title">Where you focused this week</string>
     <string name="activity_heatmap_title">Last 6 months</string>
@@ -185,6 +191,11 @@
     <string name="settings_title">Settings</string>
     <string name="app_theme">Change App Theme</string>
     <string name="app_language">Change Language</string>
+    <string name="app_colors">Change App Colors</string>
+    <string name="palette_original">Original</string>
+    <string name="palette_original_desc">The classic purple &amp; blue look</string>
+    <string name="palette_monochrome">Monochrome</string>
+    <string name="palette_monochrome_desc">Grayscale with a grid</string>
     <string name="language_english">English</string>
     <string name="language_english_short">EN</string>
     <string name="language_turkish">Turkish</string>
@@ -623,6 +634,13 @@
     <string name="location_label">Location</string>
     <string name="location_add_hint">Add location</string>
     <string name="location_clear">Clear location</string>
+    <string name="location_search_unavailable">Location search is temporarily unavailable. Please try again later.</string>
+    <string name="location_search_hint">Search for a place</string>
+    <string name="location_search_prompt">Search to add a location</string>
+    <string name="location_search_empty">No places found</string>
+    <string name="location_search_back">Back</string>
+    <string name="location_search_clear_query">Clear search</string>
+    <string name="location_powered_by_google">Powered by Google</string>
     <string name="reminder_label">Remind me</string>
     <string name="reminder_none">No reminder</string>
     <string name="reminder_on_time">On time</string>
@@ -687,10 +705,10 @@
     <string name="calendar_info_bullet_3">Recurring tasks appear on every matching day</string>
 
     <string name="activity_info_title">Your Activity</string>
-    <string name="activity_info_description">Track how your week and month are going. Charts show what you finished, what\'s pending, and your focus streak.</string>
+    <string name="activity_info_description">Track how your week and month are going. Charts show what you finished and what\'s pending, and your health bar tracks your task-completion streak.</string>
     <string name="activity_info_bullet_1">Completed vs. pending breakdown</string>
     <string name="activity_info_bullet_2">Pomodoro focus time totals</string>
-    <string name="activity_info_bullet_3">Streaks reset at midnight</string>
+    <string name="activity_info_bullet_3">Complete a task daily to keep your hearts full</string>
 
     <string name="settings_info_title">Settings</string>
     <string name="settings_info_description">Tune the app to fit you — language, theme, notifications, secret mode, and account options live here.</string>
@@ -965,10 +983,10 @@
     <string name="nav_journal_title">Journal</string>
     <string name="fab_label_journal">Journal</string>
     <string name="journal_info_title">Your Journal</string>
-    <string name="journal_info_description">Capture your day in writing — moods, memories, and moments.</string>
+    <string name="journal_info_description">Capture your day in writing — memories and moments.</string>
     <string name="journal_info_bullet_1">Add titles, free-form text, and photos</string>
-    <string name="journal_info_bullet_2">Track your mood with quick emoji tags</string>
-    <string name="journal_info_bullet_3">Search past entries and filter by mood</string>
+    <string name="journal_info_bullet_2">Lock your journal behind biometric security</string>
+    <string name="journal_info_bullet_3">Search past entries anytime</string>
     <string name="journal_info_bullet_4">Everything stays on this device — never synced</string>
     <string name="journal_empty_title">No entries yet</string>
     <string name="journal_empty_subtitle">Write your first entry to look back on later</string>
@@ -976,7 +994,6 @@
     <string name="journal_filtered_empty_title">No matching entries</string>
     <string name="journal_filtered_empty_clear">Clear filters</string>
     <string name="journal_search_hint">Search entries</string>
-    <string name="journal_mood_filter_all">All</string>
     <string name="journal_load_error">Couldn\'t load your journal</string>
     <string name="journal_add_entry_cd">Add new entry</string>
     <string name="journal_card_content_description">Journal entry, %1$s</string>
@@ -984,13 +1001,12 @@
     <string name="journal_entry_screen_title">Entry</string>
     <string name="journal_entry_new">New entry</string>
     <string name="journal_entry_info_title">Writing your entry</string>
-    <string name="journal_entry_info_description">Capture this moment — add a title, a few thoughts, your mood, and photos that matter.</string>
+    <string name="journal_entry_info_description">Capture this moment — add a title, a few thoughts, and photos that matter.</string>
     <string name="journal_entry_info_bullet_1">Title is optional — you can leave it blank</string>
     <string name="journal_entry_info_bullet_2">Photos are stored only on this device</string>
-    <string name="journal_entry_info_bullet_3">Tap Save to keep changes, back to discard</string>
+    <string name="journal_entry_info_bullet_3">Changes are saved automatically when you go back</string>
     <string name="journal_entry_title_hint">Title (optional)</string>
     <string name="journal_entry_content_hint">Write something…</string>
-    <string name="journal_entry_mood_label">How are you feeling?</string>
     <string name="journal_entry_photos_label">Photos</string>
     <string name="journal_entry_add_photo_cd">Add photo</string>
     <string name="journal_entry_remove_photo_cd">Remove photo</string>
@@ -1041,11 +1057,6 @@
     <string name="journal_date_this_week">This week</string>
     <string name="journal_date_this_month">This month</string>
     <string name="journal_date_older">Older</string>
-    <string name="journal_mood_happy">Happy</string>
-    <string name="journal_mood_neutral">Neutral</string>
-    <string name="journal_mood_sad">Sad</string>
-    <string name="journal_mood_grateful">Grateful</string>
-    <string name="journal_mood_anxious">Anxious</string>
     <!-- Journal polish (Round 2): biometric + long-press menu -->
     <string name="settings_journal_biometric_protection_title">Protect Journal with biometrics</string>
     <string name="settings_journal_biometric_protection_description">Require fingerprint to unlock when opening Journal</string>
@@ -1054,15 +1065,12 @@
     <string name="settings_crash_analytics_title">Share usage &amp; crash data</string>
     <string name="settings_crash_analytics_description">Send anonymous crash reports and usage analytics to help fix bugs and improve DoneBot</string>
     <string name="journal_locked_message">Authenticate to open your journal</string>
-    <string name="journal_action_change_mood">Change mood</string>
-    <string name="journal_action_clear_mood_cd">Clear mood</string>
     <string name="journal_action_edit">Edit</string>
     <string name="journal_action_delete">Delete</string>
     <string name="journal_action_delete_confirm_title">Delete this entry?</string>
     <string name="journal_action_delete_confirm_message">Photos attached will be removed too. This can\'t be undone.</string>
-    <string name="journal_mood_changed_toast">Mood updated</string>
     <!-- Journal Round 3: single field placeholder -->
-    <string name="journal_entry_placeholder">Bugün ne yaşadın? İlk satır başlık olur…</string>
+    <string name="journal_entry_placeholder">What happened today? The first line becomes the title…</string>
 
     <!-- Creation Hub -->
     <string name="creation_hub_title">Create</string>

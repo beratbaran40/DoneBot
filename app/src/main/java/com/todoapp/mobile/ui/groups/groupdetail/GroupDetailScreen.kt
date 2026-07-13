@@ -1,7 +1,6 @@
 package com.todoapp.mobile.ui.groups.groupdetail
 
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -173,8 +172,7 @@ private fun GroupDetailContent(
         Column(
             modifier =
             Modifier
-                .fillMaxSize()
-                .background(TDTheme.colors.background),
+                .fillMaxSize(),
         ) {
             when (uiState) {
                 is GroupDetailContract.UiState.Loading -> GroupDetailLoadingContent()

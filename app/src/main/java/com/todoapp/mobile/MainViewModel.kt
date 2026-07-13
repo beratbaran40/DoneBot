@@ -81,6 +81,20 @@ constructor(
                 .distinctUntilChanged()
                 .collect { loggedIn ->
                     Timber.tag("AuthLogout").d("observeRefreshToken loggedIn=$loggedIn (transition)")
+                    if (!loggedIn && sessionPreferences.hasStoredRefreshTokenBlob()) {
+                        // Flipped to logged-out while an (encrypted) refresh token is STILL on disk — the
+                        // fingerprint of the transient-keystore decrypt bug, not a real logout (which
+                        // removes the blob before this emission). Record it so the next occurrence is
+                        // attributable instead of silent.
+                        runCatching {
+                            FirebaseCrashlytics.getInstance().apply {
+                                setCustomKey("logged_out_with_token_on_disk", true)
+                                recordException(
+                                    IllegalStateException("auth flipped logged-out but refresh blob present on disk"),
+                                )
+                            }
+                        }
+                    }
                     isLoggedIn = loggedIn
                     if (loggedIn) userRepository.syncPendingFcmToken()
                 }
@@ -268,6 +282,10 @@ constructor(
             .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: pendingChatPrompt clear failed") }
         runCatching { dataStoreHelper.setChatDraft("") }
             .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: chatDraft clear failed") }
+        // Health-points checkpoint lives in DataStore (not user-scoped); reset it so account B doesn't
+        // inherit account A's hearts.
+        runCatching { dataStoreHelper.clearHealthPoints() }
+            .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: clearHealthPoints failed") }
         // Journal entries are intentionally NOT wiped here. Unlike tasks/groups/chat (which re-sync or are
         // stateless on the backend), the journal is local-only with no backend copy; a ForceLogout from a
         // failed token refresh must never destroy the owner's diary. Per-user isolation is handled by

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark cold-start splash so the OS splash matches the app's near-black background
+         instead of flashing white. Follows the system dark setting (the splash renders
+         before the app process / in-app theme toggle exists). -->
+    <color name="splash_background">#FF0D0D0D</color>
+</resources>

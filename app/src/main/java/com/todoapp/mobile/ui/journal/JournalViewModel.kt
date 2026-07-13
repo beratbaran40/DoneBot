@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.todoapp.mobile.R
 import com.todoapp.mobile.domain.model.JournalEntry
-import com.todoapp.mobile.domain.model.JournalMood
 import com.todoapp.mobile.domain.repository.JournalBiometricPreferences
 import com.todoapp.mobile.domain.repository.JournalRepository
 import com.todoapp.mobile.navigation.NavigationEffect
@@ -39,7 +38,6 @@ constructor(
     private val clock: Clock,
 ) : ViewModel() {
     private val searchQueryFlow = MutableStateFlow("")
-    private val moodFilterFlow = MutableStateFlow<JournalMood?>(null)
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState = _uiState.asStateFlow()
@@ -70,7 +68,6 @@ constructor(
 
             is UiAction.OnEntryLongPress -> openActionSheet(action.id)
             UiAction.OnDismissActionSheet -> updateSuccess { it.copy(actionSheetEntry = null) }
-            is UiAction.OnQuickMoodChange -> handleQuickMoodChange(action.mood)
             UiAction.OnEditFromSheet -> handleEditFromSheet()
             UiAction.OnRequestDeleteFromSheet -> handleRequestDeleteFromSheet()
             UiAction.OnConfirmDelete -> handleConfirmDelete()
@@ -80,14 +77,9 @@ constructor(
                 searchQueryFlow.value = action.query
                 updateSuccess { it.copy(searchQuery = action.query) }
             }
-            is UiAction.OnMoodFilterChange -> {
-                moodFilterFlow.value = action.mood
-                updateSuccess { it.copy(activeMoodFilter = action.mood) }
-            }
             UiAction.OnClearFilters -> {
                 searchQueryFlow.value = ""
-                moodFilterFlow.value = null
-                updateSuccess { it.copy(searchQuery = "", activeMoodFilter = null) }
+                updateSuccess { it.copy(searchQuery = "") }
             }
 
             UiAction.OnBiometricSuccess -> {
@@ -116,22 +108,19 @@ constructor(
             combine(
                 journalRepository.observeEntries(),
                 searchQueryFlow.debounce(SEARCH_DEBOUNCE_MS),
-                moodFilterFlow,
-            ) { entries, query, mood ->
-                Triple(entries, query, mood)
+            ) { entries, query ->
+                entries to query
             }.catch { throwable ->
                 Timber.tag(TAG).e(throwable, "Failed to observe journal entries")
                 _uiState.value = UiState.Error(R.string.journal_load_error)
-            }.collect { (entries, query, mood) ->
+            }.collect { (entries, query) ->
                 _uiState.update { current ->
                     val preserved = current as? UiState.Success
                     buildSuccessState(
                         entries = entries,
                         query = query,
-                        mood = mood,
                     ).copy(
                         searchQuery = preserved?.searchQuery ?: query,
-                        activeMoodFilter = preserved?.activeMoodFilter ?: mood,
                         actionSheetEntry = preserved?.actionSheetEntry,
                         pendingDeleteEntry = preserved?.pendingDeleteEntry,
                     )
@@ -143,23 +132,19 @@ constructor(
     private fun buildSuccessState(
         entries: List<JournalEntry>,
         query: String,
-        mood: JournalMood?,
     ): UiState.Success {
-        val filtered = entries
-            .let { rows -> if (mood == null) rows else rows.filter { it.mood == mood } }
-            .let { rows ->
-                if (query.isBlank()) rows else {
-                    val needle = query.trim()
-                    rows.filter { entry ->
-                        entry.title.contains(needle, ignoreCase = true) ||
-                            entry.content.contains(needle, ignoreCase = true)
-                    }
-                }
+        val filtered = if (query.isBlank()) {
+            entries
+        } else {
+            val needle = query.trim()
+            entries.filter { entry ->
+                entry.title.contains(needle, ignoreCase = true) ||
+                    entry.content.contains(needle, ignoreCase = true)
             }
+        }
         return UiState.Success(
             sections = groupEntries(entries = filtered, today = LocalDate.now(clock)),
             searchQuery = query,
-            activeMoodFilter = mood,
             isRawListEmpty = entries.isEmpty(),
             isFilteredEmpty = filtered.isEmpty(),
         )
@@ -173,25 +158,6 @@ constructor(
     private fun openActionSheet(id: Long) {
         val entry = findEntry(id) ?: return
         updateSuccess { it.copy(actionSheetEntry = entry) }
-    }
-
-    private fun handleQuickMoodChange(mood: JournalMood?) {
-        val sheetEntry = (_uiState.value as? UiState.Success)?.actionSheetEntry ?: return
-        if (sheetEntry.mood == mood) {
-            updateSuccess { it.copy(actionSheetEntry = null) }
-            return
-        }
-        viewModelScope.launch {
-            runCatching {
-                journalRepository.upsertEntry(sheetEntry.copy(mood = mood))
-            }.onSuccess {
-                _uiEffect.trySend(UiEffect.ShowToast(R.string.journal_mood_changed_toast))
-            }.onFailure { throwable ->
-                Timber.tag(TAG).e(throwable, "Failed to update mood")
-                _uiEffect.trySend(UiEffect.ShowToast(R.string.journal_entry_save_error))
-            }
-            updateSuccess { it.copy(actionSheetEntry = null) }
-        }
     }
 
     private fun handleEditFromSheet() {

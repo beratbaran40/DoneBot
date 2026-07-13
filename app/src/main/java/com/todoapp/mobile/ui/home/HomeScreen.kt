@@ -71,7 +71,7 @@ fun HomeScreen(
     when (uiState) {
         is UiState.Loading -> HomeSkeleton()
         is UiState.Error -> TDErrorState(
-            modifier = Modifier.background(TDTheme.colors.background),
+            modifier = Modifier,
             message = uiState.message,
             actionText = stringResource(com.todoapp.mobile.R.string.retry),
             onActionClick = { onAction(UiAction.OnRetry) },
@@ -163,7 +163,6 @@ private fun HomeSuccessContent(
             modifier =
             Modifier
                 .fillMaxWidth()
-                .background(TDTheme.colors.background)
                 .padding(horizontal = 16.dp),
             uiState = uiState,
             onAction = onAction,

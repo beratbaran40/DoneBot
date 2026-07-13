@@ -21,6 +21,7 @@ import com.todoapp.mobile.R
 import com.todoapp.mobile.ui.common.taskform.TaskFormType
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.previews.TDPreview
+import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
 import com.example.uikit.R as UiKitR
 
@@ -33,23 +34,20 @@ fun TaskTypeBadge(
     type: TaskFormType,
     modifier: Modifier = Modifier,
 ) {
+    val accent = taskTypeAccent(type)
     val icon: Painter
-    val accent: Color
     val labelRes: Int
     when (type) {
         TaskFormType.ONE_TIME -> {
             icon = painterResource(UiKitR.drawable.ic_edit_task)
-            accent = TDTheme.colors.darkPending
             labelRes = R.string.type_one_time_title
         }
         TaskFormType.ROUTINE -> {
             icon = painterResource(R.drawable.ic_calendar)
-            accent = TDTheme.colors.purple
             labelRes = R.string.type_routine_title
         }
         TaskFormType.STAGED -> {
             icon = painterResource(R.drawable.ic_staged)
-            accent = TDTheme.colors.mediumGreen
             labelRes = R.string.type_staged_title
         }
     }
@@ -72,6 +70,26 @@ fun TaskTypeBadge(
             style = TDTheme.typography.subheading1.copy(fontWeight = FontWeight.SemiBold),
             color = TDTheme.colors.white,
         )
+    }
+}
+
+/**
+ * Palette-aware accent for a task type. In MONOCHROME the characteristic blue (`purple`) marks
+ * both ONE_TIME and ROUTINE (they stay distinct through their icons), STAGED keeps green; in
+ * ORIGINAL the classic per-type colors are kept (ONE_TIME blue `darkPending`, ROUTINE `purple`, STAGED green).
+ */
+@Composable
+fun taskTypeAccent(type: TaskFormType): Color = if (TDTheme.palette == PaletteKit.MONOCHROME) {
+    when (type) {
+        TaskFormType.ONE_TIME -> TDTheme.colors.purple
+        TaskFormType.ROUTINE -> TDTheme.colors.purple
+        TaskFormType.STAGED -> TDTheme.colors.mediumGreen
+    }
+} else {
+    when (type) {
+        TaskFormType.ONE_TIME -> TDTheme.colors.darkPending
+        TaskFormType.ROUTINE -> TDTheme.colors.purple
+        TaskFormType.STAGED -> TDTheme.colors.mediumGreen
     }
 }
 

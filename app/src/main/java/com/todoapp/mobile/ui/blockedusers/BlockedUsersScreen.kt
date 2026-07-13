@@ -1,6 +1,5 @@
 package com.todoapp.mobile.ui.blockedusers
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -47,8 +46,7 @@ private fun BlockedUsersContent(
     Box(
         modifier =
         Modifier
-            .fillMaxSize()
-            .background(TDTheme.colors.background),
+            .fillMaxSize(),
     ) {
         when (uiState) {
             is UiState.Loading ->

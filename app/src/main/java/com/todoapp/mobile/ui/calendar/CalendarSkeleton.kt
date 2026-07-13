@@ -29,7 +29,6 @@ internal fun CalendarSkeleton(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(TDTheme.colors.background)
             .padding(horizontal = 16.dp),
     ) {
         Spacer(Modifier.height(8.dp))

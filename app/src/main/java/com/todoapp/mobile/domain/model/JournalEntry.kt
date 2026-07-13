@@ -7,7 +7,6 @@ data class JournalEntry(
     val id: Long,
     val title: String,
     val content: String,
-    val mood: JournalMood?,
     val photoPaths: List<String>,
     val createdAt: Long,
     val updatedAt: Long,
@@ -17,12 +16,9 @@ data class JournalEntry(
             id = 0L,
             title = "",
             content = "",
-            mood = null,
             photoPaths = emptyList(),
             createdAt = 0L,
             updatedAt = 0L,
         )
     }
 }
-
-enum class JournalMood { HAPPY, NEUTRAL, SAD, GRATEFUL, ANXIOUS }

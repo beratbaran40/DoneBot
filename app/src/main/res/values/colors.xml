@@ -7,7 +7,7 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="splash_background">#FFF8F9FC</color>
-    <color name="notification_accent">#FF4566EC</color>
+    <color name="splash_background">#FFFFFFFF</color>
+    <color name="notification_accent">#FF5F5F5F</color>
     <color name="pomodoro_notification_bg">#FF3D6A9E</color>
 </resources>

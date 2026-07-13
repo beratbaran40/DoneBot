@@ -57,7 +57,6 @@ constructor(
     fun onAction(action: UiAction) {
         when (action) {
             is UiAction.OnContentChange -> updateEditing { it.copy(content = action.value, isDirty = true) }
-            is UiAction.OnMoodSelect -> updateEditing { it.copy(mood = action.mood, isDirty = true) }
             is UiAction.OnPhotoPicked -> handlePhotoPicked(action.uri)
             UiAction.OnPolaroidCameraClicked -> _navEffect.trySend(NavigationEffect.Navigate(Screen.PolaroidCamera))
             is UiAction.OnPhotoCapturedFromCamera -> handlePhotoFromCamera(action.path)
@@ -65,8 +64,6 @@ constructor(
             is UiAction.OnPhotoTap -> updateEditing { it.copy(fullscreenPath = action.path) }
             UiAction.OnDismissFullscreen -> updateEditing { it.copy(fullscreenPath = null) }
             UiAction.OnBackPress -> handleBackPress()
-            UiAction.OnInfoClick -> updateEditing { it.copy(showInfoDialog = true) }
-            UiAction.OnDismissInfoDialog -> updateEditing { it.copy(showInfoDialog = false) }
         }
     }
 
@@ -149,7 +146,6 @@ constructor(
             id = editing.entryId,
             title = derivedTitle,
             content = editing.content.trim(),
-            mood = editing.mood,
             photoPaths = editing.photoPaths.toList(),
             createdAt = editing.createdAt ?: now,
             updatedAt = now,
@@ -170,7 +166,6 @@ constructor(
     private fun emptyEditing(): UiState.Editing = UiState.Editing(
         entryId = 0L,
         content = "",
-        mood = null,
         photoPaths = emptyList(),
         createdAt = null,
         isDirty = false,
@@ -179,7 +174,6 @@ constructor(
     private fun JournalEntry.toEditingState(): UiState.Editing = UiState.Editing(
         entryId = id,
         content = content,
-        mood = mood,
         photoPaths = photoPaths,
         createdAt = createdAt,
         isDirty = false,

@@ -75,8 +75,7 @@ fun GroupsTwoPane(
     Row(
         modifier =
         Modifier
-            .fillMaxSize()
-            .background(TDTheme.colors.background),
+            .fillMaxSize(),
     ) {
         Box(
             modifier =
@@ -111,8 +110,7 @@ fun GroupsTwoPane(
             modifier =
             Modifier
                 .weight(1f)
-                .fillMaxHeight()
-                .background(TDTheme.colors.background),
+                .fillMaxHeight(),
         ) {
             NavHost(
                 navController = detailNavController,

@@ -46,7 +46,6 @@ internal fun JournalList(
                 }
                 TDJournalCard(
                     dateLabel = entryDateLabel(createdAtEpochMs = entry.createdAt),
-                    moodEmoji = entry.mood?.emoji(),
                     title = titleText,
                     contentPreview = previewText,
                     photoCount = entry.photoPaths.size,

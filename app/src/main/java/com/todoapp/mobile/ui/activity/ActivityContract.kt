@@ -3,6 +3,7 @@ package com.todoapp.mobile.ui.activity
 import androidx.compose.runtime.Immutable
 import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.domain.repository.DailyBucket
+import com.todoapp.mobile.domain.repository.MAX_HALF_HEARTS
 import com.todoapp.mobile.domain.repository.MonthlyWeekBucket
 import com.todoapp.mobile.ui.home.TaskFormState
 import java.time.LocalDate
@@ -47,7 +48,8 @@ object ActivityContract {
             val monthPending: Int,
             val monthlyWeekBuckets: List<MonthlyWeekBucket>,
             val monthTrend: MonthTrend? = null,
-            val streakDays: Int = 0,
+            val healthHalfHearts: Int = MAX_HALF_HEARTS,
+            val showDepletionDialog: Boolean = false,
             val bestDay: BestDay? = null,
             val categoryBreakdown: List<CategoryStat> = emptyList(),
             val heatmapData: Map<LocalDate, Int> = emptyMap(),
@@ -132,6 +134,8 @@ object ActivityContract {
         data object OnJournalTap : UiAction
 
         data object OnCreateHubTap : UiAction
+
+        data object OnHeartsDepletedDialogDismiss : UiAction
     }
 
     sealed interface UiEffect

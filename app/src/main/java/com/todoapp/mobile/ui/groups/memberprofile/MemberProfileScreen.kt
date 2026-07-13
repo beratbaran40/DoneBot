@@ -75,8 +75,7 @@ private fun MemberProfileContent(
     Box(
         modifier =
         Modifier
-            .fillMaxSize()
-            .background(TDTheme.colors.background),
+            .fillMaxSize(),
     ) {
         when (uiState) {
             is MemberProfileContract.UiState.Loading -> {

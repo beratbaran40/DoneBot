@@ -192,7 +192,7 @@ private fun GroupTasksEmptyState() {
             painter = painterResource(UiKitR.drawable.ic_no_group_task),
             contentDescription = null,
             modifier = Modifier.size(144.dp),
-            tint = TDTheme.colors.lightGray,
+            tint = TDTheme.colors.pendingGray,
         )
         TDText(
             text = stringResource(R.string.no_tasks_yet),

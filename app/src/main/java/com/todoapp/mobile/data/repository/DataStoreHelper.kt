@@ -4,9 +4,12 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.todoapp.mobile.data.model.network.data.UserData
+import com.todoapp.mobile.domain.repository.HealthCheckpoint
+import com.todoapp.mobile.domain.repository.MAX_HALF_HEARTS
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -266,6 +269,50 @@ constructor(
 
     private fun encodeBlocked(map: Map<Long, String>): String = json.encodeToString(map.mapKeys { it.key.toString() })
 
+    /**
+     * Activity health-points checkpoint. Only fully-ended days are folded into
+     * [HealthCheckpoint.settledHalfHearts]; a null [HealthCheckpoint.lastSettledEpochDay] marks a
+     * first-ever run so the use case starts FULL without folding real history. Read one-shot; the
+     * reactive part of the bar comes from the task-completion flows. See ComputeHealthPointsUseCase.
+     */
+    suspend fun getHealthCheckpoint(): HealthCheckpoint = dataStore.data.map { preferences ->
+        HealthCheckpoint(
+            settledHalfHearts = preferences[HP_SETTLED_HALF_HEARTS] ?: MAX_HALF_HEARTS,
+            lastSettledEpochDay = preferences[HP_LAST_SETTLED_EPOCH_DAY],
+            dialogShown = preferences[HP_DEPLETION_DIALOG_SHOWN] ?: false,
+        )
+    }.first()
+
+    suspend fun setHealthCheckpoint(
+        settledHalfHearts: Int,
+        lastSettledEpochDay: Long,
+        dialogShown: Boolean,
+    ) {
+        dataStore.edit { preferences ->
+            preferences[HP_SETTLED_HALF_HEARTS] = settledHalfHearts
+            preferences[HP_LAST_SETTLED_EPOCH_DAY] = lastSettledEpochDay
+            preferences[HP_DEPLETION_DIALOG_SHOWN] = dialogShown
+        }
+    }
+
+    fun observeHealthDialogShown(): Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[HP_DEPLETION_DIALOG_SHOWN] ?: false
+    }
+
+    suspend fun setHealthDialogShown(shown: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[HP_DEPLETION_DIALOG_SHOWN] = shown
+        }
+    }
+
+    suspend fun clearHealthPoints() {
+        dataStore.edit { preferences ->
+            preferences.remove(HP_SETTLED_HALF_HEARTS)
+            preferences.remove(HP_LAST_SETTLED_EPOCH_DAY)
+            preferences.remove(HP_DEPLETION_DIALOG_SHOWN)
+        }
+    }
+
     companion object {
         private val json =
             Json {
@@ -288,5 +335,8 @@ constructor(
         private val PERF_COLLECTION_ENABLED = booleanPreferencesKey("perf_collection_enabled")
         private val CRASH_ANALYTICS_ENABLED = booleanPreferencesKey("crash_analytics_enabled")
         private val BLOCKED_USERS = stringPreferencesKey("blocked_users")
+        private val HP_SETTLED_HALF_HEARTS = intPreferencesKey("hp_settled_half_hearts")
+        private val HP_LAST_SETTLED_EPOCH_DAY = longPreferencesKey("hp_last_settled_epoch_day")
+        private val HP_DEPLETION_DIALOG_SHOWN = booleanPreferencesKey("hp_depletion_dialog_shown")
     }
 }

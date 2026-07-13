@@ -49,6 +49,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import com.todoapp.mobile.R
+import com.todoapp.mobile.ui.common.components.taskTypeAccent
+import com.todoapp.mobile.ui.common.taskform.TaskFormType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.Step
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiAction
@@ -88,7 +90,6 @@ fun CreationHubScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(TDTheme.colors.background)
             .statusBarsPadding()
             .padding(horizontal = 20.dp),
     ) {
@@ -226,19 +227,19 @@ private fun TypeHeaderBlock(taskType: TaskType) {
     when (taskType) {
         TaskType.ONE_TIME -> {
             icon = painterResource(UiKitR.drawable.ic_edit_task)
-            accent = TDTheme.colors.darkPending
+            accent = taskTypeAccent(TaskFormType.ONE_TIME)
             nameRes = R.string.type_one_time_title
             subtitleRes = R.string.type_one_time_subtitle
         }
         TaskType.ROUTINE -> {
             icon = painterResource(R.drawable.ic_calendar)
-            accent = TDTheme.colors.purple
+            accent = taskTypeAccent(TaskFormType.ROUTINE)
             nameRes = R.string.type_routine_title
             subtitleRes = R.string.type_routine_subtitle
         }
         TaskType.STAGED -> {
             icon = painterResource(R.drawable.ic_staged)
-            accent = TDTheme.colors.mediumGreen
+            accent = taskTypeAccent(TaskFormType.STAGED)
             nameRes = R.string.type_staged_title
             subtitleRes = R.string.type_staged_subtitle
         }
@@ -301,7 +302,7 @@ private fun CreationHubCarousel(onAction: (UiAction) -> Unit) {
             R.string.create_task_card_subtitle,
             painterResource(UiKitR.drawable.ic_edit_task),
             TDTheme.colors.lightPending,
-            TDTheme.colors.darkPending,
+            taskTypeAccent(TaskFormType.ONE_TIME),
             UiAction.OnCreateTaskCardTap,
         ),
         HubFeature(

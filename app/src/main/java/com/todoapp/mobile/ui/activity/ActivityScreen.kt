@@ -38,12 +38,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
 import com.todoapp.mobile.domain.model.TaskCategory
+import com.todoapp.mobile.domain.repository.HEART_COUNT
+import com.todoapp.mobile.domain.repository.MAX_HALF_HEARTS
 import com.todoapp.mobile.ui.activity.ActivityContract.BestDay
 import com.todoapp.mobile.ui.activity.ActivityContract.CategoryStat
 import com.todoapp.mobile.ui.activity.ActivityContract.MonthTrend
 import com.todoapp.mobile.ui.activity.ActivityContract.TrendDirection
 import com.todoapp.mobile.ui.activity.ActivityContract.UiAction
 import com.todoapp.mobile.ui.activity.ActivityContract.UiState
+import com.todoapp.mobile.ui.common.LocalReduceMotion
 import com.todoapp.mobile.ui.common.components.OverdueBanner
 import com.todoapp.mobile.ui.home.AddTaskSheet
 import com.todoapp.mobile.ui.home.HomeFabMenu
@@ -51,6 +54,8 @@ import com.todoapp.mobile.ui.home.TaskFormUiAction
 import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonSize
 import com.todoapp.uikit.components.TDGeneralProgressBar
+import com.todoapp.uikit.components.TDHealthBar
+import com.todoapp.uikit.components.TDHeartsDepletedDialog
 import com.todoapp.uikit.components.TDLoadingBar
 import com.todoapp.uikit.components.TDMonthNavigator
 import com.todoapp.uikit.components.TDMonthlyBarChart
@@ -89,7 +94,6 @@ private fun ActivityErrorContent(
         modifier =
         Modifier
             .fillMaxSize()
-            .background(TDTheme.colors.background)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -149,8 +153,7 @@ private fun ActivitySuccessContent(
         Box(
             modifier =
             Modifier
-                .fillMaxWidth()
-                .background(TDTheme.colors.background),
+                .fillMaxWidth(),
         ) {
             Column(
                 modifier =
@@ -166,6 +169,18 @@ private fun ActivitySuccessContent(
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                ActivityCard {
+                    HealthPointsCard(
+                        halfHearts = uiState.healthHalfHearts,
+                        animate = !LocalReduceMotion.current,
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 TDMonthNavigator(
                     modifier =
                     Modifier
@@ -193,19 +208,11 @@ private fun ActivitySuccessContent(
                             monthCompleted = uiState.monthCompleted,
                             monthPending = uiState.monthPending,
                             monthTrend = uiState.monthTrend,
+                            bestDay = uiState.bestDay,
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                     }
                     BarChartContent(uiState = uiState, onAction = onAction)
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                ActivityCard {
-                    StreakAndBestDay(
-                        streakDays = uiState.streakDays,
-                        bestDay = uiState.bestDay,
-                    )
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -244,6 +251,15 @@ private fun ActivitySuccessContent(
             HomeFabMenu(
                 onCreate = { onAction(UiAction.OnCreateHubTap) },
             )
+
+            if (uiState.showDepletionDialog) {
+                TDHeartsDepletedDialog(
+                    speechBubbleText = stringResource(com.todoapp.mobile.R.string.activity_hearts_depleted_speech),
+                    buttonText = stringResource(com.todoapp.mobile.R.string.activity_hearts_depleted_button),
+                    reduceMotion = LocalReduceMotion.current,
+                    onDismiss = { onAction(UiAction.OnHeartsDepletedDialogDismiss) },
+                )
+            }
         }
     }
 }
@@ -406,6 +422,7 @@ private fun MonthSummaryHeader(
     monthCompleted: Int,
     monthPending: Int,
     monthTrend: MonthTrend?,
+    bestDay: BestDay?,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -437,28 +454,8 @@ private fun MonthSummaryHeader(
                 color = color,
             )
         }
-    }
-}
-
-@Composable
-private fun StreakAndBestDay(
-    streakDays: Int,
-    bestDay: BestDay?,
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        TDText(
-            text = if (streakDays > 0) {
-                stringResource(com.todoapp.mobile.R.string.activity_streak_label, streakDays)
-            } else {
-                stringResource(com.todoapp.mobile.R.string.activity_streak_none)
-            },
-            style = TDTheme.typography.heading4,
-            color = if (streakDays > 0) TDTheme.colors.orange else TDTheme.colors.gray,
-        )
         if (bestDay != null) {
+            Spacer(modifier = Modifier.height(4.dp))
             val locale = currentLocale()
             val formatter = remember(locale) { DateTimeFormatter.ofPattern("MMM d", locale) }
             TDText(
@@ -472,6 +469,67 @@ private fun StreakAndBestDay(
             )
         }
     }
+}
+
+@Composable
+private fun HealthPointsCard(
+    halfHearts: Int,
+    animate: Boolean,
+) {
+    val heartsLabel = heartsLabel(halfHearts)
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            TDText(
+                text = stringResource(com.todoapp.mobile.R.string.activity_health_title),
+                style = TDTheme.typography.heading5,
+                color = TDTheme.colors.onBackground,
+            )
+            TDText(
+                text = stringResource(
+                    com.todoapp.mobile.R.string.activity_health_count,
+                    heartsLabel,
+                    HEART_COUNT,
+                ),
+                style = TDTheme.typography.subheading1,
+                color = TDTheme.colors.heartFull,
+            )
+        }
+        TDHealthBar(
+            halfHearts = halfHearts,
+            contentDescription = stringResource(
+                com.todoapp.mobile.R.string.activity_health_content_description,
+                heartsLabel,
+                HEART_COUNT,
+            ),
+            heartCount = HEART_COUNT,
+            heartSize = 20.dp,
+            animate = animate,
+        )
+        TDText(
+            text = stringResource(healthHintRes(halfHearts)),
+            style = TDTheme.typography.subheading2,
+            color = TDTheme.colors.gray,
+        )
+    }
+}
+
+private fun healthHintRes(halfHearts: Int): Int = when {
+    halfHearts >= MAX_HALF_HEARTS -> com.todoapp.mobile.R.string.activity_health_hint_full
+    halfHearts <= LOW_HEALTH_HALF_HEARTS -> com.todoapp.mobile.R.string.activity_health_hint_low
+    else -> com.todoapp.mobile.R.string.activity_health_hint_earn
+}
+
+// Full-heart label from half-heart units: "25" when whole, "12½" for an odd (half) count.
+private fun heartsLabel(halfHearts: Int): String {
+    val fullHearts = halfHearts / 2
+    return if (halfHearts % 2 == 1) "$fullHearts½" else fullHearts.toString()
 }
 
 @Composable
@@ -545,6 +603,7 @@ internal fun currentLocale(): Locale {
 internal fun yearMonthShortLabel(month: YearMonth, locale: Locale): String = month.month.getDisplayName(TextStyle.NARROW, locale)
 
 private const val SLIDE_DURATION_MS = 280
+private const val LOW_HEALTH_HALF_HEARTS = 4
 
 @com.todoapp.uikit.previews.TDPreview
 @Composable
@@ -606,7 +665,7 @@ private fun ActivityScreenSuccessRichPreview() {
                     ),
                 ),
                 monthTrend = MonthTrend(TrendDirection.UP, 25),
-                streakDays = 5,
+                healthHalfHearts = 13,
                 bestDay = BestDay(LocalDate.of(2026, 4, 12), 8),
                 categoryBreakdown = listOf(
                     CategoryStat(TaskCategory.WORK, null, 8),
@@ -641,6 +700,8 @@ private fun ActivityScreenEmptyMonthPreview() {
                 selectedMonth = YearMonth.of(2026, 4),
                 monthCompleted = 0,
                 monthPending = 0,
+                healthHalfHearts = 0,
+                showDepletionDialog = true,
                 monthlyWeekBuckets = listOf(
                     com.todoapp.mobile.domain.repository.MonthlyWeekBucket(
                         weekIndex = 1,

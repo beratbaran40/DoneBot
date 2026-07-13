@@ -2,6 +2,7 @@ package com.todoapp.mobile.data.repository
 
 import android.util.Log
 import com.google.firebase.messaging.FirebaseMessaging
+import com.todoapp.mobile.common.DomainException
 import com.todoapp.mobile.common.handleEmptyRequest
 import com.todoapp.mobile.common.handleRequest
 import com.todoapp.mobile.data.model.network.data.AuthResponseData
@@ -25,6 +26,7 @@ import com.todoapp.mobile.domain.repository.AuthRepository
 import com.todoapp.mobile.domain.repository.FCMTokenPreferences
 import com.todoapp.mobile.domain.repository.SessionPreferences
 import com.todoapp.mobile.domain.repository.UserRepository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -234,6 +236,22 @@ constructor(
     }
 
     override suspend fun refresh(request: RefreshTokenRequest): Result<RefreshTokenData> {
-        return handleRequest { authApi.refreshToken(request) }
+        val first = handleRequest { authApi.refreshToken(request) }
+        // A refresh rejected as Unauthorized is usually terminal (dead refresh token) — but a transient
+        // edge/WAF 403 or a momentary 401 presents identically (Extensions collapses 401|403 -> Unauthorized).
+        // Give exactly one more attempt before the authenticator is allowed to forceLogout: a truly dead
+        // token fails twice and still logs out; a blip survives. Retry ONLY on Unauthorized — transient
+        // ServerUnreachable/NoInternet already keep the session, and a timed-out refresh may have been
+        // processed server-side, so we must not resend those.
+        if (first.exceptionOrNull() is DomainException.Unauthorized) {
+            Timber.tag("AuthLogout").w("refresh Unauthorized; retrying once before logout is permitted")
+            delay(REFRESH_RETRY_DELAY_MS)
+            return handleRequest { authApi.refreshToken(request) }
+        }
+        return first
+    }
+
+    private companion object {
+        const val REFRESH_RETRY_DELAY_MS = 500L
     }
 }

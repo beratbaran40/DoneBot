@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.previews.TDPreview
+import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
 
 /** Priority picker for group tasks (None / Low / Medium / High). `null` = no priority. */
@@ -62,11 +63,22 @@ private fun PriorityChip(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
-    val (bg, fg) = when (value?.uppercase()) {
-        "HIGH" -> TDTheme.colors.lightRed to TDTheme.colors.crossRed
-        "MEDIUM" -> TDTheme.colors.lightOrange to TDTheme.colors.orange
-        "LOW" -> TDTheme.colors.lightPending to TDTheme.colors.darkPending
-        else -> TDTheme.colors.lightPending to TDTheme.colors.pendingGray
+    // ORIGINAL palette shows the classic red/orange/blue ramp; MONOCHROME keeps HIGH red and
+    // encodes MEDIUM/LOW/None by gray-ink intensity (the text labels disambiguate either way).
+    val (bg, fg) = if (TDTheme.palette == PaletteKit.ORIGINAL) {
+        when (value?.uppercase()) {
+            "HIGH" -> TDTheme.colors.lightRed to TDTheme.colors.crossRed
+            "MEDIUM" -> TDTheme.colors.lightOrange to TDTheme.colors.orange
+            "LOW" -> TDTheme.colors.lightPending to TDTheme.colors.darkPending
+            else -> TDTheme.colors.lightPending to TDTheme.colors.pendingGray
+        }
+    } else {
+        when (value?.uppercase()) {
+            "HIGH" -> TDTheme.colors.lightRed to TDTheme.colors.crossRed
+            "MEDIUM" -> TDTheme.colors.lightPending to TDTheme.colors.darkPending
+            "LOW" -> TDTheme.colors.lightPending to TDTheme.colors.gray
+            else -> TDTheme.colors.lightPending to TDTheme.colors.mediumPending
+        }
     }
     val containerBg = if (isSelected) bg else bg.copy(alpha = 0.35f)
     val contentColor = if (isSelected) fg else fg.copy(alpha = 0.6f)

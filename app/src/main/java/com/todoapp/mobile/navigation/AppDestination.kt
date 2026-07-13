@@ -262,6 +262,14 @@ sealed class AppDestination(
         hasInfoDialog = false,
     )
 
+    data object AppColors : AppDestination(
+        title = R.string.app_colors,
+        route = Screen.AppColors::class.requiredRoute(),
+        icon = null,
+        selectedIcon = null,
+        hasInfoDialog = false,
+    )
+
     data object Journal : AppDestination(
         title = R.string.nav_journal_title,
         route = Screen.Journal::class.requiredRoute(),
@@ -325,12 +333,14 @@ sealed class AppDestination(
                 Invitations,
                 AlarmSounds,
                 Licenses,
+                AppColors,
                 BlockedUsers,
                 Journal,
-                // JournalEntry, PolaroidCamera and AvatarCrop intentionally NOT listed — they hide
-                // the topbar so they can render their own floating chrome over a full-bleed surface
-                // (paper background / skeuomorphic camera body / crop surface). Keeping the
-                // AppDestination objects in case future surfaces need their title resources.
+                JournalEntry,
+                // PolaroidCamera and AvatarCrop intentionally NOT listed — they hide the topbar so
+                // they can render their own floating chrome over a full-bleed surface (skeuomorphic
+                // camera body / crop surface). Keeping the AppDestination objects in case future
+                // surfaces need their title resources.
             )
     }
 }

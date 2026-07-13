@@ -65,8 +65,7 @@ fun JournalScreen(
 
     Box(
         modifier = Modifier
-            .fillMaxSize()
-            .background(TDTheme.colors.background),
+            .fillMaxSize(),
     ) {
         when (uiState) {
             is UiState.Loading -> TDLoadingBar()
@@ -90,8 +89,6 @@ fun JournalScreen(
 
     if (uiState is UiState.Success && uiState.actionSheetEntry != null) {
         JournalActionSheet(
-            selectedMood = uiState.actionSheetEntry.mood,
-            onMoodSelect = { onAction(UiAction.OnQuickMoodChange(it)) },
             onEdit = { onAction(UiAction.OnEditFromSheet) },
             onDelete = { onAction(UiAction.OnRequestDeleteFromSheet) },
             onDismiss = { onAction(UiAction.OnDismissActionSheet) },
@@ -156,11 +153,6 @@ private fun JournalSuccessContent(
             JournalSearchBar(
                 query = uiState.searchQuery,
                 onQueryChange = { onAction(UiAction.OnSearchQueryChange(it)) },
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            JournalMoodFilterStrip(
-                selected = uiState.activeMoodFilter,
-                onSelect = { onAction(UiAction.OnMoodFilterChange(it)) },
             )
             Spacer(modifier = Modifier.height(4.dp))
         }

@@ -78,7 +78,6 @@ private fun AddPomodoroTimerContent(
     Column(
         modifier =
         Modifier
-            .background(TDTheme.colors.background)
             .statusBarsPadding()
             .fillMaxSize()
             .verticalScroll(rememberScrollState())

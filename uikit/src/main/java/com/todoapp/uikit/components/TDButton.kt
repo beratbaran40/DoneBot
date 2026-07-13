@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import com.example.uikit.R
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.previews.TDPreviewNoBg
+import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
 
 private val poppinsFontFamily =
@@ -86,6 +87,16 @@ fun TDButton(
 
     when (type) {
         TDButtonType.PRIMARY -> {
+            // MONOCHROME: black fill in light / gray in dark, with `onPrimary` label so the text
+            // stays readable in both modes. ORIGINAL keeps the classic pendingGray fill + white label.
+            val isMono = TDTheme.palette == PaletteKit.MONOCHROME
+            val primaryFill =
+                if (isMono) {
+                    if (TDTheme.isDark) TDTheme.colors.gray else TDTheme.colors.black
+                } else {
+                    TDTheme.colors.pendingGray
+                }
+            val primaryContent = if (isMono) TDTheme.colors.onPrimary else TDTheme.colors.white
             Button(
                 modifier = sizeModifier,
                 onClick = onClick,
@@ -94,10 +105,10 @@ fun TDButton(
                 shape = RoundedCornerShape(12.dp),
                 colors =
                 ButtonColors(
-                    containerColor = TDTheme.colors.pendingGray,
-                    contentColor = TDTheme.colors.white,
-                    disabledContainerColor = TDTheme.colors.purple.copy(alpha = 0.4f),
-                    disabledContentColor = TDTheme.colors.white.copy(alpha = 0.5f),
+                    containerColor = primaryFill,
+                    contentColor = primaryContent,
+                    disabledContainerColor = primaryFill.copy(alpha = 0.4f),
+                    disabledContentColor = primaryContent.copy(alpha = 0.5f),
                 ),
             ) {
                 icon?.let {
@@ -112,7 +123,7 @@ fun TDButton(
                 TDText(
                     text = text,
                     style = textStyle,
-                    color = TDTheme.colors.white,
+                    color = primaryContent,
                 )
             }
         }

@@ -88,7 +88,7 @@ fun CalendarScreen(
     when (uiState) {
         is UiState.Loading -> CalendarSkeleton()
         is UiState.Error -> TDErrorState(
-            modifier = Modifier.background(TDTheme.colors.background),
+            modifier = Modifier,
             message = uiState.message,
             actionText = stringResource(com.todoapp.mobile.R.string.retry),
             onActionClick = { onAction(UiAction.OnRetry) },
@@ -144,8 +144,7 @@ private fun CalendarSuccessContent(
                     Row(
                         modifier =
                         Modifier
-                            .fillMaxSize()
-                            .background(color = TDTheme.colors.background),
+                            .fillMaxSize(),
                     ) {
                         CalendarHeader(
                             uiState = uiState,
@@ -176,8 +175,7 @@ private fun CalendarSuccessContent(
                         LazyColumn(
                             modifier =
                             Modifier
-                                .fillMaxSize()
-                                .background(color = TDTheme.colors.background),
+                                .fillMaxSize(),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             item { CalendarHeader(uiState = uiState, onAction = onAction) }

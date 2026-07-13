@@ -7,6 +7,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
+import com.todoapp.mobile.ui.common.components.taskTypeAccent
+import com.todoapp.mobile.ui.common.taskform.TaskFormType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiAction
 import com.todoapp.uikit.components.TDOptionCard
@@ -23,21 +25,21 @@ internal fun CreationHubTypeStep(
             title = stringResource(R.string.type_one_time_title),
             subtitle = stringResource(R.string.type_one_time_subtitle),
             icon = painterResource(UiKitR.drawable.ic_edit_task),
-            accentColor = TDTheme.colors.darkPending,
+            accentColor = taskTypeAccent(TaskFormType.ONE_TIME),
             onClick = { onAction(UiAction.OnTypeSelect(TaskType.ONE_TIME)) },
         )
         TDOptionCard(
             title = stringResource(R.string.type_routine_title),
             subtitle = stringResource(R.string.type_routine_subtitle),
             icon = painterResource(R.drawable.ic_calendar),
-            accentColor = TDTheme.colors.purple,
+            accentColor = taskTypeAccent(TaskFormType.ROUTINE),
             onClick = { onAction(UiAction.OnTypeSelect(TaskType.ROUTINE)) },
         )
         TDOptionCard(
             title = stringResource(R.string.type_staged_title),
             subtitle = stringResource(R.string.type_staged_subtitle),
             icon = painterResource(R.drawable.ic_staged),
-            accentColor = TDTheme.colors.mediumGreen,
+            accentColor = taskTypeAccent(TaskFormType.STAGED),
             onClick = { onAction(UiAction.OnTypeSelect(TaskType.STAGED)) },
         )
         // Only shown when the user administers at least one group.

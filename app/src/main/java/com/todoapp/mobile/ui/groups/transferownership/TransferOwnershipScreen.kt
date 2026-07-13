@@ -71,8 +71,7 @@ private fun TransferOwnershipContent(
     Column(
         modifier =
         Modifier
-            .fillMaxSize()
-            .background(TDTheme.colors.background),
+            .fillMaxSize(),
     ) {
         when (uiState) {
             is TransferOwnershipContract.UiState.Loading -> {

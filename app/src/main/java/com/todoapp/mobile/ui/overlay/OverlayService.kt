@@ -44,9 +44,11 @@ import com.todoapp.mobile.domain.constants.DailyPlanDefaults
 import com.todoapp.mobile.domain.model.ThemePreference
 import com.todoapp.mobile.domain.repository.DailyCardPosition
 import com.todoapp.mobile.domain.repository.DailyPlanPreferences
+import com.todoapp.mobile.domain.repository.PaletteRepository
 import com.todoapp.mobile.domain.repository.ThemeRepository
 import com.todoapp.uikit.components.TDOverlayDailyPlanNotificationCard
 import com.todoapp.uikit.components.TDOverlayNotificationCard
+import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineDispatcher
@@ -75,6 +77,9 @@ class OverlayService :
 
     @Inject
     lateinit var themeRepository: ThemeRepository
+
+    @Inject
+    lateinit var paletteRepository: PaletteRepository
 
     @Inject
     lateinit var alarmSoundPreferences: com.todoapp.mobile.domain.repository.AlarmSoundPreferences
@@ -198,6 +203,8 @@ class OverlayService :
                 setContent {
                     val themePreference by themeRepository.themeFlow
                         .collectAsStateWithLifecycle(initialValue = ThemePreference.SYSTEM_DEFAULT)
+                    val palette by paletteRepository.paletteFlow
+                        .collectAsStateWithLifecycle(initialValue = PaletteKit.ORIGINAL)
                     val isSystemDark = isSystemInDarkTheme()
                     val darkTheme =
                         when (themePreference) {
@@ -205,7 +212,7 @@ class OverlayService :
                             ThemePreference.LIGHT_MODE -> false
                             ThemePreference.SYSTEM_DEFAULT -> isSystemDark
                         }
-                    TDTheme(darkTheme = darkTheme) {
+                    TDTheme(darkTheme = darkTheme, palette = palette) {
                         var show by remember { mutableStateOf(true) }
                         LaunchedEffect(show) {
                             if (!show) {

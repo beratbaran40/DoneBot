@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.todoapp.uikit.previews.TDPreview
+import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -64,6 +65,8 @@ private fun MonthCell(
     onClick: () -> Unit,
 ) {
     val colors = TDTheme.colors
+    // MONOCHROME: neutral selection accent (near-white in dark) instead of blue for the current month.
+    val monthAccent = if (TDTheme.palette == PaletteKit.MONOCHROME) colors.onBackground else colors.purple
     Column(
         modifier = Modifier
             .width(20.dp)
@@ -79,7 +82,7 @@ private fun MonthCell(
                     if (isSelected) {
                         Modifier.border(
                             width = 2.dp,
-                            color = colors.purple,
+                            color = monthAccent,
                             shape = RoundedCornerShape(4.dp),
                         )
                     } else {
@@ -91,7 +94,7 @@ private fun MonthCell(
         TDText(
             text = label,
             style = TDTheme.typography.subheading2,
-            color = if (isSelected) colors.purple else colors.pendingGray,
+            color = if (isSelected) monthAccent else colors.pendingGray,
         )
     }
 }

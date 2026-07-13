@@ -24,7 +24,7 @@ import com.todoapp.mobile.data.source.local.converter.StringListConverter
 import com.todoapp.mobile.data.source.local.datasource.GroupDao
 
 @Database(
-    version = 27,
+    version = 28,
     entities = [
         TaskEntity::class,
         SubtaskEntity::class,
@@ -68,6 +68,8 @@ import com.todoapp.mobile.data.source.local.datasource.GroupDao
         // remote_id group rows BEFORE creating the unique index, which an auto-migration cannot do.
         // Adds group_activities.target_name (nullable) — purely additive.
         AutoMigration(from = 26, to = 27),
+        // Drops journal_entries.mood — the journal mood feature was removed.
+        AutoMigration(from = 27, to = 28, spec = AppDatabase.Migration27To28Spec::class),
     ],
 )
 @TypeConverters(AppDatabase.SyncStatusConverter::class, StringListConverter::class)
@@ -94,6 +96,9 @@ abstract class AppDatabase : RoomDatabase() {
             db.execSQL("UPDATE groups SET order_index = id")
         }
     }
+
+    @DeleteColumn(tableName = "journal_entries", columnName = "mood")
+    class Migration27To28Spec : AutoMigrationSpec
 
     abstract fun taskDao(): TaskDao
 

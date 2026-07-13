@@ -43,6 +43,9 @@ interface Screen {
     data object Licenses : Screen
 
     @Serializable
+    data object AppColors : Screen
+
+    @Serializable
     data object Search : Screen
 
     @Serializable

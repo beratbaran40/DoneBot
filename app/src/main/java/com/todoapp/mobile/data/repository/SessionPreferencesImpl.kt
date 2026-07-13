@@ -9,11 +9,14 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.todoapp.mobile.data.auth.TokenCipher
+import com.todoapp.mobile.di.DefaultDispatcher
 import com.todoapp.mobile.domain.repository.SessionPreferences
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -25,6 +28,7 @@ constructor(
     private val dataStore: DataStore<Preferences>,
     private val legacyPreferences: SharedPreferences,
     private val cipher: TokenCipher,
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) : SessionPreferences {
     private val migrationMutex = Mutex()
 
@@ -53,7 +57,18 @@ constructor(
 
     override fun observeRefreshToken(): Flow<String?> = flow {
         ensureMigrated()
-        emitAll(dataStore.data.map { prefs -> prefs[REFRESH_TOKEN_KEY]?.let(cipher::decrypt) })
+        // decrypt() may retry with a short backoff on a transient keystore fault; keep it off the main
+        // thread (this flow is collected on Main in MainViewModel).
+        emitAll(
+            dataStore.data
+                .map { prefs -> prefs[REFRESH_TOKEN_KEY]?.let(cipher::decrypt) }
+                .flowOn(defaultDispatcher),
+        )
+    }
+
+    override suspend fun hasStoredRefreshTokenBlob(): Boolean {
+        ensureMigrated()
+        return !dataStore.data.map { it[REFRESH_TOKEN_KEY] }.first().isNullOrBlank()
     }
 
     override suspend fun setExpiresAt(expiresIn: Long) {
