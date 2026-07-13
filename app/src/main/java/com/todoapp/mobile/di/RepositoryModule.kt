@@ -9,6 +9,7 @@ import com.todoapp.mobile.data.repository.InvitationRepositoryImpl
 import com.todoapp.mobile.data.repository.JournalRepositoryImpl
 import com.todoapp.mobile.data.repository.LanguageRepositoryImpl
 import com.todoapp.mobile.data.repository.NotificationRepositoryImpl
+import com.todoapp.mobile.data.repository.PaletteRepositoryImpl
 import com.todoapp.mobile.data.repository.PomodoroRepositoryImpl
 import com.todoapp.mobile.data.repository.SessionPreferencesImpl
 import com.todoapp.mobile.data.repository.TaskRepositoryImpl
@@ -42,6 +43,7 @@ import com.todoapp.mobile.domain.repository.InvitationRepository
 import com.todoapp.mobile.domain.repository.JournalRepository
 import com.todoapp.mobile.domain.repository.LanguageRepository
 import com.todoapp.mobile.domain.repository.NotificationRepository
+import com.todoapp.mobile.domain.repository.PaletteRepository
 import com.todoapp.mobile.domain.repository.PomodoroRepository
 import com.todoapp.mobile.domain.repository.SessionPreferences
 import com.todoapp.mobile.domain.repository.TaskRepository
@@ -92,6 +94,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindThemeRepository(impl: ThemeRepositoryImpl): ThemeRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPaletteRepository(impl: PaletteRepositoryImpl): PaletteRepository
 
     @Binds
     @Singleton
@@ -170,6 +176,12 @@ abstract class RepositoryModule {
     abstract fun bindActivityPreferences(
         impl: com.todoapp.mobile.data.repository.ActivityPreferencesImpl,
     ): com.todoapp.mobile.domain.repository.ActivityPreferences
+
+    @Binds
+    @Singleton
+    abstract fun bindHealthPointsPreferences(
+        impl: com.todoapp.mobile.data.repository.HealthPointsPreferencesImpl,
+    ): com.todoapp.mobile.domain.repository.HealthPointsPreferences
 
     @Binds
     @Singleton

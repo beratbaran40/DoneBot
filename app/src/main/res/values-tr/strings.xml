@@ -153,8 +153,14 @@
     <string name="activity_trend_up">↑ Geçen haftaya göre %%%1$d</string>
     <string name="activity_trend_down">↓ Geçen haftaya göre %%%1$d</string>
     <string name="activity_trend_flat">Geçen haftayla aynı</string>
-    <string name="activity_streak_label">%1$d günlük seri 🔥</string>
-    <string name="activity_streak_none">Henüz seri yok — bugün bir görev tamamla</string>
+    <string name="activity_health_title">Üretkenlik Sağlığın</string>
+    <string name="activity_health_count">%1$s/%2$d</string>
+    <string name="activity_health_content_description">%2$d kalpten %1$s tanesi kaldı</string>
+    <string name="activity_health_hint_earn">Bugün bir görev tamamla, ½ kalp kazan</string>
+    <string name="activity_health_hint_full">Tüm kalplerin dolu, işte bu!</string>
+    <string name="activity_health_hint_low">Kalplerin azalıyor — bir görev tamamla</string>
+    <string name="activity_hearts_depleted_speech">Görev tamamlama serin sona erdi. Kaldığın yerden devam et, görev tamamlayıp kalplerini yeniden kazan.</string>
+    <string name="activity_hearts_depleted_button">Devam et</string>
     <string name="activity_best_day">En verimli gün: %1$s · %2$d görev</string>
     <string name="activity_category_breakdown_title">Bu hafta nereye odaklandın</string>
     <string name="activity_heatmap_title">Son 6 ay</string>
@@ -190,6 +196,11 @@
     <string name="settings_title">Ayarlar</string>
     <string name="app_theme">Temayı Değiştir</string>
     <string name="app_language">Dili Değiştir</string>
+    <string name="app_colors">Uygulama Renkleri</string>
+    <string name="palette_original">Orijinal</string>
+    <string name="palette_original_desc">Klasik DoneBot havası</string>
+    <string name="palette_monochrome">Monokrom</string>
+    <string name="palette_monochrome_desc">Gri tonlama + arka plan</string>
     <string name="language_english">İngilizce</string>
     <string name="language_english_short">EN</string>
     <string name="language_turkish">Türkçe</string>
@@ -695,10 +706,10 @@
     <string name="calendar_info_bullet_3">Tekrarlayan görevler her uygun günde görünür</string>
 
     <string name="activity_info_title">Aktiviten</string>
-    <string name="activity_info_description">Haftan ve ayın nasıl geçtiğini izle. Tamamlananları, bekleyenleri ve odak serini grafiklerle gör.</string>
+    <string name="activity_info_description">Haftan ve ayın nasıl geçtiğini izle. Grafikler tamamlananları ve bekleyenleri gösterir; can puanı barı görev tamamlama serini takip eder.</string>
     <string name="activity_info_bullet_1">Tamamlanan / bekleyen dağılımı</string>
     <string name="activity_info_bullet_2">Pomodoro toplam odak süresi</string>
-    <string name="activity_info_bullet_3">Seriler gece yarısı sıfırlanır</string>
+    <string name="activity_info_bullet_3">Kalplerini dolu tutmak için her gün bir görev tamamla</string>
 
     <string name="settings_info_title">Ayarlar</string>
     <string name="settings_info_description">Uygulamayı kendine göre ayarla — dil, tema, bildirimler, gizli mod ve hesap seçenekleri burada.</string>

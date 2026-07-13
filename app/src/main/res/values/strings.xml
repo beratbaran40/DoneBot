@@ -148,8 +148,14 @@
     <string name="activity_trend_up">↑ %1$d%% vs last week</string>
     <string name="activity_trend_down">↓ %1$d%% vs last week</string>
     <string name="activity_trend_flat">Same as last week</string>
-    <string name="activity_streak_label">%1$d-day streak 🔥</string>
-    <string name="activity_streak_none">No streak yet — complete a task today</string>
+    <string name="activity_health_title">Your productivity health</string>
+    <string name="activity_health_count">%1$s/%2$d</string>
+    <string name="activity_health_content_description">%1$s of %2$d hearts remaining</string>
+    <string name="activity_health_hint_earn">Complete a task today to earn ½ a heart</string>
+    <string name="activity_health_hint_full">All hearts full, keep it up!</string>
+    <string name="activity_health_hint_low">Your hearts are running low — complete a task</string>
+    <string name="activity_hearts_depleted_speech">Your task-completion streak ended. Pick up where you left off and complete tasks to win your hearts back.</string>
+    <string name="activity_hearts_depleted_button">Keep going</string>
     <string name="activity_best_day">Most productive: %1$s · %2$d tasks</string>
     <string name="activity_category_breakdown_title">Where you focused this week</string>
     <string name="activity_heatmap_title">Last 6 months</string>
@@ -185,6 +191,11 @@
     <string name="settings_title">Settings</string>
     <string name="app_theme">Change App Theme</string>
     <string name="app_language">Change Language</string>
+    <string name="app_colors">Change App Colors</string>
+    <string name="palette_original">Original</string>
+    <string name="palette_original_desc">The classic purple &amp; blue look</string>
+    <string name="palette_monochrome">Monochrome</string>
+    <string name="palette_monochrome_desc">Grayscale with a grid</string>
     <string name="language_english">English</string>
     <string name="language_english_short">EN</string>
     <string name="language_turkish">Turkish</string>
@@ -694,10 +705,10 @@
     <string name="calendar_info_bullet_3">Recurring tasks appear on every matching day</string>
 
     <string name="activity_info_title">Your Activity</string>
-    <string name="activity_info_description">Track how your week and month are going. Charts show what you finished, what\'s pending, and your focus streak.</string>
+    <string name="activity_info_description">Track how your week and month are going. Charts show what you finished and what\'s pending, and your health bar tracks your task-completion streak.</string>
     <string name="activity_info_bullet_1">Completed vs. pending breakdown</string>
     <string name="activity_info_bullet_2">Pomodoro focus time totals</string>
-    <string name="activity_info_bullet_3">Streaks reset at midnight</string>
+    <string name="activity_info_bullet_3">Complete a task daily to keep your hearts full</string>
 
     <string name="settings_info_title">Settings</string>
     <string name="settings_info_description">Tune the app to fit you — language, theme, notifications, secret mode, and account options live here.</string>

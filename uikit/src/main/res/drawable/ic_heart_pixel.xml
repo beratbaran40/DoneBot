@@ -1,0 +1,14 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="11"
+    android:viewportHeight="11">
+    <!--
+      Blocky pixel-art heart silhouette (Minecraft HUD style). Single white fill so it can be tinted
+      at draw time via Icon(tint = …) with TDTheme.colors.heartFull / heartEmpty. Half-hearts are
+      rendered by clipping this same shape to its left half over an empty-tinted base (see TDHealthBar).
+    -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M1,1 h3 v1 h-3 z M7,1 h3 v1 h-3 z M0,2 h5 v1 h-5 z M6,2 h5 v1 h-5 z M0,3 h11 v2 h-11 z M1,5 h9 v1 h-9 z M2,6 h7 v1 h-7 z M3,7 h5 v1 h-5 z M4,8 h3 v1 h-3 z M5,9 h1 v1 h-1 z" />
+</vector>

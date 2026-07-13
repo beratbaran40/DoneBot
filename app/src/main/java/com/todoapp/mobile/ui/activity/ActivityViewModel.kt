@@ -17,7 +17,11 @@ import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.domain.model.toAlarmItem
 import com.todoapp.mobile.domain.repository.ActivityPreferences
+import com.todoapp.mobile.domain.repository.HealthPointsPreferences
+import com.todoapp.mobile.domain.repository.MAX_HALF_HEARTS
 import com.todoapp.mobile.domain.repository.TaskRepository
+import com.todoapp.mobile.domain.usecase.ComputeHealthPointsUseCase
+import com.todoapp.mobile.domain.usecase.HealthPoints
 import com.todoapp.mobile.domain.usecase.ObserveOverdueSummaryUseCase
 import com.todoapp.mobile.navigation.NavigationEffect
 import com.todoapp.mobile.navigation.Screen
@@ -59,6 +63,8 @@ constructor(
     private val pomodoroEngine: PomodoroEngine,
     private val activityPreferences: ActivityPreferences,
     private val observeOverdueSummary: ObserveOverdueSummaryUseCase,
+    private val computeHealthPoints: ComputeHealthPointsUseCase,
+    private val healthPointsPreferences: HealthPointsPreferences,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
@@ -76,12 +82,16 @@ constructor(
     private val slideDirectionFlow = MutableStateFlow(0)
     private val expandedWeekFlow = MutableStateFlow<Int?>(null)
     private val overdueCountFlow = MutableStateFlow(0)
+    private val healthFlow = MutableStateFlow(HealthPoints(halfHearts = MAX_HALF_HEARTS, showDepletionDialog = false))
 
     init {
         viewModelScope.launch {
             observeOverdueSummary(today).collect { summary ->
                 overdueCountFlow.value = summary.count
             }
+        }
+        viewModelScope.launch {
+            computeHealthPoints().collect { healthFlow.value = it }
         }
         viewModelScope.launch {
             combine(
@@ -131,7 +141,6 @@ constructor(
         val currentCountFlow = taskRepository.countCompletedTasksInAMonth(monthStart, includeRecurring)
         val priorCountFlow = taskRepository.countCompletedTasksInAMonth(priorMonthStart, includeRecurring)
         val rangeMonthFlow = taskRepository.observeRange(monthStart, monthEnd)
-        val rangeStreakFlow = taskRepository.observeRange(today.minusDays(STREAK_LOOKBACK_DAYS), today)
         val heatmapMonthFlow = taskRepository.observeCompletedCountsByDateRange(monthStart, monthEnd, includeRecurring)
         val yearStripFlow = taskRepository.observeCompletedCountsByDateRange(yearStart, today, includeRecurring)
         val ytdCompletedFlow = taskRepository.countCompletedTasksYearToDate(today)
@@ -156,11 +165,9 @@ constructor(
             currentCountFlow,
             priorCountFlow,
             rangeMonthFlow,
-            rangeStreakFlow,
-        ) { buckets, currentCompleted, priorCompleted, rangeMonth, rangeStreak ->
+        ) { buckets, currentCompleted, priorCompleted, rangeMonth ->
             val pendingMonth = buckets.sumOf { it.pending }
             val trend = computeMonthTrend(currentCompleted, priorCompleted)
-            val streak = computeStreakDays(today, rangeStreak)
             val bestDay = computeBestDayInMonth(rangeMonth, includeRecurring)
             val categories = computeCategoryBreakdown(rangeMonth, includeRecurring)
 
@@ -171,7 +178,6 @@ constructor(
                 monthPending = pendingMonth,
                 monthlyWeekBuckets = buckets,
                 monthTrend = trend,
-                streakDays = streak,
                 bestDay = bestDay,
                 categoryBreakdown = categories,
                 heatmapData = emptyMap(),
@@ -191,10 +197,12 @@ constructor(
             baseFlow,
             heatmapMonthFlow,
             yearStripFlow,
-            kotlinx.coroutines.flow.combine(ytdCompletedFlow, ytdPendingFlow) { c, p -> c to p },
+            kotlinx.coroutines.flow.combine(ytdCompletedFlow, ytdPendingFlow, healthFlow) { completed, pending, health ->
+                Triple(completed, pending, health)
+            },
             expandedDailyFlow,
-        ) { state, heatmap, yearCounts, ytdPair, expandedDays ->
-            val (ytdCompleted, ytdPending) = ytdPair
+        ) { state, heatmap, yearCounts, ytdBundle, expandedDays ->
+            val (ytdCompleted, ytdPending, health) = ytdBundle
             val ytdTotal = ytdCompleted + ytdPending
             val ytdProgress = if (ytdTotal > 0) ytdCompleted.toFloat() / ytdTotal else 0f
             state.copy(
@@ -204,6 +212,8 @@ constructor(
                 yearlyCompleted = ytdCompleted,
                 yearlyTotal = ytdTotal,
                 yearlyProgress = ytdProgress,
+                healthHalfHearts = health.halfHearts,
+                showDepletionDialog = health.showDepletionDialog,
             )
         }
     }
@@ -218,24 +228,6 @@ constructor(
             else -> TrendDirection.FLAT
         }
         return MonthTrend(direction, percentDelta = abs(delta))
-    }
-
-    // Walks back day-by-day from `today` looking at task completions. The streak ends at the first
-    // day with zero completed tasks. We cap the lookback at STREAK_LOOKBACK_DAYS to bound work.
-    private fun computeStreakDays(today: LocalDate, rangeTasks: List<Task>): Int {
-        val completedByDay = rangeTasks
-            .filter { it.isCompleted }
-            .groupingBy { it.date }
-            .eachCount()
-        var streak = 0
-        var cursor = today
-        while (streak < STREAK_LOOKBACK_DAYS.toInt()) {
-            val count = completedByDay[cursor] ?: 0
-            if (count <= 0) break
-            streak++
-            cursor = cursor.minusDays(1)
-        }
-        return streak
     }
 
     private fun computeBestDayInMonth(
@@ -329,6 +321,8 @@ constructor(
             UiAction.OnViewOverdue -> _navEffect.trySend(NavigationEffect.Navigate(Screen.Calendar))
             UiAction.OnJournalTap -> _navEffect.trySend(NavigationEffect.Navigate(Screen.Journal))
             UiAction.OnCreateHubTap -> _navEffect.trySend(NavigationEffect.Navigate(Screen.CreationHub))
+            UiAction.OnHeartsDepletedDialogDismiss ->
+                viewModelScope.launch { healthPointsPreferences.setDialogShown(true) }
         }
     }
 
@@ -460,7 +454,6 @@ constructor(
 
     companion object {
         private val DEFAULT_REMINDER_MINUTES = listOf(0L, 1L, 2L, 5L, 10L)
-        private const val STREAK_LOOKBACK_DAYS = 60L
         private const val MAX_CATEGORY_ROWS = 4
         private const val YEAR_STRIP_MONTHS = 12
         private const val HUNDRED_PERCENT = 100

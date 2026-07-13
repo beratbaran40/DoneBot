@@ -282,6 +282,10 @@ constructor(
             .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: pendingChatPrompt clear failed") }
         runCatching { dataStoreHelper.setChatDraft("") }
             .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: chatDraft clear failed") }
+        // Health-points checkpoint lives in DataStore (not user-scoped); reset it so account B doesn't
+        // inherit account A's hearts.
+        runCatching { dataStoreHelper.clearHealthPoints() }
+            .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: clearHealthPoints failed") }
         // Journal entries are intentionally NOT wiped here. Unlike tasks/groups/chat (which re-sync or are
         // stateless on the backend), the journal is local-only with no backend copy; a ForceLogout from a
         // failed token refresh must never destroy the owner's diary. Per-user isolation is handled by
