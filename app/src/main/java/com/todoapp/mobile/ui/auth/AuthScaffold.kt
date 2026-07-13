@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.LocalWindowSizeClass
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.modifier.gridBackground
 import com.todoapp.uikit.theme.TDTheme
 
 /** Max width of the auth form column — a single readable column on any screen. */
@@ -76,7 +77,6 @@ fun AuthScaffold(
                 modifier = Modifier
                     .weight(0.55f)
                     .fillMaxHeight()
-                    .background(TDTheme.colors.background)
                     .statusBarsPadding()
                     .verticalScroll(rememberScrollState())
                     .imePadding(),
@@ -89,7 +89,7 @@ fun AuthScaffold(
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .background(TDTheme.colors.pendingGray)
+                .gridBackground(baseColor = TDTheme.colors.pendingGray, lineColor = TDTheme.colors.gridLine)
                 .verticalScroll(rememberScrollState())
                 .imePadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -145,7 +145,7 @@ fun AuthBrandPanel(
         }
     Column(
         modifier = modifier
-            .background(TDTheme.colors.pendingGray)
+            .gridBackground(baseColor = TDTheme.colors.pendingGray, lineColor = TDTheme.colors.gridLine)
             .statusBarsPadding()
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
