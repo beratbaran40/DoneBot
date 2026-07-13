@@ -951,6 +951,26 @@ fun ToDoApp() {
     }
 
     val startDestination = remember { if (isLoggedIn) Screen.Home else Screen.Onboarding }
+
+    // Safety net for the transient-keystore spurious-logout bug: if we latched into Onboarding only
+    // because the FIRST auth emission was a transient false (a "cold" keystore decrypting a valid token
+    // to null), correct course once auth is authoritatively true and the user is still at the start
+    // entry. This never fights a real logout — that keeps isLoggedIn=false (this requires true) and
+    // routes via NavigateClearingBackstack(Onboarding); the previousBackStackEntry==null guard also
+    // yields to a genuinely-logged-out user who has already navigated onward from Onboarding.
+    val selfHealNavController = LocalNavController.current
+    LaunchedEffect(isLoggedIn) {
+        if (isLoggedIn &&
+            startDestination == Screen.Onboarding &&
+            selfHealNavController.previousBackStackEntry == null
+        ) {
+            selfHealNavController.navigate(Screen.Home) {
+                popUpTo(Screen.Onboarding) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
+
     val isPortrait = LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
     val isCompactWidth = LocalWindowSizeClass.current.widthSizeClass == WindowWidthSizeClass.Compact
     // Bottom bar only for phones held in portrait; tablets (both orientations) and landscape get the rail.

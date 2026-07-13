@@ -81,6 +81,20 @@ constructor(
                 .distinctUntilChanged()
                 .collect { loggedIn ->
                     Timber.tag("AuthLogout").d("observeRefreshToken loggedIn=$loggedIn (transition)")
+                    if (!loggedIn && sessionPreferences.hasStoredRefreshTokenBlob()) {
+                        // Flipped to logged-out while an (encrypted) refresh token is STILL on disk — the
+                        // fingerprint of the transient-keystore decrypt bug, not a real logout (which
+                        // removes the blob before this emission). Record it so the next occurrence is
+                        // attributable instead of silent.
+                        runCatching {
+                            FirebaseCrashlytics.getInstance().apply {
+                                setCustomKey("logged_out_with_token_on_disk", true)
+                                recordException(
+                                    IllegalStateException("auth flipped logged-out but refresh blob present on disk"),
+                                )
+                            }
+                        }
+                    }
                     isLoggedIn = loggedIn
                     if (loggedIn) userRepository.syncPendingFcmToken()
                 }
