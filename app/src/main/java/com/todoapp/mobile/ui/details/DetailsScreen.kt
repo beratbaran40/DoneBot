@@ -43,6 +43,7 @@ import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.ui.common.categoryOptions
 import com.todoapp.mobile.ui.common.components.TaskPhotoBannerEditable
 import com.todoapp.mobile.ui.common.components.TaskTypeBadge
+import com.todoapp.mobile.ui.common.components.taskTypeAccent
 import com.todoapp.mobile.ui.common.taskform.TaskFormType
 import com.todoapp.mobile.ui.common.taskform.TaskFrequencyChips
 import com.todoapp.mobile.ui.common.taskform.TaskReminderChips
@@ -90,8 +91,7 @@ fun DetailsScreen(
     Box(
         modifier =
         Modifier
-            .fillMaxSize()
-            .background(TDTheme.colors.background),
+            .fillMaxSize(),
     ) {
         when (uiState) {
             is UiState.Loading -> DetailsSkeleton()
@@ -428,7 +428,6 @@ private fun DetailsSuccessContent(
             modifier =
             Modifier
                 .fillMaxWidth()
-                .background(TDTheme.colors.background)
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -642,21 +641,21 @@ private fun DetailsTypeHeader(type: TaskFormType) {
             icon = painterResource(com.example.uikit.R.drawable.ic_edit_task),
             name = stringResource(R.string.type_one_time_title),
             subtitle = stringResource(R.string.type_one_time_subtitle),
-            accent = TDTheme.colors.darkPending,
+            accent = taskTypeAccent(type),
         )
 
         TaskFormType.ROUTINE -> TaskTypeHeader(
             icon = painterResource(R.drawable.ic_calendar),
             name = stringResource(R.string.type_routine_title),
             subtitle = stringResource(R.string.type_routine_subtitle),
-            accent = TDTheme.colors.purple,
+            accent = taskTypeAccent(type),
         )
 
         TaskFormType.STAGED -> TaskTypeHeader(
             icon = painterResource(R.drawable.ic_staged),
             name = stringResource(R.string.type_staged_title),
             subtitle = stringResource(R.string.type_staged_subtitle),
-            accent = TDTheme.colors.mediumGreen,
+            accent = taskTypeAccent(type),
         )
     }
 }

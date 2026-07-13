@@ -2,7 +2,6 @@ package com.todoapp.mobile.ui.settings
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -58,7 +57,6 @@ internal fun SettingsContent(
         modifier =
         modifier
             .fillMaxSize()
-            .background(TDTheme.colors.background)
             .padding(horizontal = 16.dp)
             .verticalScroll(rememberScrollState()),
     ) {

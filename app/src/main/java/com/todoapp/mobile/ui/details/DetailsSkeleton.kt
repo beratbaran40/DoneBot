@@ -1,6 +1,5 @@
 package com.todoapp.mobile.ui.details
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,8 +27,7 @@ import com.todoapp.uikit.theme.TDTheme
 internal fun DetailsSkeleton(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
-            .fillMaxSize()
-            .background(TDTheme.colors.background),
+            .fillMaxSize(),
     ) {
         Column(
             modifier = Modifier

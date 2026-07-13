@@ -89,7 +89,6 @@ private fun ProfileContent(
         modifier =
         Modifier
             .fillMaxSize()
-            .background(TDTheme.colors.background)
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

@@ -142,8 +142,7 @@ private fun ChatReadyContent(
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .background(TDTheme.colors.background),
+            .fillMaxSize(),
     ) {
         ChatPersonaHeader(
             hasMessages = state.messages.isNotEmpty(),

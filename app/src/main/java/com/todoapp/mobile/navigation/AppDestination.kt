@@ -262,6 +262,14 @@ sealed class AppDestination(
         hasInfoDialog = false,
     )
 
+    data object AppColors : AppDestination(
+        title = R.string.app_colors,
+        route = Screen.AppColors::class.requiredRoute(),
+        icon = null,
+        selectedIcon = null,
+        hasInfoDialog = false,
+    )
+
     data object Journal : AppDestination(
         title = R.string.nav_journal_title,
         route = Screen.Journal::class.requiredRoute(),
@@ -325,6 +333,7 @@ sealed class AppDestination(
                 Invitations,
                 AlarmSounds,
                 Licenses,
+                AppColors,
                 BlockedUsers,
                 Journal,
                 JournalEntry,

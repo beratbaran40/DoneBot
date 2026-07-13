@@ -76,8 +76,7 @@ fun JournalEntryScreen(
 
     Box(
         modifier = Modifier
-            .fillMaxSize()
-            .background(TDTheme.colors.background),
+            .fillMaxSize(),
     ) {
         when (uiState) {
             is UiState.Loading -> TDLoadingBar()

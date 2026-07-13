@@ -73,7 +73,6 @@ private fun GroupSettingsContent(
         modifier =
         Modifier
             .fillMaxSize()
-            .background(TDTheme.colors.background)
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
     ) {

@@ -38,7 +38,6 @@ fun PomodoroLaunchScreen(
         modifier =
         Modifier
             .fillMaxSize()
-            .background(TDTheme.colors.background)
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

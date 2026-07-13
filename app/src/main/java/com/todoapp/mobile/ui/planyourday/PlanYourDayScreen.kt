@@ -2,7 +2,6 @@ package com.todoapp.mobile.ui.planyourday
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -60,7 +59,6 @@ fun PlanYourDayScreen(
         modifier =
         Modifier
             .fillMaxSize()
-            .background(TDTheme.colors.background)
             .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

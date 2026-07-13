@@ -13,12 +13,18 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalView
 
 private val LocalIsDarkTheme = staticCompositionLocalOf { false }
+private val LocalPalette = staticCompositionLocalOf { PaletteKit.ORIGINAL }
 
 object TDTheme {
     val isDark: Boolean
         @Composable
         @ReadOnlyComposable
         get() = LocalIsDarkTheme.current
+
+    val palette: PaletteKit
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalPalette.current
 
     val colors: TDColor
         @Composable
@@ -34,6 +40,7 @@ object TDTheme {
 @Composable
 fun TDTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    palette: PaletteKit = PaletteKit.ORIGINAL,
     content: @Composable () -> Unit,
 ) {
     val view = LocalView.current
@@ -63,10 +70,19 @@ fun TDTheme(
         }
     }
 
+    val lightColors = when (palette) {
+        PaletteKit.ORIGINAL -> defaultLightColors()
+        PaletteKit.MONOCHROME -> monochromeLightColors()
+    }
+    val darkColors = when (palette) {
+        PaletteKit.ORIGINAL -> defaultDarkColors()
+        PaletteKit.MONOCHROME -> monochromeDarkColors()
+    }
     CompositionLocalProvider(
         LocalIsDarkTheme provides darkTheme,
-        LocalLightColors provides lightColors(),
-        LocalDarkColors provides darkColors(),
+        LocalPalette provides palette,
+        LocalLightColors provides lightColors,
+        LocalDarkColors provides darkColors,
         LocalTypography provides TDTheme.typography,
     ) {
         content()

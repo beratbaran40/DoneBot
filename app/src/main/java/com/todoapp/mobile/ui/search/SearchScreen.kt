@@ -93,7 +93,6 @@ fun SearchScreen(
         modifier =
         Modifier
             .fillMaxSize()
-            .background(TDTheme.colors.background)
             .imePadding()
             .padding(horizontal = 16.dp),
     ) {

@@ -1,6 +1,7 @@
 package com.todoapp.uikit.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -26,6 +27,7 @@ fun TDInfoCard(
         modifier
             .clip(RoundedCornerShape(12.dp))
             .background(color = TDTheme.colors.infoCardBgColor)
+            .border(1.dp, TDTheme.colors.lightGray, RoundedCornerShape(12.dp))
             .padding(16.dp),
     ) {
         Icon(

@@ -55,6 +55,7 @@ import com.todoapp.mobile.ui.common.components.SubtaskChecklist
 import com.todoapp.mobile.ui.common.rememberOpenLocation
 import com.todoapp.uikit.components.TDTaskCardWithCheckbox
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.ReorderableLazyListState
@@ -260,6 +261,17 @@ fun HomeTaskList(
                                         isChecked = task.isCompleted,
                                         onCheckBoxClick = { onTaskCheck(task) },
                                         isPendingSync = task.isPendingSync && isSignedIn,
+                                        // MONOCHROME marks one-time tasks (no recurrence, no subtasks)
+                                        // with the characteristic blue left stripe; Original unaffected.
+                                        categoryStripeColor =
+                                        if (TDTheme.palette == PaletteKit.MONOCHROME &&
+                                            task.recurrence == Recurrence.NONE &&
+                                            task.subtaskTotal == 0
+                                        ) {
+                                            TDTheme.colors.purple
+                                        } else {
+                                            null
+                                        },
                                         isDragging = isDragging,
                                         isAnyDragging = isAnyDragging,
                                         shape =

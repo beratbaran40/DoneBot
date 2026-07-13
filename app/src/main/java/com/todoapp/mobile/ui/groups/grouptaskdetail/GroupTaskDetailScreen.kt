@@ -111,7 +111,6 @@ private fun TaskDetailBody(
         modifier =
         Modifier
             .fillMaxSize()
-            .background(TDTheme.colors.background)
             .verticalScroll(rememberScrollState()),
     ) {
         // Hero banner = first photo (full-bleed). Group tasks show the priority badge in the corner.

@@ -80,6 +80,8 @@ object SettingsContract {
 
         data object OnNavigateToLicenses : UiAction
 
+        data object OnNavigateToAppColors : UiAction
+
         data class OnPushNotificationsToggle(val enabled: Boolean) : UiAction
 
         data class OnReduceMotionToggle(val enabled: Boolean) : UiAction

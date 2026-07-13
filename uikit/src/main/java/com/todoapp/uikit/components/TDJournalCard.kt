@@ -2,6 +2,7 @@ package com.todoapp.uikit.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,7 @@ fun TDJournalCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(TDTheme.colors.lightPending)
+            .border(1.dp, TDTheme.colors.lightGray, RoundedCornerShape(16.dp))
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),

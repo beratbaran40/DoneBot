@@ -241,6 +241,8 @@ constructor(
                 _navEffect.trySend(NavigationEffect.Navigate(Screen.AlarmSounds))
             UiAction.OnNavigateToLicenses ->
                 _navEffect.trySend(NavigationEffect.Navigate(Screen.Licenses))
+            UiAction.OnNavigateToAppColors ->
+                _navEffect.trySend(NavigationEffect.Navigate(Screen.AppColors))
             is UiAction.OnPushNotificationsToggle -> togglePushNotifications(action.enabled)
             is UiAction.OnReduceMotionToggle -> toggleReduceMotion(action.enabled)
             is UiAction.OnJournalBiometricProtectionToggle ->

@@ -68,8 +68,7 @@ fun LicensesScreen() {
     val context = LocalContext.current
     LazyColumn(
         modifier = Modifier
-            .fillMaxSize()
-            .background(TDTheme.colors.background),
+            .fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {

@@ -96,7 +96,7 @@ fun FilteredTasksScreen(
     when (uiState) {
         is UiState.Loading -> FilteredTasksSkeleton()
         is UiState.Error -> TDErrorState(
-            modifier = Modifier.background(TDTheme.colors.background),
+            modifier = Modifier,
             message = uiState.message,
         )
         is UiState.Success -> FilteredTasksSuccessContent(uiState, onAction)
@@ -138,8 +138,7 @@ private fun FilteredTasksSuccessContent(
     Column(
         modifier =
         Modifier
-            .fillMaxSize()
-            .background(TDTheme.colors.background),
+            .fillMaxSize(),
     ) {
         // Week navigator
         TDWeekNavigator(

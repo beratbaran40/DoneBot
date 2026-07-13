@@ -24,6 +24,7 @@ import com.todoapp.mobile.domain.model.GroupTask
 import com.todoapp.mobile.ui.search.SearchContract.UiAction
 import com.todoapp.uikit.components.TDTaskCardWithCheckbox
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
 import java.time.Instant
 import java.time.ZoneId
@@ -158,10 +159,21 @@ private fun BadgePill(content: @Composable () -> Unit) {
 @Composable
 private fun PriorityBadge(priority: String) {
     val (bgColor, textColor) =
-        when (priority.uppercase()) {
-            "HIGH" -> TDTheme.colors.lightOrange to TDTheme.colors.orange
-            "LOW" -> TDTheme.colors.lightGreen to TDTheme.colors.darkGreen
-            else -> TDTheme.colors.onBackground.copy(alpha = 0.06f) to TDTheme.colors.gray
+        // ORIGINAL shows the classic red/orange/blue ramp; MONOCHROME keeps HIGH red + gray intensity.
+        if (TDTheme.palette == PaletteKit.ORIGINAL) {
+            when (priority.uppercase()) {
+                "HIGH" -> TDTheme.colors.lightRed to TDTheme.colors.crossRed
+                "MEDIUM" -> TDTheme.colors.lightOrange to TDTheme.colors.orange
+                "LOW" -> TDTheme.colors.lightPending to TDTheme.colors.darkPending
+                else -> TDTheme.colors.onBackground.copy(alpha = 0.06f) to TDTheme.colors.gray
+            }
+        } else {
+            when (priority.uppercase()) {
+                "HIGH" -> TDTheme.colors.lightRed to TDTheme.colors.crossRed
+                "MEDIUM" -> TDTheme.colors.lightPending to TDTheme.colors.darkPending
+                "LOW" -> TDTheme.colors.lightPending to TDTheme.colors.gray
+                else -> TDTheme.colors.onBackground.copy(alpha = 0.06f) to TDTheme.colors.gray
+            }
         }
     Row(
         modifier =
