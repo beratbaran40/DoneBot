@@ -43,6 +43,8 @@
     <string name="group_card_reorder_cd">Reorder</string>
     <string name="group_card_delete_cd">Delete group</string>
     <string name="group_card_members_label">Members</string>
+    <string name="role_admin">ADMIN</string>
+    <string name="role_member">MEMBER</string>
     <string name="group_card_pending_label">Pending</string>
     <string name="group_card_created_label">Created %1$s</string>
     <string name="group_card_view_details">View Details</string>

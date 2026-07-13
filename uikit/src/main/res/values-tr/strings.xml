@@ -43,6 +43,8 @@
     <string name="group_card_reorder_cd">Yeniden Sırala</string>
     <string name="group_card_delete_cd">Grubu Sil</string>
     <string name="group_card_members_label">Üye</string>
+    <string name="role_admin">YÖNETİCİ</string>
+    <string name="role_member">ÜYE</string>
     <string name="group_card_pending_label">Görev Bekliyor</string>
     <string name="group_card_created_label">Oluşturuldu: %1$s</string>
     <string name="group_card_view_details">Detayları Gör</string>

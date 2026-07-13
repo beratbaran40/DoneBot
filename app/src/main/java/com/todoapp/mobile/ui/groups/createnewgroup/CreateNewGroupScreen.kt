@@ -1,6 +1,5 @@
 package com.todoapp.mobile.ui.groups.createnewgroup
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -51,7 +50,6 @@ private fun CreateNewGroupContent(
         modifier =
         Modifier
             .fillMaxSize()
-            .background(color = TDTheme.colors.background)
             .verticalScroll(verticalScroll)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -63,7 +61,7 @@ private fun CreateNewGroupContent(
             tint = TDTheme.colors.pendingGray.copy(0.81f),
         )
         TDText(text = stringResource(let_s_get_started), style = TDTheme.typography.heading2)
-        TDText(text = stringResource(bring_your_group_together_in_one_place), color = TDTheme.colors.lightGray)
+        TDText(text = stringResource(bring_your_group_together_in_one_place), color = TDTheme.colors.gray)
         Spacer(Modifier.height(40.dp))
         TDLabeledTextField(
             title = stringResource(group_name),

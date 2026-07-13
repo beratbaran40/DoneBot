@@ -18,6 +18,7 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.todoapp.mobile.LocalNavController
+import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -42,9 +43,11 @@ fun TDNavigationRail() {
                 selected = selected,
                 colors =
                 NavigationRailItemDefaults.colors(
-                    selectedIconColor = TDTheme.colors.pendingGray,
-                    selectedTextColor = TDTheme.colors.pendingGray,
-                    indicatorColor = TDTheme.colors.pendingGray.copy(alpha = 0.2f),
+                    selectedIconColor = TDTheme.colors.primary,
+                    selectedTextColor = TDTheme.colors.primary,
+                    unselectedIconColor = TDTheme.colors.gray,
+                    unselectedTextColor = TDTheme.colors.gray,
+                    indicatorColor = TDTheme.colors.primary.copy(alpha = 0.12f),
                 ),
                 onClick = {
                     if (selected) return@NavigationRailItem
@@ -57,12 +60,19 @@ fun TDNavigationRail() {
                     }
                 },
                 icon = {
-                    val iconId = (if (selected) screen.selectedIcon else screen.icon)
+                    val useCalendarOutline =
+                        TDTheme.palette == PaletteKit.MONOCHROME && selected && screen is AppDestination.Calendar
+                    val iconId = (if (selected && !useCalendarOutline) screen.selectedIcon else screen.icon)
                         ?: return@NavigationRailItem
                     Icon(
                         painter = painterResource(id = iconId),
                         contentDescription = stringResource(screen.title),
-                        tint = Color.Unspecified,
+                        tint =
+                        when {
+                            TDTheme.palette == PaletteKit.ORIGINAL -> Color.Unspecified
+                            selected -> TDTheme.colors.primary
+                            else -> TDTheme.colors.gray
+                        },
                     )
                 },
                 label = { Text(text = stringResource(id = screen.title)) },

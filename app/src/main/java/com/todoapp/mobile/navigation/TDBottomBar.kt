@@ -30,6 +30,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.todoapp.mobile.LocalNavController
 import com.todoapp.mobile.R
+import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
 
 fun shouldShowNav(currentDestination: NavDestination?): Boolean {
@@ -62,11 +63,13 @@ fun TDBottomBar() {
                 selected = selected,
                 colors =
                 NavigationBarItemDefaults.colors(
-                    selectedIconColor = TDTheme.colors.pendingGray,
-                    selectedTextColor = TDTheme.colors.pendingGray,
+                    selectedIconColor = TDTheme.colors.primary,
+                    selectedTextColor = TDTheme.colors.primary,
+                    unselectedIconColor = TDTheme.colors.gray,
+                    unselectedTextColor = TDTheme.colors.gray,
                     indicatorColor =
                     if (isChat) Color.Transparent
-                    else TDTheme.colors.pendingGray.copy(alpha = 0.2f),
+                    else TDTheme.colors.primary.copy(alpha = 0.12f),
                 ),
                 onClick = {
                     if (selected) return@NavigationBarItem
@@ -98,12 +101,23 @@ fun TDBottomBar() {
                             )
                         }
                     } else {
-                        val iconId = (if (selected) screen.selectedIcon else screen.icon)
+                        // MONOCHROME: the filled selected calendar art collapses into an unreadable
+                        // blob under a flat tint (its detail is white-on-fill), so use the clean outline.
+                        val useCalendarOutline =
+                            TDTheme.palette == PaletteKit.MONOCHROME && selected && screen is AppDestination.Calendar
+                        val iconId = (if (selected && !useCalendarOutline) screen.selectedIcon else screen.icon)
                             ?: return@NavigationBarItem
                         Icon(
                             painter = painterResource(id = iconId),
                             contentDescription = stringResource(screen.title),
-                            tint = Color.Unspecified,
+                            // ORIGINAL keeps the drawable's own (blue) art; MONOCHROME tints the
+                            // silhouette with the blue accent when selected, gray otherwise.
+                            tint =
+                            when {
+                                TDTheme.palette == PaletteKit.ORIGINAL -> Color.Unspecified
+                                selected -> TDTheme.colors.primary
+                                else -> TDTheme.colors.gray
+                            },
                         )
                     }
                 },

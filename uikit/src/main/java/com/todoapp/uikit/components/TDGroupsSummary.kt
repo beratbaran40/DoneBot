@@ -177,7 +177,12 @@ fun TDFamilyGroupCard(
                                     .padding(horizontal = 10.dp, vertical = 2.dp),
                             ) {
                                 TDText(
-                                    text = role.uppercase(),
+                                    text =
+                                    if (role.uppercase() == "ADMIN") {
+                                        stringResource(R.string.role_admin)
+                                    } else {
+                                        stringResource(R.string.role_member)
+                                    },
                                     style = TDTheme.typography.subheading4,
                                     overflow = TextOverflow.Ellipsis,
                                     maxLines = 1,

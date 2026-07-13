@@ -12,6 +12,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -44,7 +45,8 @@ internal fun HomeSectionTabRow(
     SecondaryTabRow(
         selectedTabIndex = selectedIndex,
         modifier = modifier.fillMaxWidth(),
-        containerColor = TDTheme.colors.background,
+        // Transparent so the app-wide grid shows through this strip; labels/indicator stay explicit.
+        containerColor = Color.Transparent,
         contentColor = TDTheme.colors.pendingGray,
         indicator = {
             Box(
