@@ -1,5 +1,7 @@
 package com.todoapp.mobile.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -9,6 +11,7 @@ import com.todoapp.mobile.ThemeViewModel
 import com.todoapp.mobile.domain.model.ThemePreference
 import com.todoapp.uikit.theme.PaletteKit
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun ThemedApp() {
     val themeViewModel: ThemeViewModel = hiltViewModel()

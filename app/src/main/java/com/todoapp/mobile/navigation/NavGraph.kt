@@ -13,10 +13,12 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -506,7 +508,7 @@ fun NavGraph(
         composable<Screen.Groups> {
             val viewModel: GroupsViewModel = hiltViewModel()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-            val context = androidx.compose.ui.platform.LocalContext.current
+            val context = LocalContext.current
             NavigationEffectController(viewModel.navEffect)
             androidx.compose.runtime.LaunchedEffect(viewModel) {
                 viewModel.uiEffect.collect { effect ->
@@ -948,6 +950,7 @@ fun NavGraph(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun ToDoApp(
@@ -994,18 +997,18 @@ fun ToDoApp(
     val isCompactWidth = LocalWindowSizeClass.current.widthSizeClass == WindowWidthSizeClass.Compact
     // Bottom bar only for phones held in portrait; tablets (both orientations) and landscape get the rail.
     val useBottomBar = isPortrait && isCompactWidth
+    val isImevisible = WindowInsets.isImeVisible
 
     ThemeChangeReveal(targetDark = darkTheme, targetPalette = palette) {
         Scaffold(
             modifier =
             Modifier
-                .fillMaxSize()
-                .imePadding(),
+                .fillMaxSize(),
             // Material3 Scaffold's Surface paints containerColor over any background modifier; without this
             // it falls back to the default (light) colorScheme and leaks through the side gutters that the
             // centred ResponsiveContainer leaves on tablets / landscape. Set it to the themed background.
             containerColor = TDTheme.colors.background,
-            bottomBar = { if (useBottomBar) TDBottomBar() },
+            bottomBar = { if (useBottomBar && !isImevisible) TDBottomBar() },
             topBar = {
                 Column {
                     BannerOverlay(
@@ -1034,7 +1037,8 @@ fun ToDoApp(
                 Row(
                     Modifier
                         .fillMaxSize()
-                        .padding(padding),
+                        .padding(padding)
+                        .imePadding(),
                 ) {
                     if (!useBottomBar) TDNavigationRail()
                     NavGraph(

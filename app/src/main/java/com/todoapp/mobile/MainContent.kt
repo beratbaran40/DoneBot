@@ -102,7 +102,6 @@ fun MainContent() {
                 mainViewModel.onAction(OnDialogOkTap)
             },
         )
-
         ThemedApp()
     }
 }

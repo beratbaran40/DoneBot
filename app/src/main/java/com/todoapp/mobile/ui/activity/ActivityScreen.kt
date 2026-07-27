@@ -91,8 +91,7 @@ private fun ActivityErrorContent(
     onAction: (UiAction) -> Unit,
 ) {
     Column(
-        modifier =
-        Modifier
+        modifier = Modifier
             .fillMaxSize()
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -138,8 +137,7 @@ private fun ActivitySuccessContent(
                         is TaskFormUiAction.DateDeselect -> onAction(UiAction.OnDialogDateDeselect)
                         is TaskFormUiAction.TimeStartChange -> onAction(UiAction.OnTaskTimeStartChange(action.time))
                         is TaskFormUiAction.TimeEndChange -> onAction(UiAction.OnTaskTimeEndChange(action.time))
-                        is TaskFormUiAction.DescriptionChange ->
-                            onAction(UiAction.OnTaskDescriptionChange(action.description))
+                        is TaskFormUiAction.DescriptionChange -> onAction(UiAction.OnTaskDescriptionChange(action.description))
 
                         is TaskFormUiAction.ToggleAdvancedSettings -> onAction(UiAction.OnToggleAdvancedSettings)
                         is TaskFormUiAction.SecretChange -> onAction(UiAction.OnTaskSecretChange(action.isSecret))
@@ -151,13 +149,10 @@ private fun ActivitySuccessContent(
         onDismissSheet = { onAction(UiAction.OnDismissBottomSheet) },
     ) {
         Box(
-            modifier =
-            Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Column(
-                modifier =
-                Modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
             ) {
@@ -182,8 +177,7 @@ private fun ActivitySuccessContent(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 TDMonthNavigator(
-                    modifier =
-                    Modifier
+                    modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     month = uiState.selectedMonth,
@@ -290,13 +284,9 @@ private fun BarChartContent(
                 initialState != null && targetState == null -> -1
                 else -> if (uiState.slideDirection == 0) 1 else uiState.slideDirection
             }
-            (
-                slideInHorizontally(animationSpec = tween(SLIDE_DURATION_MS)) { width -> width * direction } +
-                    fadeIn(animationSpec = tween(SLIDE_DURATION_MS))
-                ) togetherWith (
-                slideOutHorizontally(animationSpec = tween(SLIDE_DURATION_MS)) { width -> -width * direction } +
-                    fadeOut(animationSpec = tween(SLIDE_DURATION_MS))
-                )
+            (slideInHorizontally(animationSpec = tween(SLIDE_DURATION_MS)) { width -> width * direction } + fadeIn(animationSpec = tween(SLIDE_DURATION_MS))) togetherWith (slideOutHorizontally(
+                animationSpec = tween(SLIDE_DURATION_MS),
+            ) { width -> -width * direction } + fadeOut(animationSpec = tween(SLIDE_DURATION_MS)))
         },
         label = "barChartContent",
     ) { weekIndex ->
@@ -546,10 +536,17 @@ private fun CategoryBreakdownSection(stats: List<CategoryStat>) {
         )
         stats.forEach { stat ->
             Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    painter = painterResource(categoryIconRes(stat.category)),
+                    contentDescription = null,
+                    tint = TDTheme.colors.onBackground,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
                 TDText(
                     modifier = Modifier.width(96.dp),
                     text = stat.customLabel ?: stringResource(categoryLabelRes(stat.category)),
-                    style = TDTheme.typography.subheading2,
+                    style = TDTheme.typography.heading6,
                     color = TDTheme.colors.onBackground,
                 )
                 Spacer(modifier = Modifier.size(8.dp))
@@ -567,7 +564,7 @@ private fun CategoryBreakdownSection(stats: List<CategoryStat>) {
                             .fillMaxWidth(stat.count.toFloat() / maxCount)
                             .height(8.dp)
                             .background(
-                                color = TDTheme.colors.purple,
+                                color = TDTheme.colors.mediumGreen,
                                 shape = RoundedCornerShape(4.dp),
                             ),
                     )
@@ -575,12 +572,23 @@ private fun CategoryBreakdownSection(stats: List<CategoryStat>) {
                 Spacer(modifier = Modifier.size(8.dp))
                 TDText(
                     text = stat.count.toString(),
-                    style = TDTheme.typography.subheading1,
-                    color = TDTheme.colors.onBackground,
+                    style = TDTheme.typography.heading6,
+                    color = TDTheme.colors.mediumGreen,
                 )
             }
         }
     }
+}
+
+private fun categoryIconRes(category: TaskCategory): Int = when (category) {
+    TaskCategory.PERSONAL -> R.drawable.ic_personal_label
+    TaskCategory.SHOPPING -> R.drawable.ic_shopping_label
+    TaskCategory.MEDICINE -> R.drawable.ic_medication_label
+    TaskCategory.HEALTH -> R.drawable.ic_health_label
+    TaskCategory.WORK -> R.drawable.ic_work_label
+    TaskCategory.STUDY -> R.drawable.ic_study_label
+    TaskCategory.BIRTHDAY -> R.drawable.ic_birthday_label
+    TaskCategory.OTHER -> R.drawable.ic_label_label
 }
 
 private fun categoryLabelRes(category: TaskCategory): Int = when (category) {

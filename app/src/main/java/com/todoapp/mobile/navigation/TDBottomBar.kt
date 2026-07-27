@@ -63,8 +63,8 @@ fun TDBottomBar() {
                 selected = selected,
                 colors =
                 NavigationBarItemDefaults.colors(
-                    selectedIconColor = TDTheme.colors.primary,
-                    selectedTextColor = TDTheme.colors.primary,
+                    selectedIconColor = TDTheme.colors.pendingGray,
+                    selectedTextColor = TDTheme.colors.pendingGray,
                     unselectedIconColor = TDTheme.colors.gray,
                     unselectedTextColor = TDTheme.colors.gray,
                     indicatorColor =
