@@ -117,7 +117,23 @@ constructor(
             is UiAction.OnTitleChange -> _state.update { it.copy(title = action.title, titleError = false) }
             is UiAction.OnDateSelect -> _state.update { it.copy(date = action.date) }
             is UiAction.OnReminderSelect -> _state.update { it.copy(reminderOffsetMinutes = action.minutes) }
-            is UiAction.OnFrequencySelect -> _state.update { it.copy(recurrence = action.recurrence) }
+            is UiAction.OnFrequencySelect -> selectFrequency(action.recurrence)
+            is UiAction.OnRecurrenceUntilSelect -> _state.update { it.copy(recurrenceUntil = action.until) }
+            is UiAction.OnReminderTimeAdd -> _state.update {
+                it.copy(reminderTimes = (it.reminderTimes + action.time).distinct().sorted())
+            }
+            is UiAction.OnReminderTimeRemove -> _state.update {
+                it.copy(reminderTimes = it.reminderTimes - action.time)
+            }
+            is UiAction.OnIntervalChange -> _state.update { it.copy(recurrenceInterval = action.interval) }
+            is UiAction.OnWeekdayToggle -> _state.update {
+                val next = if (action.day in it.recurrenceByDay) {
+                    it.recurrenceByDay - action.day
+                } else {
+                    it.recurrenceByDay + action.day
+                }
+                it.copy(recurrenceByDay = next)
+            }
             is UiAction.OnSubtaskChange -> changeSubtask(action.index, action.text)
             is UiAction.OnSubtaskRemove -> removeSubtask(action.index)
             is UiAction.OnToggleDetails -> _state.update { it.copy(detailsExpanded = !it.detailsExpanded) }
@@ -178,6 +194,10 @@ constructor(
                 step = Step.TASK_CORE,
                 taskType = type,
                 date = LocalDate.now(),
+                // A custom task starts with nothing switched on: the frequency chips include a
+                // "don't repeat" option, so DAILY (the routine default) would silently make every
+                // custom task recur before the user chose anything.
+                recurrence = if (type == TaskType.CUSTOM) Recurrence.NONE else it.recurrence,
                 placeholderIndex = Random.nextInt(CreationHubPlaceholders.count),
             )
         }
@@ -234,6 +254,27 @@ constructor(
         }
     }
 
+    /**
+     * Dropping the repeat also drops everything that only existed because of it. The rule fields are
+     * hidden from the form when the frequency is NONE, so keeping them would leave the calendar
+     * still drawing a span the user can no longer see or edit.
+     */
+    private fun selectFrequency(recurrence: Recurrence) {
+        _state.update {
+            if (recurrence == Recurrence.NONE) {
+                it.copy(
+                    recurrence = recurrence,
+                    recurrenceUntil = null,
+                    recurrenceInterval = 1,
+                    recurrenceByDay = emptySet(),
+                    reminderTimes = emptyList(),
+                )
+            } else {
+                it.copy(recurrence = recurrence)
+            }
+        }
+    }
+
     private fun changeSubtask(index: Int, text: String) {
         _state.update { s ->
             if (index !in s.subtaskDrafts.indices) return@update s
@@ -267,46 +308,19 @@ constructor(
             return
         }
         val subtaskTitles = s.subtaskDrafts.map { it.trim() }.filter { it.isNotBlank() }
-        if (type == TaskType.STAGED && subtaskTitles.isEmpty()) {
-            _effect.trySend(UiEffect.ShowToast(R.string.creation_need_one_step))
-            return
-        }
+
+        // What gets written comes from the DATA, not the label. For a custom task every section is on
+        // screen at once, so "does it repeat" is simply whether a frequency was picked and "is it
+        // staged" is simply whether a step was typed — the classic three are fixed shapes of the same
+        // questions. Nothing here asks the user to declare an intent twice.
+        val recurs = type == TaskType.ROUTINE || (type == TaskType.CUSTOM && s.recurrence != Recurrence.NONE)
+        val hasSteps = type == TaskType.STAGED || (type == TaskType.CUSTOM && subtaskTitles.isNotEmpty())
+
+        if (!validateCapabilities(type, hasSteps, subtaskTitles)) return
+
         _state.update { it.copy(isSaving = true) }
         viewModelScope.launch {
-            val allDay = s.isAllDay
-            val start = if (allDay) LocalTime.MIDNIGHT else (s.timeStart ?: LocalTime.of(DEFAULT_START_HOUR, 0))
-            val end = if (allDay) {
-                LocalTime.of(END_OF_DAY_HOUR, END_OF_DAY_MINUTE)
-            } else {
-                s.timeEnd ?: start.plusHours(1)
-            }
-            val task = Task(
-                title = s.title.trim(),
-                description = s.description.trim().ifBlank { null },
-                date = s.date,
-                timeStart = start,
-                timeEnd = end,
-                isCompleted = false,
-                isSecret = s.isSecret,
-                reminderOffsetMinutes = if (type == TaskType.ROUTINE) null else s.reminderOffsetMinutes,
-                category = if (type == TaskType.STAGED) TaskCategory.PERSONAL else s.category,
-                customCategoryName = if (type == TaskType.STAGED) {
-                    null
-                } else {
-                    s.customCategoryName.takeIf { s.category == TaskCategory.OTHER && it.isNotBlank() }
-                },
-                recurrence = if (type == TaskType.ROUTINE) s.recurrence else Recurrence.NONE,
-                isAllDay = allDay,
-                locationName = s.locationName,
-                locationAddress = s.locationAddress,
-                locationLat = s.locationLat,
-                locationLng = s.locationLng,
-                subtasks = if (type == TaskType.STAGED) {
-                    subtaskTitles.mapIndexed { index, title -> Subtask(title = title, orderIndex = index) }
-                } else {
-                    emptyList()
-                },
-            )
+            val task = buildTask(s, type, recurs, hasSteps, subtaskTitles)
             if (s.pendingPhotos.isNotEmpty()) {
                 taskRepository.insertWithPhotos(task, s.pendingPhotos.map { it.bytes to it.mimeType })
             } else {
@@ -316,6 +330,73 @@ constructor(
             _effect.trySend(UiEffect.ShowToast(R.string.creation_task_created))
             _navEffect.trySend(NavigationEffect.Back)
         }
+    }
+
+    /**
+     * Only the CLASSIC staged type demands a step: picking it declared an intent the form must honour.
+     * A custom task declares nothing up front, so leaving the step editor empty just means "no steps"
+     * — refusing to save there would be scolding the user for not filling in an optional section.
+     */
+    private fun validateCapabilities(
+        type: TaskType,
+        hasSteps: Boolean,
+        subtaskTitles: List<String>,
+    ): Boolean {
+        if (type == TaskType.STAGED && (!hasSteps || subtaskTitles.isEmpty())) {
+            _effect.trySend(UiEffect.ShowToast(R.string.creation_need_one_step))
+            return false
+        }
+        return true
+    }
+
+    private fun buildTask(
+        state: UiState,
+        type: TaskType,
+        recurs: Boolean,
+        hasSteps: Boolean,
+        subtaskTitles: List<String>,
+    ): Task {
+        val allDay = state.isAllDay
+        val start = if (allDay) LocalTime.MIDNIGHT else (state.timeStart ?: LocalTime.of(DEFAULT_START_HOUR, 0))
+        val end = if (allDay) LocalTime.of(END_OF_DAY_HOUR, END_OF_DAY_MINUTE) else state.timeEnd ?: start.plusHours(1)
+        return Task(
+            title = state.title.trim(),
+            description = state.description.trim().ifBlank { null },
+            date = state.date,
+            timeStart = start,
+            timeEnd = end,
+            isCompleted = false,
+            isSecret = state.isSecret,
+            // A repeating task reminds at absolute times, so the "N minutes before" offset never
+            // applies to one — nor does it when explicit reminder times were given.
+            reminderOffsetMinutes = if (recurs || state.reminderTimes.isNotEmpty()) null else state.reminderOffsetMinutes,
+            // Only the CLASSIC staged type forces PERSONAL: a custom medicine course keeps MEDICINE
+            // so its list chip still renders the pill icon.
+            category = if (type == TaskType.STAGED) TaskCategory.PERSONAL else state.category,
+            customCategoryName = if (type == TaskType.STAGED) {
+                null
+            } else {
+                state.customCategoryName.takeIf { state.category == TaskCategory.OTHER && it.isNotBlank() }
+            },
+            recurrence = if (recurs) state.recurrence else Recurrence.NONE,
+            recurrenceInterval = if (recurs) state.recurrenceInterval.coerceAtLeast(1) else 1,
+            // A weekday set only means anything for WEEKLY; carrying it on other frequencies would be
+            // dead data that firesOn ignores but contentEquals would still diff on.
+            recurrenceByDay = if (recurs && state.recurrence == Recurrence.WEEKLY) state.recurrenceByDay else emptySet(),
+            // A scheduled end only means something for something that repeats.
+            recurrenceUntil = if (recurs) state.recurrenceUntil else null,
+            reminderTimes = state.reminderTimes,
+            isAllDay = allDay,
+            locationName = state.locationName,
+            locationAddress = state.locationAddress,
+            locationLat = state.locationLat,
+            locationLng = state.locationLng,
+            subtasks = if (hasSteps) {
+                subtaskTitles.mapIndexed { index, title -> Subtask(title = title, orderIndex = index) }
+            } else {
+                emptyList()
+            },
+        )
     }
 
     /**

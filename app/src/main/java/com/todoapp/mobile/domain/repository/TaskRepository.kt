@@ -6,6 +6,7 @@ import com.todoapp.mobile.domain.model.Subtask
 import com.todoapp.mobile.domain.model.Task
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
+import java.time.LocalTime
 
 data class CompletedCountByDay(
     val date: LocalDate,
@@ -163,6 +164,13 @@ interface TaskRepository {
 
     fun searchTasks(query: String): Flow<List<Task>>
 
+    /**
+     * A task's extra reminder times, ascending. Empty when the task uses the single
+     * `reminderOffsetMinutes` reminder. Kept off [Task] on the list paths because they live in their
+     * own table and no list surface needs them — the alarm reschedule sweep does.
+     */
+    suspend fun getReminderTimes(taskId: Long): List<LocalTime>
+
     // --- Staged-task subtasks (personal tasks only) ---
 
     /** Observe the ordered steps ("adımlar") of a staged task. */
@@ -171,8 +179,21 @@ interface TaskRepository {
     /** Append a new step; reopens the parent if it had been auto-completed. */
     suspend fun addSubtask(taskId: Long, title: String)
 
-    /** Toggle a step; recomputes the parent's completion per the staged invariant. */
-    suspend fun toggleSubtask(subtaskId: Long, isCompleted: Boolean)
+    /**
+     * Toggle a step; recomputes the parent's completion per the staged invariant.
+     *
+     * [onDate] is the occurrence the tick belongs to, and matters only for a task that is BOTH
+     * recurring and staged: its steps reset each day, so the state is written per-day instead of onto
+     * the step row. Pass the date the user is looking at — list surfaces already stamp it onto
+     * `Task.date`. Null (or a non-recurring parent) keeps the classic single-flag behaviour.
+     */
+    suspend fun toggleSubtask(subtaskId: Long, isCompleted: Boolean, onDate: LocalDate? = null)
+
+    /**
+     * A staged task's steps for one occurrence day: for a recurring parent the completion flags come
+     * from that day's rows, so yesterday's ticks don't leak into today.
+     */
+    fun observeSubtasksForDay(taskId: Long, date: LocalDate): Flow<List<Subtask>>
 
     /** Delete a step; no-op when it is the last one (a staged task keeps ≥1 step). */
     suspend fun deleteSubtask(subtaskId: Long)

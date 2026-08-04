@@ -52,6 +52,8 @@ import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.Subtask
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.ui.common.components.SubtaskChecklist
+import com.todoapp.mobile.ui.common.components.categoryIconFor
+import com.todoapp.mobile.ui.common.components.taskChipLabel
 import com.todoapp.mobile.ui.common.rememberOpenLocation
 import com.todoapp.uikit.components.TDTaskCardWithCheckbox
 import com.todoapp.uikit.components.TDText
@@ -281,7 +283,7 @@ fun HomeTaskList(
                                             bottomStart = 12.dp,
                                             bottomEnd = 12.dp,
                                         ),
-                                        categoryLabel = categoryLabelFor(task),
+                                        categoryLabel = taskChipLabel(task),
                                         categoryIcon = categoryIconFor(task.category),
                                         locationLabel = task.locationName,
                                         onLocationClick = openLocation,
@@ -315,7 +317,7 @@ fun HomeTaskList(
                                     isPendingSync = task.isPendingSync && isSignedIn,
                                     isDragging = isDragging,
                                     isAnyDragging = isAnyDragging,
-                                    categoryLabel = categoryLabelFor(task),
+                                    categoryLabel = taskChipLabel(task),
                                     categoryIcon = categoryIconFor(task.category),
                                     locationLabel = task.locationName,
                                     onLocationClick = openLocation,
@@ -385,62 +387,4 @@ internal fun HomeSwipeDismissBackground(direction: SwipeToDismissBoxValue) {
             else -> {}
         }
     }
-}
-
-@Composable
-private fun categoryLabelFor(task: Task): String? {
-    val categoryText = categoryDisplayText(task)
-    val recurrenceText = recurrenceDisplayText(task.recurrence)
-    return remember(categoryText, recurrenceText) {
-        when {
-            categoryText != null && recurrenceText != null -> "$categoryText · $recurrenceText"
-            categoryText != null -> categoryText
-            recurrenceText != null -> recurrenceText
-            else -> null
-        }
-    }
-}
-
-@Composable
-private fun categoryDisplayText(task: Task): String? {
-    val category = task.category
-    if (category == com.todoapp.mobile.domain.model.TaskCategory.PERSONAL) return null
-    if (category == com.todoapp.mobile.domain.model.TaskCategory.OTHER) {
-        return task.customCategoryName?.takeIf { it.isNotBlank() }
-            ?: stringResource(com.todoapp.mobile.R.string.category_other)
-    }
-    val res = when (category) {
-        com.todoapp.mobile.domain.model.TaskCategory.SHOPPING -> com.todoapp.mobile.R.string.category_shopping
-        com.todoapp.mobile.domain.model.TaskCategory.MEDICINE -> com.todoapp.mobile.R.string.category_medicine
-        com.todoapp.mobile.domain.model.TaskCategory.HEALTH -> com.todoapp.mobile.R.string.category_health
-        com.todoapp.mobile.domain.model.TaskCategory.WORK -> com.todoapp.mobile.R.string.category_work
-        com.todoapp.mobile.domain.model.TaskCategory.STUDY -> com.todoapp.mobile.R.string.category_study
-        com.todoapp.mobile.domain.model.TaskCategory.BIRTHDAY -> com.todoapp.mobile.R.string.category_birthday
-        com.todoapp.mobile.domain.model.TaskCategory.PERSONAL,
-        com.todoapp.mobile.domain.model.TaskCategory.OTHER,
-        -> return null
-    }
-    return stringResource(res)
-}
-
-@androidx.annotation.DrawableRes
-private fun categoryIconFor(category: com.todoapp.mobile.domain.model.TaskCategory): Int? = when (category) {
-    com.todoapp.mobile.domain.model.TaskCategory.SHOPPING -> R.drawable.ic_shopping_label
-    com.todoapp.mobile.domain.model.TaskCategory.MEDICINE -> R.drawable.ic_medication_label
-    com.todoapp.mobile.domain.model.TaskCategory.HEALTH -> R.drawable.ic_health_label
-    com.todoapp.mobile.domain.model.TaskCategory.WORK -> R.drawable.ic_work_label
-    com.todoapp.mobile.domain.model.TaskCategory.STUDY -> R.drawable.ic_study_label
-    com.todoapp.mobile.domain.model.TaskCategory.BIRTHDAY -> R.drawable.ic_birthday_label
-    com.todoapp.mobile.domain.model.TaskCategory.PERSONAL,
-    com.todoapp.mobile.domain.model.TaskCategory.OTHER,
-    -> null
-}
-
-@Composable
-private fun recurrenceDisplayText(recurrence: Recurrence): String? = when (recurrence) {
-    Recurrence.NONE -> null
-    Recurrence.DAILY -> stringResource(com.todoapp.mobile.R.string.recurrence_daily)
-    Recurrence.WEEKLY -> stringResource(com.todoapp.mobile.R.string.recurrence_weekly)
-    Recurrence.MONTHLY -> stringResource(com.todoapp.mobile.R.string.recurrence_monthly)
-    Recurrence.YEARLY -> stringResource(com.todoapp.mobile.R.string.recurrence_yearly)
 }

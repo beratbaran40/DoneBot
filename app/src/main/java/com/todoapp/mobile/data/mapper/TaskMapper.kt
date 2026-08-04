@@ -3,8 +3,11 @@ package com.todoapp.mobile.data.mapper
 import com.todoapp.mobile.data.model.entity.SyncStatus
 import com.todoapp.mobile.data.model.entity.TaskEntity
 import com.todoapp.mobile.domain.model.Recurrence
+import com.todoapp.mobile.domain.model.RecurrenceRule
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.domain.model.TaskCategory
+import com.todoapp.mobile.domain.model.dayOfWeekSetFromStorage
+import com.todoapp.mobile.domain.model.toStorageCsv
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -20,6 +23,17 @@ private fun Long.toLocalTimeFromMinuteOfDay(): LocalTime = LocalTime.of(
 )
 
 private fun LocalTime.toMinuteOfDayLong(): Long = (hour * MINUTE_IN_HOUR + minute).toLong()
+
+/**
+ * The entity's repeat rule on its own. Used by the day-expansion and stats loops, which run this per
+ * task per day and must not pay for a full [toDomain] just to answer "does it fire?".
+ */
+fun TaskEntity.toRecurrenceRule(): RecurrenceRule = RecurrenceRule(
+    frequency = Recurrence.fromStorage(recurrence),
+    interval = recurrenceInterval,
+    byDay = dayOfWeekSetFromStorage(recurrenceByDay),
+    until = recurrenceUntil?.toLocalDate(),
+)
 
 fun TaskEntity.toDomain(): Task = Task(
     id = id,
@@ -44,6 +58,9 @@ fun TaskEntity.toDomain(): Task = Task(
     locationAddress = locationAddress,
     finishedOn = finishedOn?.toLocalDate(),
     isPendingSync = syncStatus != SyncStatus.SYNCED,
+    recurrenceInterval = recurrenceInterval,
+    recurrenceByDay = dayOfWeekSetFromStorage(recurrenceByDay),
+    recurrenceUntil = recurrenceUntil?.toLocalDate(),
 )
 
 fun Task.toEntity(syncStatus: SyncStatus = SyncStatus.SYNCED): TaskEntity {
@@ -70,5 +87,8 @@ fun Task.toEntity(syncStatus: SyncStatus = SyncStatus.SYNCED): TaskEntity {
         locationName = locationName?.takeIf { it.isNotBlank() },
         locationAddress = locationAddress?.takeIf { it.isNotBlank() },
         finishedOn = finishedOn?.toEpochDayLong(),
+        recurrenceInterval = recurrenceInterval.coerceAtLeast(1),
+        recurrenceByDay = recurrenceByDay.toStorageCsv(),
+        recurrenceUntil = recurrenceUntil?.toEpochDayLong(),
     )
 }

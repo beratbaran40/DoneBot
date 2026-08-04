@@ -16,18 +16,22 @@ import com.todoapp.mobile.data.model.entity.GroupTaskEntity
 import com.todoapp.mobile.data.model.entity.JournalEntryEntity
 import com.todoapp.mobile.data.model.entity.PendingPhotoEntity
 import com.todoapp.mobile.data.model.entity.PomodoroEntity
+import com.todoapp.mobile.data.model.entity.SubtaskDailyCompletionEntity
 import com.todoapp.mobile.data.model.entity.SubtaskEntity
 import com.todoapp.mobile.data.model.entity.SyncStatus
 import com.todoapp.mobile.data.model.entity.TaskDailyCompletionEntity
 import com.todoapp.mobile.data.model.entity.TaskEntity
+import com.todoapp.mobile.data.model.entity.TaskReminderEntity
 import com.todoapp.mobile.data.source.local.converter.StringListConverter
 import com.todoapp.mobile.data.source.local.datasource.GroupDao
 
 @Database(
-    version = 28,
+    version = 29,
     entities = [
         TaskEntity::class,
         SubtaskEntity::class,
+        TaskReminderEntity::class,
+        SubtaskDailyCompletionEntity::class,
         PomodoroEntity::class,
         GroupEntity::class,
         GroupTaskEntity::class,
@@ -70,6 +74,11 @@ import com.todoapp.mobile.data.source.local.datasource.GroupDao
         AutoMigration(from = 26, to = 27),
         // Drops journal_entries.mood — the journal mood feature was removed.
         AutoMigration(from = 27, to = 28, spec = AppDatabase.Migration27To28Spec::class),
+        // Custom task type — purely additive, so one hop carries the whole schema rather than three:
+        // tasks.{recurrence_interval,recurrence_by_day,recurrence_until} + the task_reminders and
+        // subtask_daily_completions tables. The defaults reproduce the legacy rule exactly, so every
+        // existing row keeps behaving identically with no backfill.
+        AutoMigration(from = 28, to = 29),
     ],
 )
 @TypeConverters(AppDatabase.SyncStatusConverter::class, StringListConverter::class)
@@ -117,6 +126,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun pendingPhotoDao(): PendingPhotoDao
 
     abstract fun taskDailyCompletionDao(): TaskDailyCompletionDao
+
+    abstract fun taskReminderDao(): TaskReminderDao
+
+    abstract fun subtaskDailyCompletionDao(): SubtaskDailyCompletionDao
 
     abstract fun chatMessageDao(): ChatMessageDao
 

@@ -52,6 +52,24 @@ data class TaskEntity(
     @ColumnInfo(name = "finished_on") val finishedOn: Long? = null,
     /** Client-generated idempotency key (UUID); null for rows created before v24. §4.12 */
     @ColumnInfo(name = "client_task_id") val clientTaskId: String? = null,
+    /**
+     * RRULE INTERVAL: fire every N periods of [recurrence]. 1 = every period, which is the legacy
+     * behaviour every pre-v29 row keeps via the default.
+     */
+    @ColumnInfo(name = "recurrence_interval", defaultValue = "1") val recurrenceInterval: Int = 1,
+    /**
+     * RRULE BYDAY: CSV of java.time.DayOfWeek names ("MONDAY,WEDNESDAY,FRIDAY"). Null/blank = derive
+     * the weekday from the anchor date, i.e. legacy WEEKLY behaviour. Only meaningful for WEEKLY.
+     */
+    @ColumnInfo(name = "recurrence_by_day") val recurrenceByDay: String? = null,
+    /**
+     * RRULE UNTIL: last epoch day the rule may fire, inclusive. Null = open-ended.
+     *
+     * Deliberately DISTINCT from [finishedOn]: this is the *scheduled* end picked at creation ("take
+     * this for a month"), whereas finishedOn is the *manual* retire from the Recurring tab. Both are
+     * honoured by Recurrence.firesOn and the earlier one wins.
+     */
+    @ColumnInfo(name = "recurrence_until") val recurrenceUntil: Long? = null,
 )
 
 enum class SyncStatus {

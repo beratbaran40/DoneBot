@@ -4,8 +4,10 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.TaskCategory
+import com.todoapp.mobile.ui.common.taskform.TaskCapabilities
 import com.todoapp.mobile.ui.common.taskform.TaskFormType
 import com.todoapp.mobile.ui.home.PendingPhoto
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -45,6 +47,22 @@ object DetailsContract {
             val pendingPhotoDeleteIds: Set<Long> = emptySet(),
             // Type is fixed at creation; derived from the loaded task and shown read-only.
             val taskType: TaskFormType = TaskFormType.ONE_TIME,
+            // What this task can do. Field visibility asks these, not the type — a custom task shows
+            // whichever sections its capabilities enable, without every gate growing a CUSTOM arm.
+            val capabilities: TaskCapabilities = TaskCapabilities(
+                recurs = false,
+                hasSteps = false,
+                hasMultipleReminders = false,
+                isBounded = false,
+            ),
+            // Extra reminder times of a multi-reminder task; empty = the single offset reminder.
+            val reminderTimes: List<LocalTime> = emptyList(),
+            // Scheduled end of a bounded routine, and how far along it is ("day 12 of 30").
+            val recurrenceUntil: LocalDate? = null,
+            val recurrenceInterval: Int = 1,
+            val recurrenceByDay: Set<DayOfWeek> = emptySet(),
+            val routineDayIndex: Int? = null,
+            val routineDayTotal: Int? = null,
             // Editable steps for a staged task (rename/toggle/add/remove). Reconciled on Save.
             val subtaskDrafts: List<SubtaskDraft> = emptyList(),
             val showDiscardDialog: Boolean = false,
@@ -129,6 +147,27 @@ object DetailsContract {
 
         data class OnReminderOffsetChange(
             val minutes: Long?,
+        ) : UiAction
+
+        data class OnReminderTimeAdd(
+            val time: LocalTime,
+        ) : UiAction
+
+        data class OnReminderTimeRemove(
+            val time: LocalTime,
+        ) : UiAction
+
+        /** null clears the scheduled end, making the routine open-ended again. */
+        data class OnRecurrenceUntilChange(
+            val until: LocalDate?,
+        ) : UiAction
+
+        data class OnIntervalChange(
+            val interval: Int,
+        ) : UiAction
+
+        data class OnWeekdayToggle(
+            val day: DayOfWeek,
         ) : UiAction
 
         data class OnAllDayChange(

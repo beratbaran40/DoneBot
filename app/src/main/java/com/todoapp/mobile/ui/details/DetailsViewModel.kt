@@ -11,10 +11,14 @@ import com.todoapp.mobile.domain.constants.DailyPlanDefaults
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.domain.model.TaskCategory
+import com.todoapp.mobile.domain.model.occurrenceIndex
+import com.todoapp.mobile.domain.model.occurrenceTotal
+import com.todoapp.mobile.domain.model.recurrenceRule
 import com.todoapp.mobile.domain.repository.PendingPhotoRepository
 import com.todoapp.mobile.domain.repository.TaskRepository
 import com.todoapp.mobile.domain.usecase.SetTaskCompletionUseCase
 import com.todoapp.mobile.navigation.NavigationEffect
+import com.todoapp.mobile.ui.common.taskform.capabilities
 import com.todoapp.mobile.ui.common.taskform.taskFormType
 import com.todoapp.mobile.ui.details.DetailsContract.UiAction
 import com.todoapp.mobile.ui.details.DetailsContract.UiEffect
@@ -26,6 +30,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -70,11 +75,17 @@ constructor(
         viewModelScope.launch {
             try {
                 _uiState.value = UiState.Loading
-                val task = taskRepository.getTaskById(taskId)
-                if (task == null) {
+                val loaded = taskRepository.getTaskById(taskId)
+                if (loaded == null) {
                     _uiState.value = UiState.Error(message = context.getString(R.string.error_task_not_found))
                     return@launch
                 }
+                // Reminder times live in their own table, so getTaskById doesn't carry them. Fold them
+                // in before anything derives capabilities — isDirty compares against originalTask, and
+                // a task missing its own reminders would read as "user cleared them" on the first save.
+                val task = loaded
+                    .copy(reminderTimes = taskRepository.getReminderTimes(taskId))
+                    .withDayScopedSteps(taskId)
                 originalTask = task
                 val initial = successFromTask(task)
                 _uiState.value = initial.copy(isReminderInPast = computeIsReminderInPast(initial))
@@ -90,6 +101,31 @@ constructor(
         }
     }
 
+    /**
+     * Reminder times drive [TaskCapabilities.hasMultipleReminders], so the capability snapshot has to
+     * be recomputed with them — otherwise the very edit that adds a second reminder wouldn't switch
+     * the task to CUSTOM until it was reloaded.
+     */
+    private fun changeReminderTimes(transform: (List<LocalTime>) -> List<LocalTime>) = updateSuccessState { state ->
+        val times = transform(state.reminderTimes)
+        val capabilities = state.capabilities.copy(hasMultipleReminders = times.size > 1)
+        state.copy(
+            reminderTimes = times,
+            capabilities = capabilities,
+            taskType = taskFormType(capabilities),
+            isDirty = true,
+        )
+    }
+
+    /**
+     * A recurring staged task's step flags live per-day, so the row flags loaded with the task are
+     * always false and would render an already-done day as untouched. Overlay this occurrence's state.
+     */
+    private suspend fun Task.withDayScopedSteps(taskId: Long): Task {
+        if (recurrence == Recurrence.NONE || subtasks.isEmpty()) return this
+        return copy(subtasks = taskRepository.observeSubtasksForDay(taskId, date).first())
+    }
+
     private fun successFromTask(task: Task): UiState.Success {
         val drafts = if (task.subtasks.isNotEmpty()) {
             task.subtasks.sortedBy { it.orderIndex }.map { SubtaskDraft(it.id, it.title, it.isCompleted) } +
@@ -97,6 +133,7 @@ constructor(
         } else {
             emptyList()
         }
+        val capabilities = task.capabilities()
         return UiState.Success(
             taskId = task.remoteId ?: -1L,
             taskTitle = task.title,
@@ -118,7 +155,15 @@ constructor(
             selectedRecurrence = task.recurrence,
             reminderOffsetMinutes = task.reminderOffsetMinutes,
             isAllDay = task.isAllDay,
-            taskType = taskFormType(task.subtasks.isNotEmpty(), task.recurrence),
+            taskType = taskFormType(capabilities),
+            capabilities = capabilities,
+            reminderTimes = task.reminderTimes,
+            recurrenceUntil = task.recurrenceUntil,
+            recurrenceInterval = task.recurrenceInterval,
+            recurrenceByDay = task.recurrenceByDay,
+            // Computed here, never in a composable — the by-weekday case counts real firing days.
+            routineDayIndex = task.recurrenceRule.occurrenceIndex(task.date, LocalDate.now(), task.finishedOn),
+            routineDayTotal = task.recurrenceRule.occurrenceTotal(task.date, task.finishedOn),
             subtaskDrafts = drafts,
             isCompleted = task.isCompleted,
         )
@@ -149,6 +194,22 @@ constructor(
             is UiAction.OnCustomCategoryNameChange -> changeCustomCategoryName(uiAction.name)
             is UiAction.OnRecurrenceChange -> changeRecurrence(uiAction.recurrence)
             is UiAction.OnReminderOffsetChange -> changeReminderOffset(uiAction.minutes)
+            is UiAction.OnReminderTimeAdd -> changeReminderTimes { (it + uiAction.time).distinct().sorted() }
+            is UiAction.OnReminderTimeRemove -> changeReminderTimes { it - uiAction.time }
+            is UiAction.OnRecurrenceUntilChange -> updateSuccessState {
+                it.copy(recurrenceUntil = uiAction.until, isDirty = true)
+            }
+            is UiAction.OnIntervalChange -> updateSuccessState {
+                it.copy(recurrenceInterval = uiAction.interval, isDirty = true)
+            }
+            is UiAction.OnWeekdayToggle -> updateSuccessState { state ->
+                val next = if (uiAction.day in state.recurrenceByDay) {
+                    state.recurrenceByDay - uiAction.day
+                } else {
+                    state.recurrenceByDay + uiAction.day
+                }
+                state.copy(recurrenceByDay = next, isDirty = true)
+            }
             is UiAction.OnSubtaskTitleChange -> changeSubtaskTitle(uiAction.index, uiAction.title)
             is UiAction.OnSubtaskToggle -> toggleSubtaskDraft(uiAction.index)
             is UiAction.OnSubtaskRemove -> removeSubtaskDraft(uiAction.index)
@@ -171,8 +232,26 @@ constructor(
         updateSuccessState { it.copy(customCategoryName = name) }
     }
 
+    /**
+     * Dropping the repeat also drops everything that only existed because of it. The rule fields
+     * (end date, interval, weekdays, absolute reminder times) are hidden from the form when the
+     * frequency is NONE, so keeping them would leave values the user can no longer see — and here
+     * they were being written straight through to the saved task.
+     */
     private fun changeRecurrence(recurrence: Recurrence) {
-        updateSuccessState { it.copy(selectedRecurrence = recurrence) }
+        updateSuccessState {
+            if (recurrence == Recurrence.NONE) {
+                it.copy(
+                    selectedRecurrence = recurrence,
+                    recurrenceUntil = null,
+                    recurrenceInterval = 1,
+                    recurrenceByDay = emptySet(),
+                    reminderTimes = emptyList(),
+                )
+            } else {
+                it.copy(selectedRecurrence = recurrence)
+            }
+        }
     }
 
     private fun changeReminderOffset(minutes: Long?) {
@@ -245,7 +324,9 @@ constructor(
                 val orig = originalById[draft.id]
                 if (orig != null) {
                     if (orig.title != draft.title) taskRepository.updateSubtaskTitle(draft.id, draft.title)
-                    if (orig.isCompleted != draft.isCompleted) taskRepository.toggleSubtask(draft.id, draft.isCompleted)
+                    if (orig.isCompleted != draft.isCompleted) {
+                        taskRepository.toggleSubtask(draft.id, draft.isCompleted, originalTask?.date)
+                    }
                 }
             }
         }
@@ -539,6 +620,11 @@ constructor(
         recurrence = current.selectedRecurrence,
         reminderOffsetMinutes = current.reminderOffsetMinutes,
         isAllDay = current.isAllDay,
+        reminderTimes = current.reminderTimes,
+        recurrenceUntil = current.recurrenceUntil,
+        recurrenceInterval = current.recurrenceInterval.coerceAtLeast(1),
+        // Dead data on any other frequency, and contentEquals would still diff on it.
+        recurrenceByDay = if (current.selectedRecurrence == Recurrence.WEEKLY) current.recurrenceByDay else emptySet(),
     )
 
     private fun subtaskDraftsChanged(state: UiState.Success, original: Task): Boolean {

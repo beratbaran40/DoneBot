@@ -156,7 +156,12 @@ constructor(
             is UiAction.OnJournalTap -> _navEffect.trySend(NavigationEffect.Navigate(Screen.Journal))
             is UiAction.OnCreateHubTap -> _navEffect.trySend(NavigationEffect.Navigate(Screen.CreationHub))
             is UiAction.OnStagedExpandToggle -> toggleStagedExpand(uiAction.taskId)
-            is UiAction.OnSubtaskToggle -> viewModelScope.launch(ioDispatcher) { taskRepository.toggleSubtask(uiAction.subtaskId, uiAction.isCompleted) }
+            is UiAction.OnSubtaskToggle -> viewModelScope.launch(ioDispatcher) {
+                // The viewed day decides which occurrence the tick belongs to; ignored for a
+                // non-recurring parent, load-bearing for a recurring one.
+                val day = (_uiState.value as? UiState.Success)?.selectedDate
+                taskRepository.toggleSubtask(uiAction.subtaskId, uiAction.isCompleted, day)
+            }
             is UiAction.OnCompletedStatCardTap -> navigateToFilteredTasks(isCompleted = true)
             is UiAction.OnPendingStatCardTap -> navigateToFilteredTasks(isCompleted = false)
             is UiAction.OnSuccessfulBiometricAuthenticationHandle -> handleSuccessfulBiometricAuthentication()
@@ -295,7 +300,10 @@ constructor(
         }
         updateSuccessState { it.copy(expandedStagedTaskId = taskId, expandedSubtasks = emptyList()) }
         subtaskJob = viewModelScope.launch {
-            taskRepository.observeSubtasks(taskId).collect { subs ->
+            // Day-scoped: a recurring staged task's steps reset each occurrence, so the checklist must
+            // reflect the day being viewed rather than the single flag on the step row.
+            val day = (_uiState.value as? UiState.Success)?.selectedDate ?: LocalDate.now()
+            taskRepository.observeSubtasksForDay(taskId, day).collect { subs ->
                 updateSuccessState { it.copy(expandedSubtasks = subs) }
             }
         }

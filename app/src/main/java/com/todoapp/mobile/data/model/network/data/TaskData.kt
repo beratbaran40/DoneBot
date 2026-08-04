@@ -36,6 +36,15 @@ data class TaskData(
     val photoUrls: List<String> = emptyList(),
     /** Ordered steps of a staged task (empty for a plain task). Synced since backend V11. */
     val subtasks: List<SubtaskData> = emptyList(),
+    /**
+     * Extended recurrence rule, synced since backend V19. The defaults describe the legacy
+     * "every period, forever" routine, so a response from an older server decodes correctly.
+     */
+    val recurrenceInterval: Int = 1,
+    val recurrenceByDay: String? = null,
+    val recurrenceUntil: Long? = null,
+    /** Absolute reminder times as SECOND-of-day; empty = the single [reminderOffsetMinutes] reminder. */
+    val reminderTimes: List<Int> = emptyList(),
 )
 
 @Serializable

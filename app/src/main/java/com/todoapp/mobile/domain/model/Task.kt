@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import com.todoapp.mobile.data.model.network.data.TaskData
 import com.todoapp.mobile.data.model.network.request.SubtaskRequest
 import com.todoapp.mobile.data.model.network.request.TaskRequest
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -66,7 +67,30 @@ data class Task(
      */
     val subtaskTotal: Int = 0,
     val subtaskDone: Int = 0,
+    /** Fire every N periods of [recurrence]. 1 = every period. Meaningless when recurrence is NONE. */
+    val recurrenceInterval: Int = 1,
+    /** WEEKLY only: the weekdays to fire on. Empty = the anchor's own weekday (legacy behaviour). */
+    val recurrenceByDay: Set<DayOfWeek> = emptySet(),
+    /**
+     * The routine's *scheduled* last day, inclusive — "take this for a month". Null = open-ended.
+     * Distinct from [finishedOn], which is the manual retire; [RecurrenceRule.firesOn] honours both
+     * and the earlier one wins.
+     */
+    val recurrenceUntil: LocalDate? = null,
+    /**
+     * Absolute times of day this task reminds at, applied to every occurrence. Non-empty ⇒ these
+     * REPLACE [reminderOffsetMinutes], which stays the model for the classic single "N minutes
+     * before" reminder on a one-off task.
+     */
+    val reminderTimes: List<LocalTime> = emptyList(),
 )
+
+/**
+ * The task's repeat rule as one value object — the single input to [RecurrenceRule.firesOn], the
+ * alarm next-fire calculator and the day-N-of-M progress helpers.
+ */
+val Task.recurrenceRule: RecurrenceRule
+    get() = RecurrenceRule(recurrence, recurrenceInterval, recurrenceByDay, recurrenceUntil)
 
 fun Task.toAlarmItem(
     remindBeforeMinutes: Long = 0,
@@ -119,6 +143,12 @@ fun Task.toCreateTaskRequestDto(
             orderIndex = it.orderIndex,
         )
     },
+    recurrenceInterval = recurrenceInterval,
+    recurrenceByDay = recurrenceByDay.toStorageCsv(),
+    recurrenceUntil = recurrenceUntil?.toEpochDay(),
+    // Seconds on the wire (like timeStart/timeEnd), minutes in Room. Null — not empty — when there are
+    // none, mirroring the subtasks convention so a plain task never tells the server to wipe times.
+    reminderTimes = reminderTimes.takeIf { it.isNotEmpty() }?.map { it.toSecondOfDay() },
 )
 
 fun TaskData.toDomain(): Task = Task(
@@ -143,4 +173,8 @@ fun TaskData.toDomain(): Task = Task(
     locationName = locationName,
     locationAddress = locationAddress,
     finishedOn = finishedOn?.let { LocalDate.ofEpochDay(it) },
+    recurrenceInterval = recurrenceInterval,
+    recurrenceByDay = dayOfWeekSetFromStorage(recurrenceByDay),
+    recurrenceUntil = recurrenceUntil?.let { LocalDate.ofEpochDay(it) },
+    reminderTimes = reminderTimes.map { LocalTime.ofSecondOfDay(it.toLong()) },
 )

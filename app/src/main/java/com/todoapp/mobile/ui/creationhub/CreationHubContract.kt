@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.ui.home.PendingPhoto
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
@@ -11,7 +12,7 @@ import java.util.UUID
 object CreationHubContract {
     enum class Step { HUB_ROOT, TASK_TYPE, TASK_CORE }
 
-    enum class TaskType { ONE_TIME, ROUTINE, STAGED, GROUP }
+    enum class TaskType { ONE_TIME, ROUTINE, STAGED, GROUP, CUSTOM }
 
     /** A group the current user administers — carries both ids: local for members, remote for create. */
     @Immutable
@@ -51,6 +52,15 @@ object CreationHubContract {
         val locationLat: Double? = null,
         val locationLng: Double? = null,
         val placeholderIndex: Int = 0,
+        // A custom task shows every section at once and derives its capabilities from what the user
+        // actually fills in — a repeat is "recurrence != NONE", steps are "a step was typed". There
+        // are deliberately no capability toggles: an extra up-front choice bought nothing, since the
+        // form itself already asks the same questions.
+        val recurrenceUntil: LocalDate? = null,
+        val reminderTimes: List<LocalTime> = emptyList(),
+        val recurrenceInterval: Int = 1,
+        /** WEEKLY only; empty = the start date's own weekday (legacy behaviour). */
+        val recurrenceByDay: Set<DayOfWeek> = emptySet(),
         val titleError: Boolean = false,
         val isSaving: Boolean = false,
         // Idempotency key for the group create. Minted once per creation session (this VM is recreated per
@@ -87,6 +97,16 @@ object CreationHubContract {
         data class OnReminderSelect(val minutes: Long?) : UiAction
 
         data class OnFrequencySelect(val recurrence: Recurrence) : UiAction
+
+        data class OnRecurrenceUntilSelect(val until: LocalDate?) : UiAction
+
+        data class OnReminderTimeAdd(val time: LocalTime) : UiAction
+
+        data class OnReminderTimeRemove(val time: LocalTime) : UiAction
+
+        data class OnIntervalChange(val interval: Int) : UiAction
+
+        data class OnWeekdayToggle(val day: DayOfWeek) : UiAction
 
         data class OnSubtaskChange(val index: Int, val text: String) : UiAction
 

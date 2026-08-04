@@ -50,6 +50,10 @@ fun TaskTypeBadge(
             icon = painterResource(R.drawable.ic_staged)
             labelRes = R.string.type_staged_title
         }
+        TaskFormType.CUSTOM -> {
+            icon = painterResource(R.drawable.ic_custom)
+            labelRes = R.string.type_custom_title
+        }
     }
     Row(
         modifier = modifier
@@ -84,12 +88,16 @@ fun taskTypeAccent(type: TaskFormType): Color = if (TDTheme.palette == PaletteKi
         TaskFormType.ONE_TIME -> TDTheme.colors.purple
         TaskFormType.ROUTINE -> TDTheme.colors.purple
         TaskFormType.STAGED -> TDTheme.colors.mediumGreen
+        TaskFormType.CUSTOM -> TDTheme.colors.darkPending
     }
 } else {
     when (type) {
         TaskFormType.ONE_TIME -> TDTheme.colors.darkPending
         TaskFormType.ROUTINE -> TDTheme.colors.purple
         TaskFormType.STAGED -> TDTheme.colors.mediumGreen
+        // A custom task combines the others, so it gets its own ink rather than borrowing one of
+        // theirs — reusing ROUTINE's purple would make a routine+staged task read as a plain routine.
+        TaskFormType.CUSTOM -> TDTheme.colors.darkPurple
     }
 }
 
@@ -104,6 +112,7 @@ private fun TaskTypeBadgePreview() {
             TaskTypeBadge(TaskFormType.ONE_TIME)
             TaskTypeBadge(TaskFormType.ROUTINE)
             TaskTypeBadge(TaskFormType.STAGED)
+            TaskTypeBadge(TaskFormType.CUSTOM)
         }
     }
 }

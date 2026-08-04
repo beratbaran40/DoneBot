@@ -6,6 +6,7 @@ import com.todoapp.mobile.ui.creationhub.CreationHubContract.Step
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiState
 import kotlinx.serialization.Serializable
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -47,6 +48,11 @@ data class CreationHubDraft(
     val locationLat: Double? = null,
     val locationLng: Double? = null,
     val placeholderIndex: Int = 0,
+    val recurrenceUntilEpochDay: Long? = null,
+    val reminderTimeSecondsOfDay: List<Int> = emptyList(),
+    val recurrenceInterval: Int = 1,
+    /** DayOfWeek names; unknown entries are dropped on restore, like every other enum here. */
+    val recurrenceByDay: List<String> = emptyList(),
 )
 
 /** Projects the current form state onto its durable slice. */
@@ -71,6 +77,10 @@ fun UiState.toDraft(): CreationHubDraft = CreationHubDraft(
     locationLat = locationLat,
     locationLng = locationLng,
     placeholderIndex = placeholderIndex,
+    recurrenceUntilEpochDay = recurrenceUntil?.toEpochDay(),
+    reminderTimeSecondsOfDay = reminderTimes.map { it.toSecondOfDay() },
+    recurrenceInterval = recurrenceInterval,
+    recurrenceByDay = recurrenceByDay.map { it.name },
 )
 
 /**
@@ -99,6 +109,10 @@ fun CreationHubDraft.toState(base: UiState): UiState = base.copy(
     locationLat = locationLat,
     locationLng = locationLng,
     placeholderIndex = placeholderIndex,
+    recurrenceUntil = recurrenceUntilEpochDay?.let { LocalDate.ofEpochDay(it) },
+    reminderTimes = reminderTimeSecondsOfDay.map { LocalTime.ofSecondOfDay(it.toLong()) },
+    recurrenceInterval = recurrenceInterval,
+    recurrenceByDay = recurrenceByDay.mapNotNull { enumOrNull<DayOfWeek>(it) }.toSet(),
 )
 
 private inline fun <reified T : Enum<T>> enumOrNull(name: String): T? {

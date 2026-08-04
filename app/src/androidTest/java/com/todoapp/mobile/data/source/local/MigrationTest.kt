@@ -25,7 +25,7 @@ class MigrationTest {
     )
 
     @Test
-    fun `migrate 22 to 25 applies auto-migrations and validates schema`() {
+    fun migrate22To25_appliesAutoMigrationsAndValidatesSchema() {
         helper.createDatabase(TEST_DB, 22).apply {
             execSQL(
                 "INSERT INTO tasks (id, title, date, time_start, time_end, is_completed, is_secret) " +
@@ -38,7 +38,7 @@ class MigrationTest {
     }
 
     @Test
-    fun `migrate 25 to 26 dedups duplicate remote groups and keeps the oldest row`() {
+    fun migrate25To26_dedupsDuplicateRemoteGroupsAndKeepsOldestRow() {
         helper.createDatabase(TEST_DB, 25).apply {
             // Two rows for the same backend group (the pre-v26 sync race) + one unsynced row.
             execSQL(
@@ -83,7 +83,7 @@ class MigrationTest {
     }
 
     @Test
-    fun `migrate 25 to 27 chains the manual dedup with the additive activity column`() {
+    fun migrate25To27_chainsManualDedupWithAdditiveActivityColumn() {
         helper.createDatabase(TEST_DB, 25).apply {
             execSQL(
                 "INSERT INTO `groups` (id, name, description, remote_id, created_at, order_index) " +
@@ -104,7 +104,7 @@ class MigrationTest {
     }
 
     @Test
-    fun `migrate 12 to 13 backfills recurrence from the daily category`() {
+    fun migrate12To13_backfillsRecurrenceFromDailyCategory() {
         helper.createDatabase(TEST_DB, 12).apply {
             execSQL(
                 "INSERT INTO tasks (id, title, date, time_start, time_end, is_completed, is_secret, category) " +
@@ -119,6 +119,56 @@ class MigrationTest {
             assertTrue(cursor.moveToFirst())
             assertEquals("DAILY", cursor.getString(0))
             assertEquals("PERSONAL", cursor.getString(1))
+        }
+    }
+
+    @Test
+    fun migrate28To29_defaultsLegacyRowsToPreCustomTaskRule() {
+        helper.createDatabase(TEST_DB, 28).apply {
+            execSQL(
+                "INSERT INTO tasks (id, title, date, time_start, time_end, is_completed, is_secret, recurrence) " +
+                    "VALUES (1, 'Vitamin', 0, 0, 0, 0, 0, 'WEEKLY')",
+            )
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(TEST_DB, 29, true)
+        // The defaults must reproduce the legacy rule exactly, or every shipped routine changes
+        // schedule on update. RecurrenceTest pins the same invariant on the Kotlin side.
+        db.query("SELECT recurrence_interval, recurrence_by_day, recurrence_until FROM tasks WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(1, cursor.getInt(0))
+            assertTrue(cursor.isNull(1))
+            assertTrue(cursor.isNull(2))
+        }
+        // Both new tables must exist and be empty — nothing is backfilled.
+        db.query("SELECT COUNT(*) FROM task_reminders").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(0, cursor.getInt(0))
+        }
+        db.query("SELECT COUNT(*) FROM subtask_daily_completions").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(0, cursor.getInt(0))
+        }
+    }
+
+    @Test
+    fun migrate25To29_chainsManualDedupThroughEveryAdditiveHop() {
+        helper.createDatabase(TEST_DB, 25).apply {
+            execSQL(
+                "INSERT INTO `groups` (id, name, description, remote_id, created_at, order_index) " +
+                    "VALUES (1, 'Fam', '', 42, 0, 0)",
+            )
+            execSQL(
+                "INSERT INTO tasks (id, title, date, time_start, time_end, is_completed, is_secret) " +
+                    "VALUES (1, 'Ship it', 0, 0, 0, 0, 0)",
+            )
+            close()
+        }
+        // The full ladder a real user on an older build actually walks: manual 25→26, then 26→29.
+        val db = helper.runMigrationsAndValidate(TEST_DB, 29, true, MIGRATION_25_26)
+        db.query("SELECT recurrence_interval FROM tasks WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(1, cursor.getInt(0))
         }
     }
 

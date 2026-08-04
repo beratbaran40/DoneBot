@@ -42,6 +42,13 @@ internal fun CreationHubTypeStep(
             accentColor = taskTypeAccent(TaskFormType.STAGED),
             onClick = { onAction(UiAction.OnTypeSelect(TaskType.STAGED)) },
         )
+        TDOptionCard(
+            title = stringResource(R.string.type_custom_title),
+            subtitle = stringResource(R.string.type_custom_subtitle),
+            icon = painterResource(R.drawable.ic_custom),
+            accentColor = taskTypeAccent(TaskFormType.CUSTOM),
+            onClick = { onAction(UiAction.OnTypeSelect(TaskType.CUSTOM)) },
+        )
         // Only shown when the user administers at least one group.
         if (showGroupCard) {
             TDOptionCard(

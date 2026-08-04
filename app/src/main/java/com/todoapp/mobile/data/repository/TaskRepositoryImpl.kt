@@ -11,12 +11,15 @@ import android.util.Log
 import com.todoapp.mobile.common.DomainException
 import com.todoapp.mobile.data.mapper.toDomain
 import com.todoapp.mobile.data.mapper.toEntity
+import com.todoapp.mobile.data.mapper.toRecurrenceRule
+import com.todoapp.mobile.data.model.entity.SubtaskDailyCompletionEntity
 import com.todoapp.mobile.data.model.entity.SubtaskEntity
 import com.todoapp.mobile.data.model.entity.SyncStatus
 import com.todoapp.mobile.data.model.entity.TaskDailyCompletionEntity
 import com.todoapp.mobile.data.model.entity.TaskEntity
 import com.todoapp.mobile.data.model.network.data.SubtaskData
 import com.todoapp.mobile.data.source.local.SubtaskCount
+import com.todoapp.mobile.data.source.local.SubtaskDailyCompletionDao
 import com.todoapp.mobile.data.source.local.TaskDailyCompletionDao
 import com.todoapp.mobile.data.source.local.datasource.GroupTaskLocalDataSource
 import com.todoapp.mobile.data.source.local.datasource.TaskLocalDataSource
@@ -24,11 +27,13 @@ import com.todoapp.mobile.data.source.remote.datasource.TaskRemoteDataSource
 import com.todoapp.mobile.di.IoDispatcher
 import com.todoapp.mobile.domain.alarm.AlarmScheduler
 import com.todoapp.mobile.domain.alarm.AlarmType
+import com.todoapp.mobile.domain.alarm.MAX_REMINDER_SLOTS
 import com.todoapp.mobile.domain.constants.DailyPlanDefaults
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.Subtask
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.domain.model.firesOn
+import com.todoapp.mobile.domain.model.recurrenceRule
 import com.todoapp.mobile.domain.model.toAlarmItem
 import com.todoapp.mobile.domain.model.toDomain
 import com.todoapp.mobile.domain.repository.CompletedCountByDay
@@ -65,6 +70,7 @@ constructor(
     private val todoApi: com.todoapp.mobile.data.source.remote.api.ToDoApi,
     private val pendingPhotoRepository: com.todoapp.mobile.domain.repository.PendingPhotoRepository,
     private val dailyCompletionDao: TaskDailyCompletionDao,
+    private val subtaskDailyCompletionDao: SubtaskDailyCompletionDao,
     private val alarmScheduler: AlarmScheduler,
     private val dailyPlanPreferences: DailyPlanPreferences,
     private val analyticsHelper: com.todoapp.mobile.domain.analytics.AnalyticsHelper,
@@ -76,6 +82,14 @@ constructor(
     // which steps were already done, so un-completing the parent restores that progress instead of zeroing
     // it. Session-memory only.
     private val stagedSnapshots = mutableMapOf<Long, Set<Long>>()
+
+    /**
+     * The per-day twin of [stagedSnapshots], keyed by task + epoch day. A recurring staged task gets
+     * the same "tick the parent, untick it, get your progress back" behaviour on each occurrence
+     * independently. In-memory like its twin: process death loses the snapshot and the existing
+     * "no snapshot ⇒ clear all" fallback applies.
+     */
+    private val stagedDaySnapshots = mutableMapOf<Pair<Long, Long>, Set<Long>>()
 
     // Serializes the two sync bodies (push + pull) across the whole app. This repository is a @Singleton,
     // so every WorkManager worker and ViewModel shares this one Mutex. SYNC_WORK and FETCH_WORK are distinct
@@ -117,7 +131,7 @@ constructor(
             // Recurring rows are intentionally excluded from the anchor-day list above so this
             // firesOn() expansion is the single source for recurring instances on the day.
             val recurringInstances = recurring.mapNotNull { entity ->
-                val rule = Recurrence.fromStorage(entity.recurrence)
+                val rule = entity.toRecurrenceRule()
                 val anchor = LocalDate.ofEpochDay(entity.date)
                 val finishedOn = entity.finishedOn?.let { LocalDate.ofEpochDay(it) }
                 if (!rule.firesOn(anchor, date, finishedOn)) return@mapNotNull null
@@ -129,7 +143,30 @@ constructor(
                 )
             }
             nonRecurring + recurringInstances
-        }.withSubtaskCounts()
+        }.withDayScopedSubtaskCounts(date)
+    }
+
+    /**
+     * Like [withSubtaskCounts], but a recurring task's "done" count comes from THAT day's step rows.
+     * The global count would freeze at whatever `subtasks.is_completed` last held — which for a
+     * recurring task is never written at all, so it would read 0/N forever.
+     */
+    private fun Flow<List<Task>>.withDayScopedSubtaskCounts(date: LocalDate): Flow<List<Task>> = combine(
+        this,
+        localDataSource.observeSubtaskCounts(),
+        subtaskDailyCompletionDao.observeDoneCountsForDate(date.toEpochDay()),
+    ) { tasks, totals, dayDone ->
+        if (totals.isEmpty()) {
+            tasks
+        } else {
+            val totalsById = totals.associateBy { it.taskId }
+            val doneById = dayDone.associate { it.taskId to it.done }
+            tasks.map { task ->
+                val count = totalsById[task.id] ?: return@map task
+                val done = if (task.recurrence != Recurrence.NONE) doneById[task.id] ?: 0 else count.done
+                task.copy(subtaskTotal = count.total, subtaskDone = done)
+            }
+        }
     }
 
     override fun observeRecurringByType(recurrence: Recurrence): Flow<List<Task>> {
@@ -143,7 +180,11 @@ constructor(
             list.map { entity ->
                 entity.toDomain().copy(
                     date = today,
-                    isCompleted = entity.finishedOn != null,
+                    // A routine ends two ways and both must tick the box: the user retired it
+                    // (finishedOn), or its scheduled end has passed. Reading only finishedOn left a
+                    // completed 30-day course rendering unchecked forever on this tab.
+                    isCompleted = entity.finishedOn != null ||
+                        entity.recurrenceUntil?.let { today.toEpochDay() > it } == true,
                 )
             }
         }
@@ -164,7 +205,26 @@ constructor(
         date: LocalDate,
         completed: Boolean,
     ) = withContext(ioDispatcher) {
-        val epochDay = date.toEpochDay()
+        setInstanceCompletionRaw(taskId, date.toEpochDay(), completed)
+        // A recurring STAGED task: the day checkbox is the same snapshot-preserving shortcut the
+        // staged parent checkbox is, scoped to this one occurrence.
+        val steps = localDataSource.getSubtasks(taskId)
+        if (steps.isNotEmpty()) applyStagedDayCompletion(taskId, steps, date, completed)
+        Unit
+    }
+
+    /**
+     * Writes ONLY the task-day row, with no cascade into steps.
+     *
+     * The split exists to break a cycle: [setInstanceCompletion] cascades parent → steps, and
+     * [recomputeDayCompletion] cascades steps → parent. If both went through the public entry point
+     * they would call each other forever. Everything that reacts to a step change must call this.
+     */
+    private suspend fun setInstanceCompletionRaw(
+        taskId: Long,
+        epochDay: Long,
+        completed: Boolean,
+    ) {
         if (completed) {
             // Mark completed and queue a push. Re-marks a not-yet-pushed uncomplete (PENDING_DELETE) as a
             // live completion again.
@@ -195,6 +255,64 @@ constructor(
         // Best-effort immediate push; pushPendingDailyCompletions() replays any failure durably.
         runCatching { pushDailyCompletion(taskId, epochDay, completed) }
         Unit
+    }
+
+    /**
+     * The per-day twin of [applyStagedParentCompletion]: ticking the whole task for a day marks every
+     * step done for THAT day, unticking restores what was done before (1/3 → ✔3/3 → ✗ → 1/3), and the
+     * next occurrence starts clean because nothing is written to `subtasks.is_completed`.
+     */
+    private suspend fun applyStagedDayCompletion(
+        taskId: Long,
+        steps: List<SubtaskEntity>,
+        date: LocalDate,
+        complete: Boolean,
+    ) {
+        val epochDay = date.toEpochDay()
+        val key = taskId to epochDay
+        val doneIds = subtaskDailyCompletionDao.getDoneStepIds(taskId, epochDay).toSet()
+        if (complete) {
+            if (steps.any { it.id !in doneIds }) stagedDaySnapshots[key] = doneIds
+            steps.filter { it.id !in doneIds }.forEach { step ->
+                subtaskDailyCompletionDao.upsert(
+                    SubtaskDailyCompletionEntity(
+                        subtaskId = step.id,
+                        taskId = taskId,
+                        date = epochDay,
+                        completedAt = System.currentTimeMillis(),
+                    ),
+                )
+            }
+        } else {
+            val snapshot = stagedDaySnapshots.remove(key)
+            steps.forEach { step ->
+                val shouldBeDone = snapshot?.contains(step.id) ?: false
+                if (shouldBeDone && step.id !in doneIds) {
+                    subtaskDailyCompletionDao.upsert(
+                        SubtaskDailyCompletionEntity(
+                            subtaskId = step.id,
+                            taskId = taskId,
+                            date = epochDay,
+                            completedAt = System.currentTimeMillis(),
+                        ),
+                    )
+                } else if (!shouldBeDone && step.id in doneIds) {
+                    subtaskDailyCompletionDao.delete(step.id, epochDay)
+                }
+            }
+        }
+    }
+
+    /**
+     * Steps → parent for one occupancy day. Calls [setInstanceCompletionRaw], never the public entry
+     * point, or the parent→steps cascade would call back into here forever.
+     */
+    private suspend fun recomputeDayCompletion(taskId: Long, date: LocalDate) {
+        val steps = localDataSource.getSubtasks(taskId)
+        if (steps.isEmpty()) return
+        val epochDay = date.toEpochDay()
+        val doneIds = subtaskDailyCompletionDao.getDoneStepIds(taskId, epochDay).toSet()
+        setInstanceCompletionRaw(taskId, epochDay, steps.all { it.id in doneIds })
     }
 
     // Pushes a single day's completion state and, on success, settles the local row (SYNCED for a
@@ -395,12 +513,12 @@ constructor(
             val completionKeys = completions.map { it.taskId to it.date }.toSet()
             val totalDays = java.time.temporal.ChronoUnit.DAYS.between(startDate, endDate).toInt() + 1
             recurring.forEach { entity ->
-                val recurrence = Recurrence.fromStorage(entity.recurrence)
+                val rule = entity.toRecurrenceRule()
                 val anchor = LocalDate.ofEpochDay(entity.date)
                 val finishedOn = entity.finishedOn?.let { LocalDate.ofEpochDay(it) }
                 for (offset in 0 until totalDays) {
                     val day = startDate.plusDays(offset.toLong())
-                    if (recurrence.firesOn(anchor, day, finishedOn)) {
+                    if (rule.firesOn(anchor, day, finishedOn)) {
                         // Finish day counts as completed via finishedOn so stats match the Today tab.
                         val done = entity.id to day.toEpochDay() in completionKeys ||
                             entity.finishedOn == day.toEpochDay()
@@ -429,6 +547,8 @@ constructor(
                 },
             )
         }
+        // Must precede the alarm arming — scheduleRecurringAlarmIfNeeded reads these rows back.
+        localDataSource.replaceReminders(localId, task.reminderTimes.map { it.toMinuteOfDay() })
         scheduleRecurringAlarmIfNeeded(localId, task)
         analyticsHelper.logTaskCreated(hasDue = !task.isAllDay, recurrence = task.recurrence.name)
 
@@ -626,9 +746,14 @@ constructor(
         // AND on the wire — so editing a finished routine doesn't silently resurrect it.
         val preserved = task.copy(finishedOn = taskEntity?.finishedOn?.let { LocalDate.ofEpochDay(it) })
 
+        // Reminder rows must land BEFORE the alarms are re-armed — scheduleRecurringAlarmIfNeeded
+        // reads them back from the table, so writing after would arm the previous set.
+        localDataSource.replaceReminders(preserved.id, preserved.reminderTimes.map { it.toMinuteOfDay() })
+
         // Re-arm or cancel the recurring alarm based on the new recurrence. Always cancel first
-        // (no-op if there was no alarm) so a change to NONE clears it. A finished routine stays
-        // alarm-less (scheduleRecurringAlarmIfNeeded skips finishedOn != null).
+        // (no-op if there was no alarm) so a change to NONE clears it, and so a reminder dropped by
+        // this edit doesn't leave its slot armed. A finished routine stays alarm-less
+        // (scheduleRecurringAlarmIfNeeded skips finishedOn != null).
         runCatching { alarmScheduler.cancelRecurring(preserved.id) }
         scheduleRecurringAlarmIfNeeded(preserved.id, preserved)
         // Edits to a non-recurring task can change date/timeStart/reminderOffsetMinutes, all of which
@@ -721,15 +846,34 @@ constructor(
         // All-day tasks have a 00:00 placeholder timeStart; honor the user's daily-plan hour
         // (or the 09:00 default) so a daily birthday-style reminder doesn't fire at midnight.
         val effectiveTime = effectiveAlarmTime(task)
+        val rule = task.recurrenceRule
+        // Reminder times live in their own table, so the callers that rebuild a Task from a row (sync
+        // reconcile, routine un-finish) never carry them. Reading here keeps all four call sites correct
+        // instead of threading the list through each one.
+        val reminders = localDataSource.getReminders(taskId).sortedBy { it.slot }.take(MAX_REMINDER_SLOTS)
         runCatching {
-            alarmScheduler.scheduleRecurring(
-                taskId = taskId,
-                recurrence = task.recurrence,
-                anchorDate = task.date,
-                hour = effectiveTime.hour,
-                minute = effectiveTime.minute,
-                message = task.title,
-            )
+            if (reminders.isEmpty()) {
+                alarmScheduler.scheduleRecurring(
+                    taskId = taskId,
+                    rule = rule,
+                    anchorDate = task.date,
+                    hour = effectiveTime.hour,
+                    minute = effectiveTime.minute,
+                    message = task.title,
+                )
+            } else {
+                reminders.forEach { reminder ->
+                    alarmScheduler.scheduleRecurring(
+                        taskId = taskId,
+                        rule = rule,
+                        anchorDate = task.date,
+                        hour = reminder.minuteOfDay / MINUTES_IN_HOUR,
+                        minute = reminder.minuteOfDay % MINUTES_IN_HOUR,
+                        message = task.title,
+                        slot = reminder.slot,
+                    )
+                }
+            }
         }.onFailure { Log.w("scheduleRecurring", "failed: ${it.message}") }
     }
 
@@ -1249,6 +1393,19 @@ constructor(
         )
     }
 
+    override fun observeSubtasksForDay(taskId: Long, date: LocalDate): Flow<List<Subtask>> = combine(
+        localDataSource.observeSubtasks(taskId),
+        subtaskDailyCompletionDao.observeDoneStepIds(taskId, date.toEpochDay()),
+    ) { steps, doneIds ->
+        val done = doneIds.toSet()
+        // Only a recurring parent tracks steps per day; for everything else the row flag is the truth.
+        val isRecurring = localDataSource.getTaskById(taskId)?.recurrence != Recurrence.NONE.name
+        steps.map { entity ->
+            val domain = entity.toDomain()
+            if (isRecurring) domain.copy(isCompleted = entity.id in done) else domain
+        }
+    }
+
     override fun observeSubtasks(taskId: Long): Flow<List<Subtask>> = localDataSource.observeSubtasks(taskId).map { list -> list.map { it.toDomain() } }
 
     override suspend fun addSubtask(taskId: Long, title: String) = withContext(ioDispatcher) {
@@ -1261,8 +1418,36 @@ constructor(
         markParentPendingUpdate(taskId)
     }
 
-    override suspend fun toggleSubtask(subtaskId: Long, isCompleted: Boolean) = withContext(ioDispatcher) {
+    override suspend fun toggleSubtask(
+        subtaskId: Long,
+        isCompleted: Boolean,
+        onDate: LocalDate?,
+    ) = withContext(ioDispatcher) {
         val subtask = localDataSource.getSubtaskById(subtaskId) ?: return@withContext
+        val parent = localDataSource.getTaskById(subtask.parentTaskId)
+        val isRecurring = parent != null && parent.recurrence != Recurrence.NONE.name
+
+        if (isRecurring && onDate != null) {
+            // A recurring task's steps reset every occurrence, so the flag on the row would stick
+            // "done" forever. Per-day rows are the truth here and subtasks.is_completed is untouched.
+            val epochDay = onDate.toEpochDay()
+            if (isCompleted) {
+                subtaskDailyCompletionDao.upsert(
+                    SubtaskDailyCompletionEntity(
+                        subtaskId = subtaskId,
+                        taskId = subtask.parentTaskId,
+                        date = epochDay,
+                        completedAt = System.currentTimeMillis(),
+                    ),
+                )
+            } else {
+                subtaskDailyCompletionDao.delete(subtaskId, epochDay)
+            }
+            stagedDaySnapshots.remove(subtask.parentTaskId to epochDay)
+            recomputeDayCompletion(subtask.parentTaskId, onDate)
+            return@withContext
+        }
+
         if (subtask.isCompleted != isCompleted) {
             localDataSource.updateSubtask(
                 subtask.copy(isCompleted = isCompleted, syncStatus = subtask.syncStatus.afterEdit()),
@@ -1276,8 +1461,11 @@ constructor(
 
     override suspend fun deleteSubtask(subtaskId: Long) = withContext(ioDispatcher) {
         val subtask = localDataSource.getSubtaskById(subtaskId) ?: return@withContext
-        // A staged task keeps at least one step so it never silently degrades into a plain task.
-        if (localDataSource.countSubtasks(subtask.parentTaskId) <= 1) return@withContext
+        // A pure staged task keeps at least one step so it never silently degrades into a plain task.
+        // A recurring one has an identity of its own without steps, so it may drop to zero.
+        val parent = localDataSource.getTaskById(subtask.parentTaskId)
+        val isRecurring = parent != null && parent.recurrence != Recurrence.NONE.name
+        if (!isRecurring && localDataSource.countSubtasks(subtask.parentTaskId) <= 1) return@withContext
         localDataSource.deleteSubtask(subtask)
         recomputeParentCompletion(subtask.parentTaskId)
         markParentPendingUpdate(subtask.parentTaskId)
@@ -1299,6 +1487,10 @@ constructor(
         if (subtasks.isEmpty()) return
         val allDone = subtasks.all { it.isCompleted }
         val parent = localDataSource.getTaskById(taskId) ?: return
+        // A recurring parent's base flag is meaningless — written once it sticks true forever and the
+        // task can never be un-done. Its completion lives per-day; recomputeDayCompletion owns that.
+        // The guard belongs here, not at the call sites, so no future caller can forget it.
+        if (parent.recurrence != Recurrence.NONE.name) return
         if (parent.isCompleted != allDone) {
             localDataSource.update(
                 parent.copy(isCompleted = allDone, syncStatus = parent.syncStatus.afterEdit()),
@@ -1379,7 +1571,17 @@ constructor(
         }
     }
 
+    override suspend fun getReminderTimes(taskId: Long): List<LocalTime> = withContext(ioDispatcher) {
+        localDataSource.getReminders(taskId)
+            .sortedBy { it.slot }
+            .map { LocalTime.of(it.minuteOfDay / MINUTES_IN_HOUR, it.minuteOfDay % MINUTES_IN_HOUR) }
+    }
+
+    /** Room stores reminder times as minute-of-day, matching tasks.time_start. */
+    private fun LocalTime.toMinuteOfDay(): Int = hour * MINUTES_IN_HOUR + minute
+
     companion object {
+        private const val MINUTES_IN_HOUR = 60
         private const val DAYS_TO_ADD = 6
         private const val DAYS_IN_WEEK = 7
         private const val DAILY_COMPLETION_PAST_DAYS = 30L

@@ -38,6 +38,7 @@ import com.todoapp.uikit.components.TDDatePickerDialog
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.theme.TDTheme
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import com.example.uikit.R as UiKitR
 
 /**
@@ -119,14 +120,39 @@ fun TaskFormDateField(
     onSelect: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
     onDeselect: () -> Unit = {},
+    /** Non-null enables hold-two-days span selection. See TDDatePickerDialog. */
+    onRangeSelect: ((start: LocalDate, end: LocalDate) -> Unit)? = null,
+    rangeEnd: LocalDate? = null,
 ) {
     TDDatePickerDialog(
         modifier = modifier,
         selectedDate = date,
         onDateSelect = onSelect,
         onDateDeselect = onDeselect,
+        onRangeSelect = onRangeSelect,
+        rangeEnd = rangeEnd,
+        rangeHint = onRangeSelect?.let { stringResource(R.string.creation_calendar_range_hint) },
+        summaryText = { start, end, awaitingEnd -> taskDateSummary(start, end, awaitingEnd) },
     )
 }
+
+/**
+ * The sentence under the calendar. Lives here rather than in :uikit because it is app copy, and it
+ * covers all three states the picker can be in so the user always knows what their selection means.
+ */
+@Composable
+private fun taskDateSummary(start: LocalDate?, end: LocalDate?, awaitingEnd: Boolean): String = when {
+    awaitingEnd -> stringResource(R.string.creation_date_summary_awaiting_end)
+    start != null && end != null -> stringResource(
+        R.string.creation_date_summary_range,
+        start.format(SUMMARY_DATE_FORMAT),
+        end.format(SUMMARY_DATE_FORMAT),
+    )
+    start != null -> stringResource(R.string.creation_date_summary_single, start.format(SUMMARY_DATE_FORMAT))
+    else -> ""
+}
+
+private val SUMMARY_DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy")
 
 @Composable
 fun TaskReminderChips(
@@ -153,11 +179,18 @@ fun TaskReminderChips(
     }
 }
 
+/**
+ * [allowNone] adds a "don't repeat" chip. Off by default and deliberately so: a ROUTINE declared its
+ * intent when the user picked the type, and letting it be demoted in place would leave a task whose
+ * header says "Routine" but which fires once. A CUSTOM task declares nothing up front, so for it the
+ * absence of a repeat is a normal answer rather than a contradiction.
+ */
 @Composable
 fun TaskFrequencyChips(
     selected: Recurrence,
     onSelect: (Recurrence) -> Unit,
     modifier: Modifier = Modifier,
+    allowNone: Boolean = false,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         TaskFormSectionLabel(stringResource(R.string.creation_frequency_label))
@@ -165,6 +198,15 @@ fun TaskFrequencyChips(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            if (allowNone) {
+                TDChoiceChip(
+                    label = stringResource(R.string.recurrence_none),
+                    selected = selected == Recurrence.NONE,
+                    onClick = { onSelect(Recurrence.NONE) },
+                    selectedContainerColor = TDTheme.colors.pendingGray,
+                    selectedContentColor = TDTheme.colors.white,
+                )
+            }
             FREQUENCY_OPTIONS.forEach { option ->
                 TDChoiceChip(
                     label = stringResource(option.labelRes),

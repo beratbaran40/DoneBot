@@ -4,9 +4,11 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -74,9 +76,6 @@ fun TDDatePicker(
         stringResource(R.string.weekday_abbr_sat),
         stringResource(R.string.weekday_abbr_sun),
     )
-    val firstDayOfMonth = selectedMonth.atDay(1)
-    val calendarStartDate =
-        firstDayOfMonth.minusDays((firstDayOfMonth.dayOfWeek.value - 1).toLong())
     val today = LocalDate.now()
 
     Column(
@@ -163,15 +162,15 @@ fun TDDatePicker(
             thickness = 1.dp,
         )
 
-        for (week in 0 until 5) {
+        // Six rows via the shared helper — five leaves the last day of some months unrenderable.
+        calendarGridWeeks(selectedMonth).forEach { week ->
             Row(
                 modifier =
                 Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
             ) {
-                for (day in 0 until 7) {
-                    val currentDate = calendarStartDate.plusDays((week * 7 + day).toLong())
+                week.forEach { currentDate ->
                     val isFromCurrentMonth =
                         currentDate.year == selectedMonth.year && currentDate.month == selectedMonth.month
                     val isSelected = currentDate == selectedDate
@@ -301,6 +300,12 @@ fun TDDatePickerSingleInput(
     selectedDate: LocalDate? = null,
     onDaySelect: (LocalDate) -> Unit,
     onDayDeselect: () -> Unit,
+    /** End of a selected span; [selectedDate] is its start. Null = plain single-day selection. */
+    rangeEnd: LocalDate? = null,
+    /** A day held down while waiting for the second one. Drawn outlined, not filled. */
+    anchorDate: LocalDate? = null,
+    /** Null disables long-press entirely — no range, no anchor. */
+    onDayLongPress: ((LocalDate) -> Unit)? = null,
 ) {
     // Safely obtain the locale from configuration to avoid exceptions in Preview environments
     val configuration = LocalConfiguration.current
@@ -318,10 +323,6 @@ fun TDDatePickerSingleInput(
         stringResource(R.string.weekday_abbr_sat),
         stringResource(R.string.weekday_abbr_sun),
     )
-
-    val firstDayOfMonth = selectedMonth.atDay(1)
-    val calendarStartDate =
-        firstDayOfMonth.minusDays((firstDayOfMonth.dayOfWeek.value - 1).toLong())
 
     Column(
         modifier =
@@ -387,23 +388,35 @@ fun TDDatePickerSingleInput(
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 1.dp)
 
-        for (week in 0 until 5) {
+        calendarGridWeeks(selectedMonth).forEach { week ->
             Row(
                 modifier =
                 Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
             ) {
-                for (day in 0 until 7) {
-                    val currentDate = calendarStartDate.plusDays((week * 7 + day).toLong())
+                week.forEach { currentDate ->
                     val isFromCurrentMonth =
                         currentDate.year == selectedMonth.year && currentDate.month == selectedMonth.month
-                    val isSelected = selectedDate == currentDate
+                    // With a range, both ends read as "selected"; the days between only get the band.
+                    val isRangeEnd = rangeEnd != null && currentDate == rangeEnd
+                    val isSelected = selectedDate == currentDate || isRangeEnd
+                    val isAnchor = anchorDate == currentDate && rangeEnd == null
+                    val isInsideRange = selectedDate != null &&
+                        rangeEnd != null &&
+                        currentDate > selectedDate &&
+                        currentDate < rangeEnd
                     TDAnimatedCell(
                         modifier = Modifier.weight(1f),
-                        backgroundColor = if (isSelected) TDTheme.colors.pendingGray else Color.Transparent,
+                        backgroundColor = when {
+                            isSelected -> TDTheme.colors.pendingGray
+                            isAnchor -> TDTheme.colors.lightPending
+                            else -> Color.Transparent
+                        },
+                        bandColor = if (isInsideRange || isSelected) TDTheme.colors.lightPending else Color.Transparent,
                         delayMillis = 0,
-                        onClick = { if (isSelected) onDayDeselect() else onDaySelect(currentDate) },
+                        onClick = { if (isSelected && rangeEnd == null) onDayDeselect() else onDaySelect(currentDate) },
+                        onLongClick = onDayLongPress?.let { press -> { press(currentDate) } },
                     ) {
                         Text(
                             text = currentDate.dayOfMonth.toString(),
@@ -422,12 +435,15 @@ fun TDDatePickerSingleInput(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun TDAnimatedCell(
     modifier: Modifier,
     backgroundColor: Color,
     delayMillis: Int,
     onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
+    bandColor: Color = Color.Transparent,
     content: @Composable () -> Unit,
 ) {
     val animatedColor by animateColorAsState(
@@ -437,14 +453,21 @@ private fun TDAnimatedCell(
     )
 
     Box(
-        modifier =
-        modifier
-            .size(36.dp)
-            .background(color = animatedColor, shape = CircleShape)
-            .clickable { onClick() },
+        // The band is drawn on the FULL cell width and the circle only on the inner 36.dp, so a
+        // selected range reads as one continuous bar with solid ends rather than detached dots.
+        modifier = modifier
+            .background(bandColor)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
         contentAlignment = Alignment.Center,
     ) {
-        content()
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .background(color = animatedColor, shape = CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            content()
+        }
     }
 }
 

@@ -45,6 +45,8 @@ import com.todoapp.mobile.R
 import com.todoapp.mobile.common.maskDescription
 import com.todoapp.mobile.common.maskTitle
 import com.todoapp.mobile.domain.model.Task
+import com.todoapp.mobile.ui.common.components.categoryIconFor
+import com.todoapp.mobile.ui.common.components.taskChipLabel
 import com.todoapp.mobile.ui.search.SearchContract.SearchResultItem
 import com.todoapp.mobile.ui.search.SearchContract.UiAction
 import com.todoapp.mobile.ui.search.SearchContract.UiEffect
@@ -277,6 +279,8 @@ private fun SearchTaskItem(
             taskDescription = if (task.isSecret) task.description?.maskDescription() else task.description,
             isChecked = task.isCompleted,
             onCheckBoxClick = { onAction(UiAction.OnTaskCheck(task)) },
+            categoryLabel = taskChipLabel(task),
+            categoryIcon = categoryIconFor(task.category),
             locationLabel = task.locationName,
             onLocationClick = openLocation,
             subtaskTotal = task.subtaskTotal,

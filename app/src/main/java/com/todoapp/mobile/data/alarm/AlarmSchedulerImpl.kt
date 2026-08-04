@@ -9,9 +9,12 @@ import android.provider.Settings
 import com.todoapp.mobile.data.notification.NotificationService
 import com.todoapp.mobile.domain.alarm.AlarmScheduler
 import com.todoapp.mobile.domain.alarm.AlarmType
+import com.todoapp.mobile.domain.alarm.MAX_REMINDER_SLOTS
 import com.todoapp.mobile.domain.model.AlarmItem
 import com.todoapp.mobile.domain.model.Recurrence
-import com.todoapp.mobile.domain.model.clampedDayOfMonth
+import com.todoapp.mobile.domain.model.RecurrenceRule
+import com.todoapp.mobile.domain.model.firesOn
+import com.todoapp.mobile.domain.model.toStorageCsv
 import com.todoapp.mobile.ui.overlay.OverlayService
 import timber.log.Timber
 import java.time.LocalDate
@@ -51,10 +54,17 @@ class AlarmSchedulerImpl(
     }
 
     private fun cancelAlarm(requestCode: Int) {
-        // Empty intent matches anything previously scheduled with the same component+requestCode,
-        // independent of extras (PI identity ignores extras).
+        // The ACTION is load-bearing. PendingIntent matching runs Intent.filterEquals, which ignores
+        // extras (so the fire-target/message/rule extras don't matter) but DOES compare the action.
+        // Cancelling with an action-less intent therefore matched nothing: AlarmManager.cancel got a
+        // freshly-minted PendingIntent and silently cancelled nothing, so a deleted or edited-away
+        // recurring alarm stayed armed — and since AlarmFireReceiver re-arms itself from its own
+        // extras, it kept firing forever. Verified on-device 2026-08-03.
         alarmManager.cancel(
-            buildFirePendingIntent(requestCode, Intent(context, AlarmFireReceiver::class.java)),
+            buildFirePendingIntent(
+                requestCode,
+                Intent(context, AlarmFireReceiver::class.java).apply { action = AlarmFireReceiver.ACTION_FIRE },
+            ),
         )
     }
 
@@ -117,25 +127,29 @@ class AlarmSchedulerImpl(
 
     override fun scheduleRecurring(
         taskId: Long,
-        recurrence: Recurrence,
+        rule: RecurrenceRule,
         anchorDate: LocalDate,
         hour: Int,
         minute: Int,
         message: String,
+        slot: Int,
     ) {
-        if (recurrence == Recurrence.NONE) return
-        val nextFire = computeNextFire(recurrence, anchorDate, hour, minute, LocalDateTime.now())
+        if (rule.frequency == Recurrence.NONE) return
+        // null = the rule is exhausted (its scheduled end has passed). Arming nothing is exactly how a
+        // bounded routine stops itself, so this is a normal exit, not an error.
+        val nextFire = computeNextFire(rule, anchorDate, LocalTime.of(hour, minute), LocalDateTime.now()) ?: return
         val intent = buildRecurringTaskBroadcast(
             taskId = taskId,
-            recurrence = recurrence,
+            rule = rule,
             anchorDate = anchorDate,
             hour = hour,
             minute = minute,
             message = message,
+            slot = slot,
         )
         scheduleAt(
             triggerAtMillis = nextFire.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
-            pendingIntent = buildFirePendingIntent(recurringRequestCode(taskId), intent),
+            pendingIntent = buildFirePendingIntent(recurringRequestCode(taskId, slot), intent),
         )
     }
 
@@ -158,69 +172,45 @@ class AlarmSchedulerImpl(
     }
 
     override fun cancelRecurring(taskId: Long) {
-        cancelAlarm(recurringRequestCode(taskId))
+        // Full sweep, not "however many reminders the task has now" — a slot dropped by an edit would
+        // otherwise stay armed and keep re-arming itself from its own extras.
+        for (slot in 0 until MAX_REMINDER_SLOTS) {
+            cancelAlarm(recurringRequestCode(taskId, slot))
+        }
     }
 
+    /**
+     * Walks forward day by day and asks the SAME [firesOn] the task list uses. One shared predicate is
+     * the point: four hand-written per-frequency branches would drift from the list the moment an
+     * interval or a weekday set entered the picture, and the alarm would fire on days the task isn't
+     * shown (or stay silent on days it is).
+     *
+     * Returns null when the rule can no longer fire — previously the monthly/yearly branches called
+     * `error(...)` here, which with a scheduled end would have thrown inside a BroadcastReceiver.
+     */
     private fun computeNextFire(
-        recurrence: Recurrence,
+        rule: RecurrenceRule,
         anchorDate: LocalDate,
-        hour: Int,
-        minute: Int,
+        time: LocalTime,
         now: LocalDateTime,
-    ): LocalDateTime {
-        val time = LocalTime.of(hour, minute)
-        return when (recurrence) {
-            Recurrence.NONE -> error("scheduleRecurring called with NONE")
-            Recurrence.DAILY -> {
-                val today = LocalDate.now().atTime(time)
-                if (today.isAfter(now)) today else today.plusDays(1)
-            }
-            Recurrence.WEEKLY -> {
-                var candidate = LocalDate.now().atTime(time)
-                while (candidate.dayOfWeek != anchorDate.dayOfWeek || !candidate.isAfter(now)) {
-                    candidate = candidate.plusDays(1)
-                }
-                candidate
-            }
-            Recurrence.MONTHLY -> nextMonthlyFire(anchorDate.dayOfMonth, time, now)
-            Recurrence.YEARLY -> nextYearlyFire(anchorDate, time, now)
+    ): LocalDateTime? {
+        var day = now.toLocalDate()
+        repeat(MAX_FIRE_LOOKAHEAD_DAYS) {
+            val candidate = day.atTime(time)
+            if (candidate.isAfter(now) && rule.firesOn(anchorDate, day)) return candidate
+            day = day.plusDays(1)
         }
-    }
-
-    private fun nextMonthlyFire(anchorDay: Int, time: LocalTime, now: LocalDateTime): LocalDateTime {
-        var year = now.year
-        var month = now.monthValue
-        repeat(MAX_MONTH_LOOKAHEAD) {
-            val day = clampedDayOfMonth(anchorDay, year, month)
-            val candidate = LocalDate.of(year, month, day).atTime(time)
-            if (candidate.isAfter(now)) return candidate
-            month++
-            if (month > 12) {
-                month = 1
-                year++
-            }
-        }
-        error("nextMonthlyFire: could not find a future fire within $MAX_MONTH_LOOKAHEAD months")
-    }
-
-    private fun nextYearlyFire(anchor: LocalDate, time: LocalTime, now: LocalDateTime): LocalDateTime {
-        var year = now.year
-        repeat(MAX_YEAR_LOOKAHEAD) {
-            val day = clampedDayOfMonth(anchor.dayOfMonth, year, anchor.monthValue)
-            val candidate = LocalDate.of(year, anchor.monthValue, day).atTime(time)
-            if (candidate.isAfter(now)) return candidate
-            year++
-        }
-        error("nextYearlyFire: could not find a future fire within $MAX_YEAR_LOOKAHEAD years")
+        return null
     }
 
     private fun buildRecurringTaskBroadcast(
         taskId: Long,
-        recurrence: Recurrence,
+        rule: RecurrenceRule,
         anchorDate: LocalDate,
         hour: Int,
         minute: Int,
         message: String,
+        slot: Int,
     ): Intent {
         val base = if (Settings.canDrawOverlays(context)) {
             Intent(context, AlarmFireReceiver::class.java).apply {
@@ -239,7 +229,7 @@ class AlarmSchedulerImpl(
             }
         }
         return base.apply {
-            putExtra(AlarmFireReceiver.EXTRA_RECURRENCE, recurrence.name)
+            putExtra(AlarmFireReceiver.EXTRA_RECURRENCE, rule.frequency.name)
             putExtra(AlarmFireReceiver.EXTRA_ANCHOR_EPOCH_DAY, anchorDate.toEpochDay())
             putExtra(AlarmFireReceiver.EXTRA_DAILY_TASK_ID, taskId)
             putExtra(AlarmFireReceiver.EXTRA_DAILY_HOUR, hour)
@@ -247,23 +237,42 @@ class AlarmSchedulerImpl(
             putExtra(AlarmFireReceiver.EXTRA_DAILY_MESSAGE, message)
             // §5.8: also carry taskId under the generic key the receiver forwards to the service.
             putExtra(AlarmFireReceiver.EXTRA_TASK_ID, taskId)
+            // V3 extras. PendingIntents armed by an older build carry none of these and WILL fire after
+            // an update, so every one must decode to its legacy value when absent — see the receiver.
+            putExtra(AlarmFireReceiver.EXTRA_RECURRENCE_INTERVAL, rule.interval)
+            putExtra(AlarmFireReceiver.EXTRA_RECURRENCE_BY_DAY, rule.byDay.toStorageCsv())
+            putExtra(
+                AlarmFireReceiver.EXTRA_RECURRENCE_UNTIL_EPOCH_DAY,
+                rule.until?.toEpochDay() ?: AlarmFireReceiver.NO_EPOCH_DAY,
+            )
+            putExtra(AlarmFireReceiver.EXTRA_REMINDER_SLOT, slot)
         }
     }
 
-    private fun recurringRequestCode(taskId: Long): Int = (RECURRING_TASK_REQUEST_BASE + taskId).toInt()
+    /**
+     * Slot 0 deliberately keeps the pre-multi-reminder request code: an alarm armed by an older build
+     * is then REPLACED (FLAG_UPDATE_CURRENT) instead of running alongside the new one.
+     */
+    private fun recurringRequestCode(taskId: Long, slot: Int): Int = if (slot == 0) {
+        (RECURRING_TASK_REQUEST_BASE + taskId).toInt()
+    } else {
+        (MULTI_REMINDER_REQUEST_BASE + taskId * MAX_REMINDER_SLOTS + slot).toInt()
+    }
 
     private companion object {
         const val REQUEST_CODE_DAILY_PLAN = 10_001
 
         // One-shot task request codes use TASK_REQUEST_BASE + taskId.
-        // Recurring task request codes use RECURRING_TASK_REQUEST_BASE + taskId.
-        // The two bases live in disjoint namespaces so a one-shot and recurring
-        // alarm for the same task can coexist without colliding.
+        // Recurring task request codes use RECURRING_TASK_REQUEST_BASE + taskId (slot 0).
+        // Extra reminder slots use MULTI_REMINDER_REQUEST_BASE + taskId * MAX_REMINDER_SLOTS + slot.
+        // The bases live in disjoint namespaces so all of them can coexist without colliding; the
+        // multi-reminder space above 0x1000_0000 leaves room for ~234M task ids before Int overflow.
         const val TASK_REQUEST_BASE = 0x0200_0000L
         const val RECURRING_TASK_REQUEST_BASE = 0x0100_0000L
+        const val MULTI_REMINDER_REQUEST_BASE = 0x1000_0000L
 
-        const val MAX_MONTH_LOOKAHEAD = 13
-        const val MAX_YEAR_LOOKAHEAD = 5
+        // 400 days covers YEARLY across a leap year, which is the widest gap any rule can produce.
+        const val MAX_FIRE_LOOKAHEAD_DAYS = 400
 
         const val TAG = "AlarmScheduler"
     }

@@ -32,6 +32,26 @@ data class TaskRequest(
      * reconcile the step set. The client only sends a non-null list when the task actually has steps.
      */
     val subtasks: List<SubtaskRequest>? = null,
+    /** RRULE INTERVAL — fire every N periods. Only honoured by the server when [recurrenceRuleSet]. */
+    val recurrenceInterval: Int? = null,
+    /** RRULE BYDAY as a DayOfWeek-name CSV ("MONDAY,WEDNESDAY,FRIDAY"). */
+    val recurrenceByDay: String? = null,
+    /** RRULE UNTIL as an epoch day — the routine's scheduled end, inclusive. */
+    val recurrenceUntil: Long? = null,
+    /**
+     * Absolute reminder times as **SECOND**-of-day, matching [timeStart]. Room stores MINUTE-of-day,
+     * so this is converted at the mapper boundary — mixing the two is a 60x error.
+     */
+    val reminderTimes: List<Int>? = null,
+    /**
+     * Marks the four fields above as authoritative, INCLUDING their nulls (which then clear the
+     * server's stored value). Always true from this client; the flag exists so a *older* build's PUT,
+     * which sends none of them, can't wipe a rule it cannot represent. Backend: TaskRequest.recurrenceRuleSet.
+     *
+     * Consequence: whenever this is true the rule must be sent in full — a partial send resets the
+     * omitted parts to their defaults.
+     */
+    val recurrenceRuleSet: Boolean = true,
 )
 
 @Serializable

@@ -7,6 +7,8 @@ import androidx.core.content.ContextCompat
 import com.todoapp.mobile.data.notification.NotificationService
 import com.todoapp.mobile.domain.alarm.AlarmScheduler
 import com.todoapp.mobile.domain.model.Recurrence
+import com.todoapp.mobile.domain.model.RecurrenceRule
+import com.todoapp.mobile.domain.model.dayOfWeekSetFromStorage
 import com.todoapp.mobile.ui.overlay.OverlayService
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
@@ -95,9 +97,22 @@ class AlarmFireReceiver : BroadcastReceiver() {
 
         if (taskId < 0 || hour !in 0..23 || minute !in 0..59) return
 
+        // V3 extras. An alarm armed before this release carries none of them, so every default here
+        // must reproduce the old behaviour exactly: interval 1, no weekday set, no scheduled end,
+        // slot 0. Getting one of these wrong changes the schedule of already-armed routines on update.
+        val untilEpochDay = intent.getLongExtra(EXTRA_RECURRENCE_UNTIL_EPOCH_DAY, NO_EPOCH_DAY)
+        val rule = RecurrenceRule(
+            frequency = recurrence,
+            interval = intent.getIntExtra(EXTRA_RECURRENCE_INTERVAL, 1),
+            byDay = dayOfWeekSetFromStorage(intent.getStringExtra(EXTRA_RECURRENCE_BY_DAY)),
+            until = untilEpochDay.takeIf { it != NO_EPOCH_DAY }?.let { LocalDate.ofEpochDay(it) },
+        )
+        val slot = intent.getIntExtra(EXTRA_REMINDER_SLOT, 0)
+
         runCatching {
-            alarmScheduler.scheduleRecurring(taskId, recurrence, anchor, hour, minute, message)
-        }.onFailure { Timber.tag(TAG).w(it, "failed to re-arm recurring alarm taskId=%d", taskId) }
+            // Arms nothing when the rule is exhausted, which is how a bounded routine ends itself.
+            alarmScheduler.scheduleRecurring(taskId, rule, anchor, hour, minute, message, slot)
+        }.onFailure { Timber.tag(TAG).w(it, "failed to re-arm recurring alarm taskId=%d slot=%d", taskId, slot) }
     }
 
     companion object {
@@ -108,6 +123,15 @@ class AlarmFireReceiver : BroadcastReceiver() {
 
         /** Task id carried on the fire broadcast so the notification/overlay can deep-link to it. §5.8 */
         const val EXTRA_TASK_ID: String = "com.todoapp.mobile.alarm.extra.TASK_ID"
+
+        /** V3 recurrence-rule extras. Absent on alarms armed by an older build — default to the legacy rule. */
+        const val EXTRA_RECURRENCE_INTERVAL: String = "com.todoapp.mobile.alarm.extra.RECURRENCE_INTERVAL"
+        const val EXTRA_RECURRENCE_BY_DAY: String = "com.todoapp.mobile.alarm.extra.RECURRENCE_BY_DAY"
+        const val EXTRA_RECURRENCE_UNTIL_EPOCH_DAY: String = "com.todoapp.mobile.alarm.extra.RECURRENCE_UNTIL"
+        const val EXTRA_REMINDER_SLOT: String = "com.todoapp.mobile.alarm.extra.REMINDER_SLOT"
+
+        /** Mirrors AlarmSchedulerImpl.NO_EPOCH_DAY — "no scheduled end" in a primitive extra. */
+        const val NO_EPOCH_DAY: Long = Long.MIN_VALUE
 
         // V2 keys.
         const val EXTRA_RECURRENCE: String = "com.todoapp.mobile.alarm.extra.RECURRENCE"

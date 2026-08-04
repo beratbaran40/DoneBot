@@ -49,6 +49,8 @@ import com.example.uikit.R
 import com.todoapp.mobile.common.maskDescription
 import com.todoapp.mobile.common.maskTitle
 import com.todoapp.mobile.domain.model.Task
+import com.todoapp.mobile.ui.common.components.categoryIconFor
+import com.todoapp.mobile.ui.common.components.taskChipLabel
 import com.todoapp.mobile.ui.filteredtasks.FilteredTasksContract.SortOrder
 import com.todoapp.mobile.ui.filteredtasks.FilteredTasksContract.TaskTab
 import com.todoapp.mobile.ui.filteredtasks.FilteredTasksContract.UiAction
@@ -309,6 +311,8 @@ private fun FilteredTasksSuccessContent(
                                         taskDescription = if (task.isSecret) task.description?.maskDescription() else task.description,
                                         isChecked = task.isCompleted,
                                         onCheckBoxClick = { onAction(UiAction.OnTaskCheck(task)) },
+                                        categoryLabel = taskChipLabel(task),
+                                        categoryIcon = categoryIconFor(task.category),
                                         locationLabel = task.locationName,
                                         onLocationClick = openLocation,
                                         subtaskTotal = task.subtaskTotal,

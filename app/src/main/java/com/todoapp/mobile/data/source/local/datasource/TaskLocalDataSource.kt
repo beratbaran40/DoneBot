@@ -2,6 +2,7 @@ package com.todoapp.mobile.data.source.local.datasource
 
 import com.todoapp.mobile.data.model.entity.SubtaskEntity
 import com.todoapp.mobile.data.model.entity.TaskEntity
+import com.todoapp.mobile.data.model.entity.TaskReminderEntity
 import com.todoapp.mobile.data.source.local.DayCount
 import com.todoapp.mobile.data.source.local.SubtaskCount
 import kotlinx.coroutines.flow.Flow
@@ -95,4 +96,18 @@ interface TaskLocalDataSource {
     suspend fun deleteSubtasksByTask(taskId: Long)
 
     fun observeSubtaskCounts(): Flow<List<SubtaskCount>>
+
+    fun observeReminders(taskId: Long): Flow<List<TaskReminderEntity>>
+
+    suspend fun getReminders(taskId: Long): List<TaskReminderEntity>
+
+    /** Every reminder row, for the boot-time alarm reschedule sweep. */
+    suspend fun getAllReminders(): List<TaskReminderEntity>
+
+    /**
+     * Replaces a task's whole reminder set, assigning slots 0..n-1 in ascending time order. Slot
+     * assignment lives here so it is defined in exactly one place — it seeds the alarm request code,
+     * and callers must cancel the old slots before calling this.
+     */
+    suspend fun replaceReminders(taskId: Long, minutesOfDay: List<Int>)
 }

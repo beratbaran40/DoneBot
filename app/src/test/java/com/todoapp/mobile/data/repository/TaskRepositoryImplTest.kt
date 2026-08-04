@@ -5,6 +5,8 @@ import com.todoapp.mobile.common.DomainException
 import com.todoapp.mobile.data.model.entity.SubtaskEntity
 import com.todoapp.mobile.data.model.entity.SyncStatus
 import com.todoapp.mobile.data.model.entity.TaskEntity
+import com.todoapp.mobile.data.source.local.SubtaskDailyCompletionDao
+import com.todoapp.mobile.data.source.local.TaskDailyCompletionDao
 import com.todoapp.mobile.data.source.local.datasource.TaskLocalDataSource
 import com.todoapp.mobile.data.source.remote.datasource.TaskRemoteDataSource
 import com.todoapp.mobile.domain.model.Task
@@ -33,6 +35,8 @@ import java.time.LocalTime
 class TaskRepositoryImplTest {
     private val localDataSource = mockk<TaskLocalDataSource>(relaxed = true)
     private val remoteDataSource = mockk<TaskRemoteDataSource>(relaxed = true)
+    private val dailyCompletionDao = mockk<TaskDailyCompletionDao>(relaxed = true)
+    private val subtaskDailyCompletionDao = mockk<SubtaskDailyCompletionDao>(relaxed = true)
 
     @Before
     fun setUp() {
@@ -51,7 +55,8 @@ class TaskRepositoryImplTest {
         groupTaskLocalDataSource = mockk(relaxed = true),
         todoApi = mockk(relaxed = true),
         pendingPhotoRepository = mockk(relaxed = true),
-        dailyCompletionDao = mockk(relaxed = true),
+        dailyCompletionDao = dailyCompletionDao,
+        subtaskDailyCompletionDao = subtaskDailyCompletionDao,
         alarmScheduler = mockk(relaxed = true),
         dailyPlanPreferences = mockk(relaxed = true),
         analyticsHelper = mockk(relaxed = true),
@@ -279,7 +284,88 @@ class TaskRepositoryImplTest {
         assertTrue(result.exceptionOrNull() is DomainException.Server) // retryable surfaced, poisoned dropped
     }
 
+    // --- recurring + staged: steps reset each occurrence (Phase 4) ---
+
+    @Test
+    fun `ticking a step of a recurring task writes the day row and never the step flag`() = runTest {
+        val steps = listOf(subtask(1L, done = false), subtask(2L, done = false))
+        coEvery { localDataSource.getSubtaskById(1L) } returns steps[0]
+        coEvery { localDataSource.getTaskById(10L) } returns taskEntity(id = 10L).copy(recurrence = "DAILY")
+        coEvery { localDataSource.getSubtasks(10L) } returns steps
+        coEvery { subtaskDailyCompletionDao.getDoneStepIds(10L, DAY) } returns listOf(1L)
+
+        repository().toggleSubtask(1L, isCompleted = true, onDate = LocalDate.ofEpochDay(DAY))
+
+        coVerify(exactly = 1) { subtaskDailyCompletionDao.upsert(any()) }
+        // The single flag on the row would stick "done" forever across occurrences.
+        coVerify(exactly = 0) { localDataSource.updateSubtask(any()) }
+    }
+
+    @Test
+    fun `the last step of a day completes that day, earlier days untouched`() = runTest {
+        val steps = listOf(subtask(1L, done = false), subtask(2L, done = false))
+        coEvery { localDataSource.getSubtaskById(2L) } returns steps[1]
+        coEvery { localDataSource.getTaskById(10L) } returns taskEntity(id = 10L).copy(recurrence = "DAILY")
+        coEvery { localDataSource.getSubtasks(10L) } returns steps
+        // After this tick both steps are done for DAY.
+        coEvery { subtaskDailyCompletionDao.getDoneStepIds(10L, DAY) } returns listOf(1L, 2L)
+
+        repository().toggleSubtask(2L, isCompleted = true, onDate = LocalDate.ofEpochDay(DAY))
+
+        coVerify(exactly = 1) { dailyCompletionDao.upsert(match { it.taskId == 10L && it.date == DAY }) }
+    }
+
+    @Test
+    fun `un-ticking a step re-opens only that day`() = runTest {
+        val steps = listOf(subtask(1L, done = false), subtask(2L, done = false))
+        coEvery { localDataSource.getSubtaskById(1L) } returns steps[0]
+        coEvery { localDataSource.getTaskById(10L) } returns taskEntity(id = 10L).copy(recurrence = "DAILY")
+        coEvery { localDataSource.getSubtasks(10L) } returns steps
+        coEvery { subtaskDailyCompletionDao.getDoneStepIds(10L, DAY) } returns listOf(2L)
+
+        repository().toggleSubtask(1L, isCompleted = false, onDate = LocalDate.ofEpochDay(DAY))
+
+        coVerify(exactly = 1) { subtaskDailyCompletionDao.delete(1L, DAY) }
+        // Not all steps done ⇒ the day is not complete. Only DAY is touched, never another date.
+        coVerify(exactly = 0) { dailyCompletionDao.upsert(any()) }
+    }
+
+    @Test
+    fun `a recurring parent never has its base completion flag written`() = runTest {
+        val steps = listOf(subtask(1L, done = true))
+        coEvery { localDataSource.getSubtaskById(1L) } returns steps[0]
+        coEvery { localDataSource.getTaskById(10L) } returns taskEntity(id = 10L).copy(recurrence = "WEEKLY")
+        coEvery { localDataSource.getSubtasks(10L) } returns steps
+
+        // No date: falls through to the classic path, which must still refuse to write the flag —
+        // once true it sticks forever and the task can never be un-done.
+        repository().toggleSubtask(1L, isCompleted = true, onDate = null)
+
+        // markParentPendingUpdate legitimately rewrites the row to flip syncStatus, so the invariant
+        // is specifically that isCompleted is never set — not that the row is never touched.
+        coVerify(exactly = 0) { localDataSource.update(match { it.id == 10L && it.isCompleted }) }
+    }
+
+    @Test
+    fun `the last step is protected on a pure staged task but not on a recurring one`() = runTest {
+        val step = subtask(1L, done = false)
+        coEvery { localDataSource.getSubtaskById(1L) } returns step
+        coEvery { localDataSource.countSubtasks(10L) } returns 1
+
+        coEvery { localDataSource.getTaskById(10L) } returns taskEntity(id = 10L)
+        repository().deleteSubtask(1L)
+        // A staged task with no steps would silently become a plain task.
+        coVerify(exactly = 0) { localDataSource.deleteSubtask(any()) }
+
+        coEvery { localDataSource.getTaskById(10L) } returns taskEntity(id = 10L).copy(recurrence = "DAILY")
+        repository().deleteSubtask(1L)
+        // A routine still has an identity without steps, so it may drop to zero.
+        coVerify(exactly = 1) { localDataSource.deleteSubtask(step) }
+    }
+
     private companion object {
+        const val DAY = 20_000L
+
         fun taskEntity(
             id: Long,
             remoteId: Long? = null,

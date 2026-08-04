@@ -150,6 +150,18 @@ object LocalStorageModule {
 
     @Provides
     @Singleton
+    fun provideTaskReminderDao(
+        database: AppDatabase,
+    ): com.todoapp.mobile.data.source.local.TaskReminderDao = database.taskReminderDao()
+
+    @Provides
+    @Singleton
+    fun provideSubtaskDailyCompletionDao(
+        database: AppDatabase,
+    ): com.todoapp.mobile.data.source.local.SubtaskDailyCompletionDao = database.subtaskDailyCompletionDao()
+
+    @Provides
+    @Singleton
     fun provideGroupDao(database: AppDatabase): GroupDao = database.groupDao()
 
     @Provides

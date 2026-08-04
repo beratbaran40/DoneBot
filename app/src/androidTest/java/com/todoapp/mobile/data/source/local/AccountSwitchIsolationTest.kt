@@ -6,9 +6,11 @@ import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.todoapp.mobile.data.model.entity.JournalEntryEntity
+import com.todoapp.mobile.data.model.entity.SubtaskDailyCompletionEntity
 import com.todoapp.mobile.data.model.entity.SubtaskEntity
 import com.todoapp.mobile.data.model.entity.TaskDailyCompletionEntity
 import com.todoapp.mobile.data.model.entity.TaskEntity
+import com.todoapp.mobile.data.model.entity.TaskReminderEntity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -39,6 +41,8 @@ class AccountSwitchIsolationTest {
     private lateinit var taskDao: TaskDao
     private lateinit var subtaskDao: SubtaskDao
     private lateinit var dailyCompletionDao: TaskDailyCompletionDao
+    private lateinit var taskReminderDao: TaskReminderDao
+    private lateinit var subtaskDailyCompletionDao: SubtaskDailyCompletionDao
     private lateinit var journalDao: JournalEntryDao
 
     @Before
@@ -51,6 +55,8 @@ class AccountSwitchIsolationTest {
         taskDao = db.taskDao()
         subtaskDao = db.subtaskDao()
         dailyCompletionDao = db.taskDailyCompletionDao()
+        taskReminderDao = db.taskReminderDao()
+        subtaskDailyCompletionDao = db.subtaskDailyCompletionDao()
         journalDao = db.journalEntryDao()
     }
 
@@ -60,15 +66,28 @@ class AccountSwitchIsolationTest {
     }
 
     @Test
-    fun `deleting all tasks cascades to subtasks and daily completions`() = runBlocking {
+    fun deletingAllTasks_cascadesToSubtasksAndDailyCompletions() = runBlocking {
         val taskId = taskDao.insert(sampleTask(id = 1L))
-        subtaskDao.insert(SubtaskEntity(title = "step", parentTaskId = taskId))
+        val subtaskId = subtaskDao.insert(SubtaskEntity(title = "step", parentTaskId = taskId))
         dailyCompletionDao.upsert(
             TaskDailyCompletionEntity(taskId = taskId, date = TODAY_EPOCH_DAY, completedAt = 0L),
+        )
+        taskReminderDao.insertAll(
+            listOf(TaskReminderEntity(taskId = taskId, minuteOfDay = 480, slot = 0)),
+        )
+        subtaskDailyCompletionDao.upsert(
+            SubtaskDailyCompletionEntity(
+                subtaskId = subtaskId,
+                taskId = taskId,
+                date = TODAY_EPOCH_DAY,
+                completedAt = 0L,
+            ),
         )
         // Sanity: the children exist before the wipe.
         assertEquals(1, rowCount("subtasks"))
         assertEquals(1, rowCount("task_daily_completions"))
+        assertEquals(1, rowCount("task_reminders"))
+        assertEquals(1, rowCount("subtask_daily_completions"))
 
         // The exact call clearLocalSession() drives on logout.
         taskDao.deleteAllTasks()
@@ -79,10 +98,22 @@ class AccountSwitchIsolationTest {
             0,
             rowCount("task_daily_completions"),
         )
+        assertEquals(
+            "task_reminders must cascade-delete with their task, or a user's reminder times survive a logout",
+            0,
+            rowCount("task_reminders"),
+        )
+        // Two hops: subtask_daily_completions -> subtasks -> tasks. Worth asserting explicitly,
+        // since a transitive cascade is exactly the kind of thing that looks fine and isn't.
+        assertEquals(
+            "subtask_daily_completions must cascade through subtasks to their task",
+            0,
+            rowCount("subtask_daily_completions"),
+        )
     }
 
     @Test
-    fun `journal entries are scoped by owner so account B never sees account A`() = runBlocking {
+    fun journalEntries_areScopedByOwnerSoAccountBNeverSeesAccountA() = runBlocking {
         journalDao.upsert(sampleJournal(title = "A-secret", ownerUserId = USER_A))
         journalDao.upsert(sampleJournal(title = "B-note", ownerUserId = USER_B))
 
@@ -97,7 +128,7 @@ class AccountSwitchIsolationTest {
     }
 
     @Test
-    fun `every room table is categorized as wiped or intentionally retained`() {
+    fun everyRoomTable_isCategorizedAsWipedOrIntentionallyRetained() {
         val appTables = tableNames() - SQLITE_INTERNAL_TABLES
 
         assertEquals(
@@ -154,6 +185,8 @@ class AccountSwitchIsolationTest {
         // Wiped by clearLocalSession() on logout — directly or via FK cascade.
         val WIPED_ON_LOGOUT = setOf(
             "tasks", "subtasks", "task_daily_completions",
+            // Cascade-deleted with their parent task, proven by the cascade test above.
+            "task_reminders", "subtask_daily_completions",
             "groups", "group_tasks", "group_members", "group_activities",
             "pending_photos", "chat_messages",
         )

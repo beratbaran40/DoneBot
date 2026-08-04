@@ -2,10 +2,12 @@ package com.todoapp.mobile.data.source.local.datasource
 
 import com.todoapp.mobile.data.model.entity.SubtaskEntity
 import com.todoapp.mobile.data.model.entity.TaskEntity
+import com.todoapp.mobile.data.model.entity.TaskReminderEntity
 import com.todoapp.mobile.data.source.local.DayCount
 import com.todoapp.mobile.data.source.local.SubtaskCount
 import com.todoapp.mobile.data.source.local.SubtaskDao
 import com.todoapp.mobile.data.source.local.TaskDao
+import com.todoapp.mobile.data.source.local.TaskReminderDao
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
@@ -14,6 +16,7 @@ class TaskLocalDataSourceImpl
 constructor(
     private val taskDao: TaskDao,
     private val subtaskDao: SubtaskDao,
+    private val taskReminderDao: TaskReminderDao,
 ) : TaskLocalDataSource {
     override fun observeAll(): Flow<List<TaskEntity>> = taskDao.getAllTasks()
 
@@ -123,4 +126,20 @@ constructor(
     override suspend fun deleteSubtasksByTask(taskId: Long) = subtaskDao.deleteByTask(taskId)
 
     override fun observeSubtaskCounts(): Flow<List<SubtaskCount>> = subtaskDao.observeSubtaskCounts()
+
+    override fun observeReminders(taskId: Long): Flow<List<TaskReminderEntity>> = taskReminderDao.observeByTask(taskId)
+
+    override suspend fun getReminders(taskId: Long): List<TaskReminderEntity> = taskReminderDao.getByTask(taskId)
+
+    override suspend fun getAllReminders(): List<TaskReminderEntity> = taskReminderDao.getAll()
+
+    override suspend fun replaceReminders(taskId: Long, minutesOfDay: List<Int>) {
+        taskReminderDao.deleteByTask(taskId)
+        if (minutesOfDay.isEmpty()) return
+        taskReminderDao.insertAll(
+            minutesOfDay.sorted().distinct().mapIndexed { slot, minute ->
+                TaskReminderEntity(taskId = taskId, minuteOfDay = minute, slot = slot)
+            },
+        )
+    }
 }

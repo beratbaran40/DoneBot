@@ -1,0 +1,10 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+  <!-- The horizontal bar of ic_plus, same coordinates, so a +/- stepper pair lines up exactly. -->
+  <path
+      android:pathData="M4,11C6.31,11 8.62,11 11,11C13.31,11 15.62,11 20,11C20,11.66 20,12.32 20,13C17.69,13 15.38,13 13,13C10.69,13 8.38,13 4,13C4,12.34 4,11.68 4,11Z"
+      android:fillColor="#FFFFFF"/>
+</vector>

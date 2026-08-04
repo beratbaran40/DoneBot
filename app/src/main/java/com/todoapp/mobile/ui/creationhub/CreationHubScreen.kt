@@ -199,6 +199,7 @@ private fun CreationHubInfoDialog(step: Step, onDismiss: () -> Unit) {
             R.string.creation_type_info_bullet_1,
             R.string.creation_type_info_bullet_2,
             R.string.creation_type_info_bullet_3,
+            R.string.creation_type_info_bullet_4,
         )
     } else {
         titleRes = R.string.creation_hub_info_title
@@ -248,6 +249,12 @@ private fun TypeHeaderBlock(taskType: TaskType) {
             accent = TDTheme.colors.darkPurple
             nameRes = R.string.type_group_title
             subtitleRes = R.string.type_group_subtitle
+        }
+        TaskType.CUSTOM -> {
+            icon = painterResource(R.drawable.ic_custom)
+            accent = taskTypeAccent(TaskFormType.CUSTOM)
+            nameRes = R.string.type_custom_title
+            subtitleRes = R.string.type_custom_subtitle
         }
     }
     Column(

@@ -46,8 +46,12 @@ import com.todoapp.mobile.ui.common.components.TaskTypeBadge
 import com.todoapp.mobile.ui.common.components.taskTypeAccent
 import com.todoapp.mobile.ui.common.taskform.TaskFormType
 import com.todoapp.mobile.ui.common.taskform.TaskFrequencyChips
+import com.todoapp.mobile.ui.common.taskform.TaskIntervalStepper
 import com.todoapp.mobile.ui.common.taskform.TaskReminderChips
+import com.todoapp.mobile.ui.common.taskform.TaskReminderTimesEditor
+import com.todoapp.mobile.ui.common.taskform.TaskRepeatUntilField
 import com.todoapp.mobile.ui.common.taskform.TaskTypeHeader
+import com.todoapp.mobile.ui.common.taskform.TaskWeekdayPicker
 import com.todoapp.mobile.ui.details.DetailsContract.UiAction
 import com.todoapp.mobile.ui.details.DetailsContract.UiEffect
 import com.todoapp.mobile.ui.details.DetailsContract.UiState
@@ -59,6 +63,7 @@ import com.todoapp.uikit.components.TDCategoryPicker
 import com.todoapp.uikit.components.TDCompactOutlinedTextField
 import com.todoapp.uikit.components.TDDatePickerDialog
 import com.todoapp.uikit.components.TDPickerField
+import com.todoapp.uikit.components.TDRoutineProgress
 import com.todoapp.uikit.components.TDTaskCompletionCard
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDWheelTimePicker
@@ -215,9 +220,9 @@ private fun DetailsSuccessContent(
             ) {
                 Spacer(Modifier.height(8.dp))
 
-                // Completion toggle only for one-time tasks: routines complete per-day from the
-                // list surfaces, and staged tasks derive completion from their steps.
-                if (uiState.taskType == TaskFormType.ONE_TIME) {
+                // Completion toggle only when nothing else owns completion: a recurring task completes
+                // per-day from the list surfaces, and a staged one derives it from its steps.
+                if (!uiState.capabilities.completionIsPerDay && !uiState.capabilities.completionIsDerivedFromSteps) {
                     TDTaskCompletionCard(
                         isCompleted = uiState.isCompleted,
                         onToggle = { onAction(UiAction.OnToggleComplete) },
@@ -245,12 +250,9 @@ private fun DetailsSuccessContent(
                         supportingText = uiState.titleError?.let { stringResource(it) },
                     )
 
-                    // Routine surfaces frequency right after the title (before the start date).
-                    if (uiState.taskType == TaskFormType.ROUTINE) {
-                        TaskFrequencyChips(
-                            selected = uiState.selectedRecurrence,
-                            onSelect = { onAction(UiAction.OnRecurrenceChange(it)) },
-                        )
+                    // Anything that repeats surfaces frequency right after the title (before the date).
+                    if (uiState.capabilities.recurs) {
+                        DetailsRecurrenceBlock(uiState = uiState, onAction = onAction)
                     }
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -334,7 +336,7 @@ private fun DetailsSuccessContent(
                     }
 
                     // Category is hidden for staged goals (no single category for a multi-step task).
-                    if (uiState.taskType != TaskFormType.STAGED) {
+                    if (!uiState.capabilities.hasSteps) {
                         TDText(
                             text = stringResource(R.string.category_label),
                             style = TDTheme.typography.heading6,
@@ -354,35 +356,7 @@ private fun DetailsSuccessContent(
                         }
                     }
 
-                    // Reminder applies to one-time & routine; staged steps don't carry their own reminder.
-                    if (uiState.taskType != TaskFormType.STAGED) {
-                        TaskReminderChips(
-                            selected = uiState.reminderOffsetMinutes,
-                            onSelect = { onAction(UiAction.OnReminderOffsetChange(it)) },
-                        )
-                        if (uiState.isReminderInPast) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(TDTheme.colors.background, RoundedCornerShape(8.dp))
-                                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Icon(
-                                    painter = painterResource(com.example.uikit.R.drawable.ic_warning),
-                                    contentDescription = null,
-                                    tint = TDTheme.colors.orange,
-                                    modifier = Modifier.size(18.dp),
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                TDText(
-                                    text = stringResource(R.string.reminder_in_past_warning),
-                                    style = TDTheme.typography.subheading1,
-                                    color = TDTheme.colors.orange,
-                                )
-                            }
-                        }
-                    }
+                    DetailsReminderBlock(uiState = uiState, onAction = onAction)
 
                     TDCompactOutlinedTextField(
                         label = stringResource(R.string.description),
@@ -413,7 +387,7 @@ private fun DetailsSuccessContent(
                     onCancelPending = { index -> onAction(UiAction.OnPendingPhotoCancel(index)) },
                 )
 
-                if (uiState.taskType == TaskFormType.STAGED) {
+                if (uiState.capabilities.hasSteps) {
                     DetailsSubtaskEditor(
                         drafts = uiState.subtaskDrafts,
                         onTitleChange = { index, title -> onAction(UiAction.OnSubtaskTitleChange(index, title)) },
@@ -634,6 +608,93 @@ private fun replaceBannerPhoto(
     onAction(UiAction.OnPhotoPicked(bytes, "image/jpeg"))
 }
 
+/**
+ * A repeating task reminds at absolute times of day and can carry a scheduled end; a one-off reminds
+ * relative to its start. Staged steps carry no reminder of their own, so they get neither.
+ */
+@Composable
+private fun DetailsReminderBlock(
+    uiState: UiState.Success,
+    onAction: (UiAction) -> Unit,
+) {
+    if (uiState.capabilities.recurs) {
+        TaskReminderTimesEditor(
+            times = uiState.reminderTimes,
+            onAdd = { onAction(UiAction.OnReminderTimeAdd(it)) },
+            onRemove = { onAction(UiAction.OnReminderTimeRemove(it)) },
+        )
+        TaskRepeatUntilField(
+            anchor = uiState.taskDate,
+            until = uiState.recurrenceUntil,
+            onSelect = { onAction(UiAction.OnRecurrenceUntilChange(it)) },
+        )
+        return
+    }
+    if (uiState.capabilities.hasSteps) return
+    TaskReminderChips(
+        selected = uiState.reminderOffsetMinutes,
+        onSelect = { onAction(UiAction.OnReminderOffsetChange(it)) },
+    )
+    if (uiState.isReminderInPast) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(TDTheme.colors.background, RoundedCornerShape(8.dp))
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                painter = painterResource(com.example.uikit.R.drawable.ic_warning),
+                contentDescription = null,
+                tint = TDTheme.colors.orange,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            TDText(
+                text = stringResource(R.string.reminder_in_past_warning),
+                style = TDTheme.typography.subheading1,
+                color = TDTheme.colors.orange,
+            )
+        }
+    }
+}
+
+/**
+ * Frequency chips plus, for a bounded routine, how far along it is ("Day 12 of 30"). The counts are
+ * computed in the ViewModel — the by-weekday case walks real firing days and must not run per frame.
+ */
+@Composable
+private fun DetailsRecurrenceBlock(
+    uiState: UiState.Success,
+    onAction: (UiAction) -> Unit,
+) {
+    TaskFrequencyChips(
+        selected = uiState.selectedRecurrence,
+        onSelect = { onAction(UiAction.OnRecurrenceChange(it)) },
+    )
+    TaskIntervalStepper(
+        frequency = uiState.selectedRecurrence,
+        interval = uiState.recurrenceInterval,
+        onChange = { onAction(UiAction.OnIntervalChange(it)) },
+    )
+    if (uiState.selectedRecurrence == Recurrence.WEEKLY) {
+        TaskWeekdayPicker(
+            selected = uiState.recurrenceByDay,
+            onToggle = { onAction(UiAction.OnWeekdayToggle(it)) },
+        )
+    }
+    val dayIndex = uiState.routineDayIndex
+    val dayTotal = uiState.routineDayTotal
+    if (dayIndex != null && dayTotal != null) {
+        TDRoutineProgress(
+            current = dayIndex,
+            total = dayTotal,
+            label = stringResource(R.string.routine_day_progress, dayIndex, dayTotal),
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
 @Composable
 private fun DetailsTypeHeader(type: TaskFormType) {
     when (type) {
@@ -655,6 +716,13 @@ private fun DetailsTypeHeader(type: TaskFormType) {
             icon = painterResource(R.drawable.ic_staged),
             name = stringResource(R.string.type_staged_title),
             subtitle = stringResource(R.string.type_staged_subtitle),
+            accent = taskTypeAccent(type),
+        )
+
+        TaskFormType.CUSTOM -> TaskTypeHeader(
+            icon = painterResource(R.drawable.ic_custom),
+            name = stringResource(R.string.type_custom_title),
+            subtitle = stringResource(R.string.type_custom_subtitle),
             accent = taskTypeAccent(type),
         )
     }
