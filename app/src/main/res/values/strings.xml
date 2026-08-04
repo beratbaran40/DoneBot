@@ -1021,6 +1021,7 @@
     <string name="polaroid_camera_screen_title">Polaroid camera</string>
     <string name="journal_polaroid_fab_content_description">Take a Polaroid photo</string>
     <string name="polaroid_camera_flip_content_description">Switch camera</string>
+    <string name="polaroid_shutter_content_description">Take photo</string>
     <string name="polaroid_retake">Retake</string>
     <string name="polaroid_save_to_journal">Add to journal</string>
     <string name="polaroid_permission_denied">Camera permission is needed to take photos</string>

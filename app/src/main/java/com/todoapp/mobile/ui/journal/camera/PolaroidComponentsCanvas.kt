@@ -421,16 +421,14 @@ internal fun DrawScope.drawExposureDial(
 
 /** Draws the DoneBot logo badge where the camera originally had its "Supercolor 1000" sticker. */
 internal fun DrawScope.drawBranding(
-    w: Float,
-    topY: Float,
-    topBodyH: Float,
+    bounds: Rect,
     shadowPaint: Paint,
     colors: PolaroidColors,
     brandIcon: ImageBitmap,
 ) {
-    val stickerSize = w * 0.16f
-    val stickerX = w * 0.11f
-    val stickerY = topY + (topBodyH * 0.10f)
+    val stickerSize = bounds.width
+    val stickerX = bounds.left
+    val stickerY = bounds.top
 
     drawIntoCanvas { canvas ->
         canvas.drawRoundRect(
@@ -466,7 +464,11 @@ internal fun DrawScope.drawBranding(
     )
 }
 
-/** Draws the bottom chassis: speaker grille panel, model text, and film ejection slot. */
+/**
+ * Draws the bottom chassis: speaker grille panel and model text. The film ejection slot is *not*
+ * here — it sits at the top of the body (see [drawEjectSlot]) so the print ejects upwards, and the
+ * grille is centred in the tray to fill the space the slot used to take.
+ */
 internal fun DrawScope.drawBottomTrayDetails(
     textMeasurer: TextMeasurer,
     startX: Float,
@@ -476,9 +478,9 @@ internal fun DrawScope.drawBottomTrayDetails(
     colors: PolaroidColors,
 ) {
     val panelWidth = trayW * 0.90f
-    val panelHeight = trayH * 0.35f
+    val panelHeight = trayH * 0.40f
     val panelX = startX + (trayW - panelWidth) / 2f
-    val panelY = startY + (trayH * 0.12f)
+    val panelY = startY + (trayH * 0.30f)
 
     drawRoundRect(
         colors.trayDeep,
@@ -514,7 +516,7 @@ internal fun DrawScope.drawBottomTrayDetails(
     drawText(
         textMeasurer,
         "POLAROID LAND CAMERA",
-        Offset(panelX + (trayW * 0.04f), panelY + (panelHeight * 0.25f)),
+        Offset(panelX + (trayW * 0.04f), panelY + (panelHeight * 0.30f)),
         TextStyle(
             color = colors.textColor,
             fontSize = 13.sp,
@@ -523,37 +525,52 @@ internal fun DrawScope.drawBottomTrayDetails(
             letterSpacing = 1.sp,
         ),
     )
+}
 
-    val slotWidth = trayW * 0.86f
-    val slotHeight = trayH * 0.26f
-    val slotX = startX + (trayW - slotWidth) / 2f
-    val slotY = startY + (trayH * 0.62f)
-
+/**
+ * Draws the film ejection slot cut into the top edge of the cream body — the opening the developed
+ * print rises out of. [mouth] is the visible opening; the surrounding bezel and lip are derived from
+ * it, so the layout can anchor the print to exactly the same rect.
+ *
+ * The lip gradient runs the opposite way to a bottom-mounted slot: with light coming from the top
+ * left, the edge that catches it on a top-facing opening is the near (lower) lip, not the far one.
+ */
+internal fun DrawScope.drawEjectSlot(mouth: Rect, colors: PolaroidColors) {
+    val bezel = 4f
     drawRoundRect(
         colors.panelRecess,
-        Offset(slotX - 4f, slotY - 4f),
-        Size(slotWidth + 8f, slotHeight + 8f),
+        Offset(mouth.left - bezel, mouth.top - bezel),
+        Size(mouth.width + bezel * 2f, mouth.height + bezel * 2f),
         CornerRadius(6.dp.toPx()),
     )
     drawRoundRect(
         colors.trayDeep,
-        Offset(slotX, slotY),
-        Size(slotWidth, slotHeight),
+        mouth.topLeft,
+        mouth.size,
         CornerRadius(4.dp.toPx()),
     )
 
-    val lipHeight = slotHeight * 0.5f
+    val lipHeight = mouth.height * 0.5f
+    val lipTop = mouth.bottom - lipHeight - 2f
     drawRoundRect(
         Brush.verticalGradient(
-            0.0f to colors.panelSeam,
-            0.4f to colors.slotLip,
-            0.6f to colors.panelRecess,
-            1.0f to colors.trayDeep,
-            startY = slotY + 2f,
-            endY = slotY + lipHeight,
+            0.0f to colors.trayDeep,
+            0.4f to colors.panelRecess,
+            0.6f to colors.slotLip,
+            1.0f to colors.panelSeam,
+            startY = lipTop,
+            endY = lipTop + lipHeight,
         ),
-        Offset(slotX + 4f, slotY + 2f),
-        Size(slotWidth - 8f, lipHeight),
+        Offset(mouth.left + bezel, lipTop),
+        Size(mouth.width - bezel * 2f, lipHeight),
         CornerRadius(3.dp.toPx()),
+    )
+
+    // Hairline highlight along the cream just below the opening, so the slot reads as cut in.
+    drawLine(
+        Color.White.copy(alpha = 0.65f),
+        Offset(mouth.left - bezel, mouth.bottom + bezel + 1f),
+        Offset(mouth.right + bezel, mouth.bottom + bezel + 1f),
+        strokeWidth = 2f,
     )
 }

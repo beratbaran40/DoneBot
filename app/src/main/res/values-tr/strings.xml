@@ -1022,6 +1022,7 @@
     <string name="polaroid_camera_screen_title">Polaroid kamera</string>
     <string name="journal_polaroid_fab_content_description">Polaroid fotoğraf çek</string>
     <string name="polaroid_camera_flip_content_description">Kamerayı değiştir</string>
+    <string name="polaroid_shutter_content_description">Fotoğraf çek</string>
     <string name="polaroid_retake">Tekrar çek</string>
     <string name="polaroid_save_to_journal">Günlüğe ekle</string>
     <string name="polaroid_permission_denied">Fotoğraf çekmek için kamera izni gerekli</string>

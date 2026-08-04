@@ -27,6 +27,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toSize
 import com.todoapp.uikit.theme.PolaroidColors
 import com.todoapp.uikit.theme.TDTheme
 
@@ -35,6 +36,9 @@ import com.todoapp.uikit.theme.TDTheme
  * [drawWithCache]: geometry + paints are built once per size change, the draw phase only
  * references cached objects and branches on [isShutterPressed]. Colors are read once from
  * [TDTheme] and captured by the cache lambda (which is not `@Composable`).
+ *
+ * All positions come from [PolaroidBodyMetrics] so the drawing, the shutter hit test, and the
+ * screen layout that anchors the ejecting print to the film slot cannot drift apart.
  */
 @Composable
 internal fun SkeuomorphicPolaroidCanvas(
@@ -53,79 +57,50 @@ internal fun SkeuomorphicPolaroidCanvas(
             .pointerInput(Unit) {
                 detectTapGestures(
                     onPress = { offset ->
-                        val paddingX = 16.dp.toPx()
-                        val paddingTop = 16.dp.toPx()
-                        val paddingBottom = 32.dp.toPx()
-                        val w = size.width - (paddingX * 2)
-                        val h = size.height - (paddingTop + paddingBottom)
-
-                        val trayH = h * 0.28f
-                        val lipH = h * 0.048f
-                        val ledgeH = h * 0.065f
-                        val topBodyH = h - trayH - ledgeH - lipH
-
-                        val shutterCenter = Offset(
-                            paddingX + w * 0.20f,
-                            paddingTop + topBodyH * 0.68f,
-                        )
-                        val shutterRadius = w * 0.065f * 1.35f
-
-                        if ((offset - shutterCenter).getDistance() <= shutterRadius) {
+                        val metrics = PolaroidBodyMetrics(size.toSize(), this)
+                        val distance = (offset - metrics.shutterTouchCenterInBox).getDistance()
+                        if (distance <= metrics.shutterTouchRadius) {
                             onShutterStateChange(true)
-                            tryAwaitRelease()
+                            // Dragging off the button before lifting must cancel, not capture.
+                            val released = tryAwaitRelease()
                             onShutterStateChange(false)
-                            currentOnShutterClick()
+                            if (released) currentOnShutterClick()
                         }
                     },
                 )
             }
             .drawWithCache {
                 // ── CACHE PHASE: runs once per size change ──
-                val paddingX = 16.dp.toPx()
-                val paddingTop = 16.dp.toPx()
-                val paddingBottom = 32.dp.toPx()
-
-                val w = size.width - (paddingX * 2)
-                val h = size.height - (paddingTop + paddingBottom)
+                val m = PolaroidBodyMetrics(size, this)
+                val w = m.w
+                val h = m.h
 
                 val trayW = w
-                val topBodyBottomW = w * 0.94f
-                val topBodyTopW = w * 0.88f
-
-                val trayH = h * 0.28f
-                val lipH = h * 0.048f
-                val ledgeH = h * 0.065f
-                val topBodyH = h - trayH - ledgeH - lipH
-
                 val trayLeft = 0f
                 val trayRight = w
 
-                val topBodyBottomLeft = (w - topBodyBottomW) / 2f
-                val topBodyBottomRight = topBodyBottomLeft + topBodyBottomW
-                val topBodyTopLeft = (w - topBodyTopW) / 2f
-                val topBodyTopRight = topBodyTopLeft + topBodyTopW
+                val topBodyBottomLeft = (w - m.topBodyBottomW) / 2f
+                val topBodyBottomRight = topBodyBottomLeft + m.topBodyBottomW
+                val topBodyTopLeft = (w - m.topBodyTopW) / 2f
+                val topBodyTopRight = topBodyTopLeft + m.topBodyTopW
 
                 val topY = 0f
-                val ledgeTopY = topBodyH
-                val lipTopY = ledgeTopY + ledgeH
-                val trayTopY = lipTopY + lipH
-                val bottomY = h
+                val ledgeTopY = m.ledgeTopY
+                val lipTopY = m.lipTopY
+                val trayTopY = m.trayTopY
+                val bottomY = m.bottomY
 
                 val topRadius = 24.dp.toPx()
                 val seamRadius = 3.dp.toPx()
                 val bottomRadius = 24.dp.toPx()
 
-                // Cached paths
-                val topBumpW = w * 0.48f
-                val topBumpH = 14.dp.toPx()
-                val topBumpX = (w - topBumpW) / 2f
-                val topBumpY = topY - topBumpH + 4f
-
-                val topBumpPath = Path().apply {
+                // Cached paths — the hood is the dark housing the film slot is cut under.
+                val hoodTop = topY - m.hoodH + 4f
+                val hoodPath = Path().apply {
                     addRoundRect(
                         RoundRect(
-                            left = topBumpX, top = topBumpY,
-                            right = topBumpX + topBumpW, bottom = topY + 10f,
+                            left = m.hoodLeft, top = hoodTop,
+                            right = m.hoodLeft + m.hoodW, bottom = topY + 10f,
                             topLeftCornerRadius = CornerRadius(10.dp.toPx()),
                             topRightCornerRadius = CornerRadius(10.dp.toPx()),
                             bottomLeftCornerRadius = CornerRadius.Zero,
@@ -145,7 +120,7 @@ internal fun SkeuomorphicPolaroidCanvas(
                 }
 
                 val lipCornerRadius = 6.dp.toPx()
-                val slantRatio = (ledgeH - lipCornerRadius) / ledgeH
+                val slantRatio = (lipTopY - ledgeTopY - lipCornerRadius) / (lipTopY - ledgeTopY)
                 val leftSlantX = topBodyBottomLeft + (trayLeft - topBodyBottomLeft) * slantRatio
                 val rightSlantX = topBodyBottomRight + (trayRight - topBodyBottomRight) * slantRatio
 
@@ -175,21 +150,21 @@ internal fun SkeuomorphicPolaroidCanvas(
                 }
 
                 val silhouettePath = Path().apply {
-                    addPath(topBumpPath)
+                    addPath(hoodPath)
                     addPath(topBodyPath)
                     addPath(ledgeAndLipPath)
                     addPath(trayPath)
                 }
 
                 // Cached brushes
-                val topBumpGradient = Brush.verticalGradient(
+                val hoodGradient = Brush.verticalGradient(
                     listOf(colors.chassisLight, colors.nearBlack),
-                    startY = topBumpY, endY = topY,
+                    startY = hoodTop, endY = topY,
                 )
-                val topBumpEdgeBrush = Brush.linearGradient(
+                val hoodEdgeBrush = Brush.linearGradient(
                     listOf(Color.White.copy(alpha = 0.25f), Color.Transparent),
-                    start = Offset(topBumpX + topBumpW, topBumpY),
-                    end = Offset(topBumpX, topBumpY + topBumpH),
+                    start = Offset(m.hoodLeft + m.hoodW, hoodTop),
+                    end = Offset(m.hoodLeft, hoodTop + m.hoodH),
                 )
                 val trayGradient = Brush.verticalGradient(
                     listOf(colors.chassisLight, colors.chassisDark),
@@ -228,20 +203,9 @@ internal fun SkeuomorphicPolaroidCanvas(
                 val specularPaint = blurPaint(Color.White.copy(alpha = 0.85f), 1f)
                 val dialHighlightPaint = blurPaint(Color.White.copy(alpha = 0.15f), 4f)
 
-                // Component positions
-                val housingCenter = Offset(w / 2f, topBodyH * 0.48f)
-                val housingSize = topBodyBottomW * 0.35f
-                val stripeStartY = housingCenter.y + (housingSize * 0.35f)
-                val shutterCenter = Offset(w * 0.20f, topBodyH * 0.68f)
-                val shutterRadius = w * 0.065f
-                val flashCenter = Offset(w * 0.79f, topBodyH * 0.22f)
-                val flashSize = w * 0.14f
-                val dialCenter = Offset(w * 0.77f, topBodyH * 0.65f)
-                val dialRadius = w * 0.05f
-
                 // ── DRAW PHASE: runs per frame, uses cached objects ──
                 onDrawBehind {
-                    withTransform({ translate(left = paddingX, top = paddingTop) }) {
+                    withTransform({ translate(left = m.originX, top = m.originY) }) {
                         // Body shadow
                         drawIntoCanvas { canvas ->
                             canvas.translate(-8f, 30f)
@@ -249,8 +213,8 @@ internal fun SkeuomorphicPolaroidCanvas(
                             canvas.translate(8f, -30f)
                         }
 
-                        drawPath(topBumpPath, topBumpGradient)
-                        drawPath(topBumpPath, topBumpEdgeBrush, style = Stroke(2f))
+                        drawPath(hoodPath, hoodGradient)
+                        drawPath(hoodPath, hoodEdgeBrush, style = Stroke(2f))
 
                         drawRect(
                             colors.panelSeam,
@@ -309,13 +273,14 @@ internal fun SkeuomorphicPolaroidCanvas(
                         )
 
                         // Components
-                        drawPerspectiveStripe(w, topBodyBottomW, stripeStartY, ledgeTopY, lipTopY, trayTopY, colors)
-                        drawLensAssembly(housingCenter, housingSize, shadowPaint25, specularPaint, colors)
-                        drawBranding(w, topY, topBodyH, shadowPaint8, colors, brandIcon)
-                        drawFlash(flashCenter, flashSize, shadowPaint15, colors)
-                        drawShutterButton(shutterCenter, shutterRadius, isShutterPressed, shadowPaint12, colors)
-                        drawExposureDial(dialCenter, dialRadius, shadowPaint10, dialHighlightPaint, colors)
-                        drawBottomTrayDetails(textMeasurer, trayLeft, trayTopY, trayW, trayH, colors)
+                        drawEjectSlot(m.slotMouth, colors)
+                        drawPerspectiveStripe(w, m.topBodyBottomW, m.stripeStartY, ledgeTopY, lipTopY, trayTopY, colors)
+                        drawLensAssembly(m.lensCenter, m.lensSize, shadowPaint25, specularPaint, colors)
+                        drawBranding(m.brandingRect, shadowPaint8, colors, brandIcon)
+                        drawFlash(m.flashCenter, m.flashSize, shadowPaint15, colors)
+                        drawShutterButton(m.shutterCenter, m.shutterRadius, isShutterPressed, shadowPaint12, colors)
+                        drawExposureDial(m.dialCenter, m.dialRadius, shadowPaint10, dialHighlightPaint, colors)
+                        drawBottomTrayDetails(textMeasurer, trayLeft, trayTopY, trayW, m.trayH, colors)
                     }
                 }
             },

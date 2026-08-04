@@ -4,10 +4,13 @@ import android.graphics.Bitmap
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -25,6 +28,21 @@ import com.todoapp.uikit.theme.TDTheme
 private fun PolaroidCameraIdlePreview() {
     TDTheme {
         PolaroidBodyPreviewHost(photoState = PhotoState.Idle, showPrint = false)
+    }
+}
+
+@TDPreviewWide
+@Composable
+private fun PolaroidCameraEjectingPreview() {
+    TDTheme {
+        PolaroidBodyPreviewHost(
+            photoState = PhotoState.Ejecting,
+            showPrint = true,
+            ejectProgress = 0.45f,
+            devGreyAlpha = 1f,
+            devTealAlpha = 1f,
+            bitmap = rememberSampleBitmap(),
+        )
     }
 }
 
@@ -60,7 +78,7 @@ private fun PolaroidCameraDonePreview() {
 @Composable
 private fun PolaroidCanvasRestingPreview() {
     TDTheme {
-        Box(modifier = Modifier.fillMaxWidth().aspectRatio(1.15f)) {
+        Box(modifier = Modifier.fillMaxWidth().aspectRatio(PolaroidBodyMetrics.BODY_ASPECT)) {
             SkeuomorphicPolaroidCanvas(isShutterPressed = false, onShutterStateChange = {}, onShutterClick = {})
         }
     }
@@ -70,8 +88,27 @@ private fun PolaroidCanvasRestingPreview() {
 @Composable
 private fun PolaroidCanvasShutterPressedPreview() {
     TDTheme {
-        Box(modifier = Modifier.fillMaxWidth().aspectRatio(1.15f)) {
+        Box(modifier = Modifier.fillMaxWidth().aspectRatio(PolaroidBodyMetrics.BODY_ASPECT)) {
             SkeuomorphicPolaroidCanvas(isShutterPressed = true, onShutterStateChange = {}, onShutterClick = {})
+        }
+    }
+}
+
+// ──────────────────────────── Shutter button ────────────────────────────
+
+@TDPreview
+@Composable
+private fun PolaroidShutterButtonPreview() {
+    TDTheme {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.Black)
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+        ) {
+            PolaroidShutterButton(enabled = true, onPressChange = {}, onClick = {})
+            PolaroidShutterButton(enabled = false, onPressChange = {}, onClick = {})
         }
     }
 }
@@ -100,6 +137,7 @@ private fun PolaroidPrintDevelopedPreview() {
 private fun PolaroidBodyPreviewHost(
     photoState: PhotoState,
     showPrint: Boolean,
+    ejectProgress: Float = 1f,
     devGreyAlpha: Float = 0f,
     devTealAlpha: Float = 0f,
     bitmap: Bitmap? = null,
@@ -111,8 +149,8 @@ private fun PolaroidBodyPreviewHost(
         isShutterPressed = false,
         showPrint = showPrint,
         flashAlpha = 0f,
-        ejectOffsetY = 0f,
-        printRotation = -2f,
+        ejectProgress = ejectProgress,
+        printTilt = -2f,
         devGreyAlpha = devGreyAlpha,
         devTealAlpha = devTealAlpha,
         cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA,
@@ -137,10 +175,13 @@ private fun PrintPreviewHost(devGreyAlpha: Float, devTealAlpha: Float) {
     ) {
         PolaroidPrint(
             bitmap = rememberSampleBitmap(),
-            offsetY = 0f,
-            rotationZ = -2f,
+            ejectProgress = 1f,
+            tiltDegrees = -2f,
             devGreyAlpha = devGreyAlpha,
             devTealAlpha = devTealAlpha,
+            modifier = Modifier
+                .fillMaxWidth(0.6f)
+                .aspectRatio(PRINT_ASPECT),
         )
     }
 }
