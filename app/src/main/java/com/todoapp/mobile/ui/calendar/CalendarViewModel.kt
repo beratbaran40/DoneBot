@@ -13,6 +13,7 @@ import com.todoapp.mobile.domain.alarm.AlarmType
 import com.todoapp.mobile.domain.engine.PomodoroEngine
 import com.todoapp.mobile.domain.model.GroupTask
 import com.todoapp.mobile.domain.model.Task
+import com.todoapp.mobile.domain.model.firesOnDate
 import com.todoapp.mobile.domain.model.toAlarmItem
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.SecretPreferences
@@ -48,7 +49,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Clock
-import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
@@ -363,7 +363,7 @@ constructor(
                 groupRepository.observeAllGroupTasks(),
                 taskRepository.observeTaskPhotoUrls(),
             ) { personalTasks, groupTasks, photoUrlsByRemoteId ->
-                val groupForDate = groupTasks.filter { dueDateToLocalDate(it.dueDate) == date }
+                val groupForDate = groupTasks.filter { it.firesOnDate(date) }
                 val personalWithPhotos = personalTasks.map { task ->
                     val remoteUrls = task.remoteId?.let { photoUrlsByRemoteId[it] }.orEmpty()
                     if (remoteUrls.isNotEmpty()) task.copy(photoUrls = remoteUrls) else task
@@ -523,10 +523,6 @@ constructor(
         return "$base/${relative.trimStart('/')}"
     }
 
-    private fun dueDateToLocalDate(epochMillis: Long?): LocalDate? = epochMillis?.let {
-        Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
-    }
-
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun syncTaskDatesForMonth() {
         viewModelScope.launch {
@@ -537,15 +533,22 @@ constructor(
                 .flatMapLatest { month ->
                     val firstDay = month.atDay(1)
                     val startDate = firstDay.minusDays((firstDay.dayOfWeek.value - 1).toLong())
-                    val endDate = startDate.plusDays(34L)
+                    // The grid draws six week rows (see calendarGridWeeks) — 35 covered only five, so
+                    // the last row never got its markers.
+                    val endDate = startDate.plusDays(GRID_SPAN_DAYS)
                     combine(
                         taskRepository.observeRange(startDate, endDate),
                         groupRepository.observeAllGroupTasks(),
                     ) { personalTasks, groupTasks ->
                         val personalDates = personalTasks.map { it.date }
-                        val groupDates = groupTasks
-                            .mapNotNull { dueDateToLocalDate(it.dueDate) }
-                            .filter { it in startDate..endDate }
+                        // A repeating group task marks every day it fires on, not just its start —
+                        // otherwise a daily chore leaves the rest of the month looking empty.
+                        val visibleDays = generateSequence(startDate) { it.plusDays(1) }
+                            .takeWhile { !it.isAfter(endDate) }
+                            .toList()
+                        val groupDates = groupTasks.flatMap { task ->
+                            visibleDays.filter { task.firesOnDate(it) }
+                        }
                         (personalDates + groupDates).toSet()
                     }
                 }.collect { taskDates ->
@@ -556,6 +559,9 @@ constructor(
 
     companion object {
         private val DEFAULT_REMINDER_MINUTES = listOf(0L, 1L, 2L, 5L, 10L)
+
+        /** Six week rows, inclusive of both ends — matches CALENDAR_WEEK_ROWS in the picker grid. */
+        private const val GRID_SPAN_DAYS = 41L
         private const val OVERDUE_TICK_MILLIS = 60_000L
         private const val REFRESH_INDICATOR_MS = 800L
     }

@@ -34,6 +34,7 @@ import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.ui.common.categoryOptions
 import com.todoapp.mobile.ui.common.components.SecretCheckbox
 import com.todoapp.mobile.ui.common.rememberLocationPickerLauncher
+import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskScope
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiAction
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiState
@@ -88,8 +89,9 @@ internal fun CreationHubDetailsSection(
                     onValueChange = { onAction(UiAction.OnDescriptionChange(it)) },
                     singleLine = false,
                 )
-                // Staged goals and group tasks have no single category — hide the picker for both.
-                if (state.taskType != TaskType.STAGED && state.taskType != TaskType.GROUP) {
+                // A staged goal is its steps, not a category. Group tasks DO get one now — they are
+                // the same server row as a personal task and always had the column.
+                if (state.taskType != TaskType.STAGED) {
                     TDCategoryPicker(
                         selectedKey = state.category.name,
                         options = categoryOptions(),
@@ -123,20 +125,25 @@ internal fun CreationHubDetailsSection(
                     onRemoveAt = { onAction(UiAction.OnPhotoRemove(it)) },
                 )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    TDText(
-                        text = stringResource(R.string.creation_secret_label),
-                        style = TDTheme.typography.regularTextStyle,
-                        color = TDTheme.colors.onBackground,
-                        modifier = Modifier.weight(1f),
-                    )
-                    SecretCheckbox(
-                        checked = state.isSecret,
-                        onCheckedChange = { onAction(UiAction.OnSecretChange(it)) },
-                    )
+                // Secret mode hides a task behind the personal vault. A task the whole group can read
+                // is never secret, so offering the toggle there would promise privacy that cannot
+                // exist — the VM also forces isSecret = false on the group create path.
+                if (state.scope != TaskScope.GROUP) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TDText(
+                            text = stringResource(R.string.creation_secret_label),
+                            style = TDTheme.typography.regularTextStyle,
+                            color = TDTheme.colors.onBackground,
+                            modifier = Modifier.weight(1f),
+                        )
+                        SecretCheckbox(
+                            checked = state.isSecret,
+                            onCheckedChange = { onAction(UiAction.OnSecretChange(it)) },
+                        )
+                    }
                 }
             }
         }

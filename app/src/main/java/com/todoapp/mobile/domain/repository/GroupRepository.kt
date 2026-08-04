@@ -7,8 +7,10 @@ import com.todoapp.mobile.domain.model.Group
 import com.todoapp.mobile.domain.model.GroupActivity
 import com.todoapp.mobile.domain.model.GroupMember
 import com.todoapp.mobile.domain.model.GroupTask
+import com.todoapp.mobile.domain.model.Subtask
 import com.todoapp.mobile.domain.model.Task
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
 
 interface GroupRepository {
     suspend fun createGroup(request: CreateGroupRequest): Result<GroupData>
@@ -92,6 +94,38 @@ interface GroupRepository {
         groupId: Long,
         taskId: Long,
         groupTask: GroupTask,
+        isCompleted: Boolean,
+    ): Result<Unit>
+
+    /**
+     * Completes (or un-completes) **one occurrence** of a recurring group task. Shared across the
+     * group: whoever ticks it first completes that day for everyone, so this takes no user id.
+     *
+     * Non-recurring group tasks keep using [updateGroupTaskStatus] — the flat `isCompleted` flag is
+     * still the right model when there is only ever one occurrence.
+     */
+    suspend fun setGroupTaskDayCompletion(
+        groupId: Long,
+        taskId: Long,
+        date: LocalDate,
+        completed: Boolean,
+    ): Result<Unit>
+
+    /** Ids of the group tasks already completed on [date] — one query per list surface, not per card. */
+    fun observeGroupTasksDoneOn(date: LocalDate): Flow<Set<Long>>
+
+    /** Steps of a group task, ordered. Empty ⇒ the task is not staged. */
+    fun observeGroupSubtasks(taskId: Long): Flow<List<Subtask>>
+
+    /**
+     * Ticks one step of a group task. Takes [steps] — the task's whole current step set — because the
+     * update endpoint reconciles by replacement: sending only the changed one would delete the rest.
+     */
+    suspend fun setGroupSubtaskCompletion(
+        groupId: Long,
+        taskId: Long,
+        steps: List<Subtask>,
+        subtaskId: Long,
         isCompleted: Boolean,
     ): Result<Unit>
 

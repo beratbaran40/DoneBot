@@ -5,10 +5,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
 import com.todoapp.mobile.R
+import com.todoapp.mobile.domain.model.GroupTask
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.ui.common.taskform.recurrenceIntervalLabel
+import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Locale
 import com.example.uikit.R as UiKitR
@@ -20,11 +22,43 @@ import com.example.uikit.R as UiKitR
  * point Home was the only surface saying anything about a routine at all, and Search / Calendar /
  * FilteredTasks were silently showing a Mon-Wed-Fri task as if it were a plain one-off. Shared here
  * so every surface tells the same story.
+ *
+ * Personal and group tasks are separate models with the same fields, so the implementation takes the
+ * fields and each model gets a one-line overload — a second copy would drift the moment one of them
+ * learned a new rule.
  */
 @Composable
-fun taskChipLabel(task: Task): String? {
-    val categoryText = categoryDisplayText(task)
-    val recurrenceText = recurrenceDisplayText(task)
+fun taskChipLabel(task: Task): String? = taskChipLabel(
+    category = task.category,
+    customCategoryName = task.customCategoryName,
+    recurrence = task.recurrence,
+    recurrenceInterval = task.recurrenceInterval,
+    recurrenceByDay = task.recurrenceByDay,
+)
+
+@Composable
+fun taskChipLabel(task: GroupTask): String? = taskChipLabel(
+    category = task.category,
+    customCategoryName = task.customCategoryName,
+    recurrence = task.recurrence,
+    recurrenceInterval = task.recurrenceInterval,
+    recurrenceByDay = task.recurrenceByDay,
+)
+
+/**
+ * The field-level entry point, for surfaces whose UI model is neither [Task] nor [GroupTask] — a
+ * screen's own projection can call this without :ui/common having to know that projection's type.
+ */
+@Composable
+fun taskChipLabel(
+    category: TaskCategory,
+    customCategoryName: String?,
+    recurrence: Recurrence,
+    recurrenceInterval: Int,
+    recurrenceByDay: Set<DayOfWeek>,
+): String? {
+    val categoryText = categoryDisplayText(category, customCategoryName)
+    val recurrenceText = recurrenceDisplayText(recurrence, recurrenceInterval, recurrenceByDay)
     return remember(categoryText, recurrenceText) {
         when {
             categoryText != null && recurrenceText != null -> "$categoryText · $recurrenceText"
@@ -36,11 +70,13 @@ fun taskChipLabel(task: Task): String? {
 }
 
 @Composable
-fun categoryDisplayText(task: Task): String? {
-    val category = task.category
+fun categoryDisplayText(task: Task): String? = categoryDisplayText(task.category, task.customCategoryName)
+
+@Composable
+private fun categoryDisplayText(category: TaskCategory, customCategoryName: String?): String? {
     if (category == TaskCategory.PERSONAL) return null
     if (category == TaskCategory.OTHER) {
-        return task.customCategoryName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.category_other)
+        return customCategoryName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.category_other)
     }
     val res = when (category) {
         TaskCategory.SHOPPING -> R.string.category_shopping
@@ -75,14 +111,33 @@ fun categoryIconFor(category: TaskCategory): Int? = when (category) {
  * Mon/Wed/Fri routine, which is wrong three times a week.
  */
 @Composable
-fun recurrenceDisplayText(task: Task): String? {
-    if (task.recurrence == Recurrence.NONE) return null
+fun recurrenceDisplayText(task: Task): String? = recurrenceDisplayText(
+    task.recurrence,
+    task.recurrenceInterval,
+    task.recurrenceByDay,
+)
+
+@Composable
+fun recurrenceDisplayText(task: GroupTask): String? = recurrenceDisplayText(
+    task.recurrence,
+    task.recurrenceInterval,
+    task.recurrenceByDay,
+)
+
+/** Field-level entry point, for the same reason the [taskChipLabel] overload above is public. */
+@Composable
+fun recurrenceDisplayText(
+    recurrence: Recurrence,
+    recurrenceInterval: Int,
+    recurrenceByDay: Set<DayOfWeek>,
+): String? {
+    if (recurrence == Recurrence.NONE) return null
     // The weekday set is the most specific thing we can say, so it wins when present.
-    if (task.recurrence == Recurrence.WEEKLY && task.recurrenceByDay.isNotEmpty()) {
+    if (recurrence == Recurrence.WEEKLY && recurrenceByDay.isNotEmpty()) {
         val locale = Locale.getDefault()
-        return task.recurrenceByDay
+        return recurrenceByDay
             .sortedBy { it.value }
             .joinToString(" · ") { it.getDisplayName(TextStyle.SHORT, locale) }
     }
-    return recurrenceIntervalLabel(task.recurrence, task.recurrenceInterval)
+    return recurrenceIntervalLabel(recurrence, recurrenceInterval)
 }

@@ -23,6 +23,7 @@ import com.todoapp.mobile.navigation.Screen
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.AssigneeOption
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.GroupOption
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.Step
+import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskScope
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiAction
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiEffect
@@ -105,7 +106,8 @@ constructor(
 
     fun onAction(action: UiAction) {
         when (action) {
-            is UiAction.OnCreateTaskCardTap -> _state.update { it.copy(step = Step.TASK_TYPE) }
+            is UiAction.OnCreateTaskCardTap -> _state.update { it.copy(step = Step.TASK_SCOPE) }
+            is UiAction.OnScopeSelect -> selectScope(action.scope)
             is UiAction.OnJournalCardTap -> navigateOut(Screen.Journal)
             is UiAction.OnPomodoroCardTap ->
                 navigateOut(if (pomodoroEngine.state.value.isRunning) Screen.Pomodoro else Screen.PomodoroLaunch)
@@ -183,8 +185,18 @@ constructor(
     private fun goBack() {
         when (_state.value.step) {
             Step.TASK_CORE -> _state.update { it.copy(step = Step.TASK_TYPE) }
-            Step.TASK_TYPE -> _state.update { it.copy(step = Step.HUB_ROOT, taskType = null) }
+            Step.TASK_TYPE -> _state.update { it.copy(step = Step.TASK_SCOPE, taskType = null) }
+            Step.TASK_SCOPE -> _state.update { it.copy(step = Step.HUB_ROOT, scope = null) }
             Step.HUB_ROOT -> _navEffect.trySend(NavigationEffect.Back)
+        }
+    }
+
+    private fun selectScope(scope: TaskScope) {
+        _state.update { it.copy(step = Step.TASK_TYPE, scope = scope) }
+        // With a single admin group there is nothing to pick — auto-select it and load its members,
+        // so the form can show the assignee picker straight away.
+        if (scope == TaskScope.GROUP) {
+            _state.value.adminGroups.singleOrNull()?.let { selectGroup(it.localId, it.remoteId) }
         }
     }
 
@@ -200,10 +212,6 @@ constructor(
                 recurrence = if (type == TaskType.CUSTOM) Recurrence.NONE else it.recurrence,
                 placeholderIndex = Random.nextInt(CreationHubPlaceholders.count),
             )
-        }
-        // With a single admin group there's nothing to pick — auto-select it and load its members.
-        if (type == TaskType.GROUP) {
-            _state.value.adminGroups.singleOrNull()?.let { selectGroup(it.localId, it.remoteId) }
         }
     }
 
@@ -303,10 +311,6 @@ constructor(
             return
         }
         val type = s.taskType ?: return
-        if (type == TaskType.GROUP) {
-            createGroupTask(s)
-            return
-        }
         val subtaskTitles = s.subtaskDrafts.map { it.trim() }.filter { it.isNotBlank() }
 
         // What gets written comes from the DATA, not the label. For a custom task every section is on
@@ -318,9 +322,17 @@ constructor(
 
         if (!validateCapabilities(type, hasSteps, subtaskTitles)) return
 
+        // ONE builder for both scopes. The group path used to assemble its own, much poorer Task —
+        // which is exactly why a group task could never repeat or carry steps. Parity is now a
+        // property of the code shape rather than something two call sites have to remember.
+        val task = buildTask(s, type, recurs, hasSteps, subtaskTitles)
+        if (s.scope == TaskScope.GROUP) {
+            createGroupTask(s, task)
+            return
+        }
+
         _state.update { it.copy(isSaving = true) }
         viewModelScope.launch {
-            val task = buildTask(s, type, recurs, hasSteps, subtaskTitles)
             if (s.pendingPhotos.isNotEmpty()) {
                 taskRepository.insertWithPhotos(task, s.pendingPhotos.map { it.bytes to it.mimeType })
             } else {
@@ -402,9 +414,14 @@ constructor(
     /**
      * Creates a task in the selected admin group. Unassigned (assignedToUserId = null) is valid and is
      * the default. Photos are uploaded after create using the returned remote task id (mirrors
-     * GroupDetailViewModel). No local AlarmScheduler call — group reminders are server-side.
+     * GroupDetailViewModel).
+     *
+     * [built] arrives from the shared [buildTask], so a group task now carries the same recurrence
+     * rule, steps, category and reminder times a personal one does — the create endpoint has always
+     * accepted them (it is `POST /tasks` with `familyGroupId` set, and `toCreateTaskRequestDto`
+     * sends the whole shape); only this function's own stripped-down `Task` stood in the way.
      */
-    private fun createGroupTask(s: UiState) {
+    private fun createGroupTask(s: UiState, built: Task) {
         val remoteId = s.selectedGroupRemoteId
         if (remoteId == null) {
             _effect.trySend(UiEffect.ShowToast(R.string.creation_group_required))
@@ -412,29 +429,8 @@ constructor(
         }
         _state.update { it.copy(isSaving = true) }
         viewModelScope.launch {
-            val allDay = s.isAllDay
-            val start = if (allDay) LocalTime.MIDNIGHT else (s.timeStart ?: LocalTime.of(DEFAULT_START_HOUR, 0))
-            val end = if (allDay) {
-                LocalTime.of(END_OF_DAY_HOUR, END_OF_DAY_MINUTE)
-            } else {
-                s.timeEnd ?: start.plusHours(1)
-            }
-            val task = Task(
-                title = s.title.trim(),
-                description = s.description.trim().ifBlank { null },
-                date = s.date,
-                timeStart = start,
-                timeEnd = end,
-                isCompleted = false,
-                isSecret = s.isSecret,
-                isAllDay = allDay,
-                locationName = s.locationName,
-                locationAddress = s.locationAddress,
-                locationLat = s.locationLat,
-                locationLng = s.locationLng,
-                clientTaskId = s.clientTaskId,
-                // No recurrence / category / subtasks — group tasks are a flat, assignable task.
-            )
+            // Secret mode is a personal-vault concept; a task the whole group can read is never secret.
+            val task = built.copy(isSecret = false, clientTaskId = s.clientTaskId)
             groupRepository.createGroupTask(
                 groupId = remoteId,
                 task = task,

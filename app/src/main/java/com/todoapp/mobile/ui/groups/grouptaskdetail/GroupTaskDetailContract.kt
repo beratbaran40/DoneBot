@@ -1,7 +1,11 @@
 package com.todoapp.mobile.ui.groups.grouptaskdetail
 
 import androidx.compose.runtime.Immutable
+import com.todoapp.mobile.domain.model.Recurrence
+import com.todoapp.mobile.domain.model.Subtask
+import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -30,6 +34,16 @@ object GroupTaskDetailContract {
         val locationAddress: String? = null,
         val locationLat: Double? = null,
         val locationLng: Double? = null,
+        /** The rule as raw fields — the chip needs string resources, so it renders in the screen. */
+        val category: TaskCategory = TaskCategory.PERSONAL,
+        val customCategoryName: String? = null,
+        val recurrence: Recurrence = Recurrence.NONE,
+        val recurrenceInterval: Int = 1,
+        val recurrenceByDay: Set<DayOfWeek> = emptySet(),
+        val subtasks: List<Subtask> = emptyList(),
+        /** For a bounded routine: "Day 12 of 30". Null when the routine is open-ended or one-off. */
+        val routineDayIndex: Int? = null,
+        val routineDayTotal: Int? = null,
     )
 
     sealed interface UiState {
@@ -64,6 +78,9 @@ object GroupTaskDetailContract {
         data object OnBackTap : UiAction
 
         data object OnToggleComplete : UiAction
+
+        /** Ticks one step of a staged group task. Shared with the group, like everything else here. */
+        data class OnSubtaskToggle(val subtaskId: Long, val isCompleted: Boolean) : UiAction
 
         data object OnEditTap : UiAction
 

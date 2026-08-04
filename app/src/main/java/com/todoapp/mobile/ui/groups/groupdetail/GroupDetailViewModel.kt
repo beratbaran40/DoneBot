@@ -18,6 +18,7 @@ import com.todoapp.mobile.data.model.network.data.GroupInvitationData
 import com.todoapp.mobile.domain.model.GroupActivity
 import com.todoapp.mobile.domain.model.GroupMember
 import com.todoapp.mobile.domain.model.GroupTask
+import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.domain.repository.BlockedUsersPreferences
 import com.todoapp.mobile.domain.repository.GroupRepository
@@ -45,11 +46,13 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 import java.util.Date
@@ -229,6 +232,10 @@ constructor(
             val blockedUserIds = blockedUsersPreferences.getBlockedIds()
             val visibleMembers = members.filter { it.userId !in blockedUserIds }
             val previousState = _uiState.value as? UiState.Success
+            // A recurring group task is "done" per day, and shared: any member's tick counts. The
+            // flat isCompleted flag still rules the one-off tasks.
+            val doneToday = groupRepository.observeGroupTasksDoneOn(LocalDate.now()).first()
+            val items = tasks.map { it.toUiItem(currentUserRole, membersById, doneToday) }
 
             _uiState.value =
                 UiState.Success(
@@ -236,9 +243,9 @@ constructor(
                     groupName = detail.name,
                     description = detail.description,
                     memberCount = visibleMembers.size,
-                    completedCount = tasks.count { it.isCompleted },
-                    pendingCount = tasks.count { !it.isCompleted },
-                    tasks = tasks.map { it.toUiItem(currentUserRole, membersById) },
+                    completedCount = items.count { it.isCompleted },
+                    pendingCount = items.count { !it.isCompleted },
+                    tasks = items,
                     members = visibleMembers.map { it.toUiItem(currentUserId) },
                     pendingInvites = detail.pendingInvitations.map { it.toUiItem() },
                     activities = activities.map { it.toUiItem() },
@@ -295,8 +302,14 @@ constructor(
                 assignee = null,
             )
         viewModelScope.launch {
-            groupRepository
-                .updateGroupTaskStatus(groupId, taskId, groupTask, isChecked)
+            // A routine completes ONE occurrence; the flat flag would retire the whole task. Which
+            // day is "today" here rather than the task's own date — the group list shows today.
+            val result = if (task.isRecurring) {
+                groupRepository.setGroupTaskDayCompletion(groupId, taskId, LocalDate.now(), isChecked)
+            } else {
+                groupRepository.updateGroupTaskStatus(groupId, taskId, groupTask, isChecked)
+            }
+            result
                 .onFailure {
                     updateSuccessState { s ->
                         s.copy(
@@ -731,6 +744,7 @@ constructor(
     private fun GroupTask.toUiItem(
         currentUserRole: String = "",
         membersById: Map<Long, GroupMember> = emptyMap(),
+        doneToday: Set<Long> = emptySet(),
     ): GroupTaskUiItem {
         val assigneeInitials =
             assignee
@@ -753,7 +767,9 @@ constructor(
             dueTime = dueDate?.let { formatDueDate(it) },
             rawDueDate = dueDate,
             priority = priority,
-            isCompleted = isCompleted,
+            // For a routine the question is "is TODAY done", which no flat flag can answer — the
+            // row's isCompleted would leave a daily chore ticked forever after its first completion.
+            isCompleted = if (recurrence != Recurrence.NONE) id in doneToday else isCompleted,
             isAssignedToMe = isAssignedToMe,
             canDelete = currentUserRole.uppercase() == "ADMIN",
             photoUrls = photoUrls,
@@ -761,6 +777,14 @@ constructor(
             locationAddress = locationAddress,
             locationLat = locationLat,
             locationLng = locationLng,
+            category = category,
+            customCategoryName = customCategoryName,
+            recurrence = recurrence,
+            recurrenceInterval = recurrenceInterval,
+            recurrenceByDay = recurrenceByDay,
+            subtaskTotal = subtasks.size,
+            subtaskDone = subtasks.count { it.isCompleted },
+            isRecurring = recurrence != Recurrence.NONE,
         )
     }
 

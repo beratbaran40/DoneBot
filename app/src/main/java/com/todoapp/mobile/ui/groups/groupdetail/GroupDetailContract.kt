@@ -1,8 +1,11 @@
 package com.todoapp.mobile.ui.groups.groupdetail
 
 import androidx.compose.runtime.Immutable
+import com.todoapp.mobile.domain.model.Recurrence
+import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.ui.home.TaskFormState
 import com.todoapp.mobile.ui.home.TaskFormUiAction
+import java.time.DayOfWeek
 
 object GroupDetailContract {
     // Tab indices shared by the tab row, the pager, and initialTab route/navigation call sites.
@@ -31,6 +34,23 @@ object GroupDetailContract {
         val locationAddress: String? = null,
         val locationLat: Double? = null,
         val locationLng: Double? = null,
+        /**
+         * The rule as raw fields rather than a rendered chip: the label needs string resources, and
+         * `taskChipLabel` is a @Composable, so it is resolved in the card exactly the way personal
+         * surfaces do it. Pre-formatting here would need a second, VM-side copy of that logic.
+         */
+        val category: TaskCategory = TaskCategory.PERSONAL,
+        val customCategoryName: String? = null,
+        val recurrence: Recurrence = Recurrence.NONE,
+        val recurrenceInterval: Int = 1,
+        val recurrenceByDay: Set<DayOfWeek> = emptySet(),
+        val subtaskTotal: Int = 0,
+        val subtaskDone: Int = 0,
+        /**
+         * True when this task repeats. Completion then means "this day's occurrence", not the whole
+         * task, and the checkbox writes to the per-day table instead of the flat flag.
+         */
+        val isRecurring: Boolean = false,
     )
 
     @Immutable

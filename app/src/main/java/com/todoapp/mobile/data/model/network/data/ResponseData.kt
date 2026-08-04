@@ -148,6 +148,18 @@ data class GroupTaskData(
     @SerialName("locationLng") val locationLng: Double? = null,
     @SerialName("locationName") val locationName: String? = null,
     @SerialName("locationAddress") val locationAddress: String? = null,
+    // Full task shape — a group task is the same server row as a personal one. Defaults describe the
+    // flat, non-repeating task group tasks were limited to, so an older server stays decodable.
+    @SerialName("isAllDay") val isAllDay: Boolean = false,
+    @SerialName("category") val category: String? = null,
+    @SerialName("customCategoryName") val customCategoryName: String? = null,
+    @SerialName("recurrence") val recurrence: String? = null,
+    @SerialName("recurrenceInterval") val recurrenceInterval: Int = 1,
+    @SerialName("recurrenceByDay") val recurrenceByDay: String? = null,
+    @SerialName("recurrenceUntil") val recurrenceUntil: Long? = null,
+    /** SECOND-of-day on the wire. */
+    @SerialName("reminderTimes") val reminderTimes: List<Int> = emptyList(),
+    @SerialName("subtasks") val subtasks: List<SubtaskData> = emptyList(),
 )
 
 @Serializable

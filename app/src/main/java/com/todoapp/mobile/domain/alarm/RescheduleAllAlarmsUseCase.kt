@@ -4,8 +4,10 @@ import com.todoapp.mobile.domain.constants.DailyPlanDefaults
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.domain.model.recurrenceRule
+import com.todoapp.mobile.domain.model.startDate
 import com.todoapp.mobile.domain.model.toAlarmItem
 import com.todoapp.mobile.domain.repository.DailyPlanPreferences
+import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.TaskRepository
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
@@ -18,13 +20,47 @@ class RescheduleAllAlarmsUseCase
 @Inject
 constructor(
     private val taskRepository: TaskRepository,
+    private val groupRepository: GroupRepository,
     private val dailyPlanPreferences: DailyPlanPreferences,
     private val alarmScheduler: AlarmScheduler,
 ) {
     suspend operator fun invoke() {
         rescheduleTaskAlarms()
         rescheduleRecurringTaskAlarms()
+        rescheduleRecurringGroupTaskAlarms()
         rescheduleDailyPlan()
+    }
+
+    /**
+     * Group reminders are local alarms too — a reboot wipes them exactly like personal ones, and
+     * nothing else re-arms them until the next group sync (which may be hours away, or never if the
+     * user doesn't open the group). Reads the local mirror rather than the network so a boot with no
+     * connectivity still restores what the device already knew.
+     */
+    private suspend fun rescheduleRecurringGroupTaskAlarms() {
+        val today = LocalDate.now()
+        val tasks = groupRepository.observeAllGroupTasks().first()
+            .filter { it.recurrence != Recurrence.NONE && it.reminderTimes.isNotEmpty() }
+            .filter { task -> task.recurrenceUntil?.let { !today.isAfter(it) } ?: true }
+        tasks.forEach { task ->
+            runCatching {
+                alarmScheduler.cancelRecurring(task.id, isGroupTask = true)
+                val anchor = task.startDate ?: return@runCatching
+                task.reminderTimes.take(MAX_REMINDER_SLOTS).forEachIndexed { slot, time ->
+                    alarmScheduler.scheduleRecurring(
+                        taskId = task.id,
+                        rule = task.recurrenceRule,
+                        anchorDate = anchor,
+                        hour = time.hour,
+                        minute = time.minute,
+                        message = task.title,
+                        slot = slot,
+                        isGroupTask = true,
+                    )
+                }
+            }.onFailure { Timber.tag(TAG).w(it, "group scheduleRecurring failed for taskId=%d", task.id) }
+        }
+        Timber.tag(TAG).d("Rescheduled %d recurring group task alarms", tasks.size)
     }
 
     private suspend fun rescheduleTaskAlarms() {

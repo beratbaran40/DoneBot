@@ -38,6 +38,9 @@ class GroupRepositoryImplTest {
         groupActivityLocalDataSource = mockk(relaxed = true),
         taskRemoteDataSource = mockk(relaxed = true),
         taskLocalDataSource = mockk(relaxed = true),
+        alarmScheduler = mockk(relaxed = true),
+        groupSubtaskDao = mockk(relaxed = true),
+        groupTaskDailyCompletionDao = mockk(relaxed = true),
         todoApi = mockk(relaxed = true),
         ioDispatcher = Dispatchers.Unconfined,
     )

@@ -32,12 +32,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.todoapp.mobile.BuildConfig
 import com.todoapp.mobile.R
+import com.todoapp.mobile.ui.common.components.SubtaskChecklist
 import com.todoapp.mobile.ui.common.components.TaskPhotoBannerEditable
+import com.todoapp.mobile.ui.common.components.recurrenceDisplayText
 import com.todoapp.mobile.ui.groups.groupdetail.AssigneeAvatar
 import com.todoapp.mobile.ui.groups.grouptaskdetail.GroupTaskDetailContract.TaskUiModel
 import com.todoapp.mobile.ui.groups.grouptaskdetail.GroupTaskDetailContract.UiAction
 import com.todoapp.mobile.ui.groups.grouptaskdetail.GroupTaskDetailContract.UiState
 import com.todoapp.uikit.components.TDPriorityBadge
+import com.todoapp.uikit.components.TDRoutineProgress
 import com.todoapp.uikit.components.TDScreenWithSheet
 import com.todoapp.uikit.components.TDTaskCompletionCard
 import com.todoapp.uikit.components.TDText
@@ -210,7 +213,42 @@ private fun TaskDetailBody(
                             )
                         }
                     }
+
+                    // "Every 2 days", "Mon · Wed · Fri" — the same sentence a personal routine gets.
+                    recurrenceDisplayText(
+                        recurrence = task.recurrence,
+                        recurrenceInterval = task.recurrenceInterval,
+                        recurrenceByDay = task.recurrenceByDay,
+                    )?.let { rule ->
+                        MetadataRow(label = stringResource(R.string.creation_frequency_label)) {
+                            TDText(
+                                text = rule,
+                                style = TDTheme.typography.subheading2,
+                                color = TDTheme.colors.onBackground,
+                            )
+                        }
+                    }
                 }
+            }
+
+            val dayIndex = task.routineDayIndex
+            val dayTotal = task.routineDayTotal
+            if (dayIndex != null && dayTotal != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                TDRoutineProgress(
+                    current = dayIndex,
+                    total = dayTotal,
+                    label = stringResource(R.string.routine_day_progress, dayIndex, dayTotal),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            if (task.subtasks.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                SubtaskChecklist(
+                    subtasks = task.subtasks,
+                    onToggle = { subtaskId, checked -> onAction(UiAction.OnSubtaskToggle(subtaskId, checked)) },
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))

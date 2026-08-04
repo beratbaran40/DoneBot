@@ -10,9 +10,16 @@ import java.time.LocalTime
 import java.util.UUID
 
 object CreationHubContract {
-    enum class Step { HUB_ROOT, TASK_TYPE, TASK_CORE }
+    enum class Step { HUB_ROOT, TASK_SCOPE, TASK_TYPE, TASK_CORE }
 
-    enum class TaskType { ONE_TIME, ROUTINE, STAGED, GROUP, CUSTOM }
+    /**
+     * Who the task belongs to. Orthogonal to [TaskType], which describes its *shape* — that is the
+     * whole point of asking separately: "Group" used to be a fifth type card, which quietly made a
+     * group task un-repeatable and un-staged because a task could only be one thing.
+     */
+    enum class TaskScope { PERSONAL, GROUP }
+
+    enum class TaskType { ONE_TIME, ROUTINE, STAGED, CUSTOM }
 
     /** A group the current user administers — carries both ids: local for members, remote for create. */
     @Immutable
@@ -30,6 +37,7 @@ object CreationHubContract {
     @Immutable
     data class UiState(
         val step: Step = Step.HUB_ROOT,
+        val scope: TaskScope? = null,
         val taskType: TaskType? = null,
         val title: String = "",
         val date: LocalDate = LocalDate.now(),
@@ -85,6 +93,8 @@ object CreationHubContract {
         data object OnPomodoroCardTap : UiAction
 
         data object OnGroupCardTap : UiAction
+
+        data class OnScopeSelect(val scope: TaskScope) : UiAction
 
         data class OnTypeSelect(val type: TaskType) : UiAction
 

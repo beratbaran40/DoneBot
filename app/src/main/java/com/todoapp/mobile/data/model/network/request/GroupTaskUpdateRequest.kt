@@ -26,4 +26,14 @@ data class GroupTaskUpdateRequest(
     val locationAddress: String? = null,
     /** Set true to wipe all four location fields in one request. */
     val clearLocation: Boolean = false,
+    val recurrence: String? = null,
+    val recurrenceInterval: Int? = null,
+    val recurrenceByDay: String? = null,
+    val recurrenceUntil: Long? = null,
+    /** SECOND-of-day on the wire, like every other reminder-time field. */
+    val reminderTimes: List<Int>? = null,
+    val category: String? = null,
+    val customCategoryName: String? = null,
+    /** Non-null replaces the whole step set; null leaves the existing steps untouched. */
+    val subtasks: List<SubtaskRequest>? = null,
 )

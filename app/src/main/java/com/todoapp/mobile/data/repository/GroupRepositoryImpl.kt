@@ -7,9 +7,13 @@ package com.todoapp.mobile.data.repository
 
 import com.todoapp.mobile.common.DomainException
 import com.todoapp.mobile.data.mapper.toDomain
+import com.todoapp.mobile.data.mapper.toDomainSubtasks
 import com.todoapp.mobile.data.mapper.toEntity
 import com.todoapp.mobile.data.mapper.toGroupTask
+import com.todoapp.mobile.data.mapper.toSubtaskEntities
 import com.todoapp.mobile.data.model.entity.GroupEntity
+import com.todoapp.mobile.data.model.entity.GroupSubtaskEntity
+import com.todoapp.mobile.data.model.entity.GroupTaskDailyCompletionEntity
 import com.todoapp.mobile.data.model.network.data.GroupData
 import com.todoapp.mobile.data.model.network.data.GroupMemberData
 import com.todoapp.mobile.data.model.network.data.GroupSummaryData
@@ -18,8 +22,12 @@ import com.todoapp.mobile.data.model.network.request.CreateGroupRequest
 import com.todoapp.mobile.data.model.network.request.GroupTaskUpdateRequest
 import com.todoapp.mobile.data.model.network.request.InviteMemberRequest
 import com.todoapp.mobile.data.model.network.request.ReportContentRequest
+import com.todoapp.mobile.data.model.network.request.SubtaskRequest
+import com.todoapp.mobile.data.model.network.request.TaskDailyCompletionRequest
 import com.todoapp.mobile.data.model.network.request.TransferOwnershipRequest
 import com.todoapp.mobile.data.model.network.request.UpdateGroupRequest
+import com.todoapp.mobile.data.source.local.GroupSubtaskDao
+import com.todoapp.mobile.data.source.local.GroupTaskDailyCompletionDao
 import com.todoapp.mobile.data.source.local.datasource.GroupActivityLocalDataSource
 import com.todoapp.mobile.data.source.local.datasource.GroupLocalDataSource
 import com.todoapp.mobile.data.source.local.datasource.GroupMemberLocalDataSource
@@ -28,11 +36,17 @@ import com.todoapp.mobile.data.source.local.datasource.TaskLocalDataSource
 import com.todoapp.mobile.data.source.remote.datasource.GroupRemoteDataSource
 import com.todoapp.mobile.data.source.remote.datasource.TaskRemoteDataSource
 import com.todoapp.mobile.di.IoDispatcher
+import com.todoapp.mobile.domain.alarm.AlarmScheduler
+import com.todoapp.mobile.domain.alarm.MAX_REMINDER_SLOTS
 import com.todoapp.mobile.domain.model.Group
 import com.todoapp.mobile.domain.model.GroupActivity
 import com.todoapp.mobile.domain.model.GroupMember
 import com.todoapp.mobile.domain.model.GroupTask
+import com.todoapp.mobile.domain.model.Recurrence
+import com.todoapp.mobile.domain.model.Subtask
 import com.todoapp.mobile.domain.model.Task
+import com.todoapp.mobile.domain.model.recurrenceRule
+import com.todoapp.mobile.domain.model.startDate
 import com.todoapp.mobile.domain.repository.GroupRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -43,9 +57,13 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.time.LocalDate
 import javax.inject.Inject
 
-@Suppress("LargeClass")
+// LongParameterList: this repository fronts five local tables, two remote sources and the alarm
+// scheduler, and every one is a real collaborator. Bundling them into a wrapper type would exist
+// only to satisfy the counter, not to make anything clearer.
+@Suppress("LargeClass", "LongParameterList")
 class GroupRepositoryImpl
 @Inject
 constructor(
@@ -56,6 +74,9 @@ constructor(
     private val groupActivityLocalDataSource: GroupActivityLocalDataSource,
     private val taskRemoteDataSource: TaskRemoteDataSource,
     private val taskLocalDataSource: TaskLocalDataSource,
+    private val alarmScheduler: AlarmScheduler,
+    private val groupSubtaskDao: GroupSubtaskDao,
+    private val groupTaskDailyCompletionDao: GroupTaskDailyCompletionDao,
     private val todoApi: com.todoapp.mobile.data.source.remote.api.ToDoApi,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : GroupRepository {
@@ -171,6 +192,11 @@ constructor(
     override suspend fun deleteAllLocalGroups(): Result<Unit> = withContext(ioDispatcher) {
         runCatching {
             groupTaskLocalDataSource.deleteAll()
+            // Explicit, because these two are keyed by the SERVER task id and carry no foreign key —
+            // exactly what lets them survive a sync refresh, and exactly what stops the group_tasks
+            // wipe above from cascading into them. Miss this and account B inherits A's ticks.
+            groupSubtaskDao.deleteAll()
+            groupTaskDailyCompletionDao.deleteAll()
             groupMemberLocalDataSource.deleteAll()
             groupActivityLocalDataSource.deleteAll()
             val all = groupLocalDataSource.getAllGroupsOrdered().first()
@@ -352,6 +378,80 @@ constructor(
             groupTaskLocalDataSource.deleteByRemoteId(taskId)
             invalidateGroupCache(groupId)
         }
+
+    override suspend fun setGroupTaskDayCompletion(
+        groupId: Long,
+        taskId: Long,
+        date: LocalDate,
+        completed: Boolean,
+    ): Result<Unit> {
+        val day = date.toEpochDay()
+        // Local first so the checkbox answers immediately; the group cache is invalidated either way
+        // so a failed push is corrected by the next refresh rather than silently diverging.
+        if (completed) {
+            groupTaskDailyCompletionDao.upsert(GroupTaskDailyCompletionEntity(remoteTaskId = taskId, date = day))
+        } else {
+            groupTaskDailyCompletionDao.delete(remoteTaskId = taskId, date = day)
+        }
+        return runCatching {
+            // The same endpoint personal tasks use — a group task is the same server row, and its
+            // authorization now accepts any member of the group rather than only the creator.
+            todoApi.setTaskDailyCompletion(
+                taskId,
+                TaskDailyCompletionRequest(date = day, completed = completed),
+            )
+            Unit
+        }.onSuccess { invalidateGroupCache(groupId) }
+    }
+
+    override fun observeGroupTasksDoneOn(date: LocalDate): Flow<Set<Long>> = groupTaskDailyCompletionDao
+        .observeDoneTaskIdsForDate(date.toEpochDay())
+        .map { it.toSet() }
+
+    override fun observeGroupSubtasks(taskId: Long): Flow<List<Subtask>> = groupSubtaskDao
+        .observeByTask(taskId)
+        .map { it.toDomainSubtasks() }
+
+    override suspend fun setGroupSubtaskCompletion(
+        groupId: Long,
+        taskId: Long,
+        steps: List<Subtask>,
+        subtaskId: Long,
+        isCompleted: Boolean,
+    ): Result<Unit> {
+        val next = steps.map { if (it.id == subtaskId) it.copy(isCompleted = isCompleted) else it }
+        return groupRemoteDataSource
+            .updateGroupTask(
+                groupId = groupId,
+                taskId = taskId,
+                // The server reconciles by remoteId, so every step must carry its own — a null id
+                // there would insert a duplicate and orphan the original.
+                request = GroupTaskUpdateRequest(
+                    subtasks = next.map {
+                        SubtaskRequest(
+                            remoteId = it.id,
+                            title = it.title,
+                            isCompleted = it.isCompleted,
+                        )
+                    },
+                ),
+            ).map { }
+            .onSuccess {
+                groupSubtaskDao.replaceForTask(
+                    taskId,
+                    next.mapIndexed { index, step ->
+                        GroupSubtaskEntity(
+                            remoteId = step.id,
+                            remoteTaskId = taskId,
+                            title = step.title,
+                            isCompleted = step.isCompleted,
+                            orderIndex = if (step.orderIndex >= 0) step.orderIndex else index,
+                        )
+                    },
+                )
+                invalidateGroupCache(groupId)
+            }
+    }
 
     override suspend fun updateGroupTaskStatus(
         groupId: Long,
@@ -691,18 +791,36 @@ constructor(
                 .first()
                 .find { it.remoteId == groupId } ?: return remote
         return runCatching {
-            groupTaskLocalDataSource.observeByGroupId(localGroup.id).first().map { it.toDomain() }
+            groupTaskLocalDataSource.observeByGroupId(localGroup.id).first().map { it.toDomain() }.withSteps()
         }
     }
 
     override fun observeGroupTasks(localGroupId: Long): Flow<List<GroupTask>> = groupTaskLocalDataSource.observeByGroupId(
         localGroupId
     ).map { entities ->
-        entities.map { it.toDomain() }
+        entities.map { it.toDomain() }.withSteps()
     }
 
     override fun observeAllGroupTasks(): Flow<List<GroupTask>> = groupTaskLocalDataSource.observeAll().map { entities ->
-        entities.map { it.toDomain() }
+        entities.map { it.toDomain() }.withSteps()
+    }
+
+    /**
+     * Fills in the steps, which live in their own table and so cannot come out of the row mapper.
+     * One query for the whole list rather than one per card — a group with 40 tasks would otherwise
+     * issue 40 reads every time the list recomposed.
+     */
+    private suspend fun List<GroupTask>.withSteps(): List<GroupTask> {
+        if (isEmpty()) return this
+        val stepsByTask = groupSubtaskDao
+            .getByTasks(map { it.id })
+            .groupBy { it.remoteTaskId }
+        // Nothing staged in this group — skip rebuilding every object for no change.
+        if (stepsByTask.isEmpty()) return this
+        return map { task ->
+            val steps = stepsByTask[task.id].orEmpty()
+            if (steps.isEmpty()) task else task.copy(subtasks = steps.toDomainSubtasks())
+        }
     }
 
     override suspend fun syncGroupTasks(
@@ -721,7 +839,36 @@ constructor(
                     .tasks
                     .map { it.toGroupTask() }
             persistGroupTasksLocally(remoteGroupId = remoteGroupId, tasks = tasks)
+            syncGroupTaskCompletions(tasks)
             groupTasksSyncedAt[remoteGroupId] = System.currentTimeMillis()
+        }
+    }
+
+    /**
+     * Pulls the completed occurrences of the group's recurring tasks. The endpoint is the personal
+     * one — a group task is the same server row — and it now returns rows written by *any* member,
+     * which is what makes completion shared. `TaskRepositoryImpl`'s own pull drops these ids because
+     * they map to no personal task, so this is the only path that keeps them.
+     */
+    private suspend fun syncGroupTaskCompletions(tasks: List<GroupTask>) {
+        val recurringIds = tasks.filter { it.recurrence != Recurrence.NONE }.map { it.id }.toSet()
+        if (recurringIds.isEmpty()) return
+        val today = LocalDate.now()
+        val from = today.minusDays(COMPLETION_WINDOW_PAST_DAYS).toEpochDay()
+        val to = today.plusDays(COMPLETION_WINDOW_FUTURE_DAYS).toEpochDay()
+        runCatching {
+            val items = todoApi.getTaskDailyCompletions(from, to).body()?.data?.items.orEmpty()
+            val rows = items
+                .filter { it.taskId in recurringIds }
+                .map { GroupTaskDailyCompletionEntity(remoteTaskId = it.taskId, date = it.date) }
+            // Full-window reconcile: a row the server no longer has was un-ticked on another device.
+            recurringIds.forEach { taskId ->
+                val serverDates = rows.filter { it.remoteTaskId == taskId }.map { it.date }.toSet()
+                groupTaskDailyCompletionDao.getDatesInRange(taskId, from, to)
+                    .filterNot { it in serverDates }
+                    .forEach { groupTaskDailyCompletionDao.delete(taskId, it) }
+            }
+            if (rows.isNotEmpty()) groupTaskDailyCompletionDao.insertAll(rows)
         }
     }
 
@@ -735,10 +882,53 @@ constructor(
                 .first()
                 .find { it.remoteId == remoteGroupId } ?: return
         val entities = tasks.map { it.toEntity(localGroupId = localGroup.id, remoteGroupId = remoteGroupId) }
+        // Read the previous id set BEFORE the wipe below: a task another member deleted is simply
+        // absent from `tasks`, and its alarm re-arms itself from its own extras forever unless it is
+        // cancelled here. Nothing else in the app ever learns that id existed.
+        val previousRemoteIds = groupTaskLocalDataSource
+            .observeByGroupId(localGroup.id)
+            .first()
+            .mapNotNull { it.remoteId }
+            .toSet()
         groupTaskLocalDataSource.deleteByGroupId(localGroup.id)
         groupTaskLocalDataSource.insertAll(entities)
+        // Steps live in their own table keyed by the SERVER id, precisely because the wholesale
+        // delete above churns local ids on every refresh.
+        tasks.forEach { groupSubtaskDao.replaceForTask(it.id, it.toSubtaskEntities()) }
         val remoteIds = tasks.map { it.id }
         if (remoteIds.isNotEmpty()) taskLocalDataSource.deleteByRemoteIds(remoteIds)
+        rearmGroupAlarms(previousRemoteIds = previousRemoteIds, tasks = tasks)
+    }
+
+    /**
+     * Group reminders are local alarms on every member's device — there is no server-side scheduler.
+     * Re-armed here because a sync is the only moment the client sees the whole current picture: what
+     * the group has now, and (via [previousRemoteIds]) what it no longer has.
+     *
+     * Cancel-then-arm rather than diffing per slot: a task whose reminder times shrank from three to
+     * two must not leave the third armed, and a blanket cancel is far cheaper to reason about than
+     * tracking which slots were live last time.
+     */
+    private fun rearmGroupAlarms(previousRemoteIds: Set<Long>, tasks: List<GroupTask>) {
+        val currentIds = tasks.map { it.id }.toSet()
+        (previousRemoteIds - currentIds).forEach { alarmScheduler.cancelRecurring(it, isGroupTask = true) }
+        tasks.forEach { task ->
+            alarmScheduler.cancelRecurring(task.id, isGroupTask = true)
+            if (task.recurrence == Recurrence.NONE) return@forEach
+            val anchor = task.startDate ?: return@forEach
+            task.reminderTimes.take(MAX_REMINDER_SLOTS).forEachIndexed { slot, time ->
+                alarmScheduler.scheduleRecurring(
+                    taskId = task.id,
+                    rule = task.recurrenceRule,
+                    anchorDate = anchor,
+                    hour = time.hour,
+                    minute = time.minute,
+                    message = task.title,
+                    slot = slot,
+                    isGroupTask = true,
+                )
+            }
+        }
     }
 
     private fun GroupData.toEntity(): GroupEntity = GroupEntity(
@@ -782,5 +972,9 @@ constructor(
         const val GROUPS_CACHE_TTL_MS = 60_000L
         const val GROUP_TASKS_TTL_MS = 60_000L
         const val GROUP_DETAIL_TTL_MS = 15_000L
+
+        // Same window TaskRepositoryImpl reconciles personal completions over, so the two stay in step.
+        const val COMPLETION_WINDOW_PAST_DAYS = 30L
+        const val COMPLETION_WINDOW_FUTURE_DAYS = 7L
     }
 }

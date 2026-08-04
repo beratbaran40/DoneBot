@@ -188,6 +188,10 @@ class AccountSwitchIsolationTest {
             // Cascade-deleted with their parent task, proven by the cascade test above.
             "task_reminders", "subtask_daily_completions",
             "groups", "group_tasks", "group_members", "group_activities",
+            // NOT cascade-deleted: both are keyed by the server task id and carry no foreign key, so
+            // they survive the per-sync churn of group_tasks rows. GroupRepositoryImpl
+            // .deleteAllLocalGroups clears them explicitly — see the group cascade test below.
+            "group_subtasks", "group_task_daily_completions",
             "pending_photos", "chat_messages",
         )
 

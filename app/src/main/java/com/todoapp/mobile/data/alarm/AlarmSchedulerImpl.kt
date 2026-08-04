@@ -125,6 +125,7 @@ class AlarmSchedulerImpl(
         item.taskId?.let { putExtra(AlarmFireReceiver.EXTRA_TASK_ID, it) }
     }
 
+    @Suppress("LongParameterList")
     override fun scheduleRecurring(
         taskId: Long,
         rule: RecurrenceRule,
@@ -133,6 +134,7 @@ class AlarmSchedulerImpl(
         minute: Int,
         message: String,
         slot: Int,
+        isGroupTask: Boolean,
     ) {
         if (rule.frequency == Recurrence.NONE) return
         // null = the rule is exhausted (its scheduled end has passed). Arming nothing is exactly how a
@@ -146,10 +148,11 @@ class AlarmSchedulerImpl(
             minute = minute,
             message = message,
             slot = slot,
+            isGroupTask = isGroupTask,
         )
         scheduleAt(
             triggerAtMillis = nextFire.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
-            pendingIntent = buildFirePendingIntent(recurringRequestCode(taskId, slot), intent),
+            pendingIntent = buildFirePendingIntent(recurringRequestCode(taskId, slot, isGroupTask), intent),
         )
     }
 
@@ -171,11 +174,11 @@ class AlarmSchedulerImpl(
         }.onFailure { Timber.tag(TAG).w(it, "scheduleAt failed") }
     }
 
-    override fun cancelRecurring(taskId: Long) {
+    override fun cancelRecurring(taskId: Long, isGroupTask: Boolean) {
         // Full sweep, not "however many reminders the task has now" — a slot dropped by an edit would
         // otherwise stay armed and keep re-arming itself from its own extras.
         for (slot in 0 until MAX_REMINDER_SLOTS) {
-            cancelAlarm(recurringRequestCode(taskId, slot))
+            cancelAlarm(recurringRequestCode(taskId, slot, isGroupTask))
         }
     }
 
@@ -211,6 +214,7 @@ class AlarmSchedulerImpl(
         minute: Int,
         message: String,
         slot: Int,
+        isGroupTask: Boolean,
     ): Intent {
         val base = if (Settings.canDrawOverlays(context)) {
             Intent(context, AlarmFireReceiver::class.java).apply {
@@ -246,6 +250,9 @@ class AlarmSchedulerImpl(
                 rule.until?.toEpochDay() ?: AlarmFireReceiver.NO_EPOCH_DAY,
             )
             putExtra(AlarmFireReceiver.EXTRA_REMINDER_SLOT, slot)
+            // Carried so the self-re-arm on fire lands in the SAME request-code space. Without it a
+            // group alarm would re-arm itself as a personal one and drift out of reach of cancel.
+            putExtra(AlarmFireReceiver.EXTRA_IS_GROUP_TASK, isGroupTask)
         }
     }
 
@@ -253,23 +260,17 @@ class AlarmSchedulerImpl(
      * Slot 0 deliberately keeps the pre-multi-reminder request code: an alarm armed by an older build
      * is then REPLACED (FLAG_UPDATE_CURRENT) instead of running alongside the new one.
      */
-    private fun recurringRequestCode(taskId: Long, slot: Int): Int = if (slot == 0) {
-        (RECURRING_TASK_REQUEST_BASE + taskId).toInt()
-    } else {
-        (MULTI_REMINDER_REQUEST_BASE + taskId * MAX_REMINDER_SLOTS + slot).toInt()
-    }
+    private fun recurringRequestCode(
+        taskId: Long,
+        slot: Int,
+        isGroupTask: Boolean = false,
+    ): Int = recurringAlarmRequestCode(taskId, slot, isGroupTask)
 
     private companion object {
         const val REQUEST_CODE_DAILY_PLAN = 10_001
 
-        // One-shot task request codes use TASK_REQUEST_BASE + taskId.
-        // Recurring task request codes use RECURRING_TASK_REQUEST_BASE + taskId (slot 0).
-        // Extra reminder slots use MULTI_REMINDER_REQUEST_BASE + taskId * MAX_REMINDER_SLOTS + slot.
-        // The bases live in disjoint namespaces so all of them can coexist without colliding; the
-        // multi-reminder space above 0x1000_0000 leaves room for ~234M task ids before Int overflow.
-        const val TASK_REQUEST_BASE = 0x0200_0000L
-        const val RECURRING_TASK_REQUEST_BASE = 0x0100_0000L
-        const val MULTI_REMINDER_REQUEST_BASE = 0x1000_0000L
+        // The request-code bases and their disjointness argument live in AlarmRequestCodes.kt, where
+        // they can be tested as the pure arithmetic they are.
 
         // 400 days covers YEARLY across a leap year, which is the widest gap any rule can produce.
         const val MAX_FIRE_LOOKAHEAD_DAYS = 400

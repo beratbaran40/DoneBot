@@ -11,6 +11,11 @@ import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.data.model.network.request.ReportTargetType
 import com.todoapp.mobile.domain.model.GroupMember
 import com.todoapp.mobile.domain.model.GroupTask
+import com.todoapp.mobile.domain.model.Recurrence
+import com.todoapp.mobile.domain.model.occurrenceIndex
+import com.todoapp.mobile.domain.model.occurrenceTotal
+import com.todoapp.mobile.domain.model.recurrenceRule
+import com.todoapp.mobile.domain.model.startDate
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.UserRepository
 import com.todoapp.mobile.navigation.NavigationEffect
@@ -25,11 +30,13 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 import java.util.Date
@@ -70,6 +77,7 @@ constructor(
         when (action) {
             UiAction.OnBackTap -> _navEffect.trySend(NavigationEffect.Back)
             UiAction.OnToggleComplete -> toggleComplete()
+            is UiAction.OnSubtaskToggle -> toggleSubtask(action.subtaskId, action.isCompleted)
             UiAction.OnEditTap -> openEditSheet()
             UiAction.OnEditDismiss -> updateSuccess { it.copy(isEditSheetOpen = false) }
             UiAction.OnEditSave -> saveEdit()
@@ -175,6 +183,8 @@ constructor(
                     )
                 }
 
+            // Shared per-day completion: any member's tick marks today's occurrence for everyone.
+            val doneToday = groupRepository.observeGroupTasksDoneOn(LocalDate.now()).first()
             groupRepository
                 .getGroupTasks(groupId, force = force)
                 .onSuccess { tasks ->
@@ -184,7 +194,10 @@ constructor(
                     } else {
                         _uiState.value =
                             UiState.Success(
-                                task = task.toUiModel(members.associateBy { m -> m.userId }),
+                                task = task.toUiModel(
+                                    membersById = members.associateBy { m -> m.userId },
+                                    doneToday = doneToday,
+                                ),
                                 groupName = detail?.name.orEmpty(),
                                 members = memberUiItems,
                             )
@@ -216,9 +229,39 @@ constructor(
                 dueDate = previousTask.rawDueDate,
                 assignee = null,
             )
-            groupRepository
-                .updateGroupTaskStatus(groupId, taskId, groupTask, newCompleted)
+            // A routine completes ONE occurrence — today's. The flat flag would retire the whole
+            // task, so a daily chore would never come back.
+            val result = if (previousTask.recurrence != Recurrence.NONE) {
+                groupRepository.setGroupTaskDayCompletion(groupId, taskId, LocalDate.now(), newCompleted)
+            } else {
+                groupRepository.updateGroupTaskStatus(groupId, taskId, groupTask, newCompleted)
+            }
+            result
                 .onFailure {
+                    _uiState.update { s -> (s as? UiState.Success)?.copy(task = previousTask) ?: s }
+                    _uiEffect.trySend(UiEffect.ShowToast(context.getString(R.string.failed_to_update_task)))
+                }
+        }
+    }
+
+    private fun toggleSubtask(subtaskId: Long, isCompleted: Boolean) {
+        val current = _uiState.value as? UiState.Success ?: return
+        val previousTask = current.task
+        val next = previousTask.subtasks.map {
+            if (it.id == subtaskId) it.copy(isCompleted = isCompleted) else it
+        }
+        // Optimistic, same as the completion toggle: the checkbox answers immediately and a failed
+        // push restores the whole step list rather than leaving one step out of step.
+        _uiState.value = current.copy(task = previousTask.copy(subtasks = next))
+        viewModelScope.launch {
+            groupRepository
+                .setGroupSubtaskCompletion(
+                    groupId = groupId,
+                    taskId = taskId,
+                    steps = previousTask.subtasks,
+                    subtaskId = subtaskId,
+                    isCompleted = isCompleted,
+                ).onFailure {
                     _uiState.update { s -> (s as? UiState.Success)?.copy(task = previousTask) ?: s }
                     _uiEffect.trySend(UiEffect.ShowToast(context.getString(R.string.failed_to_update_task)))
                 }
@@ -341,7 +384,10 @@ constructor(
         _uiState.update { current -> (current as? UiState.Success)?.let(transform) ?: current }
     }
 
-    private fun GroupTask.toUiModel(membersById: Map<Long, GroupMember> = emptyMap()): TaskUiModel {
+    private fun GroupTask.toUiModel(
+        membersById: Map<Long, GroupMember> = emptyMap(),
+        doneToday: Set<Long> = emptySet(),
+    ): TaskUiModel {
         val isAssignedToMe = assignee?.userId == currentUserId
         val assigneeInitials =
             assignee
@@ -362,7 +408,8 @@ constructor(
             isAllDay = isAllDay,
             timeStart = timeStart,
             timeEnd = timeEnd,
-            isCompleted = isCompleted,
+            // A routine's completion is per-occurrence; the flat flag can't express "today".
+            isCompleted = if (recurrence != Recurrence.NONE) id in doneToday else isCompleted,
             assigneeName = assignee?.displayName,
             assigneeInitials = assigneeInitials,
             assigneeAvatarUrl = assigneeAvatar,
@@ -375,7 +422,29 @@ constructor(
             locationAddress = locationAddress,
             locationLat = locationLat,
             locationLng = locationLng,
+            category = category,
+            customCategoryName = customCategoryName,
+            recurrence = recurrence,
+            recurrenceInterval = recurrenceInterval,
+            recurrenceByDay = recurrenceByDay,
+            subtasks = subtasks,
+            routineDayIndex = routineProgress()?.first,
+            routineDayTotal = routineProgress()?.second,
         )
+    }
+
+    /**
+     * "Day 12 of 30" for a bounded routine. Reuses the personal side's occurrence helpers, so a
+     * group routine counts its days exactly the way a personal one does — including the by-weekday
+     * case, where the count is a walk over real firing days rather than a subtraction.
+     */
+    private fun GroupTask.routineProgress(): Pair<Int, Int>? {
+        if (recurrence == Recurrence.NONE || recurrenceUntil == null) return null
+        val anchor = startDate ?: return null
+        val rule = recurrenceRule
+        val total = rule.occurrenceTotal(anchor) ?: return null
+        val index = rule.occurrenceIndex(anchor, LocalDate.now()) ?: return null
+        return index to total
     }
 
     private fun formatDueDate(timestamp: Long): String {

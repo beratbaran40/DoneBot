@@ -49,6 +49,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.BuildConfig
 import com.todoapp.mobile.R
+import com.todoapp.mobile.ui.common.components.categoryIconFor
+import com.todoapp.mobile.ui.common.components.taskChipLabel
 import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract.GroupTaskStatusFilter
 import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract.GroupTaskTimeFilter
 import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract.GroupTaskUiItem
@@ -586,6 +588,10 @@ private fun GroupTaskCard(
                         bottomStart = 12.dp,
                         bottomEnd = 12.dp,
                     ),
+                    categoryLabel = taskChipLabel(task),
+                    categoryIcon = categoryIconFor(task.category),
+                    subtaskTotal = task.subtaskTotal,
+                    subtaskDone = task.subtaskDone,
                     locationLabel = task.locationName,
                     onLocationClick = openLocation,
                 )
@@ -599,6 +605,10 @@ private fun GroupTaskCard(
                 taskText = task.title,
                 taskDescription = task.description,
                 onCheckBoxClick = onChecked,
+                categoryLabel = taskChipLabel(task),
+                categoryIcon = categoryIconFor(task.category),
+                subtaskTotal = task.subtaskTotal,
+                subtaskDone = task.subtaskDone,
                 locationLabel = task.locationName,
                 onLocationClick = openLocation,
             )
@@ -614,6 +624,19 @@ private fun GroupTaskCard(
         }
     }
 }
+
+/**
+ * The chip line for a group task card, from this screen's own UI projection. Delegates to the shared
+ * field-level builder so a group card says exactly what a personal one says for the same rule.
+ */
+@Composable
+private fun taskChipLabel(task: GroupTaskUiItem): String? = taskChipLabel(
+    category = task.category,
+    customCategoryName = task.customCategoryName,
+    recurrence = task.recurrence,
+    recurrenceInterval = task.recurrenceInterval,
+    recurrenceByDay = task.recurrenceByDay,
+)
 
 @Composable
 fun AssigneeAvatar(

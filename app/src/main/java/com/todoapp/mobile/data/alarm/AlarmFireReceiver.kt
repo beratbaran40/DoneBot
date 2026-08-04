@@ -108,10 +108,11 @@ class AlarmFireReceiver : BroadcastReceiver() {
             until = untilEpochDay.takeIf { it != NO_EPOCH_DAY }?.let { LocalDate.ofEpochDay(it) },
         )
         val slot = intent.getIntExtra(EXTRA_REMINDER_SLOT, 0)
+        val isGroupTask = intent.getBooleanExtra(EXTRA_IS_GROUP_TASK, false)
 
         runCatching {
             // Arms nothing when the rule is exhausted, which is how a bounded routine ends itself.
-            alarmScheduler.scheduleRecurring(taskId, rule, anchor, hour, minute, message, slot)
+            alarmScheduler.scheduleRecurring(taskId, rule, anchor, hour, minute, message, slot, isGroupTask)
         }.onFailure { Timber.tag(TAG).w(it, "failed to re-arm recurring alarm taskId=%d slot=%d", taskId, slot) }
     }
 
@@ -129,6 +130,12 @@ class AlarmFireReceiver : BroadcastReceiver() {
         const val EXTRA_RECURRENCE_BY_DAY: String = "com.todoapp.mobile.alarm.extra.RECURRENCE_BY_DAY"
         const val EXTRA_RECURRENCE_UNTIL_EPOCH_DAY: String = "com.todoapp.mobile.alarm.extra.RECURRENCE_UNTIL"
         const val EXTRA_REMINDER_SLOT: String = "com.todoapp.mobile.alarm.extra.REMINDER_SLOT"
+
+        /**
+         * Whether this alarm belongs to a group task. Absent (false) on everything armed before group
+         * reminders existed, which is exactly right — those were all personal.
+         */
+        const val EXTRA_IS_GROUP_TASK: String = "com.todoapp.mobile.alarm.extra.IS_GROUP_TASK"
 
         /** Mirrors AlarmSchedulerImpl.NO_EPOCH_DAY — "no scheduled end" in a primitive extra. */
         const val NO_EPOCH_DAY: Long = Long.MIN_VALUE

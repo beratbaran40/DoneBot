@@ -29,7 +29,12 @@ interface AlarmScheduler {
      *
      * [slot] 0 is the task's own reminder; slots 1.. are the extra times of a multi-reminder task.
      * Caller must pass a rule whose frequency != NONE.
+     *
+     * [isGroupTask] picks a separate request-code namespace. It is load-bearing, not cosmetic: a
+     * group task's id comes from the server while a personal one's is a local Room id, so the two
+     * counters overlap and would otherwise silently overwrite each other's alarms.
      */
+    @Suppress("LongParameterList")
     fun scheduleRecurring(
         taskId: Long,
         rule: RecurrenceRule,
@@ -38,6 +43,7 @@ interface AlarmScheduler {
         minute: Int,
         message: String,
         slot: Int = 0,
+        isGroupTask: Boolean = false,
     )
 
     /**
@@ -45,5 +51,5 @@ interface AlarmScheduler {
      * reminder count: editing 3 reminders down to 2 must not leave slot 2 armed, and an armed slot
      * re-arms itself from its own intent extras forever.
      */
-    fun cancelRecurring(taskId: Long)
+    fun cancelRecurring(taskId: Long, isGroupTask: Boolean = false)
 }

@@ -170,6 +170,18 @@ object LocalStorageModule {
 
     @Provides
     @Singleton
+    fun provideGroupSubtaskDao(
+        database: AppDatabase,
+    ): com.todoapp.mobile.data.source.local.GroupSubtaskDao = database.groupSubtaskDao()
+
+    @Provides
+    @Singleton
+    fun provideGroupTaskDailyCompletionDao(
+        database: AppDatabase,
+    ): com.todoapp.mobile.data.source.local.GroupTaskDailyCompletionDao = database.groupTaskDailyCompletionDao()
+
+    @Provides
+    @Singleton
     fun provideGroupMemberDao(database: AppDatabase): GroupMemberDao = database.groupMemberDao()
 
     @Provides

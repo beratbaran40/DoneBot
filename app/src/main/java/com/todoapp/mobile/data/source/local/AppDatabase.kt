@@ -12,6 +12,8 @@ import com.todoapp.mobile.data.model.entity.ChatMessageEntity
 import com.todoapp.mobile.data.model.entity.GroupActivityEntity
 import com.todoapp.mobile.data.model.entity.GroupEntity
 import com.todoapp.mobile.data.model.entity.GroupMemberEntity
+import com.todoapp.mobile.data.model.entity.GroupSubtaskEntity
+import com.todoapp.mobile.data.model.entity.GroupTaskDailyCompletionEntity
 import com.todoapp.mobile.data.model.entity.GroupTaskEntity
 import com.todoapp.mobile.data.model.entity.JournalEntryEntity
 import com.todoapp.mobile.data.model.entity.PendingPhotoEntity
@@ -26,7 +28,7 @@ import com.todoapp.mobile.data.source.local.converter.StringListConverter
 import com.todoapp.mobile.data.source.local.datasource.GroupDao
 
 @Database(
-    version = 29,
+    version = 30,
     entities = [
         TaskEntity::class,
         SubtaskEntity::class,
@@ -35,6 +37,8 @@ import com.todoapp.mobile.data.source.local.datasource.GroupDao
         PomodoroEntity::class,
         GroupEntity::class,
         GroupTaskEntity::class,
+        GroupSubtaskEntity::class,
+        GroupTaskDailyCompletionEntity::class,
         GroupMemberEntity::class,
         GroupActivityEntity::class,
         PendingPhotoEntity::class,
@@ -79,6 +83,11 @@ import com.todoapp.mobile.data.source.local.datasource.GroupDao
         // subtask_daily_completions tables. The defaults reproduce the legacy rule exactly, so every
         // existing row keeps behaving identically with no backfill.
         AutoMigration(from = 28, to = 29),
+        // Group tasks reach parity with personal ones: the recurrence rule, category and reminder
+        // times move onto group_tasks, plus the group_subtasks and group_task_daily_completions
+        // mirrors. Purely additive — the defaults describe the flat, non-repeating task a group task
+        // used to be, so every cached row keeps rendering exactly as before until a sync refills it.
+        AutoMigration(from = 29, to = 30),
     ],
 )
 @TypeConverters(AppDatabase.SyncStatusConverter::class, StringListConverter::class)
@@ -116,6 +125,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun groupDao(): GroupDao
 
     abstract fun groupTaskDao(): GroupTaskDao
+
+    abstract fun groupSubtaskDao(): GroupSubtaskDao
+
+    abstract fun groupTaskDailyCompletionDao(): GroupTaskDailyCompletionDao
 
     abstract fun groupMemberDao(): GroupMemberDao
 

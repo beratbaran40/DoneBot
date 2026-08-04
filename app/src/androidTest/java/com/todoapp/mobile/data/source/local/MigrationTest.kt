@@ -172,6 +172,76 @@ class MigrationTest {
         }
     }
 
+    @Test
+    fun migrate29To30_leavesCachedGroupTasksLookingExactlyAsBefore() {
+        helper.createDatabase(TEST_DB, 29).apply {
+            execSQL(
+                "INSERT INTO `groups` (id, name, description, remote_id, created_at, order_index) " +
+                    "VALUES (1, 'Fam', '', 42, 0, 0)",
+            )
+            execSQL(
+                "INSERT INTO group_tasks (id, remote_id, local_group_id, remote_group_id, title, is_completed) " +
+                    "VALUES (1, 900, 1, 42, 'Take out the bins', 0)",
+            )
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(TEST_DB, 30, true)
+        // A cached group task predates the rule columns, so the defaults must describe the flat,
+        // non-repeating task it has always been — otherwise every group list changes shape on update.
+        db.query(
+            "SELECT recurrence, recurrence_interval, recurrence_by_day, recurrence_until, reminder_times, category " +
+                "FROM group_tasks WHERE id = 1",
+        ).use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("NONE", cursor.getString(0))
+            assertEquals(1, cursor.getInt(1))
+            assertTrue(cursor.isNull(2))
+            assertTrue(cursor.isNull(3))
+            assertTrue(cursor.isNull(4))
+            assertEquals("PERSONAL", cursor.getString(5))
+        }
+        // Both new tables exist and start empty — a sync fills them, nothing is backfilled.
+        db.query("SELECT COUNT(*) FROM group_subtasks").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(0, cursor.getInt(0))
+        }
+        db.query("SELECT COUNT(*) FROM group_task_daily_completions").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(0, cursor.getInt(0))
+        }
+    }
+
+    @Test
+    fun groupTaskCompletionsSurviveTheDeleteAndReinsertOfASync() {
+        // The whole reason these two tables key on the SERVER id and carry no foreign key: a group
+        // refresh deletes every local group_tasks row and re-inserts. A cascade would take the ticks
+        // with it and the day would silently un-complete on every pull.
+        helper.createDatabase(TEST_DB, 29).apply { close() }
+        val db = helper.runMigrationsAndValidate(TEST_DB, 30, true)
+        db.execSQL(
+            "INSERT INTO `groups` (id, name, description, remote_id, created_at, order_index) " +
+                "VALUES (1, 'Fam', '', 42, 0, 0)",
+        )
+        db.execSQL(
+            "INSERT INTO group_tasks (id, remote_id, local_group_id, remote_group_id, title, is_completed) " +
+                "VALUES (1, 900, 1, 42, 'Water the plants', 0)",
+        )
+        db.execSQL("INSERT INTO group_task_daily_completions (remote_task_id, date) VALUES (900, 20000)")
+        db.execSQL("INSERT INTO group_subtasks (remote_id, remote_task_id, title, is_completed, order_index) " +
+            "VALUES (5, 900, 'Kitchen', 0, 0)")
+
+        db.execSQL("DELETE FROM group_tasks WHERE local_group_id = 1")
+
+        db.query("SELECT COUNT(*) FROM group_task_daily_completions WHERE remote_task_id = 900").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(1, cursor.getInt(0))
+        }
+        db.query("SELECT COUNT(*) FROM group_subtasks WHERE remote_task_id = 900").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(1, cursor.getInt(0))
+        }
+    }
+
     private companion object {
         const val TEST_DB = "migration-test"
     }

@@ -21,6 +21,7 @@ import com.todoapp.mobile.ui.common.taskform.TaskReminderTimesEditor
 import com.todoapp.mobile.ui.common.taskform.TaskRepeatUntilField
 import com.todoapp.mobile.ui.common.taskform.TaskSubtaskEditor
 import com.todoapp.mobile.ui.common.taskform.TaskWeekdayPicker
+import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskScope
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiAction
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiState
@@ -48,6 +49,13 @@ internal fun CreationHubCoreStep(
             isError = state.titleError,
             supportingText = if (state.titleError) stringResource(R.string.error_task_title_required) else null,
         )
+
+        // Who it belongs to comes before what shape it takes: a group task's audience changes how the
+        // rest of the form reads. Only rendered for the group scope — a personal task has no group,
+        // no assignee and no priority.
+        if (state.scope == TaskScope.GROUP) {
+            CreationHubGroupSection(state = state, onAction = onAction)
+        }
 
         // Field order is type-specific: routine surfaces frequency right after the title (before the
         // start date); one-time and staged keep the date first.
@@ -141,8 +149,7 @@ internal fun CreationHubCoreStep(
                     stepPlaceholder = { stringResource(CreationHubPlaceholders.stepRes(it)) },
                 )
             }
-            // GROUP is rendered by CreationHubGroupStep, never reaches here; arm kept for exhaustiveness.
-            TaskType.GROUP, null ->
+            null ->
                 TaskFormDateField(date = state.date, onSelect = { onAction(UiAction.OnDateSelect(it)) })
         }
 

@@ -12,14 +12,15 @@ import com.todoapp.mobile.ui.common.taskform.TaskFormType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiAction
 import com.todoapp.uikit.components.TDOptionCard
-import com.todoapp.uikit.theme.TDTheme
 import com.example.uikit.R as UiKitR
 
+/**
+ * The task's *shape*. Scope ("mine or the group's?") is a separate question asked one step earlier —
+ * "Group" used to sit here as a fifth card, which is what made a group task un-repeatable: a task
+ * could only be one of these, so choosing Group meant giving up Routine, Staged and Custom.
+ */
 @Composable
-internal fun CreationHubTypeStep(
-    showGroupCard: Boolean,
-    onAction: (UiAction) -> Unit,
-) {
+internal fun CreationHubTypeStep(onAction: (UiAction) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         TDOptionCard(
             title = stringResource(R.string.type_one_time_title),
@@ -49,15 +50,5 @@ internal fun CreationHubTypeStep(
             accentColor = taskTypeAccent(TaskFormType.CUSTOM),
             onClick = { onAction(UiAction.OnTypeSelect(TaskType.CUSTOM)) },
         )
-        // Only shown when the user administers at least one group.
-        if (showGroupCard) {
-            TDOptionCard(
-                title = stringResource(R.string.type_group_title),
-                subtitle = stringResource(R.string.type_group_subtitle),
-                icon = painterResource(R.drawable.ic_groups),
-                accentColor = TDTheme.colors.darkPurple,
-                onClick = { onAction(UiAction.OnTypeSelect(TaskType.GROUP)) },
-            )
-        }
     }
 }

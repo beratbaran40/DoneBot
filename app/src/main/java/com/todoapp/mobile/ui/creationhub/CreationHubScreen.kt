@@ -49,9 +49,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import com.todoapp.mobile.R
+import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.ui.common.components.taskTypeAccent
 import com.todoapp.mobile.ui.common.taskform.TaskFormType
+import com.todoapp.mobile.ui.creationhub.CreationHubContract.GroupOption
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.Step
+import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskScope
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiAction
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiEffect
@@ -109,14 +112,15 @@ fun CreationHubScreen(
         ) { step ->
             when (step) {
                 Step.HUB_ROOT -> CreationHubCarousel(onAction = onAction)
-                Step.TASK_TYPE ->
-                    CreationHubTypeStep(showGroupCard = state.adminGroups.isNotEmpty(), onAction = onAction)
-                Step.TASK_CORE ->
-                    if (state.taskType == TaskType.GROUP) {
-                        CreationHubGroupStep(state = state, onAction = onAction)
-                    } else {
-                        CreationHubCoreStep(state = state, onAction = onAction)
-                    }
+                Step.TASK_SCOPE ->
+                    CreationHubScopeStep(
+                        hasGroups = state.adminGroups.isNotEmpty(),
+                        selected = state.scope,
+                        onAction = onAction,
+                    )
+                Step.TASK_TYPE -> CreationHubTypeStep(onAction = onAction)
+                // One form for both scopes now — the group-only sections live inside it.
+                Step.TASK_CORE -> CreationHubCoreStep(state = state, onAction = onAction)
             }
         }
         if (showInfo) {
@@ -146,7 +150,13 @@ private fun CreationHubHeader(
         }
         return
     }
-    val titleRes = if (step == Step.HUB_ROOT) R.string.creation_hub_prompt else R.string.creation_type_title
+    // The scope step asks its own question in bold inside the step body, so the bar carries only the
+    // controls — two headings stacked would read as a title plus a subtitle rather than one question.
+    val titleRes = when (step) {
+        Step.HUB_ROOT -> R.string.creation_hub_prompt
+        Step.TASK_SCOPE -> null
+        else -> R.string.creation_type_title
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -155,11 +165,13 @@ private fun CreationHubHeader(
     ) {
         BackButton(onBack)
         Spacer(Modifier.width(8.dp))
-        TDText(
-            text = stringResource(titleRes),
-            style = TDTheme.typography.heading3.copy(fontWeight = FontWeight.SemiBold),
-            color = TDTheme.colors.onBackground,
-        )
+        titleRes?.let {
+            TDText(
+                text = stringResource(it),
+                style = TDTheme.typography.heading3.copy(fontWeight = FontWeight.SemiBold),
+                color = TDTheme.colors.onBackground,
+            )
+        }
         Spacer(Modifier.weight(1f))
         InfoButton(onInfo)
     }
@@ -243,12 +255,6 @@ private fun TypeHeaderBlock(taskType: TaskType) {
             accent = taskTypeAccent(TaskFormType.STAGED)
             nameRes = R.string.type_staged_title
             subtitleRes = R.string.type_staged_subtitle
-        }
-        TaskType.GROUP -> {
-            icon = painterResource(R.drawable.ic_groups)
-            accent = TDTheme.colors.darkPurple
-            nameRes = R.string.type_group_title
-            subtitleRes = R.string.type_group_subtitle
         }
         TaskType.CUSTOM -> {
             icon = painterResource(R.drawable.ic_custom)
@@ -433,10 +439,58 @@ private fun CreationHubCarouselPreview() {
 
 @TDPreview
 @Composable
+private fun CreationHubScopePreview() {
+    TDTheme {
+        CreationHubScreen(
+            state = UiState(
+                step = Step.TASK_SCOPE,
+                adminGroups = listOf(GroupOption(localId = 1, remoteId = 10, name = "Ev")),
+            ),
+            effect = emptyFlow(),
+            onAction = {},
+        )
+    }
+}
+
+@TDPreview
+@Composable
+private fun CreationHubScopeNoGroupsPreview() {
+    TDTheme {
+        CreationHubScreen(
+            state = UiState(step = Step.TASK_SCOPE),
+            effect = emptyFlow(),
+            onAction = {},
+        )
+    }
+}
+
+@TDPreview
+@Composable
 private fun CreationHubTypePreview() {
     TDTheme {
         CreationHubScreen(
             state = UiState(step = Step.TASK_TYPE),
+            effect = emptyFlow(),
+            onAction = {},
+        )
+    }
+}
+
+@TDPreview
+@Composable
+private fun CreationHubGroupCustomCorePreview() {
+    TDTheme {
+        CreationHubScreen(
+            state = UiState(
+                step = Step.TASK_CORE,
+                scope = TaskScope.GROUP,
+                taskType = TaskType.CUSTOM,
+                title = "Çöpü çıkar",
+                recurrence = Recurrence.DAILY,
+                adminGroups = listOf(GroupOption(localId = 1, remoteId = 10, name = "Ev")),
+                selectedGroupLocalId = 1,
+                selectedGroupRemoteId = 10,
+            ),
             effect = emptyFlow(),
             onAction = {},
         )

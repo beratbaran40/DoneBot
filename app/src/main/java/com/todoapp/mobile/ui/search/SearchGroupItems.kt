@@ -21,6 +21,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.domain.model.Group
 import com.todoapp.mobile.domain.model.GroupTask
+import com.todoapp.mobile.ui.common.components.categoryIconFor
+import com.todoapp.mobile.ui.common.components.taskChipLabel
 import com.todoapp.mobile.ui.search.SearchContract.UiAction
 import com.todoapp.uikit.components.TDTaskCardWithCheckbox
 import com.todoapp.uikit.components.TDText
@@ -90,6 +92,10 @@ internal fun SearchGroupTaskItem(
             taskDescription = groupTask.description,
             isChecked = groupTask.isCompleted,
             onCheckBoxClick = {},
+            categoryLabel = taskChipLabel(groupTask),
+            categoryIcon = categoryIconFor(groupTask.category),
+            subtaskTotal = groupTask.subtasks.size,
+            subtaskDone = groupTask.subtasks.count { it.isCompleted },
             locationLabel = groupTask.locationName,
             onLocationClick = openLocation,
         )

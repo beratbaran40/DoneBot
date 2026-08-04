@@ -40,4 +40,22 @@ data class GroupTaskEntity(
     @ColumnInfo(name = "location_lng") val locationLng: Double? = null,
     @ColumnInfo(name = "location_name") val locationName: String? = null,
     @ColumnInfo(name = "location_address") val locationAddress: String? = null,
+    @ColumnInfo(name = "category", defaultValue = "PERSONAL") val category: String = "PERSONAL",
+    @ColumnInfo(name = "custom_category_name") val customCategoryName: String? = null,
+    @ColumnInfo(name = "recurrence", defaultValue = "NONE") val recurrence: String = "NONE",
+    /** RRULE INTERVAL: fire every N periods of [recurrence]. 1 = every period. */
+    @ColumnInfo(name = "recurrence_interval", defaultValue = "1") val recurrenceInterval: Int = 1,
+    /** RRULE BYDAY as a CSV of [java.time.DayOfWeek] names; null/empty = the start date's own weekday. */
+    @ColumnInfo(name = "recurrence_by_day") val recurrenceByDay: String? = null,
+    /** RRULE UNTIL as an epoch day, inclusive. Null = repeats forever. */
+    @ColumnInfo(name = "recurrence_until") val recurrenceUntil: Long? = null,
+    /**
+     * Absolute reminder times as a CSV of MINUTE-of-day values (the wire format is SECOND-of-day —
+     * convert at the mapper or every reminder lands 60× off).
+     *
+     * A CSV here where personal tasks use a `task_reminders` table: that table exists so a reminder's
+     * `slot` stays stable across edits, and no slot can be stable on this side — a group sync deletes
+     * and re-inserts every local row. Group alarms are therefore swept and re-armed wholesale.
+     */
+    @ColumnInfo(name = "reminder_times") val reminderTimes: String? = null,
 )
