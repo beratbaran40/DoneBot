@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -28,7 +27,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -40,8 +38,11 @@ import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonSize
 import com.todoapp.uikit.components.TDOutlinedTextField
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.rememberPixelPainter
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 
 /**
  * One-shot dialog shown the first time a freshly created group's detail opens: nudges the creator
@@ -61,7 +62,7 @@ internal fun GroupDetailFirstInviteDialog(
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(24.dp),
+            shape = tdCorner(24.dp),
             color = TDTheme.colors.lightPending,
             tonalElevation = 8.dp,
             modifier = Modifier.widthIn(min = 280.dp, max = 360.dp),
@@ -94,7 +95,7 @@ internal fun GroupDetailFirstInviteDialog(
                     placeholder = stringResource(R.string.invite_member_email_hint),
                     leadingIcon = {
                         Icon(
-                            painter = painterResource(com.example.uikit.R.drawable.ic_mail),
+                            painter = tdPainter(com.example.uikit.R.drawable.ic_mail),
                             contentDescription = null,
                             tint = TDTheme.colors.gray,
                         )
@@ -152,7 +153,10 @@ private fun MascotHero() {
         contentAlignment = Alignment.Center,
     ) {
         Image(
-            painter = painterResource(com.example.uikit.R.drawable.img_donebot_recurring_yearly_night),
+            painter = rememberPixelPainter(
+                tdPainter(com.example.uikit.R.drawable.img_donebot_recurring_yearly_night),
+                96.dp,
+            ),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier

@@ -21,8 +21,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -47,9 +44,13 @@ import com.todoapp.uikit.components.TDButtonSize
 import com.todoapp.uikit.components.TDCompactOutlinedTextField
 import com.todoapp.uikit.components.TDDatePickerDialog
 import com.todoapp.uikit.components.TDPickerField
+import com.todoapp.uikit.components.TDSwitch
+import com.todoapp.uikit.components.TDSwitchTone
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDWheelTimePickerDialog
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdOutlineColor
 
 @Composable
 fun GroupTaskEditSheet(
@@ -81,7 +82,7 @@ fun GroupTaskEditSheet(
             modifier = Modifier.align(Alignment.End),
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_close),
+                painter = tdPainter(R.drawable.ic_close),
                 contentDescription = stringResource(com.todoapp.mobile.R.string.cd_close),
                 tint = TDTheme.colors.onBackground,
                 modifier = Modifier.size(20.dp),
@@ -110,7 +111,7 @@ fun GroupTaskEditSheet(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_clock),
+                painter = tdPainter(R.drawable.ic_clock),
                 contentDescription = null,
                 tint = TDTheme.colors.onBackground,
                 modifier = Modifier.size(24.dp),
@@ -122,14 +123,10 @@ fun GroupTaskEditSheet(
                 color = TDTheme.colors.onBackground,
                 modifier = Modifier.weight(1f),
             )
-            Switch(
+            TDSwitch(
                 checked = state.editIsAllDay,
                 onCheckedChange = { onAction(UiAction.OnEditAllDayChange(it)) },
-                colors =
-                SwitchDefaults.colors(
-                    checkedThumbColor = TDTheme.colors.purple,
-                    checkedTrackColor = TDTheme.colors.lightPurple,
-                ),
+                tone = TDSwitchTone.ACCENT,
             )
         }
         if (!state.editIsAllDay) {
@@ -143,7 +140,7 @@ fun GroupTaskEditSheet(
                         onClick = { showStartPicker = true },
                         leadingIcon = {
                             Icon(
-                                painter = painterResource(R.drawable.ic_clock),
+                                painter = tdPainter(R.drawable.ic_clock),
                                 contentDescription = null,
                                 tint = TDTheme.colors.onBackground,
                                 modifier = Modifier.size(24.dp),
@@ -160,7 +157,7 @@ fun GroupTaskEditSheet(
                         onClick = { showEndPicker = true },
                         leadingIcon = {
                             Icon(
-                                painter = painterResource(R.drawable.ic_clock),
+                                painter = tdPainter(R.drawable.ic_clock),
                                 contentDescription = null,
                                 tint = TDTheme.colors.onBackground,
                                 modifier = Modifier.size(24.dp),
@@ -262,7 +259,7 @@ private fun EditTaskAssigneeSelector(
                             .background(if (isSelected) TDTheme.colors.pendingGray else TDTheme.colors.lightPending)
                             .then(
                                 if (isSelected) {
-                                    Modifier.border(2.dp, TDTheme.colors.pendingGray, CircleShape)
+                                    Modifier.border(2.dp, tdOutlineColor(TDTheme.colors.onBackground), CircleShape)
                                 } else {
                                     Modifier
                                 },

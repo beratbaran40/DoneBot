@@ -20,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -28,8 +27,12 @@ import coil.compose.AsyncImage
 import com.todoapp.mobile.BuildConfig
 import com.todoapp.mobile.R
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.rememberPixelImageModel
+import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.image.tdPixelFilterQuality
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdOutlineColor
 
 /**
  * Horizontal avatar picker for assigning a group task to a member. The first chip is an explicit
@@ -88,11 +91,11 @@ private fun UnassignedChip(
                 .clip(CircleShape)
                 .background(if (selected) TDTheme.colors.pendingGray else TDTheme.colors.lightPending)
                 .then(
-                    if (selected) Modifier.border(2.dp, TDTheme.colors.pendingGray, CircleShape) else Modifier,
+                    if (selected) Modifier.border(2.dp, tdOutlineColor(TDTheme.colors.onBackground), CircleShape) else Modifier,
                 ),
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_groups),
+                painter = tdPainter(R.drawable.ic_groups),
                 contentDescription = null,
                 tint = if (selected) TDTheme.colors.surface else TDTheme.colors.pendingGray,
                 modifier = Modifier.size(20.dp),
@@ -129,12 +132,13 @@ private fun MemberChip(
                 .clip(CircleShape)
                 .background(if (selected) TDTheme.colors.pendingGray else TDTheme.colors.lightPending)
                 .then(
-                    if (selected) Modifier.border(2.dp, TDTheme.colors.pendingGray, CircleShape) else Modifier,
+                    if (selected) Modifier.border(2.dp, tdOutlineColor(TDTheme.colors.onBackground), CircleShape) else Modifier,
                 ),
         ) {
             if (absoluteAvatarUrl != null) {
                 AsyncImage(
-                    model = absoluteAvatarUrl,
+                    model = rememberPixelImageModel(absoluteAvatarUrl, 40.dp),
+                    filterQuality = tdPixelFilterQuality(),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.size(40.dp).clip(CircleShape),

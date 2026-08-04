@@ -29,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -38,6 +37,7 @@ import com.todoapp.mobile.R
 import com.todoapp.mobile.ui.webview.WebViewContract.UiAction
 import com.todoapp.mobile.ui.webview.WebViewContract.UiEffect
 import com.todoapp.uikit.extensions.collectWithLifecycle
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -139,7 +139,7 @@ fun WebViewScreen(
             contentAlignment = Alignment.TopEnd,
         ) {
             Icon(
-                painter = painterResource(android.R.drawable.ic_menu_close_clear_cancel),
+                painter = tdPainter(android.R.drawable.ic_menu_close_clear_cancel),
                 contentDescription = stringResource(R.string.cd_close),
                 tint = TDTheme.colors.black,
                 modifier =

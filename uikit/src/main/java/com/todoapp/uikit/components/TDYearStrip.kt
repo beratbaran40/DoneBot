@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,7 +65,10 @@ private fun MonthCell(
 ) {
     val colors = TDTheme.colors
     // MONOCHROME: neutral selection accent (near-white in dark) instead of blue for the current month.
-    val monthAccent = if (TDTheme.palette == PaletteKit.MONOCHROME) colors.onBackground else colors.purple
+    val monthAccent = when (TDTheme.palette) {
+        PaletteKit.MONOCHROME -> colors.onBackground
+        PaletteKit.ORIGINAL, PaletteKit.PIXEL -> colors.purple
+    }
     Column(
         modifier = Modifier
             .width(20.dp)
@@ -76,14 +78,14 @@ private fun MonthCell(
         Box(
             modifier = Modifier
                 .size(16.dp)
-                .clip(RoundedCornerShape(4.dp))
+                .clip(TDTheme.shapes.tiny)
                 .background(heatmapBucketColor(count, colors))
                 .then(
                     if (isSelected) {
                         Modifier.border(
                             width = 2.dp,
                             color = monthAccent,
-                            shape = RoundedCornerShape(4.dp),
+                            shape = TDTheme.shapes.tiny,
                         )
                     } else {
                         Modifier

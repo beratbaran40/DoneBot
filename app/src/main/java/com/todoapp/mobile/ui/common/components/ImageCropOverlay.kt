@@ -44,7 +44,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -59,6 +58,7 @@ import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonSize
 import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.Dispatchers
@@ -239,7 +239,7 @@ private fun ImageCropContent(
                 .padding(8.dp),
         ) {
             Icon(
-                painter = painterResource(UiKitR.drawable.ic_arrow_back),
+                painter = tdPainter(UiKitR.drawable.ic_arrow_back),
                 contentDescription = stringResource(R.string.cd_navigate_back),
                 tint = Color.White,
             )

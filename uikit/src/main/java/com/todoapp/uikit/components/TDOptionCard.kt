@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -22,14 +21,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
-import com.todoapp.uikit.modifier.neumorphicShadow
+import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.modifier.tdShadow
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdOutlineColor
 
 /**
  * Large, tappable choice card for the Creation Hub and its type fork. Colour identity lives in a
@@ -47,15 +47,19 @@ fun TDOptionCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
 ) {
-    val shape = RoundedCornerShape(16.dp)
+    val shape = TDTheme.shapes.large
     val cardModifier =
         modifier
             .fillMaxWidth()
             .then(
                 if (TDTheme.isDark) {
-                    Modifier.border(1.dp, TDTheme.colors.lightGray.copy(alpha = 0.25f), shape)
+                    Modifier.border(
+                        TDTheme.style.borderWidth,
+                        tdOutlineColor(TDTheme.colors.lightGray.copy(alpha = 0.25f)),
+                        shape,
+                    )
                 } else {
-                    Modifier.neumorphicShadow(
+                    Modifier.tdShadow(
                         lightShadow = TDTheme.colors.white.copy(alpha = 0.85f),
                         darkShadow = accentColor.copy(alpha = 0.15f),
                         cornerRadius = 16.dp,
@@ -123,19 +127,19 @@ private fun TDOptionCardHubPreview() {
             TDOptionCard(
                 title = "Görev ekle",
                 subtitle = "Tek seferlik, rutin ya da aşamalı",
-                icon = painterResource(R.drawable.ic_info),
+                icon = tdPainter(R.drawable.ic_info),
                 accentColor = TDTheme.colors.primary,
             )
             TDOptionCard(
                 title = "Pomodoro başlat",
                 subtitle = "Odaklanma seansı",
-                icon = painterResource(R.drawable.ic_info),
+                icon = tdPainter(R.drawable.ic_info),
                 accentColor = TDTheme.colors.orange,
             )
             TDOptionCard(
                 title = "Grup oluştur",
                 subtitle = "Görevleri paylaş",
-                icon = painterResource(R.drawable.ic_info),
+                icon = tdPainter(R.drawable.ic_info),
                 accentColor = TDTheme.colors.darkPurple,
             )
         }
@@ -149,7 +153,7 @@ private fun TDOptionCardSinglePreview() {
         TDOptionCard(
             title = "Aşamalı görev",
             subtitle = "Birkaç adımda biten büyük bir iş",
-            icon = painterResource(R.drawable.ic_info),
+            icon = tdPainter(R.drawable.ic_info),
             accentColor = TDTheme.colors.mediumGreen,
             modifier = Modifier.padding(16.dp),
         )

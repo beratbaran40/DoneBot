@@ -12,18 +12,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreviewDialog
 import com.todoapp.uikit.theme.TDTheme
 
@@ -46,14 +45,14 @@ fun TDFeatureExplainer(
             modifier = modifier
                 .padding(24.dp)
                 .widthIn(max = 400.dp)
-                .clip(RoundedCornerShape(20.dp))
+                .clip(TDTheme.shapes.xLarge)
                 .background(TDTheme.colors.background)
                 .verticalScroll(rememberScrollState())
                 .padding(24.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_info),
+                    painter = tdPainter(id = R.drawable.ic_info),
                     contentDescription = null,
                     tint = TDTheme.colors.purple,
                     modifier = Modifier.size(28.dp),
@@ -81,7 +80,7 @@ fun TDFeatureExplainer(
                         verticalAlignment = Alignment.Top,
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_check),
+                            painter = tdPainter(id = R.drawable.ic_check),
                             contentDescription = null,
                             tint = TDTheme.colors.purple,
                             modifier = Modifier.size(20.dp),

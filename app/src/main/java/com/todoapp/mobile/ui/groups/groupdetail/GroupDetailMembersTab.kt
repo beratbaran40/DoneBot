@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -25,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -38,6 +36,9 @@ import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonSize
 import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.rememberPixelImageModel
+import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.image.tdPixelFilterQuality
 import com.todoapp.uikit.theme.TDTheme
 import com.example.uikit.R as UiKitR
 
@@ -106,10 +107,10 @@ private fun MemberCard(
         Modifier
             .border(
                 width = 2.dp,
-                shape = RoundedCornerShape(12.dp),
+                shape = TDTheme.shapes.medium,
                 color = TDTheme.colors.pendingGray,
             ).fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(TDTheme.shapes.medium)
             .background(TDTheme.colors.background)
             .then(if (!member.isCurrentUser) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(16.dp),
@@ -171,7 +172,7 @@ private fun MemberCard(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Icon(
-                        painter = painterResource(UiKitR.drawable.ic_tasks_done),
+                        painter = tdPainter(UiKitR.drawable.ic_tasks_done),
                         contentDescription = null,
                         tint = TDTheme.colors.darkGreen,
                         modifier = Modifier.size(16.dp),
@@ -188,7 +189,7 @@ private fun MemberCard(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Icon(
-                        painter = painterResource(UiKitR.drawable.ic_sand_clock),
+                        painter = tdPainter(UiKitR.drawable.ic_sand_clock),
                         contentDescription = null,
                         tint = TDTheme.colors.pendingGray,
                         modifier = Modifier.size(16.dp),
@@ -285,10 +286,11 @@ fun MemberAvatar(
     ) {
         if (absoluteUrl != null) {
             AsyncImage(
-                model = absoluteUrl,
+                model = rememberPixelImageModel(absoluteUrl, size.dp),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.size(size.dp).clip(CircleShape),
+                filterQuality = tdPixelFilterQuality(),
+                modifier = Modifier.size(size.dp).clip(TDTheme.shapes.circle),
             )
         } else {
             TDText(
@@ -306,7 +308,7 @@ fun RoleBadge(role: String) {
     Box(
         modifier =
         Modifier
-            .clip(RoundedCornerShape(4.dp))
+            .clip(TDTheme.shapes.tiny)
             .background(if (isAdmin) TDTheme.colors.orange else TDTheme.colors.pendingGray.copy(alpha = 0.5f))
             .padding(horizontal = 8.dp, vertical = 2.dp),
     ) {

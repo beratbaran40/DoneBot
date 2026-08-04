@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.compose.LottieAnimation
@@ -34,7 +32,8 @@ import com.todoapp.mobile.ui.pomodorosummary.PomodoroSummaryContract.UiState
 import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDText
-import com.todoapp.uikit.modifier.neumorphicShadow
+import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.modifier.tdShadow
 import com.todoapp.uikit.theme.TDTheme
 import com.example.uikit.R as UiKitR
 
@@ -67,7 +66,7 @@ fun PomodoroSummaryScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    painter = painterResource(UiKitR.drawable.ic_check_svg),
+                    painter = tdPainter(UiKitR.drawable.ic_check_svg),
                     contentDescription = null,
                     tint = TDTheme.colors.white,
                     modifier = Modifier.size(40.dp),
@@ -162,7 +161,7 @@ private fun PomodoroStatCard(
     modifier: Modifier = Modifier,
 ) {
     val isDark = TDTheme.isDark
-    val statShape = RoundedCornerShape(16.dp)
+    val statShape = TDTheme.shapes.large
     Column(
         modifier =
         modifier
@@ -170,7 +169,7 @@ private fun PomodoroStatCard(
                 if (isDark) {
                     Modifier.border(1.dp, TDTheme.colors.lightGray.copy(alpha = 0.2f), statShape)
                 } else {
-                    Modifier.neumorphicShadow(
+                    Modifier.tdShadow(
                         lightShadow = TDTheme.colors.white.copy(alpha = 0.85f),
                         darkShadow = TDTheme.colors.darkPending.copy(alpha = 0.18f),
                         cornerRadius = 16.dp,

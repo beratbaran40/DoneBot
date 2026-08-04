@@ -21,10 +21,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
+
+/**
+ * Bar cap. Rounded kits keep the soft top the chart was drawn with; a stepped kit gets a flat
+ * block, because a curved cap cannot be expressed on a whole-pixel grid.
+ */
+@Composable
+private fun barShape(): Shape = if (TDTheme.motion.stepped) RectangleShape else RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)
 
 @Composable
 fun TDMonthlyBarChart(
@@ -113,7 +122,7 @@ private fun BarColumn(
             modifier = Modifier
                 .width(barWidth)
                 .height(BAR_AREA_HEIGHT * animatedFraction)
-                .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)),
+                .clip(barShape()),
         ) {
             if (total > 0) {
                 Column(modifier = Modifier.fillMaxWidth()) {

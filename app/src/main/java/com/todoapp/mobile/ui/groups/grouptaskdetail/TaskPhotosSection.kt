@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,7 +35,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -47,6 +45,7 @@ import com.todoapp.mobile.R
 import com.todoapp.mobile.ui.common.components.ImageCropOverlay
 import com.todoapp.mobile.ui.home.PendingPhoto
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -247,7 +246,7 @@ private fun PhotoActionButton(
         Modifier
             .fillMaxWidth()
             .height(56.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(TDTheme.shapes.large)
             .background(background)
             .clickable(onClick = onClick)
             .padding(horizontal = 24.dp),
@@ -255,7 +254,7 @@ private fun PhotoActionButton(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            painter = painterResource(iconRes),
+            painter = tdPainter(iconRes),
             contentDescription = null,
             tint = Color.White,
             modifier = Modifier.size(22.dp),
@@ -275,13 +274,13 @@ private fun AddPhotoTile(onClick: () -> Unit) {
         modifier =
         Modifier
             .size(80.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(TDTheme.shapes.medium)
             .background(TDTheme.colors.lightPending)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            painter = painterResource(com.example.uikit.R.drawable.ic_plus),
+            painter = tdPainter(com.example.uikit.R.drawable.ic_plus),
             contentDescription = stringResource(R.string.add_photo),
             tint = TDTheme.colors.pendingGray,
         )
@@ -298,7 +297,7 @@ private fun PendingPhotoTile(
             modifier =
             Modifier
                 .size(80.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(TDTheme.shapes.medium)
                 .background(TDTheme.colors.lightPending),
         ) {
             AsyncImage(
@@ -314,13 +313,13 @@ private fun PendingPhotoTile(
                 .size(24.dp)
                 .offset(x = 4.dp, y = (-4).dp)
                 .align(Alignment.TopEnd)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(TDTheme.shapes.medium)
                 .background(TDTheme.colors.crossRed)
                 .clickable(onClick = onCancel),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(com.example.uikit.R.drawable.ic_delete),
+                painter = tdPainter(com.example.uikit.R.drawable.ic_delete),
                 contentDescription = stringResource(R.string.delete),
                 tint = Color.White,
                 modifier = Modifier.size(14.dp),
@@ -338,7 +337,7 @@ private fun PhotoTile(
         modifier =
         Modifier
             .size(80.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(TDTheme.shapes.medium)
             .background(TDTheme.colors.lightPending)
             .pointerInput(url) {
                 detectTapGestures(

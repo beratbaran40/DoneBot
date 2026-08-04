@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -22,9 +21,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
@@ -51,12 +50,12 @@ fun TDPermissionPromptCard(
         modifier =
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
+            .clip(TDTheme.shapes.xLarge)
             .background(gradient)
             .border(
                 width = 1.dp,
                 color = TDTheme.colors.darkPending.copy(alpha = 0.25f),
-                shape = RoundedCornerShape(20.dp),
+                shape = TDTheme.shapes.xLarge,
             ),
     ) {
         Column(
@@ -78,7 +77,7 @@ fun TDPermissionPromptCard(
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        painter = painterResource(iconRes),
+                        painter = tdPainter(iconRes),
                         contentDescription = null,
                         tint = TDTheme.colors.surface,
                         modifier = Modifier.size(24.dp),
@@ -120,7 +119,7 @@ fun TDPermissionPromptCard(
                 .padding(top = 4.dp, end = 4.dp),
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_close),
+                painter = tdPainter(R.drawable.ic_close),
                 contentDescription = "Close",
                 tint = TDTheme.colors.onBackground,
                 modifier = Modifier.size(20.dp),

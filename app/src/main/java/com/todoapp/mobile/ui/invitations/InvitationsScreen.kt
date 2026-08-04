@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -47,7 +45,8 @@ import com.todoapp.uikit.components.TDButtonSize
 import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.extensions.collectWithLifecycle
-import com.todoapp.uikit.modifier.neumorphicShadow
+import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.modifier.tdShadow
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.flow.Flow
@@ -135,7 +134,7 @@ private fun EmptyBlock() {
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    painter = painterResource(com.example.uikit.R.drawable.ic_members),
+                    painter = tdPainter(com.example.uikit.R.drawable.ic_members),
                     contentDescription = null,
                     tint = TDTheme.colors.purple,
                     modifier = Modifier.size(36.dp),
@@ -194,10 +193,10 @@ private fun InvitationCard(
                 base.border(
                     width = 1.dp,
                     color = TDTheme.colors.lightGray.copy(alpha = 0.20f),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = TDTheme.shapes.large,
                 )
             } else {
-                base.neumorphicShadow(
+                base.tdShadow(
                     lightShadow = TDTheme.colors.white.copy(alpha = 0.85f),
                     darkShadow = TDTheme.colors.darkPending.copy(alpha = 0.15f),
                     cornerRadius = 16.dp,
@@ -205,7 +204,7 @@ private fun InvitationCard(
                 )
             }
         }
-        .clip(RoundedCornerShape(16.dp))
+        .clip(TDTheme.shapes.large)
         .background(TDTheme.colors.lightPending)
         .padding(16.dp)
     Column(modifier = cardModifier) {

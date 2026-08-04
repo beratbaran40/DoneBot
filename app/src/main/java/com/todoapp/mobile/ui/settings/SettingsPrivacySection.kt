@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
@@ -15,6 +14,7 @@ import com.todoapp.mobile.ui.settings.SettingsContract.UiAction
 import com.todoapp.uikit.components.TDSettingsGroup
 import com.todoapp.uikit.components.TDSettingsItem
 import com.todoapp.uikit.components.TDSwitch
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
@@ -29,14 +29,14 @@ internal fun SettingsPrivacySection(
     TDSettingsGroup(title = stringResource(R.string.settings_section_privacy_security)) {
         TDSettingsItem(
             title = stringResource(R.string.privacy_security),
-            icon = painterResource(R.drawable.ic_secret_mode),
+            icon = tdPainter(R.drawable.ic_secret_mode),
             iconTint = TDTheme.colors.purple,
             iconContainerColor = TDTheme.colors.purpleContainer,
             onClick = { onAction(UiAction.OnNavigateToSecretModeSettings) },
         )
         TDSettingsItem(
             title = stringResource(R.string.settings_blocked_users),
-            icon = painterResource(R.drawable.ic_settings_block),
+            icon = tdPainter(R.drawable.ic_settings_block),
             iconTint = TDTheme.colors.purple,
             iconContainerColor = TDTheme.colors.purpleContainer,
             onClick = { onAction(UiAction.OnNavigateToBlockedUsers) },
@@ -44,7 +44,7 @@ internal fun SettingsPrivacySection(
         TDSettingsItem(
             title = stringResource(R.string.settings_journal_biometric_protection_title),
             subtitle = stringResource(R.string.settings_journal_biometric_protection_description),
-            icon = painterResource(R.drawable.ic_settings_fingerprint),
+            icon = tdPainter(R.drawable.ic_settings_fingerprint),
             iconTint = TDTheme.colors.purple,
             iconContainerColor = TDTheme.colors.purpleContainer,
             trailingContent = {
@@ -57,7 +57,7 @@ internal fun SettingsPrivacySection(
         TDSettingsItem(
             title = stringResource(R.string.settings_camera_permission_title),
             subtitle = stringResource(R.string.settings_camera_permission_description),
-            icon = painterResource(R.drawable.ic_settings_camera),
+            icon = tdPainter(R.drawable.ic_settings_camera),
             iconTint = TDTheme.colors.purple,
             iconContainerColor = TDTheme.colors.purpleContainer,
             trailingContent = {
@@ -87,7 +87,7 @@ internal fun SettingsDataSection(
         TDSettingsItem(
             title = stringResource(R.string.settings_download_data_title),
             subtitle = stringResource(R.string.settings_download_data_description),
-            icon = painterResource(R.drawable.ic_settings_download),
+            icon = tdPainter(R.drawable.ic_settings_download),
             iconTint = TDTheme.colors.darkGreen,
             iconContainerColor = TDTheme.colors.lightGreen,
             onClick = { onAction(UiAction.OnDownloadDataClick) },
@@ -95,7 +95,7 @@ internal fun SettingsDataSection(
         TDSettingsItem(
             title = stringResource(R.string.settings_share_performance_diagnostics_title),
             subtitle = stringResource(R.string.settings_share_performance_diagnostics_description),
-            icon = painterResource(R.drawable.ic_settings_diagnostics),
+            icon = tdPainter(R.drawable.ic_settings_diagnostics),
             iconTint = TDTheme.colors.darkGreen,
             iconContainerColor = TDTheme.colors.lightGreen,
             trailingContent = {
@@ -108,7 +108,7 @@ internal fun SettingsDataSection(
         TDSettingsItem(
             title = stringResource(R.string.settings_crash_analytics_title),
             subtitle = stringResource(R.string.settings_crash_analytics_description),
-            icon = painterResource(R.drawable.ic_settings_bug),
+            icon = tdPainter(R.drawable.ic_settings_bug),
             iconTint = TDTheme.colors.darkGreen,
             iconContainerColor = TDTheme.colors.lightGreen,
             trailingContent = {

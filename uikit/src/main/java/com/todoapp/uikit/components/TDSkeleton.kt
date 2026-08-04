@@ -20,8 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -30,22 +28,47 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.todoapp.uikit.previews.TDPreview
+import com.todoapp.uikit.theme.SteppedEasing
 import com.todoapp.uikit.theme.TDTheme
 
 private const val SHIMMER_DURATION_MS = 1200
+private const val BLINK_DURATION_MS = 700
+private const val BLINK_STEPS = 2
 
 /**
- * Animated shimmer brush that sweeps a light highlight across the placeholder. Use as the
- * `background(brush = ...)` of a Box to make any rectangular block read as a loading skeleton.
+ * Animated placeholder fill. Use as the `background(brush = ...)` of a Box to make any rectangular
+ * block read as a loading skeleton.
+ *
+ * A kit with stepped motion gets a two-frame block blink instead of the sweeping gradient: a smooth
+ * highlight travelling across a placeholder is the one thing an 8-bit surface cannot do — there is
+ * no sub-pixel ramp on a machine that only has whole pixels. The gradient path below is untouched
+ * for every other kit.
  */
 @Composable
 private fun rememberShimmerBrush(): Brush {
-    val transition = rememberInfiniteTransition(label = "td-skeleton-shimmer")
     val base = TDTheme.colors.lightPending
     val highlight = TDTheme.colors.lightGray.copy(alpha = 0.45f)
+
+    if (TDTheme.motion.stepped) {
+        val transition = rememberInfiniteTransition(label = "td-skeleton-blink")
+        val step by transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(BLINK_DURATION_MS, easing = SteppedEasing(steps = BLINK_STEPS)),
+                repeatMode = RepeatMode.Reverse,
+            ),
+            label = "td-skeleton-blink-step",
+        )
+        return SolidColor(lerp(base, highlight, step))
+    }
+
+    val transition = rememberInfiniteTransition(label = "td-skeleton-shimmer")
     val translate by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1000f,
@@ -69,7 +92,7 @@ private fun rememberShimmerBrush(): Brush {
 @Composable
 fun TDSkeletonBox(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(8.dp),
+    shape: Shape = TDTheme.shapes.small,
 ) {
     Box(
         modifier = modifier
@@ -92,7 +115,7 @@ fun TDSkeletonText(
         modifier = modifier
             .width(width)
             .height(height),
-        shape = RoundedCornerShape(4.dp),
+        shape = TDTheme.shapes.tiny,
     )
 }
 
@@ -107,14 +130,14 @@ fun TDSkeletonCard(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(TDTheme.shapes.medium)
             .background(TDTheme.colors.lightPending.copy(alpha = 0.4f))
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         TDSkeletonBox(
             modifier = Modifier.size(36.dp),
-            shape = CircleShape,
+            shape = TDTheme.shapes.circle,
         )
         Spacer(Modifier.width(12.dp))
         Column(
@@ -136,7 +159,7 @@ private fun TdSkeletonBoxPreview() {
                 .fillMaxWidth()
                 .padding(16.dp)
                 .height(120.dp),
-            shape = RoundedCornerShape(16.dp),
+            shape = TDTheme.shapes.large,
         )
     }
 }

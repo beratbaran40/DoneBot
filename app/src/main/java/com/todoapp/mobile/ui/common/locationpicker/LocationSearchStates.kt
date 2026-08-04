@@ -22,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -33,6 +32,7 @@ import com.todoapp.uikit.components.TDErrorState
 import com.todoapp.uikit.components.TDSkeletonBox
 import com.todoapp.uikit.components.TDSkeletonText
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 
 private const val SKELETON_ROWS = 6
@@ -97,7 +97,7 @@ private fun LocationPinBadge() {
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            painter = painterResource(com.example.uikit.R.drawable.ic_pin),
+            painter = tdPainter(com.example.uikit.R.drawable.ic_pin),
             contentDescription = null,
             tint = TDTheme.colors.darkPending,
             modifier = Modifier.size(20.dp),
@@ -164,7 +164,7 @@ internal fun PoweredByGoogleFooter() {
         horizontalArrangement = Arrangement.Center,
     ) {
         Image(
-            painter = painterResource(
+            painter = tdPainter(
                 // Official Google attribution asset from the Places SDK. Non-transitive R → it lives
                 // under the library's own namespace, not the app's. Required by the Places ToS when
                 // predictions are shown off-map.

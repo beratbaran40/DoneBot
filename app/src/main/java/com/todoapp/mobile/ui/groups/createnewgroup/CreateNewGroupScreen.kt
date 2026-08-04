@@ -13,7 +13,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
@@ -30,6 +29,7 @@ import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDInfoCard
 import com.todoapp.uikit.components.TDLabeledTextField
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -55,7 +55,7 @@ private fun CreateNewGroupContent(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(
-            painterResource(com.example.uikit.R.drawable.ic_avatar_new_group),
+            tdPainter(com.example.uikit.R.drawable.ic_avatar_new_group),
             contentDescription = stringResource(new_group),
             modifier = Modifier.size(140.dp),
             tint = TDTheme.colors.pendingGray.copy(0.81f),

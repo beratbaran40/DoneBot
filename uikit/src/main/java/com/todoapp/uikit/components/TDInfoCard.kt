@@ -6,14 +6,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
@@ -25,13 +24,13 @@ fun TDInfoCard(
     Row(
         modifier =
         modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(TDTheme.shapes.medium)
             .background(color = TDTheme.colors.infoCardBgColor)
-            .border(1.dp, TDTheme.colors.lightGray, RoundedCornerShape(12.dp))
+            .border(1.dp, TDTheme.colors.lightGray, TDTheme.shapes.medium)
             .padding(16.dp),
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.ic_info),
+            painter = tdPainter(id = R.drawable.ic_info),
             contentDescription = null,
             tint = TDTheme.colors.pendingGray,
         )

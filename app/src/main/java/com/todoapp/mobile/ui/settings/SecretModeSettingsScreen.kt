@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -42,7 +41,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
@@ -54,6 +52,7 @@ import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.extensions.collectWithLifecycle
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -164,8 +163,8 @@ private fun SecretModeStatusCard(
         modifier =
         Modifier
             .fillMaxWidth()
-            .border(width = 1.5.dp, color = borderColor, shape = RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
+            .border(width = 1.5.dp, color = borderColor, shape = TDTheme.shapes.large),
+        shape = TDTheme.shapes.large,
         color = backgroundColor,
         tonalElevation = 0.dp,
     ) {
@@ -175,7 +174,7 @@ private fun SecretModeStatusCard(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_secret_mode),
+                painter = tdPainter(R.drawable.ic_secret_mode),
                 contentDescription = null,
                 tint = iconTint,
                 modifier =
@@ -252,9 +251,9 @@ private fun SecretModeOptionRow(
         modifier =
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(TDTheme.shapes.medium)
             .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
+        shape = TDTheme.shapes.medium,
         color = backgroundColor,
         tonalElevation = 0.dp,
     ) {

@@ -12,10 +12,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
@@ -37,7 +37,7 @@ fun TDEmptyState(
     ) {
         if (iconRes != null) {
             Icon(
-                painter = painterResource(iconRes),
+                painter = tdPainter(iconRes),
                 contentDescription = null,
                 tint = TDTheme.colors.pendingGray,
                 modifier = Modifier.size(64.dp),

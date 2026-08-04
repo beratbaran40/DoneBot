@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
@@ -38,7 +37,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -53,8 +51,10 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreviewForm
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 
 @Composable
 fun TDTaskCardWithCheckbox(
@@ -65,7 +65,7 @@ fun TDTaskCardWithCheckbox(
     onCheckBoxClick: (Boolean) -> Unit,
     isDragging: Boolean = false,
     isAnyDragging: Boolean = false,
-    shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(12.dp),
+    shape: androidx.compose.ui.graphics.Shape = TDTheme.shapes.medium,
     categoryLabel: String? = null,
     @androidx.annotation.DrawableRes categoryIcon: Int? = null,
     categoryStripeColor: Color? = null,
@@ -197,7 +197,7 @@ fun TDTaskCardWithCheckbox(
                             if (onSubtaskExpandToggle != null) {
                                 Spacer(Modifier.width(8.dp))
                                 Icon(
-                                    painter = painterResource(
+                                    painter = tdPainter(
                                         if (subtaskExpanded) R.drawable.ic_arrow_up else R.drawable.ic_arrow_down,
                                     ),
                                     contentDescription = stringResource(
@@ -211,7 +211,7 @@ fun TDTaskCardWithCheckbox(
                                     modifier = Modifier
                                         .minimumInteractiveComponentSize()
                                         .size(20.dp)
-                                        .clip(RoundedCornerShape(6.dp))
+                                        .clip(tdCorner(6.dp))
                                         .clickable { onSubtaskExpandToggle() },
                                 )
                             }
@@ -228,12 +228,12 @@ fun TDTaskCardWithCheckbox(
                             if (isPendingSync) {
                                 Box(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
+                                        .clip(TDTheme.shapes.small)
                                         .background(TDTheme.colors.pendingGray.copy(alpha = 0.18f))
                                         .padding(horizontal = 6.dp, vertical = 4.dp),
                                 ) {
                                     Icon(
-                                        painter = painterResource(R.drawable.ic_refresh),
+                                        painter = tdPainter(R.drawable.ic_refresh),
                                         contentDescription = stringResource(R.string.cd_sync_pending),
                                         tint = TDTheme.colors.darkPending,
                                         modifier = Modifier.size(12.dp),
@@ -249,12 +249,12 @@ fun TDTaskCardWithCheckbox(
                                     modifier = Modifier
                                         .background(
                                             color = TDTheme.colors.crossRed,
-                                            shape = RoundedCornerShape(8.dp),
+                                            shape = TDTheme.shapes.small,
                                         )
                                         .padding(horizontal = 8.dp, vertical = 2.dp),
                                 ) {
                                     Icon(
-                                        painter = painterResource(R.drawable.ic_warning),
+                                        painter = tdPainter(R.drawable.ic_warning),
                                         contentDescription = null,
                                         tint = TDTheme.colors.background,
                                         modifier = Modifier.size(12.dp),
@@ -276,13 +276,13 @@ fun TDTaskCardWithCheckbox(
                                     modifier = Modifier
                                         .background(
                                             color = if (isChecked) TDTheme.colors.darkGreen else TDTheme.colors.darkPending,
-                                            shape = RoundedCornerShape(8.dp),
+                                            shape = TDTheme.shapes.small,
                                         )
                                         .padding(horizontal = 8.dp, vertical = 2.dp),
                                 ) {
                                     if (categoryIcon != null) {
                                         Icon(
-                                            painter = painterResource(categoryIcon),
+                                            painter = tdPainter(categoryIcon),
                                             contentDescription = null,
                                             tint = TDTheme.colors.background,
                                             modifier = Modifier.size(12.dp),
@@ -299,13 +299,13 @@ fun TDTaskCardWithCheckbox(
                             }
                             if (!locationLabel.isNullOrBlank()) {
                                 val pillModifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
+                                    .clip(TDTheme.shapes.small)
                                     .background(if (isChecked) TDTheme.colors.darkGreen else TDTheme.colors.darkPending)
                                     .let { base -> if (onLocationClick != null) base.clickable(onClick = onLocationClick) else base }
                                     .padding(horizontal = 8.dp, vertical = 2.dp)
                                 Row(modifier = pillModifier, verticalAlignment = Alignment.CenterVertically) {
                                     Icon(
-                                        painter = painterResource(R.drawable.ic_pin),
+                                        painter = tdPainter(R.drawable.ic_pin),
                                         contentDescription = null,
                                         tint = TDTheme.colors.background,
                                         modifier = Modifier.size(12.dp),
@@ -376,7 +376,7 @@ private fun TDTaskCheckBox(
     isChecked: Boolean,
     onToggle: () -> Unit,
 ) {
-    val shape = RoundedCornerShape(6.dp)
+    val shape = tdCorner(6.dp)
 
     val checkboxBg by animateColorAsState(
         targetValue = if (isChecked) TDTheme.colors.mediumGreen else TDTheme.colors.pendingGray.copy(alpha = 0.08f),
@@ -420,14 +420,14 @@ private fun TDTaskCheckBox(
                 Modifier
                     .size(16.dp)
                     .scale(checkScale),
-                painter = painterResource(R.drawable.ic_check_svg),
+                painter = tdPainter(R.drawable.ic_check_svg),
                 contentDescription = null,
                 tint = TDTheme.colors.white,
             )
         } else {
             Icon(
                 modifier = Modifier.size(14.dp),
-                painter = painterResource(R.drawable.ic_sand_clock),
+                painter = tdPainter(R.drawable.ic_sand_clock),
                 contentDescription = null,
                 tint = TDTheme.colors.pendingGray,
             )

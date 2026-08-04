@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,17 +62,17 @@ private fun PriorityChip(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
-    // ORIGINAL palette shows the classic red/orange/blue ramp; MONOCHROME keeps HIGH red and
-    // encodes MEDIUM/LOW/None by gray-ink intensity (the text labels disambiguate either way).
-    val (bg, fg) = if (TDTheme.palette == PaletteKit.ORIGINAL) {
-        when (value?.uppercase()) {
+    // The chromatic kits show the classic red/orange/blue ramp — an NES palette is small but
+    // maximally saturated, so PIXEL belongs here. MONOCHROME alone keeps HIGH red and encodes
+    // MEDIUM/LOW/None by gray-ink intensity (the text labels disambiguate either way).
+    val (bg, fg) = when (TDTheme.palette) {
+        PaletteKit.ORIGINAL, PaletteKit.PIXEL -> when (value?.uppercase()) {
             "HIGH" -> TDTheme.colors.lightRed to TDTheme.colors.crossRed
             "MEDIUM" -> TDTheme.colors.lightOrange to TDTheme.colors.orange
             "LOW" -> TDTheme.colors.lightPending to TDTheme.colors.darkPending
             else -> TDTheme.colors.lightPending to TDTheme.colors.pendingGray
         }
-    } else {
-        when (value?.uppercase()) {
+        PaletteKit.MONOCHROME -> when (value?.uppercase()) {
             "HIGH" -> TDTheme.colors.lightRed to TDTheme.colors.crossRed
             "MEDIUM" -> TDTheme.colors.lightPending to TDTheme.colors.darkPending
             "LOW" -> TDTheme.colors.lightPending to TDTheme.colors.gray
@@ -84,11 +83,11 @@ private fun PriorityChip(
     val contentColor = if (isSelected) fg else fg.copy(alpha = 0.6f)
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(TDTheme.shapes.small)
             .background(containerBg)
             .then(
                 if (isSelected) {
-                    Modifier.border(2.dp, TDTheme.colors.pendingGray, RoundedCornerShape(8.dp))
+                    Modifier.border(TDTheme.style.borderWidth, TDTheme.colors.pendingGray, TDTheme.shapes.small)
                 } else {
                     Modifier
                 },

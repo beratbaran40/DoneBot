@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -31,7 +30,7 @@ fun TDSegmentedControl(
 ) {
     Row(
         modifier = modifier
-            .background(TDTheme.colors.onBackground.copy(alpha = 0.06f), RoundedCornerShape(12.dp))
+            .background(TDTheme.colors.onBackground.copy(alpha = 0.06f), TDTheme.shapes.medium)
             .padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
@@ -40,7 +39,7 @@ fun TDSegmentedControl(
             Surface(
                 onClick = { onSegmentSelected(index) },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(8.dp),
+                shape = TDTheme.shapes.small,
                 color = if (selected) TDTheme.colors.background else Color.Transparent,
                 shadowElevation = if (selected) 2.dp else 0.dp,
             ) {

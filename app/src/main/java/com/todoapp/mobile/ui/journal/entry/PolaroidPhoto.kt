@@ -19,13 +19,13 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.example.uikit.R
 import com.todoapp.mobile.R.string
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 import java.io.File
 import kotlin.math.abs
@@ -89,7 +89,7 @@ internal fun PolaroidPhoto(
                 .zIndex(2f),
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_close),
+                painter = tdPainter(R.drawable.ic_close),
                 contentDescription = stringResource(string.journal_entry_remove_photo_cd),
                 tint = Color.White,
                 modifier = Modifier.size(12.dp),

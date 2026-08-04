@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
@@ -16,6 +15,7 @@ import com.todoapp.mobile.ui.settings.SettingsContract.UiAction
 import com.todoapp.uikit.components.TDSettingsGroup
 import com.todoapp.uikit.components.TDSettingsItem
 import com.todoapp.uikit.components.TDSwitch
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
@@ -28,7 +28,7 @@ internal fun SettingsAccessibilitySection(
     TDSettingsGroup(title = stringResource(R.string.settings_section_accessibility)) {
         TDSettingsItem(
             title = stringResource(R.string.settings_open_system_a11y),
-            icon = painterResource(R.drawable.ic_settings_accessibility),
+            icon = tdPainter(R.drawable.ic_settings_accessibility),
             iconTint = TDTheme.colors.primary,
             iconContainerColor = TDTheme.colors.infoCardBgColor,
             onClick = {
@@ -43,7 +43,7 @@ internal fun SettingsAccessibilitySection(
         TDSettingsItem(
             title = stringResource(R.string.settings_reduce_motion),
             subtitle = stringResource(R.string.settings_reduce_motion_desc),
-            icon = painterResource(R.drawable.ic_settings_motion),
+            icon = tdPainter(R.drawable.ic_settings_motion),
             iconTint = TDTheme.colors.primary,
             iconContainerColor = TDTheme.colors.infoCardBgColor,
             trailingContent = {
@@ -56,7 +56,7 @@ internal fun SettingsAccessibilitySection(
         TDSettingsItem(
             title = stringResource(R.string.settings_larger_text),
             subtitle = stringResource(R.string.settings_larger_text_desc),
-            icon = painterResource(R.drawable.ic_settings_text_size),
+            icon = tdPainter(R.drawable.ic_settings_text_size),
             iconTint = TDTheme.colors.primary,
             iconContainerColor = TDTheme.colors.infoCardBgColor,
             onClick = {

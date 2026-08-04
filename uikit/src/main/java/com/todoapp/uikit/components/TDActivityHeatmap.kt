@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -31,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDColor
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -212,7 +212,7 @@ private fun HeatmapCell(
             .size(cellSize)
             .background(
                 color = heatmapBucketColor(count, colors),
-                shape = RoundedCornerShape(3.dp),
+                shape = tdCorner(3.dp),
             )
             .clickable { onClick(date) }
             .semantics { contentDescription = description },
@@ -275,7 +275,7 @@ private fun HeatmapLegend(legendLessLabel: String, legendMoreLabel: String) {
                     .size(DEFAULT_CELL_SIZE)
                     .background(
                         color = heatmapBucketColor(sample, colors),
-                        shape = RoundedCornerShape(3.dp),
+                        shape = tdCorner(3.dp),
                     ),
             )
         }

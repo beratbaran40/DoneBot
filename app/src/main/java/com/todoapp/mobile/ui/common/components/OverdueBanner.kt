@@ -9,16 +9,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
@@ -38,13 +37,13 @@ internal fun OverdueBanner(
         Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
-            .background(TDTheme.colors.lightRed, RoundedCornerShape(12.dp))
+            .background(TDTheme.colors.lightRed, TDTheme.shapes.medium)
             .clickable(onClick = onView)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_warning),
+            painter = tdPainter(R.drawable.ic_warning),
             contentDescription = null,
             tint = TDTheme.colors.crossRed,
             modifier = Modifier.size(20.dp),

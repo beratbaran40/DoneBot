@@ -22,14 +22,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,7 +41,6 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
@@ -66,8 +62,12 @@ import com.todoapp.uikit.components.TDLocationPicker
 import com.todoapp.uikit.components.TDPickerField
 import com.todoapp.uikit.components.TDRecurrencePicker
 import com.todoapp.uikit.components.TDReminderOffsetPicker
+import com.todoapp.uikit.components.TDSwitch
+import com.todoapp.uikit.components.TDSwitchTone
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDWheelTimePickerDialog
+import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.theme.TDCornerStyle
 import com.todoapp.uikit.theme.TDTheme
 import java.time.LocalDateTime
 
@@ -105,7 +105,7 @@ internal fun AddTaskSheet(
                 onClick = { onAction(TaskFormUiAction.Dismiss) },
             ) {
                 Icon(
-                    painterResource(R.drawable.ic_close),
+                    tdPainter(R.drawable.ic_close),
                     tint = TDTheme.colors.onBackground,
                     contentDescription = stringResource(com.todoapp.mobile.R.string.close_button),
                 )
@@ -133,7 +133,7 @@ internal fun AddTaskSheet(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_clock),
+                painter = tdPainter(R.drawable.ic_clock),
                 tint = TDTheme.colors.onBackground,
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
@@ -145,13 +145,10 @@ internal fun AddTaskSheet(
                 color = TDTheme.colors.onBackground,
                 modifier = Modifier.weight(1f),
             )
-            Switch(
+            TDSwitch(
                 checked = formState.isAllDay,
                 onCheckedChange = { onAction(TaskFormUiAction.AllDayChange(it)) },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = TDTheme.colors.purple,
-                    checkedTrackColor = TDTheme.colors.lightPurple,
-                ),
+                tone = TDSwitchTone.ACCENT,
             )
         }
         if (!formState.isAllDay) {
@@ -168,7 +165,7 @@ internal fun AddTaskSheet(
                         supportingText = formState.timeErrorRes?.let { stringResource(it) },
                         leadingIcon = {
                             Icon(
-                                painter = painterResource(R.drawable.ic_clock),
+                                painter = tdPainter(R.drawable.ic_clock),
                                 tint = TDTheme.colors.onBackground,
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp),
@@ -187,7 +184,7 @@ internal fun AddTaskSheet(
                         isError = formState.timeErrorRes != null,
                         leadingIcon = {
                             Icon(
-                                painter = painterResource(R.drawable.ic_clock),
+                                painter = tdPainter(R.drawable.ic_clock),
                                 tint = TDTheme.colors.onBackground,
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp),
@@ -214,12 +211,12 @@ internal fun AddTaskSheet(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(TDTheme.colors.background, RoundedCornerShape(8.dp))
+                    .background(TDTheme.colors.background, TDTheme.shapes.small)
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_warning),
+                    painter = tdPainter(R.drawable.ic_warning),
                     contentDescription = null,
                     tint = TDTheme.colors.orange,
                     modifier = Modifier.size(18.dp),
@@ -331,7 +328,7 @@ private fun GroupAssignmentSection(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    painter = painterResource(com.todoapp.mobile.R.drawable.ic_groups),
+                    painter = tdPainter(com.todoapp.mobile.R.drawable.ic_groups),
                     contentDescription = null,
                     tint = TDTheme.colors.pendingGray,
                     modifier = Modifier.size(24.dp),
@@ -348,7 +345,11 @@ private fun GroupAssignmentSection(
                     onCheckedChange = { onGroupSelected(group.groupId) },
                     colors =
                     CheckboxDefaults.colors(
-                        checkedColor = TDTheme.colors.pendingGray,
+                        checkedColor = if (TDTheme.shapes.cornerStyle == TDCornerStyle.PIXEL) {
+                            TDTheme.colors.mediumGreen
+                        } else {
+                            TDTheme.colors.pendingGray
+                        },
                         uncheckedColor = TDTheme.colors.onBackground.copy(alpha = 0.5f),
                     ),
                 )
@@ -393,7 +394,7 @@ private fun DetailsSection(
             )
             Icon(
                 painter =
-                painterResource(
+                tdPainter(
                     if (isExpanded) {
                         R.drawable.ic_outline_expand_circle_down_24
                     } else {
@@ -443,12 +444,12 @@ private fun DetailsSection(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(TDTheme.colors.background, RoundedCornerShape(8.dp))
+                            .background(TDTheme.colors.background, TDTheme.shapes.small)
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_warning),
+                            painter = tdPainter(R.drawable.ic_warning),
                             contentDescription = null,
                             tint = TDTheme.colors.orange,
                             modifier = Modifier.size(18.dp),
@@ -527,7 +528,7 @@ private fun SecretCheckbox(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val shape = RoundedCornerShape(4.dp)
+    val shape = TDTheme.shapes.tiny
     val bgColor by animateColorAsState(
         targetValue = if (checked) TDTheme.colors.pendingGray else Color.Transparent,
         animationSpec = tween(durationMillis = 200),
@@ -577,7 +578,7 @@ private fun SecretCheckbox(
         contentAlignment = Alignment.Center,
     ) {
         Image(
-            painter = painterResource(com.todoapp.mobile.R.drawable.ic_secret_mode),
+            painter = tdPainter(com.todoapp.mobile.R.drawable.ic_secret_mode),
             contentDescription = null,
             colorFilter = ColorFilter.tint(TDTheme.colors.white),
             modifier = Modifier

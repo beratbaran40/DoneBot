@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.windowsizeclass.WindowHeightSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -31,8 +30,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.LocalWindowSizeClass
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.rememberPixelPainter
 import com.todoapp.uikit.modifier.gridBackground
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 
 /** Max width of the auth form column — a single readable column on any screen. */
 val AuthFormMaxWidth = 400.dp
@@ -89,7 +90,13 @@ fun AuthScaffold(
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .gridBackground(baseColor = TDTheme.colors.pendingGray, lineColor = TDTheme.colors.gridLine)
+                .gridBackground(
+                    baseColor = TDTheme.colors.pendingGray,
+                    lineColor = TDTheme.colors.gridLine,
+                    spacing = TDTheme.style.gridSpacing,
+                    lineWidth = TDTheme.style.gridLineWidth,
+                    style = TDTheme.style.gridStyle,
+                )
                 .verticalScroll(rememberScrollState())
                 .imePadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -114,7 +121,7 @@ private fun AuthFormColumn(
     val styled =
         if (card) {
             base
-                .clip(RoundedCornerShape(32.dp))
+                .clip(tdCorner(32.dp))
                 .background(TDTheme.colors.background)
                 .padding(start = 24.dp, end = 24.dp, top = 28.dp)
         } else {
@@ -145,14 +152,23 @@ fun AuthBrandPanel(
         }
     Column(
         modifier = modifier
-            .gridBackground(baseColor = TDTheme.colors.pendingGray, lineColor = TDTheme.colors.gridLine)
+            .gridBackground(
+                baseColor = TDTheme.colors.pendingGray,
+                lineColor = TDTheme.colors.gridLine,
+                spacing = TDTheme.style.gridSpacing,
+                lineWidth = TDTheme.style.gridLineWidth,
+                style = TDTheme.style.gridStyle,
+            )
             .statusBarsPadding()
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Image(
-            painter = painterResource(com.example.uikit.R.drawable.img_donebot_alarm_reminder_light),
+            painter = rememberPixelPainter(
+                painterResource(com.example.uikit.R.drawable.img_donebot_alarm_reminder_light),
+                illustrationSize * BRAND_ROBOT_ZOOM,
+            ),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.size(illustrationSize * BRAND_ROBOT_ZOOM),

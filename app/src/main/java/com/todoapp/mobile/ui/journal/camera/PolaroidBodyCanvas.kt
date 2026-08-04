@@ -28,6 +28,8 @@ import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
+import com.todoapp.uikit.image.rememberPixelBitmap
+import com.todoapp.uikit.image.tdPixelFilterQuality
 import com.todoapp.uikit.theme.PolaroidColors
 import com.todoapp.uikit.theme.TDTheme
 
@@ -49,7 +51,12 @@ internal fun SkeuomorphicPolaroidCanvas(
     val textMeasurer = rememberTextMeasurer()
     val currentOnShutterClick by rememberUpdatedState(onShutterClick)
     val colors = TDTheme.colors.polaroid
-    val brandIcon = ImageBitmap.imageResource(com.todoapp.mobile.R.drawable.img_donebot_new_logo)
+    // The branding sticker is the camera's own mark, so it follows the kit like every other
+    // DoneBot artwork — unlike the polaroid PRINT, which stays faithful in every kit.
+    val brandIcon = rememberPixelBitmap(
+        ImageBitmap.imageResource(com.todoapp.mobile.R.drawable.img_donebot_new_logo),
+    )
+    val brandFilter = tdPixelFilterQuality()
 
     Spacer(
         modifier = Modifier
@@ -276,7 +283,7 @@ internal fun SkeuomorphicPolaroidCanvas(
                         drawEjectSlot(m.slotMouth, colors)
                         drawPerspectiveStripe(w, m.topBodyBottomW, m.stripeStartY, ledgeTopY, lipTopY, trayTopY, colors)
                         drawLensAssembly(m.lensCenter, m.lensSize, shadowPaint25, specularPaint, colors)
-                        drawBranding(m.brandingRect, shadowPaint8, colors, brandIcon)
+                        drawBranding(m.brandingRect, shadowPaint8, colors, brandIcon, brandFilter)
                         drawFlash(m.flashCenter, m.flashSize, shadowPaint15, colors)
                         drawShutterButton(m.shutterCenter, m.shutterRadius, isShutterPressed, shadowPaint12, colors)
                         drawExposureDial(m.dialCenter, m.dialRadius, shadowPaint10, dialHighlightPaint, colors)

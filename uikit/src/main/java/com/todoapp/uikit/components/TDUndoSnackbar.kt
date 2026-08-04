@@ -24,12 +24,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
@@ -58,7 +59,7 @@ fun TDUndoSnackbar(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .widthIn(max = 520.dp),
-        shape = RoundedCornerShape(22.dp),
+        shape = tdCorner(22.dp),
         tonalElevation = 6.dp,
         color = TDTheme.colors.onBackground,
         contentColor = TDTheme.colors.background,
@@ -86,7 +87,7 @@ fun TDUndoSnackbar(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_delete),
+                    painter = tdPainter(R.drawable.ic_delete),
                     contentDescription = null,
                     tint = TDTheme.colors.crossRed,
                     modifier = Modifier.size(20.dp),

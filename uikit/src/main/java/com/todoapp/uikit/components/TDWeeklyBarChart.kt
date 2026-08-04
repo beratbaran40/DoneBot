@@ -31,19 +31,29 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreviewWide
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 import kotlin.math.max
+
+/**
+ * Bar cap. Rounded kits keep the soft top the chart was drawn with; a stepped kit gets a flat
+ * block, because a curved cap cannot be expressed on a whole-pixel grid.
+ */
+@Composable
+private fun barShape(): Shape = if (TDTheme.motion.stepped) RectangleShape else RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp)
 
 @Composable
 fun TDWeeklyBarChart(
@@ -176,7 +186,7 @@ private fun TDWeeklyBarChartContent(
                     modifier = Modifier.size(24.dp),
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_fullscreen),
+                        painter = tdPainter(R.drawable.ic_fullscreen),
                         contentDescription = stringResource(R.string.cd_expand_chart),
                         tint = TDTheme.colors.onBackground,
                         modifier = Modifier.size(18.dp),
@@ -271,7 +281,7 @@ private fun TDWeeklyBarChartContent(
                                         Modifier
                                             .fillMaxWidth()
                                             .fillMaxHeight(totalAnim)
-                                            .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
+                                            .clip(barShape())
                                             .background(pendingBarColor),
                                     )
                                 }
@@ -280,7 +290,7 @@ private fun TDWeeklyBarChartContent(
                                     Modifier
                                         .fillMaxWidth()
                                         .fillMaxHeight(if (pendingValues != null) completedAnim else totalAnim)
-                                        .clip(RoundedCornerShape(2.dp))
+                                        .clip(tdCorner(2.dp))
                                         .background(barColor),
                                 )
                             }

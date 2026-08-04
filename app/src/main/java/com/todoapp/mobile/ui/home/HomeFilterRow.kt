@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -20,8 +19,9 @@ import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
 import com.todoapp.mobile.ui.home.HomeContract.HomeFilter
 import com.todoapp.uikit.components.TDText
-import com.todoapp.uikit.modifier.neumorphicShadow
+import com.todoapp.uikit.modifier.tdShadow
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdOutlineColor
 
 /**
  * Recurring filter chip row (Daily / Weekly / Monthly / Yearly). Surfaces under the section
@@ -60,15 +60,15 @@ private fun FilterChip(
     val background = if (isSelected) TDTheme.colors.pendingGray else TDTheme.colors.lightPending
     val foreground = if (isSelected) TDTheme.colors.white else TDTheme.colors.onBackground
 
-    val baseModifier = Modifier.clip(RoundedCornerShape(20.dp))
+    val baseModifier = Modifier.clip(TDTheme.shapes.xLarge)
     val elevation = if (isDark) {
         baseModifier.border(
-            width = 1.dp,
-            color = TDTheme.colors.lightGray.copy(alpha = 0.20f),
-            shape = RoundedCornerShape(20.dp),
+            width = TDTheme.style.borderWidth,
+            color = tdOutlineColor(TDTheme.colors.lightGray.copy(alpha = 0.20f)),
+            shape = TDTheme.shapes.xLarge,
         )
     } else {
-        baseModifier.neumorphicShadow(
+        baseModifier.tdShadow(
             lightShadow = TDTheme.colors.white.copy(alpha = 0.85f),
             darkShadow = TDTheme.colors.darkPending.copy(alpha = 0.15f),
             cornerRadius = 20.dp,

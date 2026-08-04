@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -117,7 +116,7 @@ private fun QuickReplyChipRow(onClick: (String) -> Unit) {
 private fun QuickReplyPill(text: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(16.dp))
+            .clip(TDTheme.shapes.large)
             .background(TDTheme.colors.lightPurple)
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 8.dp),

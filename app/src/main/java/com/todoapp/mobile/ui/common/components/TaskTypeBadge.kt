@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -13,13 +12,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
 import com.todoapp.mobile.ui.common.taskform.TaskFormType
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
@@ -39,25 +38,25 @@ fun TaskTypeBadge(
     val labelRes: Int
     when (type) {
         TaskFormType.ONE_TIME -> {
-            icon = painterResource(UiKitR.drawable.ic_edit_task)
+            icon = tdPainter(UiKitR.drawable.ic_edit_task)
             labelRes = R.string.type_one_time_title
         }
         TaskFormType.ROUTINE -> {
-            icon = painterResource(R.drawable.ic_calendar)
+            icon = tdPainter(R.drawable.ic_calendar)
             labelRes = R.string.type_routine_title
         }
         TaskFormType.STAGED -> {
-            icon = painterResource(R.drawable.ic_staged)
+            icon = tdPainter(R.drawable.ic_staged)
             labelRes = R.string.type_staged_title
         }
         TaskFormType.CUSTOM -> {
-            icon = painterResource(R.drawable.ic_custom)
+            icon = tdPainter(R.drawable.ic_custom)
             labelRes = R.string.type_custom_title
         }
     }
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(TDTheme.shapes.small)
             .background(accent)
             .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -79,19 +78,19 @@ fun TaskTypeBadge(
 
 /**
  * Palette-aware accent for a task type. In MONOCHROME the characteristic blue (`purple`) marks
- * both ONE_TIME and ROUTINE (they stay distinct through their icons), STAGED keeps green; in
- * ORIGINAL the classic per-type colors are kept (ONE_TIME blue `darkPending`, ROUTINE `purple`, STAGED green).
+ * both ONE_TIME and ROUTINE (they stay distinct through their icons), STAGED keeps green. The
+ * chromatic kits keep the classic per-type colors (ONE_TIME blue `darkPending`, ROUTINE `purple`,
+ * STAGED green) — 8-bit wants more hue separation, not less.
  */
 @Composable
-fun taskTypeAccent(type: TaskFormType): Color = if (TDTheme.palette == PaletteKit.MONOCHROME) {
-    when (type) {
+fun taskTypeAccent(type: TaskFormType): Color = when (TDTheme.palette) {
+    PaletteKit.MONOCHROME -> when (type) {
         TaskFormType.ONE_TIME -> TDTheme.colors.purple
         TaskFormType.ROUTINE -> TDTheme.colors.purple
         TaskFormType.STAGED -> TDTheme.colors.mediumGreen
         TaskFormType.CUSTOM -> TDTheme.colors.darkPending
     }
-} else {
-    when (type) {
+    PaletteKit.ORIGINAL, PaletteKit.PIXEL -> when (type) {
         TaskFormType.ONE_TIME -> TDTheme.colors.darkPending
         TaskFormType.ROUTINE -> TDTheme.colors.purple
         TaskFormType.STAGED -> TDTheme.colors.mediumGreen

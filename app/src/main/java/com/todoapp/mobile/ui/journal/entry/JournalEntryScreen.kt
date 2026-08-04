@@ -28,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -42,6 +41,7 @@ import com.todoapp.mobile.ui.permissions.rememberCameraPermissionRequest
 import com.todoapp.uikit.components.TDLoadingBar
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.extensions.collectWithLifecycle
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreviewForm
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.flow.Flow
@@ -128,7 +128,7 @@ private fun FloatingNotebookButton(
     ) {
         if (tintIcon) {
             Icon(
-                painter = painterResource(iconRes),
+                painter = tdPainter(iconRes),
                 contentDescription = contentDescription,
                 tint = TDTheme.colors.onBackground,
                 modifier = Modifier.size(iconSize),
@@ -137,7 +137,7 @@ private fun FloatingNotebookButton(
             // Multicolor artwork (the polaroid icon): render with Image so its colors survive —
             // Icon would flatten everything to the tint color.
             Image(
-                painter = painterResource(iconRes),
+                painter = tdPainter(iconRes),
                 contentDescription = contentDescription,
                 modifier = Modifier.size(iconSize),
             )

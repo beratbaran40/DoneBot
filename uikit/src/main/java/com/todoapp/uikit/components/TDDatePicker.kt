@@ -20,8 +20,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,15 +30,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreviewWide
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
@@ -100,7 +99,7 @@ fun TDDatePicker(
                     modifier = Modifier.size(40.dp),
                 ) {
                     Icon(
-                        painterResource(R.drawable.ic_arrow_back),
+                        tdPainter(R.drawable.ic_arrow_back),
                         tint = TDTheme.colors.onBackground,
                         contentDescription =
                         if (hasOverdueBeforeDisplayedMonth) prevMonthOverdueCd else "Previous Month",
@@ -113,7 +112,7 @@ fun TDDatePicker(
                             .align(Alignment.TopEnd)
                             .offset(x = (-6).dp, y = 6.dp)
                             .size(8.dp)
-                            .background(TDTheme.colors.crossRed, CircleShape),
+                            .background(TDTheme.colors.crossRed, TDTheme.shapes.circle),
                     )
                 }
             }
@@ -132,7 +131,7 @@ fun TDDatePicker(
                 modifier = Modifier.size(40.dp),
             ) {
                 Icon(
-                    painterResource(R.drawable.ic_arrow_forward),
+                    tdPainter(R.drawable.ic_arrow_forward),
                     tint = TDTheme.colors.onBackground,
                     contentDescription = "Next Month",
                 )
@@ -248,14 +247,14 @@ private fun TDCalendarCell(
                     Box(
                         Modifier
                             .size(34.dp)
-                            .border(2.dp, TDTheme.colors.pendingGray, CircleShape),
+                            .border(2.dp, TDTheme.colors.pendingGray, TDTheme.shapes.circle),
                     )
                 }
                 Box(
                     modifier =
                     Modifier
                         .size(36.dp)
-                        .background(animatedColor, CircleShape),
+                        .background(animatedColor, TDTheme.shapes.circle),
                 )
                 TDText(
                     text = dayText,
@@ -275,7 +274,7 @@ private fun TDCalendarCell(
                             .padding(top = 3.dp)
                             .height(4.dp)
                             .width(24.dp)
-                            .background(barColor, RoundedCornerShape(2.dp))
+                            .background(barColor, tdCorner(2.dp))
                             .then(
                                 if (barCd != null) {
                                     Modifier.semantics { contentDescription = barCd }
@@ -342,7 +341,7 @@ fun TDDatePickerSingleInput(
         ) {
             IconButton(onClick = onMonthBack, modifier = Modifier.size(40.dp)) {
                 Icon(
-                    painterResource(R.drawable.ic_arrow_back),
+                    tdPainter(R.drawable.ic_arrow_back),
                     tint = TDTheme.colors.onBackground,
                     contentDescription = "Previous Month",
                 )
@@ -360,7 +359,7 @@ fun TDDatePickerSingleInput(
             Spacer(Modifier.weight(1f))
             IconButton(onClick = onMonthForward, modifier = Modifier.size(40.dp)) {
                 Icon(
-                    painterResource(R.drawable.ic_arrow_forward),
+                    tdPainter(R.drawable.ic_arrow_forward),
                     tint = TDTheme.colors.onBackground,
                     contentDescription = "Next Month",
                 )
@@ -463,7 +462,7 @@ private fun TDAnimatedCell(
         Box(
             modifier = Modifier
                 .size(36.dp)
-                .background(color = animatedColor, shape = CircleShape),
+                .background(color = animatedColor, shape = TDTheme.shapes.circle),
             contentAlignment = Alignment.Center,
         ) {
             content()

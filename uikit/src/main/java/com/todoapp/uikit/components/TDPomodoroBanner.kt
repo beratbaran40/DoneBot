@@ -35,10 +35,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreviewWide
 import com.todoapp.uikit.theme.TDTheme
 
@@ -93,7 +93,7 @@ fun TDPomodoroBanner(
     ) {
         // Left: mode icon + label
         Icon(
-            painter = painterResource(modeIconRes),
+            painter = tdPainter(modeIconRes),
             contentDescription = null,
             tint = contentColor,
             modifier = Modifier.size(16.dp),
@@ -123,7 +123,7 @@ fun TDPomodoroBanner(
 
         // Right: subtle forward arrow
         Icon(
-            painter = painterResource(R.drawable.ic_arrow_forward),
+            painter = tdPainter(R.drawable.ic_arrow_forward),
             contentDescription = null,
             tint = contentColor.copy(alpha = 0.55f),
             modifier = Modifier.size(16.dp),

@@ -30,6 +30,8 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.todoapp.mobile.LocalNavController
 import com.todoapp.mobile.R
+import com.todoapp.uikit.image.rememberPixelPainter
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
 
@@ -95,36 +97,42 @@ fun TDBottomBar() {
                             contentAlignment = Alignment.Center,
                         ) {
                             Image(
-                                painter = painterResource(id = chatImage),
+                                painter = rememberPixelPainter(painterResource(id = chatImage), 40.dp),
                                 contentDescription = stringResource(screen.title),
                                 modifier = Modifier.size(40.dp),
                             )
                         }
                     } else {
-                        // MONOCHROME: the filled selected calendar art collapses into an unreadable
-                        // blob under a flat tint (its detail is white-on-fill), so use the clean outline.
-                        val useCalendarOutline =
-                            TDTheme.palette == PaletteKit.MONOCHROME && selected && screen is AppDestination.Calendar
+                        // Under a flat tint the filled selected calendar art collapses into an
+                        // unreadable blob (its detail is white-on-fill), so MONOCHROME uses the clean
+                        // outline instead. PIXEL is exempt: its own art is already a flat silhouette.
+                        val useCalendarOutline = when (TDTheme.palette) {
+                            PaletteKit.ORIGINAL, PaletteKit.PIXEL -> false
+                            PaletteKit.MONOCHROME -> selected && screen is AppDestination.Calendar
+                        }
                         val iconId = (if (selected && !useCalendarOutline) screen.selectedIcon else screen.icon)
                             ?: return@NavigationBarItem
                         Icon(
-                            painter = painterResource(id = iconId),
+                            painter = tdPainter(id = iconId),
                             contentDescription = stringResource(screen.title),
-                            // ORIGINAL keeps the drawable's own (blue) art; MONOCHROME tints the
-                            // silhouette with the blue accent when selected, gray otherwise.
-                            tint =
-                            when {
-                                TDTheme.palette == PaletteKit.ORIGINAL -> Color.Unspecified
-                                selected -> TDTheme.colors.primary
-                                else -> TDTheme.colors.gray
+                            // ORIGINAL keeps the drawable's own (blue) art; the other kits tint the
+                            // silhouette with the accent when selected, gray otherwise.
+                            tint = when (TDTheme.palette) {
+                                PaletteKit.ORIGINAL -> Color.Unspecified
+                                PaletteKit.MONOCHROME, PaletteKit.PIXEL ->
+                                    if (selected) TDTheme.colors.primary else TDTheme.colors.gray
                             },
                         )
                     }
                 },
                 label = {
                     val labelRes = if (isChat) R.string.bottombar_chat_tab_label else screen.title
+                    // Explicit style: NavigationBarItem wraps its label in ProvideTextStyle with
+                    // MaterialTheme.typography.labelMedium, which overrides the LocalTextStyle the
+                    // active kit provides — a bare Text() here renders in Roboto, not the kit's face.
                     Text(
                         text = stringResource(id = labelRes),
+                        style = TDTheme.typography.subheading2,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )

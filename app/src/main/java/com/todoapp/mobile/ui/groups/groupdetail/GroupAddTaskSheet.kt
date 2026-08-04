@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -30,7 +29,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -52,6 +50,7 @@ import com.todoapp.uikit.components.TDDatePickerDialog
 import com.todoapp.uikit.components.TDPickerField
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDWheelTimePickerDialog
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -81,7 +80,7 @@ fun GroupAddTaskSheet(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    painter = painterResource(com.todoapp.mobile.R.drawable.ic_groups),
+                    painter = tdPainter(com.todoapp.mobile.R.drawable.ic_groups),
                     contentDescription = null,
                     tint = TDTheme.colors.pendingGray,
                     modifier = Modifier.size(20.dp),
@@ -95,7 +94,7 @@ fun GroupAddTaskSheet(
             }
             IconButton(onClick = { onAction(TaskFormUiAction.Dismiss) }) {
                 Icon(
-                    painterResource(R.drawable.ic_close),
+                    tdPainter(R.drawable.ic_close),
                     tint = TDTheme.colors.onBackground,
                     contentDescription = stringResource(com.todoapp.mobile.R.string.close_button),
                 )
@@ -133,7 +132,7 @@ fun GroupAddTaskSheet(
             supportingText = formState.timeErrorRes?.let { stringResource(it) },
             leadingIcon = {
                 Icon(
-                    painter = painterResource(R.drawable.ic_clock),
+                    painter = tdPainter(R.drawable.ic_clock),
                     tint = TDTheme.colors.onBackground,
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
@@ -256,7 +255,7 @@ private fun ExistingPhotosRow(
                     Modifier
                         .size(72.dp)
                         .clip(
-                            RoundedCornerShape(12.dp),
+                            TDTheme.shapes.medium,
                         ).background(TDTheme.colors.lightPending)
                         .clickable { onToggle(photo.id) },
                 ) {
@@ -275,7 +274,7 @@ private fun ExistingPhotosRow(
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_delete),
+                                painter = tdPainter(R.drawable.ic_delete),
                                 contentDescription = null,
                                 tint = TDTheme.colors.surface,
                             )

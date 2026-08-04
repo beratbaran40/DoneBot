@@ -14,18 +14,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
-import com.todoapp.uikit.modifier.neumorphicShadow
+import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.modifier.tdShadow
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
+import com.todoapp.uikit.theme.tdOutlineColor
 
 /**
  * Display field for an optional location attached to a task. Stateless / primitive-only —
@@ -52,15 +53,15 @@ fun TDLocationPicker(
     val isDark = TDTheme.isDark
     val baseModifier = Modifier
         .fillMaxWidth()
-        .clip(RoundedCornerShape(20.dp))
+        .clip(TDTheme.shapes.xLarge)
     val elevated = if (isDark) {
         baseModifier.border(
-            width = 1.dp,
-            color = TDTheme.colors.lightGray.copy(alpha = 0.20f),
-            shape = RoundedCornerShape(20.dp),
+            width = TDTheme.style.borderWidth,
+            color = tdOutlineColor(TDTheme.colors.lightGray.copy(alpha = 0.20f)),
+            shape = TDTheme.shapes.xLarge,
         )
     } else {
-        baseModifier.neumorphicShadow(
+        baseModifier.tdShadow(
             lightShadow = TDTheme.colors.white.copy(alpha = 0.85f),
             darkShadow = TDTheme.colors.darkPending.copy(alpha = 0.15f),
             cornerRadius = 20.dp,
@@ -80,7 +81,7 @@ fun TDLocationPicker(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_pin),
+            painter = tdPainter(R.drawable.ic_pin),
             contentDescription = null,
             tint = if (isFilled) TDTheme.colors.purple else TDTheme.colors.darkPending,
             modifier = Modifier.size(20.dp),
@@ -118,12 +119,12 @@ fun TDLocationPicker(
         if (isFilled) {
             Spacer(Modifier.width(8.dp))
             Icon(
-                painter = painterResource(R.drawable.ic_close),
+                painter = tdPainter(R.drawable.ic_close),
                 contentDescription = clearContentDescription,
                 tint = TDTheme.colors.gray,
                 modifier = Modifier
                     .size(20.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(tdCorner(10.dp))
                     .clickable(onClick = onClear),
             )
         }

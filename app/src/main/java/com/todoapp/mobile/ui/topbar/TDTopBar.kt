@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -25,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -44,6 +42,9 @@ import com.todoapp.mobile.navigation.AppDestination
 import com.todoapp.mobile.navigation.Screen
 import com.todoapp.mobile.navigation.appDestinationFromRoute
 import com.todoapp.mobile.ui.topbar.TopBarContract.UiAction
+import com.todoapp.uikit.image.rememberPixelImageModel
+import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.image.tdPixelFilterQuality
 import com.todoapp.uikit.theme.TDTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,7 +67,7 @@ fun TDTopBar(
         navigationIcon = {
             IconButton(onClick = state.onNavigationClick) {
                 Icon(
-                    painterResource(state.navigationIcon),
+                    tdPainter(state.navigationIcon),
                     tint = TDTheme.colors.onBackground,
                     contentDescription = stringResource(state.navigationContentDescription),
                 )
@@ -77,7 +78,7 @@ fun TDTopBar(
                 IconButton(onClick = action.onClick) {
                     Box {
                         Icon(
-                            painterResource(action.icon),
+                            tdPainter(action.icon),
                             tint = TDTheme.colors.onBackground,
                             contentDescription = stringResource(action.contentDescription),
                         )
@@ -86,7 +87,7 @@ fun TDTopBar(
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
                                     .size(8.dp)
-                                    .clip(CircleShape)
+                                    .clip(TDTheme.shapes.circle)
                                     .background(TDTheme.colors.crossRed),
                             )
                         }
@@ -240,7 +241,7 @@ private fun AvatarChip(
             .padding(end = 8.dp)
             .minimumInteractiveComponentSize()
             .size(36.dp)
-            .clip(CircleShape)
+            .clip(TDTheme.shapes.circle)
             .background(TDTheme.colors.lightPending)
             .clickable(onClick = onClick)
             .semantics {
@@ -251,9 +252,10 @@ private fun AvatarChip(
     ) {
         if (url != null) {
             AsyncImage(
-                model = url,
+                model = rememberPixelImageModel(url, 36.dp),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
+                filterQuality = tdPixelFilterQuality(),
                 modifier = Modifier.size(36.dp),
             )
         } else {

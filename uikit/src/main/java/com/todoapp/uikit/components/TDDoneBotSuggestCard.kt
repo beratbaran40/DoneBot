@@ -25,6 +25,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.uikit.image.rememberPixelPainter
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
@@ -44,13 +46,13 @@ fun TDDoneBotSuggestCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(TDTheme.shapes.large)
             .background(TDTheme.colors.infoCardBgColor)
             .padding(PaddingValues(start = 12.dp, top = 12.dp, end = 8.dp, bottom = 12.dp)),
     ) {
         Row(verticalAlignment = Alignment.Top) {
             Image(
-                painter = painterResource(avatarRes),
+                painter = rememberPixelPainter(painterResource(avatarRes), 96.dp),
                 contentDescription = null,
                 modifier = Modifier
                     .size(96.dp)
@@ -84,7 +86,7 @@ fun TDDoneBotSuggestCard(
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_close),
+                            painter = tdPainter(R.drawable.ic_close),
                             contentDescription = dismissContentDescription,
                             tint = TDTheme.colors.pendingGray,
                             modifier = Modifier.size(14.dp),

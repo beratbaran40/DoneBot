@@ -17,7 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -28,6 +27,7 @@ import com.todoapp.mobile.ui.settings.SettingsContract.UiAction
 import com.todoapp.uikit.components.TDSettingsGroup
 import com.todoapp.uikit.components.TDSettingsItem
 import com.todoapp.uikit.components.TDSwitch
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
@@ -43,7 +43,7 @@ internal fun SettingsNotificationsSection(
         if (isUserAuthenticated) {
             TDSettingsItem(
                 title = stringResource(R.string.settings_push_notifications),
-                icon = painterResource(com.example.uikit.R.drawable.ic_notification),
+                icon = tdPainter(com.example.uikit.R.drawable.ic_notification),
                 iconTint = TDTheme.colors.darkPending,
                 iconContainerColor = TDTheme.colors.lightPending,
                 trailingContent = {
@@ -58,7 +58,7 @@ internal fun SettingsNotificationsSection(
         SettingsExactAlarmsRow()
         TDSettingsItem(
             title = stringResource(R.string.alarm_sounds),
-            icon = painterResource(R.drawable.ic_settings_sound),
+            icon = tdPainter(R.drawable.ic_settings_sound),
             iconTint = TDTheme.colors.darkPending,
             iconContainerColor = TDTheme.colors.lightPending,
             onClick = { onAction(UiAction.OnNavigateToAlarmSounds) },
@@ -101,7 +101,7 @@ private fun SettingsExactAlarmsRow() {
     TDSettingsItem(
         title = stringResource(R.string.settings_exact_alarms_title),
         subtitle = subtitle,
-        icon = painterResource(com.example.uikit.R.drawable.ic_clock),
+        icon = tdPainter(com.example.uikit.R.drawable.ic_clock),
         iconTint = TDTheme.colors.darkPending,
         iconContainerColor = TDTheme.colors.lightPending,
         onClick = openExactAlarmSettings,

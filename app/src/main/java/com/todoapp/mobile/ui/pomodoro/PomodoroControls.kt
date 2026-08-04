@@ -15,12 +15,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
 import com.todoapp.mobile.ui.pomodoro.PomodoroContract.UiAction
-import com.todoapp.uikit.modifier.neumorphicShadow
+import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.modifier.tdShadow
 import com.todoapp.uikit.theme.TDTheme
 import com.example.uikit.R as UiKitR
 
@@ -53,7 +53,7 @@ fun PomodoroControls(
             Modifier
                 .padding(horizontal = 32.dp)
                 .size(88.dp)
-                .neumorphicShadow(
+                .tdShadow(
                     lightShadow = lightShadow,
                     darkShadow = darkShadow,
                     cornerRadius = 44.dp,
@@ -70,7 +70,7 @@ fun PomodoroControls(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(playIconRes),
+                painter = tdPainter(playIconRes),
                 contentDescription = stringResource(playDescRes),
                 tint = contentColor,
                 modifier = Modifier.size(42.dp),
@@ -87,7 +87,7 @@ fun PomodoroControls(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(UiKitR.drawable.ic_skip_next),
+                painter = tdPainter(UiKitR.drawable.ic_skip_next),
                 contentDescription = stringResource(R.string.skip),
                 tint = contentColor.copy(alpha = 0.65f),
                 modifier = Modifier.size(28.dp),

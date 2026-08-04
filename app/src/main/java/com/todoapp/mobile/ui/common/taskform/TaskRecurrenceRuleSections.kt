@@ -13,7 +13,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -21,6 +20,7 @@ import com.todoapp.mobile.R
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.uikit.components.TDChoiceChip
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 import java.time.DayOfWeek
@@ -55,7 +55,7 @@ fun TaskIntervalStepper(
                 enabled = interval > 1,
             ) {
                 Icon(
-                    painter = painterResource(UiKitR.drawable.ic_minus),
+                    painter = tdPainter(UiKitR.drawable.ic_minus),
                     contentDescription = stringResource(R.string.creation_interval_decrease_cd),
                     tint = TDTheme.colors.onBackground,
                     modifier = Modifier.size(16.dp),
@@ -73,7 +73,7 @@ fun TaskIntervalStepper(
                 enabled = interval < MAX_RECURRENCE_INTERVAL,
             ) {
                 Icon(
-                    painter = painterResource(UiKitR.drawable.ic_plus),
+                    painter = tdPainter(UiKitR.drawable.ic_plus),
                     contentDescription = stringResource(R.string.creation_interval_increase_cd),
                     tint = TDTheme.colors.onBackground,
                     modifier = Modifier.size(16.dp),

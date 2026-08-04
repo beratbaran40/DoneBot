@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -84,7 +83,7 @@ private fun CalendarSkeletonDatePicker() {
                 repeat(CALENDAR_SKELETON_GRID_COLS) {
                     TDSkeletonBox(
                         modifier = Modifier.size(40.dp),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = TDTheme.shapes.medium,
                     )
                 }
             }
@@ -99,7 +98,7 @@ private fun CalendarSkeletonFullTaskCard() {
         modifier = Modifier
             .fillMaxWidth()
             .height(110.dp)
-            .clip(RoundedCornerShape(20.dp))
+            .clip(TDTheme.shapes.xLarge)
             .background(TDTheme.colors.lightPending.copy(alpha = 0.4f))
             .padding(16.dp),
     ) {
@@ -108,7 +107,7 @@ private fun CalendarSkeletonFullTaskCard() {
             TDSkeletonText(width = 120.dp, height = 12.dp)
             TDSkeletonBox(
                 modifier = Modifier.size(width = 80.dp, height = 24.dp),
-                shape = RoundedCornerShape(12.dp),
+                shape = TDTheme.shapes.medium,
             )
         }
     }

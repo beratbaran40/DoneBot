@@ -22,7 +22,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -39,6 +38,7 @@ import com.todoapp.mobile.ui.groups.GroupsContract.UiState
 import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailScreen
 import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailViewModel
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.serialization.Serializable
 
@@ -151,7 +151,7 @@ private fun GroupDetailPanePlaceholder() {
         verticalArrangement = Arrangement.Center,
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_members),
+            painter = tdPainter(R.drawable.ic_members),
             contentDescription = null,
             tint = TDTheme.colors.pendingGray,
             modifier = Modifier.size(72.dp),

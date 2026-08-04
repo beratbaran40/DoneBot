@@ -1,7 +1,6 @@
 package com.todoapp.mobile.navigation
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +22,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import com.todoapp.mobile.ui.common.LocalReduceMotion
 import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.style
 
 /**
  * Applies [TDTheme] and plays a top-down "curtain" wipe whenever the theme (dark/light) or palette
@@ -89,7 +89,14 @@ fun ThemeChangeReveal(
         try {
             sweep.animateTo(
                 targetValue = sweepHeight,
-                animationSpec = tween(durationMillis = REVEAL_DURATION_MS, easing = LinearEasing),
+                // The wipe reveals the NEW theme, so it animates in the target kit's motion language
+                // (linear for the rounded kits — unchanged — stepped for 8-Bit). Resolved from the kit
+                // directly rather than from `TDTheme.motion`: this effect runs OUTSIDE the TDTheme it
+                // hosts, so it has no composition locals.
+                animationSpec = tween(
+                    durationMillis = REVEAL_DURATION_MS,
+                    easing = targetPalette.style().motion.revealEasing,
+                ),
             )
         } finally {
             overlay = null

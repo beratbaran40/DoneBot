@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
@@ -41,6 +40,7 @@ import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.extensions.ObscuredTouchGuard
 import com.todoapp.uikit.extensions.collectWithLifecycle
 import com.todoapp.uikit.previews.TDPreview
+import com.todoapp.uikit.theme.TDCornerStyle
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -164,7 +164,7 @@ private fun TransferMemberRow(
         modifier =
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(TDTheme.shapes.medium)
             .background(TDTheme.colors.lightPending)
             .clickable(onClick = onClick)
             .padding(16.dp),
@@ -190,7 +190,16 @@ private fun TransferMemberRow(
         RadioButton(
             selected = isSelected,
             onClick = onClick,
-            colors = RadioButtonDefaults.colors(selectedColor = TDTheme.colors.pendingGray),
+            // The 8-Bit kit reads "on" as green with an explicit unselected colour; the rounded kits
+            // keep the neutral accent they already had.
+            colors = if (TDTheme.shapes.cornerStyle == TDCornerStyle.PIXEL) {
+                RadioButtonDefaults.colors(
+                    selectedColor = TDTheme.colors.mediumGreen,
+                    unselectedColor = TDTheme.colors.gray,
+                )
+            } else {
+                RadioButtonDefaults.colors(selectedColor = TDTheme.colors.pendingGray)
+            },
             modifier = Modifier.size(24.dp),
         )
     }

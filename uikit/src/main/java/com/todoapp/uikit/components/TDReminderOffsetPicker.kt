@@ -14,17 +14,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
-import com.todoapp.uikit.modifier.neumorphicShadow
+import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.modifier.tdShadow
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdOutlineColor
 
 /**
  * One reminder option. `minutes = 0L` means on-time; `minutes = null` means no reminder.
@@ -75,15 +75,15 @@ private fun ReminderChip(
     val iconTint = if (isSelected) TDTheme.colors.white else TDTheme.colors.darkPending
 
     val baseModifier = Modifier
-        .clip(RoundedCornerShape(20.dp))
+        .clip(TDTheme.shapes.xLarge)
     val elevation = if (isDark) {
         baseModifier.border(
-            width = 1.dp,
-            color = TDTheme.colors.lightGray.copy(alpha = 0.20f),
-            shape = RoundedCornerShape(20.dp),
+            width = TDTheme.style.borderWidth,
+            color = tdOutlineColor(TDTheme.colors.lightGray.copy(alpha = 0.20f)),
+            shape = TDTheme.shapes.xLarge,
         )
     } else {
-        baseModifier.neumorphicShadow(
+        baseModifier.tdShadow(
             lightShadow = TDTheme.colors.white.copy(alpha = 0.85f),
             darkShadow = TDTheme.colors.darkPending.copy(alpha = 0.15f),
             cornerRadius = 20.dp,
@@ -99,7 +99,7 @@ private fun ReminderChip(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_clock),
+            painter = tdPainter(R.drawable.ic_clock),
             contentDescription = null,
             tint = iconTint,
             modifier = Modifier.size(14.dp),

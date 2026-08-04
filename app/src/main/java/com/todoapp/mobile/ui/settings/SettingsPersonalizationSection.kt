@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
@@ -14,6 +13,7 @@ import com.todoapp.mobile.domain.model.ThemePreference
 import com.todoapp.mobile.ui.settings.SettingsContract.UiAction
 import com.todoapp.uikit.components.TDSettingsGroup
 import com.todoapp.uikit.components.TDSettingsItem
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
@@ -36,7 +36,7 @@ internal fun SettingsPersonalizationSection(
         )
         TDSettingsItem(
             title = stringResource(R.string.app_colors),
-            icon = painterResource(com.example.uikit.R.drawable.ic_palette),
+            icon = tdPainter(com.example.uikit.R.drawable.ic_palette),
             iconTint = TDTheme.colors.darkPending,
             iconContainerColor = TDTheme.colors.lightPending,
             onClick = { onAction(UiAction.OnNavigateToAppColors) },

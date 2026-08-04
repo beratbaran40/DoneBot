@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -34,9 +33,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextRange
@@ -47,6 +46,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreviewForm
 import com.todoapp.uikit.theme.TDTheme
 import com.todoapp.uikit.theme.textFieldColors
@@ -141,7 +141,7 @@ fun TDTextField(
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
         colors = textFieldColors(),
-        shape = RoundedCornerShape(12.dp),
+        shape = TDTheme.shapes.medium,
         supportingText = {
             if (!supportingText.isNullOrEmpty()) {
                 TDText(
@@ -197,7 +197,7 @@ fun TDLabeledTextField(
                     )
                 }
             },
-            shape = RoundedCornerShape(12.dp),
+            shape = TDTheme.shapes.medium,
             textStyle = TDTheme.typography.regularTextStyle.copy(color = TDTheme.colors.onSurface),
         )
     }
@@ -220,7 +220,9 @@ fun TDCompactOutlinedTextField(
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     supportingText: String? = null,
-    roundedCornerShape: RoundedCornerShape = RoundedCornerShape(12.dp),
+    // Shape, not RoundedCornerShape: a pixel kit's corner is an Outline.Generic. Composable
+    // default so it follows the active kit; the rounded kits still resolve to 12.dp.
+    roundedCornerShape: Shape = TDTheme.shapes.medium,
     height: Dp = 48.dp,
 ) {
     var isFocused by remember { mutableStateOf(false) }
@@ -272,7 +274,7 @@ fun TDCompactOutlinedTextField(
                 Modifier
                     .height(height = height)
                     .heightIn(min = 40.dp)
-                    .border(1.5.dp, borderColor, roundedCornerShape)
+                    .border(TDTheme.style.borderWidth, borderColor, roundedCornerShape)
                     .background(
                         color = if (enabled) Color.Transparent else TDTheme.colors.background.copy(alpha = 0.5f),
                         shape = roundedCornerShape,
@@ -367,7 +369,7 @@ private fun TDTextFieldCompositePreview() {
                 label = "First Name",
                 leadingIcon = {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_name),
+                        painter = tdPainter(id = R.drawable.ic_name),
                         contentDescription = null,
                         tint = TDTheme.colors.gray,
                     )
@@ -382,7 +384,7 @@ private fun TDTextFieldCompositePreview() {
                 label = "Email",
                 leadingIcon = {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_mail),
+                        painter = tdPainter(id = R.drawable.ic_mail),
                         contentDescription = null,
                         tint = TDTheme.colors.gray,
                     )
@@ -399,7 +401,7 @@ private fun TDTextFieldCompositePreview() {
                 isError = true,
                 leadingIcon = {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_password),
+                        painter = tdPainter(id = R.drawable.ic_password),
                         contentDescription = null,
                         tint = TDTheme.colors.red,
                     )

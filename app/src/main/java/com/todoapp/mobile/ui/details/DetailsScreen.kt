@@ -15,12 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -31,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -64,11 +60,14 @@ import com.todoapp.uikit.components.TDCompactOutlinedTextField
 import com.todoapp.uikit.components.TDDatePickerDialog
 import com.todoapp.uikit.components.TDPickerField
 import com.todoapp.uikit.components.TDRoutineProgress
+import com.todoapp.uikit.components.TDSwitch
+import com.todoapp.uikit.components.TDSwitchTone
 import com.todoapp.uikit.components.TDTaskCompletionCard
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDWheelTimePicker
 import com.todoapp.uikit.extensions.ObscuredTouchGuard
 import com.todoapp.uikit.extensions.collectWithLifecycle
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalTime
@@ -157,7 +156,7 @@ private fun DetailsErrorContent(
         verticalArrangement = Arrangement.Center,
     ) {
         Icon(
-            painter = painterResource(com.example.uikit.R.drawable.ic_error),
+            painter = tdPainter(com.example.uikit.R.drawable.ic_error),
             contentDescription = null,
             tint = TDTheme.colors.crossRed,
             modifier = Modifier.size(64.dp),
@@ -233,7 +232,7 @@ private fun DetailsSuccessContent(
                     modifier =
                     Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(TDTheme.shapes.large)
                         .padding(vertical = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -273,7 +272,7 @@ private fun DetailsSuccessContent(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
-                            painter = painterResource(com.example.uikit.R.drawable.ic_clock),
+                            painter = tdPainter(com.example.uikit.R.drawable.ic_clock),
                             tint = TDTheme.colors.onBackground,
                             contentDescription = null,
                             modifier = Modifier.size(24.dp),
@@ -285,13 +284,10 @@ private fun DetailsSuccessContent(
                             color = TDTheme.colors.onBackground,
                             modifier = Modifier.weight(1f),
                         )
-                        Switch(
+                        TDSwitch(
                             checked = uiState.isAllDay,
                             onCheckedChange = { onAction(UiAction.OnAllDayChange(it)) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = TDTheme.colors.purple,
-                                checkedTrackColor = TDTheme.colors.lightPurple,
-                            ),
+                            tone = TDSwitchTone.ACCENT,
                         )
                     }
 
@@ -306,7 +302,7 @@ private fun DetailsSuccessContent(
                                     onClick = { showStartTimePicker = true },
                                     leadingIcon = {
                                         Icon(
-                                            painter = painterResource(com.example.uikit.R.drawable.ic_clock),
+                                            painter = tdPainter(com.example.uikit.R.drawable.ic_clock),
                                             tint = TDTheme.colors.onBackground,
                                             contentDescription = null,
                                             modifier = Modifier.size(24.dp),
@@ -324,7 +320,7 @@ private fun DetailsSuccessContent(
                                     onClick = { showEndTimePicker = true },
                                     leadingIcon = {
                                         Icon(
-                                            painter = painterResource(com.example.uikit.R.drawable.ic_clock),
+                                            painter = tdPainter(com.example.uikit.R.drawable.ic_clock),
                                             tint = TDTheme.colors.onBackground,
                                             contentDescription = null,
                                             modifier = Modifier.size(24.dp),
@@ -459,7 +455,7 @@ private fun WheelTimePickerDialog(
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(16.dp),
+            shape = TDTheme.shapes.large,
             tonalElevation = 8.dp,
             contentColor = TDTheme.colors.onBackground,
             color = TDTheme.colors.background,
@@ -639,12 +635,12 @@ private fun DetailsReminderBlock(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(TDTheme.colors.background, RoundedCornerShape(8.dp))
+                .background(TDTheme.colors.background, TDTheme.shapes.small)
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                painter = painterResource(com.example.uikit.R.drawable.ic_warning),
+                painter = tdPainter(com.example.uikit.R.drawable.ic_warning),
                 contentDescription = null,
                 tint = TDTheme.colors.orange,
                 modifier = Modifier.size(18.dp),
@@ -699,28 +695,28 @@ private fun DetailsRecurrenceBlock(
 private fun DetailsTypeHeader(type: TaskFormType) {
     when (type) {
         TaskFormType.ONE_TIME -> TaskTypeHeader(
-            icon = painterResource(com.example.uikit.R.drawable.ic_edit_task),
+            icon = tdPainter(com.example.uikit.R.drawable.ic_edit_task),
             name = stringResource(R.string.type_one_time_title),
             subtitle = stringResource(R.string.type_one_time_subtitle),
             accent = taskTypeAccent(type),
         )
 
         TaskFormType.ROUTINE -> TaskTypeHeader(
-            icon = painterResource(R.drawable.ic_calendar),
+            icon = tdPainter(R.drawable.ic_calendar),
             name = stringResource(R.string.type_routine_title),
             subtitle = stringResource(R.string.type_routine_subtitle),
             accent = taskTypeAccent(type),
         )
 
         TaskFormType.STAGED -> TaskTypeHeader(
-            icon = painterResource(R.drawable.ic_staged),
+            icon = tdPainter(R.drawable.ic_staged),
             name = stringResource(R.string.type_staged_title),
             subtitle = stringResource(R.string.type_staged_subtitle),
             accent = taskTypeAccent(type),
         )
 
         TaskFormType.CUSTOM -> TaskTypeHeader(
-            icon = painterResource(R.drawable.ic_custom),
+            icon = tdPainter(R.drawable.ic_custom),
             name = stringResource(R.string.type_custom_title),
             subtitle = stringResource(R.string.type_custom_subtitle),
             accent = taskTypeAccent(type),

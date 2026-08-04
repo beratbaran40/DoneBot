@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -17,12 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
 import com.todoapp.mobile.domain.model.LanguagePreference
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -46,25 +45,25 @@ fun LanguageSelector(
             modifier =
             Modifier
                 .padding(start = 16.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(TDTheme.shapes.medium)
                 .background(TDTheme.colors.background)
                 .border(
                     width = 1.dp,
                     color = TDTheme.colors.lightGray,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = TDTheme.shapes.medium,
                 ),
         ) {
             LanguageItem(
                 selected = currentLanguage == LanguagePreference.ENGLISH,
                 onClick = { onLanguageChange(LanguagePreference.ENGLISH) },
-                flag = painterResource(R.drawable.ic_american_flag),
+                flag = tdPainter(R.drawable.ic_american_flag),
                 contentDescription = stringResource(R.string.language_english),
             )
 
             LanguageItem(
                 selected = currentLanguage == LanguagePreference.TURKISH,
                 onClick = { onLanguageChange(LanguagePreference.TURKISH) },
-                flag = painterResource(R.drawable.ic_turkish_flag),
+                flag = tdPainter(R.drawable.ic_turkish_flag),
                 contentDescription = stringResource(R.string.language_turkish),
             )
         }
@@ -81,7 +80,7 @@ private fun LanguageItem(
     Box(
         modifier =
         Modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(TDTheme.shapes.small)
             .background(
                 if (selected) TDTheme.colors.pendingGray else Color.Transparent,
             ).clickable { onClick() }

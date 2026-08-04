@@ -22,11 +22,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreviewDialog
 import com.todoapp.uikit.theme.TDTheme
 import java.time.LocalDate
@@ -102,7 +102,7 @@ fun TDDatePickerDialog(
             emphasizeValue = selectedDate != null,
             trailingIcon = {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_calendar2),
+                    painter = tdPainter(id = R.drawable.ic_calendar2),
                     tint = TDTheme.colors.onBackground,
                     contentDescription = null,
                 )

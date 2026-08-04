@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -44,7 +42,9 @@ import com.todoapp.uikit.components.TDCompactOutlinedTextField
 import com.todoapp.uikit.components.TDLocationPicker
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDWheelTimePickerDialog
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 import java.time.LocalTime
 import com.example.uikit.R as UiKitR
 
@@ -61,7 +61,7 @@ internal fun CreationHubDetailsSection(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
+                .clip(tdCorner(10.dp))
                 .clickable { onAction(UiAction.OnToggleDetails) }
                 .padding(vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -73,7 +73,7 @@ internal fun CreationHubDetailsSection(
                 modifier = Modifier.weight(1f),
             )
             Icon(
-                painter = painterResource(
+                painter = tdPainter(
                     if (state.detailsExpanded) UiKitR.drawable.ic_arrow_up else UiKitR.drawable.ic_arrow_down,
                 ),
                 contentDescription = null,
@@ -161,7 +161,7 @@ private fun AllDayAndTime(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
+                .clip(tdCorner(10.dp))
                 .clickable { onAction(UiAction.OnAllDayChange(!state.isAllDay)) }
                 .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -220,7 +220,7 @@ private fun TimeRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(TDTheme.shapes.medium)
             .background(TDTheme.colors.lightPending)
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
@@ -239,7 +239,7 @@ private fun TimeRow(
         )
         Spacer(Modifier.width(8.dp))
         Icon(
-            painter = painterResource(UiKitR.drawable.ic_clock),
+            painter = tdPainter(UiKitR.drawable.ic_clock),
             contentDescription = null,
             tint = TDTheme.colors.darkPending,
             modifier = Modifier.size(20.dp),
@@ -253,7 +253,7 @@ private fun TickBox(checked: Boolean) {
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .size(24.dp)
-            .clip(RoundedCornerShape(6.dp))
+            .clip(tdCorner(6.dp))
             .background(
                 if (checked) TDTheme.colors.pendingGray else TDTheme.colors.pendingGray.copy(alpha = 0.08f),
             )
@@ -264,12 +264,12 @@ private fun TickBox(checked: Boolean) {
                 } else {
                     TDTheme.colors.pendingGray.copy(alpha = 0.5f)
                 },
-                shape = RoundedCornerShape(6.dp),
+                shape = tdCorner(6.dp),
             ),
     ) {
         if (checked) {
             Icon(
-                painter = painterResource(UiKitR.drawable.ic_check_svg),
+                painter = tdPainter(UiKitR.drawable.ic_check_svg),
                 contentDescription = null,
                 tint = TDTheme.colors.white,
                 modifier = Modifier.size(14.dp),

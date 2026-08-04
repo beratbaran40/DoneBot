@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.todoapp.mobile.BuildConfig
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.rememberPixelImageModel
+import com.todoapp.uikit.image.tdPixelFilterQuality
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -48,9 +50,10 @@ fun GroupAvatar(
     ) {
         if (absoluteUrl != null) {
             AsyncImage(
-                model = absoluteUrl,
+                model = rememberPixelImageModel(absoluteUrl, 96.dp),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
+                filterQuality = tdPixelFilterQuality(),
                 modifier = Modifier.size(96.dp),
             )
         } else {

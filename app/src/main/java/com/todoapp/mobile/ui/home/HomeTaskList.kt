@@ -18,7 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,7 +32,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -57,6 +55,9 @@ import com.todoapp.mobile.ui.common.components.taskChipLabel
 import com.todoapp.mobile.ui.common.rememberOpenLocation
 import com.todoapp.uikit.components.TDTaskCardWithCheckbox
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.rememberPixelPainter
+import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.modifier.tdDropShadow
 import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
 import sh.calvin.reorderable.ReorderableItem
@@ -108,22 +109,21 @@ fun HomeTaskList(
                         com.todoapp.mobile.R.drawable.ic_idle_robot_light
                     }
                     Image(
-                        painter = painterResource(emptyImageRes ?: defaultIdleImage),
+                        painter = rememberPixelPainter(painterResource(emptyImageRes ?: defaultIdleImage), 180.dp),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .size(180.dp)
-                            .shadow(
+                            .tdDropShadow(
                                 elevation = 8.dp,
-                                shape = CircleShape,
+                                shape = TDTheme.shapes.circle,
                                 ambientColor = TDTheme.colors.purple.copy(alpha = 0.3f),
-                                spotColor = TDTheme.colors.purple.copy(alpha = 0.3f),
                             )
-                            .clip(CircleShape)
+                            .clip(TDTheme.shapes.circle)
                             .border(
                                 width = 2.dp,
                                 color = TDTheme.colors.lightPurple.copy(alpha = 0.6f),
-                                shape = CircleShape,
+                                shape = TDTheme.shapes.circle,
                             ),
                     )
                     Spacer(Modifier.height(12.dp))
@@ -241,10 +241,7 @@ fun HomeTaskList(
                                     modifier =
                                     Modifier
                                         .fillMaxWidth()
-                                        .clip(
-                                            androidx.compose.foundation.shape
-                                                .RoundedCornerShape(12.dp),
-                                        )
+                                        .clip(TDTheme.shapes.medium)
                                         .background(TDTheme.colors.lightPending),
                                 ) {
                                     SecretOrNormalPhotoBanner(
@@ -263,16 +260,16 @@ fun HomeTaskList(
                                         isChecked = task.isCompleted,
                                         onCheckBoxClick = { onTaskCheck(task) },
                                         isPendingSync = task.isPendingSync && isSignedIn,
-                                        // MONOCHROME marks one-time tasks (no recurrence, no subtasks)
-                                        // with the characteristic blue left stripe; Original unaffected.
-                                        categoryStripeColor =
-                                        if (TDTheme.palette == PaletteKit.MONOCHROME &&
-                                            task.recurrence == Recurrence.NONE &&
-                                            task.subtaskTotal == 0
-                                        ) {
-                                            TDTheme.colors.purple
-                                        } else {
-                                            null
+                                        // MONOCHROME and PIXEL mark one-time tasks (no recurrence, no
+                                        // subtasks) with an accent left stripe — it reads as a sprite
+                                        // edge in the 8-bit kit. ORIGINAL is unaffected.
+                                        categoryStripeColor = when (TDTheme.palette) {
+                                            PaletteKit.ORIGINAL -> null
+                                            PaletteKit.MONOCHROME, PaletteKit.PIXEL ->
+                                                TDTheme.colors.purple.takeIf {
+                                                    task.recurrence == Recurrence.NONE &&
+                                                        task.subtaskTotal == 0
+                                                }
                                         },
                                         isDragging = isDragging,
                                         isAnyDragging = isAnyDragging,
@@ -365,21 +362,21 @@ internal fun HomeSwipeDismissBackground(direction: SwipeToDismissBoxValue) {
         modifier =
         Modifier
             .fillMaxSize()
-            .background(color, RoundedCornerShape(12.dp))
+            .background(color, TDTheme.shapes.medium)
             .padding(horizontal = 20.dp),
         contentAlignment = alignment,
     ) {
         when (direction) {
             SwipeToDismissBoxValue.EndToStart ->
                 Icon(
-                    painter = painterResource(R.drawable.ic_delete),
+                    painter = tdPainter(R.drawable.ic_delete),
                     contentDescription = null,
                     tint = Color.White,
                 )
 
             SwipeToDismissBoxValue.StartToEnd ->
                 Icon(
-                    painter = painterResource(com.todoapp.mobile.R.drawable.ic_secret_mode),
+                    painter = tdPainter(com.todoapp.mobile.R.drawable.ic_secret_mode),
                     contentDescription = null,
                     tint = Color.White,
                 )

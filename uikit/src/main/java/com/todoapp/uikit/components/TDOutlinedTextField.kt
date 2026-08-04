@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
@@ -25,7 +24,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.dp
 import com.example.uikit.R
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.previews.TDPreviewForm
@@ -138,7 +136,7 @@ fun TDOutlinedTextField(
         // below win — otherwise Material3 OutlinedTextField uses the textStyle's color and
         // typed text stays #000000 in dark theme (regularTextStyle hardcodes black).
         textStyle = TDTheme.typography.regularTextStyle.copy(color = Color.Unspecified),
-        shape = RoundedCornerShape(12.dp),
+        shape = TDTheme.shapes.medium,
         colors = OutlinedTextFieldDefaults.colors(
             focusedTextColor = TDTheme.colors.onBackground,
             unfocusedTextColor = TDTheme.colors.onBackground,

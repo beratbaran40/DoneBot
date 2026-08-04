@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -26,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -41,6 +39,7 @@ import com.todoapp.mobile.ui.groups.managemembers.ManageMembersContract.ManageMe
 import com.todoapp.mobile.ui.groups.managemembers.ManageMembersContract.UiAction
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.extensions.collectWithLifecycle
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -150,7 +149,7 @@ private fun ManageMemberRow(
         modifier =
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(TDTheme.shapes.medium)
             .background(TDTheme.colors.background)
             .clickable(onClick = onClick)
             .padding(16.dp),
@@ -180,7 +179,7 @@ private fun ManageMemberRow(
             )
         }
         Icon(
-            painter = painterResource(R.drawable.ic_arrow_forward),
+            painter = tdPainter(R.drawable.ic_arrow_forward),
             contentDescription = null,
             tint = TDTheme.colors.gray,
             modifier = Modifier.size(20.dp),

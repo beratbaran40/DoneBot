@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 
 /**
  * Slim X/Y progress for a staged task: `lightGray` track, `mediumGreen` fill, `darkGreen` "3/5" label.
@@ -40,7 +40,7 @@ fun TDSubtaskProgress(
             Modifier
                 .weight(1f)
                 .height(6.dp)
-                .clip(RoundedCornerShape(3.dp))
+                .clip(tdCorner(3.dp))
                 .background(TDTheme.colors.lightGray),
         ) {
             if (fraction > 0f) {
@@ -49,7 +49,7 @@ fun TDSubtaskProgress(
                     Modifier
                         .fillMaxWidth(fraction)
                         .height(6.dp)
-                        .clip(RoundedCornerShape(3.dp))
+                        .clip(tdCorner(3.dp))
                         .background(TDTheme.colors.mediumGreen),
                 )
             }

@@ -22,6 +22,7 @@ import com.todoapp.uikit.components.TDSkeletonBox
 import com.todoapp.uikit.components.TDSkeletonText
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 
 @Composable
 internal fun DetailsSkeleton(modifier: Modifier = Modifier) {
@@ -82,7 +83,7 @@ private fun DetailsSkeletonAllDayRow() {
         Spacer(Modifier.weight(1f))
         TDSkeletonBox(
             modifier = Modifier.size(width = 52.dp, height = 32.dp),
-            shape = RoundedCornerShape(16.dp),
+            shape = TDTheme.shapes.large,
         )
     }
 }
@@ -97,13 +98,13 @@ private fun DetailsSkeletonTimeRow() {
             modifier = Modifier
                 .weight(1f)
                 .height(56.dp),
-            shape = RoundedCornerShape(12.dp),
+            shape = TDTheme.shapes.medium,
         )
         TDSkeletonBox(
             modifier = Modifier
                 .weight(1f)
                 .height(56.dp),
-            shape = RoundedCornerShape(12.dp),
+            shape = TDTheme.shapes.medium,
         )
     }
 }
@@ -120,13 +121,13 @@ private fun DetailsSkeletonBottomBar() {
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp),
-            shape = RoundedCornerShape(24.dp),
+            shape = tdCorner(24.dp),
         )
         TDSkeletonBox(
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp),
-            shape = RoundedCornerShape(24.dp),
+            shape = tdCorner(24.dp),
         )
     }
 }

@@ -20,7 +20,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,7 +39,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
@@ -61,6 +59,7 @@ import com.todoapp.uikit.components.TDFamilyGroupCard
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDUndoSnackbar
 import com.todoapp.uikit.extensions.ObscuredTouchGuard
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -241,7 +240,7 @@ private fun GroupsContent(
                     .padding(24.dp),
                 text = stringResource(com.todoapp.mobile.R.string.create_new_group),
                 type = TDButtonType.PRIMARY,
-                icon = painterResource(R.drawable.ic_plus),
+                icon = tdPainter(R.drawable.ic_plus),
                 onClick = { onAction(UiAction.OnCreateNewGroupTap) },
             )
 
@@ -314,7 +313,7 @@ private fun GroupEmptyContent(
         verticalArrangement = Arrangement.Center,
     ) {
         Icon(
-            painterResource(R.drawable.ic_avatar_new_group),
+            tdPainter(R.drawable.ic_avatar_new_group),
             contentDescription = stringResource(com.todoapp.mobile.R.string.new_group),
             modifier = Modifier.size(192.dp),
             tint = TDTheme.colors.pendingGray.copy(0.81f),
@@ -338,7 +337,7 @@ private fun GroupEmptyContent(
         )
         Spacer(Modifier.height(32.dp))
         TDButton(
-            modifier = Modifier.clip(RoundedCornerShape(12.dp)),
+            modifier = Modifier.clip(TDTheme.shapes.medium),
             text =
             if (uiState.isUserAuthenticated) {
                 stringResource(com.todoapp.mobile.R.string.create_new_group)

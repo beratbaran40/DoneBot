@@ -22,18 +22,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
@@ -60,7 +56,9 @@ import com.todoapp.uikit.components.TDLoadingBar
 import com.todoapp.uikit.components.TDMonthNavigator
 import com.todoapp.uikit.components.TDMonthlyBarChart
 import com.todoapp.uikit.components.TDScreenWithSheet
+import com.todoapp.uikit.components.TDSwitch
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 import java.time.LocalDate
 import java.time.YearMonth
@@ -98,7 +96,7 @@ private fun ActivityErrorContent(
         verticalArrangement = Arrangement.Center,
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_error),
+            painter = tdPainter(R.drawable.ic_error),
             contentDescription = null,
             tint = TDTheme.colors.crossRed,
             modifier = Modifier.size(64.dp),
@@ -324,7 +322,7 @@ private fun DrillInWeekChart(
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_arrow_back),
+                    painter = tdPainter(R.drawable.ic_arrow_back),
                     contentDescription = stringResource(com.todoapp.mobile.R.string.activity_drill_in_back),
                     tint = TDTheme.colors.onBackground,
                 )
@@ -381,13 +379,9 @@ private fun IncludeRecurringRow(
             style = TDTheme.typography.subheading1,
             color = TDTheme.colors.onBackground,
         )
-        Switch(
+        TDSwitch(
             checked = checked,
             onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = TDTheme.colors.white,
-                checkedTrackColor = TDTheme.colors.pendingGray,
-            ),
         )
     }
 }
@@ -400,7 +394,7 @@ internal fun ActivityCard(content: @Composable ColumnScope.() -> Unit) {
             .padding(horizontal = 16.dp)
             .background(
                 color = TDTheme.colors.lightPending,
-                shape = RoundedCornerShape(16.dp),
+                shape = TDTheme.shapes.large,
             )
             .padding(16.dp),
         content = content,
@@ -537,7 +531,7 @@ private fun CategoryBreakdownSection(stats: List<CategoryStat>) {
         stats.forEach { stat ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    painter = painterResource(categoryIconRes(stat.category)),
+                    painter = tdPainter(categoryIconRes(stat.category)),
                     contentDescription = null,
                     tint = TDTheme.colors.onBackground,
                     modifier = Modifier.size(16.dp),
@@ -556,7 +550,7 @@ private fun CategoryBreakdownSection(stats: List<CategoryStat>) {
                         .height(8.dp)
                         .background(
                             color = TDTheme.colors.lightPending,
-                            shape = RoundedCornerShape(4.dp),
+                            shape = TDTheme.shapes.tiny,
                         ),
                 ) {
                     Box(
@@ -565,7 +559,7 @@ private fun CategoryBreakdownSection(stats: List<CategoryStat>) {
                             .height(8.dp)
                             .background(
                                 color = TDTheme.colors.mediumGreen,
-                                shape = RoundedCornerShape(4.dp),
+                                shape = TDTheme.shapes.tiny,
                             ),
                     )
                 }

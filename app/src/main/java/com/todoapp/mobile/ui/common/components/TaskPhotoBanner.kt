@@ -35,13 +35,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.todoapp.mobile.R
 import com.todoapp.mobile.ui.common.taskform.TaskFormType
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 import com.example.uikit.R as UiKitR
@@ -123,7 +123,7 @@ fun TaskPhotoBannerEditable(
                         .clickable { sheetOpen = true },
                 ) {
                     Icon(
-                        painter = painterResource(UiKitR.drawable.ic_edit_task),
+                        painter = tdPainter(UiKitR.drawable.ic_edit_task),
                         contentDescription = stringResource(R.string.task_banner_edit_cd),
                         tint = Color.White,
                         modifier = Modifier.size(26.dp),
@@ -202,7 +202,7 @@ private fun BannerActionRow(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Icon(
-            painter = painterResource(iconRes),
+            painter = tdPainter(iconRes),
             contentDescription = null,
             tint = tint,
             modifier = Modifier.size(22.dp),

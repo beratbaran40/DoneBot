@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,7 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -57,7 +55,9 @@ import com.todoapp.uikit.components.TDTaskCardWithCheckbox
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDTextField
 import com.todoapp.uikit.extensions.collectWithLifecycle
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import java.time.LocalDate
@@ -115,7 +115,7 @@ fun SearchScreen(
                 label = stringResource(R.string.search),
                 leadingIcon = {
                     Icon(
-                        painter = painterResource(UikitR.drawable.ic_search),
+                        painter = tdPainter(UikitR.drawable.ic_search),
                         contentDescription = null,
                         tint = TDTheme.colors.gray,
                     )
@@ -128,7 +128,7 @@ fun SearchScreen(
                     ) {
                         IconButton(onClick = { onAction(UiAction.OnQueryChange("")) }) {
                             Icon(
-                                painter = painterResource(UikitR.drawable.ic_close),
+                                painter = tdPainter(UikitR.drawable.ic_close),
                                 contentDescription = stringResource(R.string.cd_clear_search),
                                 tint = TDTheme.colors.gray,
                             )
@@ -243,13 +243,13 @@ private fun SearchFilterTrigger(
     Row(
         modifier =
         Modifier
-            .background(color = bgColor, shape = RoundedCornerShape(20.dp))
+            .background(color = bgColor, shape = TDTheme.shapes.xLarge)
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            painter = painterResource(UikitR.drawable.ic_filter),
+            painter = tdPainter(UikitR.drawable.ic_filter),
             contentDescription = null,
             tint = textColor,
             modifier = Modifier.size(16.dp),
@@ -293,13 +293,13 @@ private fun SearchTaskItem(
                 .padding(horizontal = 4.dp)
                 .background(
                     color = TDTheme.colors.onBackground.copy(alpha = 0.06f),
-                    shape = RoundedCornerShape(6.dp),
+                    shape = tdCorner(6.dp),
                 ).padding(horizontal = 6.dp, vertical = 3.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 modifier = Modifier.size(10.dp),
-                painter = painterResource(R.drawable.ic_calendar),
+                painter = tdPainter(R.drawable.ic_calendar),
                 contentDescription = null,
                 tint = TDTheme.colors.onBackground.copy(alpha = 0.5f),
             )

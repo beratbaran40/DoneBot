@@ -11,9 +11,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 import java.time.YearMonth
@@ -41,7 +41,7 @@ fun TDMonthNavigator(
     ) {
         IconButton(onClick = onPreviousMonth) {
             Icon(
-                painter = painterResource(R.drawable.ic_arrow_back),
+                painter = tdPainter(R.drawable.ic_arrow_back),
                 contentDescription = stringResource(R.string.cd_previous_month),
                 tint = TDTheme.colors.onBackground,
             )
@@ -58,7 +58,7 @@ fun TDMonthNavigator(
             enabled = !isCurrentMonth,
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_arrow_forward),
+                painter = tdPainter(R.drawable.ic_arrow_forward),
                 contentDescription = stringResource(R.string.cd_next_month),
                 tint = TDTheme.colors.onBackground,
                 modifier = Modifier.alpha(if (isCurrentMonth) 0.3f else 1f),

@@ -6,14 +6,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
@@ -30,7 +29,7 @@ fun TDSettingsGroup(
     showBorder: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val shape = RoundedCornerShape(16.dp)
+    val shape = TDTheme.shapes.large
     val borderAlpha = if (TDTheme.isDark) 0.25f else 0.4f
     Column(modifier = modifier) {
         if (title != null) {
@@ -68,7 +67,7 @@ private fun TdSettingsGroupPreview() {
             TDSettingsGroup(title = "Notifications & Reminders") {
                 TDSettingsItem(
                     title = "Push notifications",
-                    icon = painterResource(R.drawable.ic_notification),
+                    icon = tdPainter(R.drawable.ic_notification),
                     iconTint = TDTheme.colors.darkPending,
                     iconContainerColor = TDTheme.colors.lightPending,
                     trailingContent = { TDSwitch(checked = true, onCheckedChange = {}) },
@@ -76,13 +75,13 @@ private fun TdSettingsGroupPreview() {
                 TDSettingsItem(
                     title = "Exact reminders",
                     subtitle = "Enabled",
-                    icon = painterResource(R.drawable.ic_clock),
+                    icon = tdPainter(R.drawable.ic_clock),
                     iconTint = TDTheme.colors.darkPending,
                     iconContainerColor = TDTheme.colors.lightPending,
                 )
                 TDSettingsItem(
                     title = "Alarm sound",
-                    icon = painterResource(R.drawable.ic_notification),
+                    icon = tdPainter(R.drawable.ic_notification),
                     iconTint = TDTheme.colors.darkPending,
                     iconContainerColor = TDTheme.colors.lightPending,
                     onClick = {},
@@ -100,7 +99,7 @@ private fun TdSettingsGroupUntitledPreview() {
             TDSettingsGroup {
                 TDSettingsItem(
                     title = "Login or Create Account",
-                    icon = painterResource(R.drawable.ic_profile),
+                    icon = tdPainter(R.drawable.ic_profile),
                     iconTint = TDTheme.colors.primary,
                     iconContainerColor = TDTheme.colors.bgColorPurple,
                     titleColor = TDTheme.colors.darkPending,
@@ -119,7 +118,7 @@ private fun TdSettingsGroupDestructivePreview() {
             TDSettingsGroup(title = "Danger Zone") {
                 TDSettingsItem(
                     title = "Delete account",
-                    icon = painterResource(R.drawable.ic_delete),
+                    icon = tdPainter(R.drawable.ic_delete),
                     iconTint = TDTheme.colors.crossRed,
                     iconContainerColor = TDTheme.colors.lightRed,
                     titleColor = TDTheme.colors.crossRed,

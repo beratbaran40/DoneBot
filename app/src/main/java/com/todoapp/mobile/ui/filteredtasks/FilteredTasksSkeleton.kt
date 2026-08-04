@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -79,13 +78,13 @@ private fun FilteredTasksSkeletonTabRow() {
             modifier = Modifier
                 .weight(1f)
                 .height(40.dp),
-            shape = RoundedCornerShape(12.dp),
+            shape = TDTheme.shapes.medium,
         )
         TDSkeletonBox(
             modifier = Modifier
                 .weight(1f)
                 .height(40.dp),
-            shape = RoundedCornerShape(12.dp),
+            shape = TDTheme.shapes.medium,
         )
     }
 }
@@ -99,7 +98,7 @@ private fun FilteredTasksSkeletonSortButton() {
         Spacer(Modifier.weight(1f))
         TDSkeletonBox(
             modifier = Modifier.size(width = 110.dp, height = 32.dp),
-            shape = RoundedCornerShape(16.dp),
+            shape = TDTheme.shapes.large,
         )
     }
 }
@@ -114,20 +113,20 @@ private fun FilteredTasksSkeletonRow(variantIndex: Int) {
     Column {
         TDSkeletonBox(
             modifier = Modifier.size(width = 96.dp, height = 20.dp),
-            shape = RoundedCornerShape(8.dp),
+            shape = TDTheme.shapes.small,
         )
         Spacer(Modifier.height(6.dp))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
+                .clip(TDTheme.shapes.medium)
                 .background(TDTheme.colors.lightPending.copy(alpha = 0.4f))
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             TDSkeletonBox(
                 modifier = Modifier.size(28.dp),
-                shape = RoundedCornerShape(8.dp),
+                shape = TDTheme.shapes.small,
             )
             Spacer(Modifier.width(12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {

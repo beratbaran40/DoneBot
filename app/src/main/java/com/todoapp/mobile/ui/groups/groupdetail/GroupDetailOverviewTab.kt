@@ -44,7 +44,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.BuildConfig
@@ -64,6 +63,7 @@ import com.todoapp.uikit.components.TDPriorityBadge
 import com.todoapp.uikit.components.TDTaskCardWithCheckbox
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDUndoSnackbar
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 import java.time.DayOfWeek
 import java.time.Instant
@@ -191,7 +191,7 @@ private fun GroupTasksEmptyState() {
         verticalArrangement = Arrangement.Center,
     ) {
         Icon(
-            painter = painterResource(UiKitR.drawable.ic_no_group_task),
+            painter = tdPainter(UiKitR.drawable.ic_no_group_task),
             contentDescription = null,
             modifier = Modifier.size(144.dp),
             tint = TDTheme.colors.pendingGray,
@@ -271,9 +271,9 @@ private fun GroupStatCard(
     Row(
         modifier =
         modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(TDTheme.shapes.medium)
             .background(cardBg)
-            .then(if (selected) Modifier.border(2.dp, countColor, RoundedCornerShape(12.dp)) else Modifier)
+            .then(if (selected) Modifier.border(2.dp, countColor, TDTheme.shapes.medium) else Modifier)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -288,7 +288,7 @@ private fun GroupStatCard(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(iconRes),
+                painter = tdPainter(iconRes),
                 contentDescription = null,
                 tint = iconTint,
                 modifier = Modifier.size(18.dp),
@@ -404,21 +404,21 @@ private fun GroupTaskSwipeBackground(
         modifier =
         Modifier
             .fillMaxSize()
-            .background(color, RoundedCornerShape(12.dp))
+            .background(color, TDTheme.shapes.medium)
             .padding(horizontal = 20.dp),
         contentAlignment = alignment,
     ) {
         when (direction) {
             SwipeToDismissBoxValue.EndToStart ->
                 Icon(
-                    painter = painterResource(UiKitR.drawable.ic_delete),
+                    painter = tdPainter(UiKitR.drawable.ic_delete),
                     contentDescription = null,
                     tint = Color.White,
                 )
 
             SwipeToDismissBoxValue.StartToEnd ->
                 Icon(
-                    painter = painterResource(UiKitR.drawable.ic_members),
+                    painter = tdPainter(UiKitR.drawable.ic_members),
                     contentDescription =
                     stringResource(
                         if (hasAssignee) R.string.unassign_task else R.string.assign_to_me,
@@ -491,7 +491,7 @@ private fun AssigneeBackFace(task: GroupTaskUiItem) {
         modifier =
         Modifier
             .fillMaxSize()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(TDTheme.shapes.medium)
             .background(TDTheme.colors.infoCardBgColor)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -516,7 +516,7 @@ private fun AssigneeBackFace(task: GroupTaskUiItem) {
                 )
             } else {
                 Icon(
-                    painter = painterResource(UiKitR.drawable.ic_members),
+                    painter = tdPainter(UiKitR.drawable.ic_members),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
                     tint = TDTheme.colors.lightGray,
@@ -534,7 +534,7 @@ private fun AssigneeBackFace(task: GroupTaskUiItem) {
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_calendar),
+                painter = tdPainter(R.drawable.ic_calendar),
                 contentDescription = null,
                 modifier = Modifier.size(14.dp),
                 tint = TDTheme.colors.gray,
@@ -560,7 +560,7 @@ private fun GroupTaskCard(
                 modifier =
                 Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(TDTheme.shapes.medium)
                     .background(TDTheme.colors.lightPending),
             ) {
                 SecretOrNormalPhotoBanner(

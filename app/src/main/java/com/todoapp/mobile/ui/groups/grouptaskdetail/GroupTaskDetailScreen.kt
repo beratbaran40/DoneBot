@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -24,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -45,6 +43,7 @@ import com.todoapp.uikit.components.TDScreenWithSheet
 import com.todoapp.uikit.components.TDTaskCompletionCard
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.extensions.collectWithLifecycle
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 import com.example.uikit.R as UiKitR
 
@@ -141,7 +140,7 @@ private fun TaskDetailBody(
                 )
                 IconButton(onClick = { onAction(UiAction.OnEditTap) }) {
                     Icon(
-                        painter = painterResource(UiKitR.drawable.ic_edit_task),
+                        painter = tdPainter(UiKitR.drawable.ic_edit_task),
                         contentDescription = stringResource(R.string.edit_task),
                         tint = TDTheme.colors.pendingGray,
                         modifier = Modifier.size(22.dp),
@@ -180,7 +179,7 @@ private fun TaskDetailBody(
                     modifier =
                     Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(TDTheme.shapes.medium)
                         .background(TDTheme.colors.lightPending)
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),

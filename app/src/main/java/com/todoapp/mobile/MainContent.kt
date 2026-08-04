@@ -8,6 +8,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
@@ -21,17 +22,25 @@ import com.todoapp.mobile.navigation.NavigationEffectController
 import com.todoapp.mobile.navigation.RouteArgs
 import com.todoapp.mobile.navigation.Screen
 import com.todoapp.mobile.navigation.ThemedApp
+import com.todoapp.mobile.ui.common.AppPixelIcons
 import com.todoapp.mobile.ui.common.LocalReduceMotion
 import com.todoapp.uikit.extensions.collectWithLifecycle
+import com.todoapp.uikit.image.LocalPixelIconMap
+import com.todoapp.uikit.image.UikitPixelIcons
 
 @Composable
 fun MainContent() {
     val navController = rememberNavController()
     val mainViewModel: MainViewModel = hiltViewModel()
     val reduceMotion by mainViewModel.reduceMotion.collectAsStateWithLifecycle(initialValue = false)
+    // Merged icon map: `:uikit` and `:app` own separate R classes, so uikit's default local only
+    // resolves uikit drawables. The overlay root keeps that default on purpose — it renders uikit
+    // cards only.
+    val pixelIcons = remember { UikitPixelIcons + AppPixelIcons }
     CompositionLocalProvider(
         LocalNavController provides navController,
         LocalReduceMotion provides reduceMotion,
+        LocalPixelIconMap provides pixelIcons,
     ) {
         var dialogMessage by rememberSaveable { mutableStateOf<String?>(null) }
 

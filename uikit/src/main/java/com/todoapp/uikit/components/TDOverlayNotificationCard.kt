@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,7 +32,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -41,8 +39,11 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.uikit.R
+import com.todoapp.uikit.image.rememberPixelPainter
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -125,7 +126,7 @@ private fun NotificationCardContent(
     Surface(
         onClick = onOpenClick,
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
+        shape = tdCorner(28.dp),
         color = TDTheme.colors.background,
         shadowElevation = 12.dp,
         border = BorderStroke(1.dp, TDTheme.colors.onSurface.copy(alpha = 0.05f)),
@@ -144,13 +145,15 @@ private fun NotificationCardContent(
                     verticalAlignment = Alignment.Top,
                 ) {
                     Image(
-                        painter =
-                        painterResource(
-                            if (TDTheme.isDark) {
-                                R.drawable.img_donebot_alarm_reminder_light
-                            } else {
-                                R.drawable.img_donebot_alarm_reminder_dark
-                            },
+                        painter = rememberPixelPainter(
+                            tdPainter(
+                                if (TDTheme.isDark) {
+                                    R.drawable.img_donebot_alarm_reminder_light
+                                } else {
+                                    R.drawable.img_donebot_alarm_reminder_dark
+                                },
+                            ),
+                            100.dp,
                         ),
                         contentDescription = null,
                         modifier = Modifier.size(100.dp),

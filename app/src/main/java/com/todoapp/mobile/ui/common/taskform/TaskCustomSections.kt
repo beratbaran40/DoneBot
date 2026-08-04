@@ -18,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
@@ -27,6 +26,7 @@ import com.todoapp.mobile.domain.alarm.MAX_REMINDER_SLOTS
 import com.todoapp.uikit.components.TDChoiceChip
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDWheelTimePickerDialog
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 import java.time.LocalDate
@@ -128,7 +128,7 @@ fun TaskReminderTimesEditor(
                 )
                 IconButton(onClick = { onRemove(time) }) {
                     Icon(
-                        painter = painterResource(UiKitR.drawable.ic_close),
+                        painter = tdPainter(UiKitR.drawable.ic_close),
                         contentDescription = stringResource(R.string.creation_remove_reminder_cd),
                         tint = TDTheme.colors.pendingGray,
                         modifier = Modifier.size(16.dp),
@@ -141,7 +141,7 @@ fun TaskReminderTimesEditor(
                 label = stringResource(R.string.creation_reminder_add),
                 selected = false,
                 onClick = { picking = true },
-                leadingIcon = painterResource(UiKitR.drawable.ic_plus),
+                leadingIcon = tdPainter(UiKitR.drawable.ic_plus),
             )
         } else {
             TDText(

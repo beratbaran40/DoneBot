@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -71,9 +70,12 @@ import com.todoapp.mobile.domain.model.ChatMessage
 import com.todoapp.uikit.components.TDLoadingBar
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.extensions.collectWithLifecycle
+import com.todoapp.uikit.image.rememberPixelPainter
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.previews.TDPreviewWide
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
@@ -270,7 +272,7 @@ private fun MessageActionsSheet(
     ) {
         Column(modifier = Modifier.padding(bottom = 16.dp)) {
             MessageActionItem(
-                icon = painterResource(com.example.uikit.R.drawable.ic_content_copy),
+                icon = tdPainter(com.example.uikit.R.drawable.ic_content_copy),
                 label = stringResource(R.string.chat_action_copy),
                 onClick = {
                     clipboardScope.launch {
@@ -284,14 +286,14 @@ private fun MessageActionsSheet(
             )
             if (previousUserPrompt != null) {
                 MessageActionItem(
-                    icon = painterResource(com.example.uikit.R.drawable.ic_refresh),
+                    icon = tdPainter(com.example.uikit.R.drawable.ic_refresh),
                     label = stringResource(R.string.chat_action_try_again),
                     onClick = { onTryAgain(previousUserPrompt) },
                 )
             }
             if (target.role == ChatMessage.Role.ASSISTANT) {
                 MessageActionItem(
-                    icon = painterResource(com.example.uikit.R.drawable.ic_warning),
+                    icon = tdPainter(com.example.uikit.R.drawable.ic_warning),
                     label = stringResource(R.string.chat_action_report),
                     onClick = onReport,
                 )
@@ -351,7 +353,7 @@ private fun BoxScope.ScrollToBottomFab(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(com.example.uikit.R.drawable.ic_arrow_down),
+                painter = tdPainter(com.example.uikit.R.drawable.ic_arrow_down),
                 contentDescription = stringResource(R.string.chat_scroll_to_bottom),
                 tint = TDTheme.colors.darkPending,
                 modifier = Modifier.size(20.dp),
@@ -380,7 +382,7 @@ private fun ChatPersonaHeader(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.img_splash),
+                    painter = rememberPixelPainter(painterResource(R.drawable.img_splash), 55.dp),
                     contentDescription = null,
                     tint = Color.Unspecified,
                     modifier = Modifier.size(55.dp),
@@ -413,7 +415,7 @@ private fun ChatPersonaHeader(
         if (hasMessages) {
             IconButton(onClick = onClearClick) {
                 Icon(
-                    painter = painterResource(com.example.uikit.R.drawable.ic_delete),
+                    painter = tdPainter(com.example.uikit.R.drawable.ic_delete),
                     contentDescription = stringResource(R.string.chat_action_clear_history),
                     tint = TDTheme.colors.gray,
                 )
@@ -445,7 +447,7 @@ private fun ChatEmptyState(
             contentAlignment = Alignment.Center,
         ) {
             Image(
-                painter = painterResource(R.drawable.img_splash),
+                painter = rememberPixelPainter(painterResource(R.drawable.img_splash), 88.dp),
                 contentDescription = null,
                 modifier = Modifier.size(88.dp),
             )
@@ -486,7 +488,7 @@ private fun SuggestedPromptChip(
 ) {
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
+            .clip(TDTheme.shapes.xLarge)
             .background(TDTheme.colors.lightPending)
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 10.dp),
@@ -520,12 +522,12 @@ private fun ChatInputPill(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(24.dp))
+                    .clip(tdCorner(24.dp))
                     .background(TDTheme.colors.lightPending)
                     .border(
                         width = 1.dp,
                         color = TDTheme.colors.lightGray.copy(alpha = 0.4f),
-                        shape = RoundedCornerShape(24.dp),
+                        shape = tdCorner(24.dp),
                     )
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 contentAlignment = Alignment.CenterStart,
@@ -611,7 +613,7 @@ private fun SendButton(
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            painter = painterResource(com.example.uikit.R.drawable.ic_send),
+            painter = tdPainter(com.example.uikit.R.drawable.ic_send),
             contentDescription = stringResource(R.string.chat_send_button_description),
             tint = TDTheme.colors.white,
             modifier = Modifier.size(20.dp),
@@ -632,7 +634,7 @@ private fun StopButton(
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            painter = painterResource(com.example.uikit.R.drawable.ic_stop),
+            painter = tdPainter(com.example.uikit.R.drawable.ic_stop),
             contentDescription = stringResource(R.string.chat_stop_button_description),
             tint = TDTheme.colors.white,
             modifier = Modifier.size(16.dp),

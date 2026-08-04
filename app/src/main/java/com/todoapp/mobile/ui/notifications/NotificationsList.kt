@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SwipeToDismissBox
@@ -24,13 +23,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
 import com.todoapp.mobile.domain.model.Notification
 import com.todoapp.mobile.domain.model.NotificationType
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 import java.time.Instant
 import java.time.LocalDate
@@ -141,7 +140,7 @@ private fun SwipeableNotificationCard(
 
 @Composable
 private fun NotificationSwipeBackground(direction: SwipeToDismissBoxValue) {
-    val shape = RoundedCornerShape(16.dp)
+    val shape = TDTheme.shapes.large
     when (direction) {
         SwipeToDismissBoxValue.EndToStart -> Box(
             modifier = Modifier
@@ -151,7 +150,7 @@ private fun NotificationSwipeBackground(direction: SwipeToDismissBoxValue) {
             contentAlignment = Alignment.CenterEnd,
         ) {
             Icon(
-                painter = painterResource(com.example.uikit.R.drawable.ic_delete),
+                painter = tdPainter(com.example.uikit.R.drawable.ic_delete),
                 contentDescription = null,
                 tint = TDTheme.colors.white,
                 modifier = Modifier
@@ -167,7 +166,7 @@ private fun NotificationSwipeBackground(direction: SwipeToDismissBoxValue) {
             contentAlignment = Alignment.CenterStart,
         ) {
             Icon(
-                painter = painterResource(com.example.uikit.R.drawable.ic_check),
+                painter = tdPainter(com.example.uikit.R.drawable.ic_check),
                 contentDescription = null,
                 tint = TDTheme.colors.white,
                 modifier = Modifier

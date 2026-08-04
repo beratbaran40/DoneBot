@@ -18,8 +18,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
@@ -39,13 +37,23 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.todoapp.mobile.BuildConfig
 import com.todoapp.mobile.R
+import com.todoapp.mobile.domain.repository.MAX_HALF_HEARTS
 import com.todoapp.mobile.ui.profile.ProfileContract.UiAction
 import com.todoapp.mobile.ui.profile.ProfileContract.UiState
 import com.todoapp.uikit.components.TDButton
+import com.todoapp.uikit.components.TDHealthRing
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.extensions.collectWithLifecycle
+import com.todoapp.uikit.image.rememberPixelImageModel
+import com.todoapp.uikit.image.tdPixelFilterQuality
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
+
+/** Avatar diameter. The health ring frames this, so the two must agree. */
+private val AVATAR_SIZE = 120.dp
+
+/** Extra diameter the ring needs so it frames the avatar rather than overlapping it. */
+private val AVATAR_RING_INSET = 24.dp
 
 @Composable
 fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
@@ -99,12 +107,19 @@ private fun ProfileContent(
             return@Column
         }
 
-        AvatarDisplay(
-            url = uiState.avatarUrl?.let { absoluteAvatarUrl(it, uiState.avatarVersion) },
-            initials = initialsFrom(uiState.displayName),
-            isUploading = uiState.isUploading,
-            onClick = onPickAvatar,
-        )
+        // The ring surfaces the same health-points streak the Activity screen shows as hearts.
+        TDHealthRing(
+            filled = uiState.healthHalfHearts,
+            total = MAX_HALF_HEARTS,
+            size = AVATAR_SIZE + AVATAR_RING_INSET,
+        ) {
+            AvatarDisplay(
+                url = uiState.avatarUrl?.let { absoluteAvatarUrl(it, uiState.avatarVersion) },
+                initials = initialsFrom(uiState.displayName),
+                isUploading = uiState.isUploading,
+                onClick = onPickAvatar,
+            )
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -128,7 +143,7 @@ private fun ProfileContent(
             value = uiState.editedDisplayName,
             onValueChange = { onAction(UiAction.OnDisplayNameChange(it)) },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
+            shape = TDTheme.shapes.medium,
             colors =
             OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = TDTheme.colors.pendingGray,
@@ -165,7 +180,7 @@ private fun ProfileContent(
             modifier =
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
+                .clip(TDTheme.shapes.medium)
                 .background(TDTheme.colors.lightPending)
                 .clickable { onAction(UiAction.OnChangePasswordTap) }
                 .padding(horizontal = 16.dp, vertical = 16.dp),
@@ -209,15 +224,16 @@ private fun AvatarDisplay(
     Box(
         modifier =
         Modifier
-            .size(120.dp)
-            .clip(CircleShape)
+            .size(AVATAR_SIZE)
+            .clip(TDTheme.shapes.circle)
             .background(TDTheme.colors.lightPending)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         if (url != null) {
             AsyncImage(
-                model = url,
+                model = rememberPixelImageModel(url, AVATAR_SIZE),
+                filterQuality = tdPixelFilterQuality(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),

@@ -1023,15 +1023,19 @@ fun ToDoApp(
             },
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
         ) { padding ->
-            // Notion-style graph-paper grid painted app-wide, BEHIND the content Row. Must live inside
-            // the content lambda (not on the Scaffold modifier): Material3's Surface paints containerColor
-            // over any Scaffold-level background modifier, which would hide the grid.
+            // Graph-paper grid painted app-wide, BEHIND the content Row. Must live inside the content
+            // lambda (not on the Scaffold modifier): Material3's Surface paints containerColor over any
+            // Scaffold-level background modifier, which would hide the grid. Spacing/weight come from
+            // the active kit (ORIGINAL's transparent gridLine short-circuits the tiling to a flat fill).
             Box(
                 Modifier
                     .fillMaxSize()
                     .gridBackground(
                         baseColor = TDTheme.colors.background,
                         lineColor = TDTheme.colors.gridLine,
+                        spacing = TDTheme.style.gridSpacing,
+                        lineWidth = TDTheme.style.gridLineWidth,
+                        style = TDTheme.style.gridStyle,
                     ),
             ) {
                 Row(

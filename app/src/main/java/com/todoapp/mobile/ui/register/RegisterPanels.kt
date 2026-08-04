@@ -6,13 +6,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -26,6 +24,7 @@ import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDCompactOutlinedTextField
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -42,12 +41,11 @@ internal fun RegisterFormPanel(
         isError = false,
         leadingIcon = {
             Icon(
-                painterResource(R.drawable.ic_person),
+                tdPainter(R.drawable.ic_person),
                 contentDescription = stringResource(R.string.full_name),
                 tint = TDTheme.colors.onBackground.copy(0.5f),
             )
         },
-        roundedCornerShape = RoundedCornerShape(12.dp),
         height = 50.dp,
     )
     TDCompactOutlinedTextField(
@@ -58,7 +56,7 @@ internal fun RegisterFormPanel(
         isError = uiState.emailError != null,
         leadingIcon = {
             Icon(
-                painterResource(R.drawable.ic_mail_white),
+                tdPainter(R.drawable.ic_mail_white),
                 contentDescription = stringResource(R.string.email),
                 tint =
                 when {
@@ -67,7 +65,6 @@ internal fun RegisterFormPanel(
                 },
             )
         },
-        roundedCornerShape = RoundedCornerShape(12.dp),
         height = 50.dp,
     )
     uiState.emailError?.let {
@@ -82,7 +79,7 @@ internal fun RegisterFormPanel(
         isError = uiState.passwordError != null,
         leadingIcon = {
             Icon(
-                painterResource(R.drawable.ic_lock),
+                tdPainter(R.drawable.ic_lock),
                 contentDescription = stringResource(R.string.password),
                 tint =
                 when {
@@ -95,7 +92,7 @@ internal fun RegisterFormPanel(
             IconButton(onClick = { onAction(UiAction.OnPasswordVisibilityTap) }) {
                 Icon(
                     painter =
-                    painterResource(
+                    tdPainter(
                         if (uiState.isPasswordVisible) R.drawable.ic_visibility_on else R.drawable.ic_visibility_close,
                     ),
                     contentDescription = stringResource(R.string.toggle_password_visibility),
@@ -103,7 +100,6 @@ internal fun RegisterFormPanel(
                 )
             }
         },
-        roundedCornerShape = RoundedCornerShape(12.dp),
         height = 50.dp,
     )
     uiState.passwordError?.let {
@@ -123,7 +119,7 @@ internal fun RegisterFormPanel(
         isError = uiState.confirmPasswordError != null,
         leadingIcon = {
             Icon(
-                painterResource(R.drawable.ic_lock),
+                tdPainter(R.drawable.ic_lock),
                 contentDescription = stringResource(R.string.confirm_password),
                 tint =
                 when {
@@ -132,7 +128,6 @@ internal fun RegisterFormPanel(
                 },
             )
         },
-        roundedCornerShape = RoundedCornerShape(12.dp),
         height = 50.dp,
     )
     uiState.confirmPasswordError?.let {
@@ -145,7 +140,7 @@ internal fun RegisterFormPanel(
     TDButton(
         text = stringResource(R.string.sign_up),
         fullWidth = true,
-        modifier = Modifier.clip(RoundedCornerShape(12.dp)),
+        modifier = Modifier.clip(TDTheme.shapes.medium),
     ) { onAction(UiAction.OnSignUpTap) }
     Spacer(Modifier.height(16.dp))
 
@@ -154,7 +149,7 @@ internal fun RegisterFormPanel(
             text = stringResource(R.string.sign_up_with_google),
             fullWidth = true,
             type = TDButtonType.OUTLINE,
-            icon = painterResource(R.drawable.ic_google_logo),
+            icon = tdPainter(R.drawable.ic_google_logo),
             modifier = Modifier.fillMaxWidth(),
         ) { onAction(UiAction.OnGoogleSignInTap) }
     }

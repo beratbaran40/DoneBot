@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
@@ -49,7 +48,7 @@ internal fun SearchFiltersDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = TDTheme.colors.background,
-        shape = RoundedCornerShape(20.dp),
+        shape = TDTheme.shapes.xLarge,
         title = {
             TDText(
                 text = stringResource(R.string.search_filter_dialog_title),
@@ -180,8 +179,8 @@ private fun ChoiceChip(
     val borderColor = if (selected) TDTheme.colors.purple else TDTheme.colors.lightGray
     Column(
         modifier = Modifier
-            .background(bg, RoundedCornerShape(20.dp))
-            .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(20.dp))
+            .background(bg, TDTheme.shapes.xLarge)
+            .border(width = 1.dp, color = borderColor, shape = TDTheme.shapes.xLarge)
             .clickable(onClick = onClick)
             .padding(PaddingValues(horizontal = 14.dp, vertical = 8.dp)),
     ) {

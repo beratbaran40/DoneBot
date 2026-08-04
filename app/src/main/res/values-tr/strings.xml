@@ -201,6 +201,8 @@
     <string name="palette_original_desc">Klasik DoneBot havası</string>
     <string name="palette_monochrome">Monokrom</string>
     <string name="palette_monochrome_desc">Gri tonlama + arka plan</string>
+    <string name="palette_pixel">8-Bit</string>
+    <string name="palette_pixel_desc">Retro arcade pikselleri ve sert gölgeler</string>
     <string name="language_english">İngilizce</string>
     <string name="language_english_short">EN</string>
     <string name="language_turkish">Türkçe</string>

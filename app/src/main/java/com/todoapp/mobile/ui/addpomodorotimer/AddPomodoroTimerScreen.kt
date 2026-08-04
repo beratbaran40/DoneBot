@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -28,7 +27,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -38,7 +36,8 @@ import com.todoapp.mobile.ui.addpomodorotimer.AddPomodoroTimerContract.UiState
 import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDText
-import com.todoapp.uikit.modifier.neumorphicShadow
+import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.modifier.tdShadow
 import com.todoapp.uikit.theme.TDTheme
 import com.example.uikit.R as UiKitR
 
@@ -210,22 +209,22 @@ private fun PomodoroPreviewCard(
             .fillMaxWidth()
             .then(
                 if (isDark) {
-                    Modifier.border(1.dp, TDTheme.colors.pendingGray.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
+                    Modifier.border(1.dp, TDTheme.colors.pendingGray.copy(alpha = 0.35f), TDTheme.shapes.large)
                 } else {
-                    Modifier.neumorphicShadow(
+                    Modifier.tdShadow(
                         lightShadow = TDTheme.colors.white.copy(alpha = 0.9f),
                         darkShadow = TDTheme.colors.darkPending.copy(alpha = 0.15f),
                         cornerRadius = 16.dp,
                         elevation = 8.dp,
                     )
                 },
-            ).clip(RoundedCornerShape(16.dp))
+            ).clip(TDTheme.shapes.large)
             .background(TDTheme.colors.background)
             .padding(horizontal = 16.dp, vertical = 14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                painter = painterResource(UiKitR.drawable.ic_sand_clock),
+                painter = tdPainter(UiKitR.drawable.ic_sand_clock),
                 contentDescription = null,
                 tint = TDTheme.colors.darkPending,
                 modifier = Modifier.size(20.dp),
@@ -291,22 +290,22 @@ private fun PomodoroStepperCard(
             .fillMaxWidth()
             .then(
                 if (isDark) {
-                    Modifier.border(1.dp, TDTheme.colors.lightGray.copy(alpha = 0.25f), RoundedCornerShape(16.dp))
+                    Modifier.border(1.dp, TDTheme.colors.lightGray.copy(alpha = 0.25f), TDTheme.shapes.large)
                 } else {
-                    Modifier.neumorphicShadow(
+                    Modifier.tdShadow(
                         lightShadow = TDTheme.colors.white.copy(alpha = 0.85f),
                         darkShadow = iconTintColor.copy(alpha = 0.18f),
                         cornerRadius = 16.dp,
                         elevation = 6.dp,
                     )
                 },
-            ).clip(RoundedCornerShape(16.dp))
+            ).clip(TDTheme.shapes.large)
             .background(cardBgColor)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            painter = painterResource(iconRes),
+            painter = tdPainter(iconRes),
             contentDescription = null,
             tint = iconTintColor,
             modifier = Modifier.size(22.dp),
@@ -330,11 +329,11 @@ private fun PomodoroStepperCard(
                 modifier =
                 Modifier
                     .size(28.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(TDTheme.shapes.small)
                     .border(
                         width = 1.dp,
                         color = iconTintColor.copy(alpha = if (canDecrement) 0.5f else 0.2f),
-                        shape = RoundedCornerShape(8.dp),
+                        shape = TDTheme.shapes.small,
                     ),
                 contentAlignment = Alignment.Center,
             ) {
@@ -366,16 +365,16 @@ private fun PomodoroStepperCard(
                 modifier =
                 Modifier
                     .size(28.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(TDTheme.shapes.small)
                     .border(
                         width = 1.dp,
                         color = iconTintColor.copy(alpha = if (canIncrement) 0.5f else 0.2f),
-                        shape = RoundedCornerShape(8.dp),
+                        shape = TDTheme.shapes.small,
                     ),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    painter = painterResource(UiKitR.drawable.ic_plus),
+                    painter = tdPainter(UiKitR.drawable.ic_plus),
                     contentDescription = null,
                     tint = iconTintColor.copy(alpha = if (canIncrement) 1f else 0.3f),
                     modifier = Modifier.size(16.dp),

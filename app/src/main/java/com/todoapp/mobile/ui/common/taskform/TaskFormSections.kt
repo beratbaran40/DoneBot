@@ -25,7 +25,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -36,6 +35,7 @@ import com.todoapp.uikit.components.TDChoiceChip
 import com.todoapp.uikit.components.TDCompactOutlinedTextField
 import com.todoapp.uikit.components.TDDatePickerDialog
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -212,7 +212,7 @@ fun TaskFrequencyChips(
                     label = stringResource(option.labelRes),
                     selected = selected == option.recurrence,
                     onClick = { onSelect(option.recurrence) },
-                    leadingIcon = painterResource(option.iconRes),
+                    leadingIcon = tdPainter(option.iconRes),
                     selectedContainerColor = TDTheme.colors.pendingGray,
                     selectedContentColor = TDTheme.colors.white,
                 )
@@ -248,7 +248,7 @@ fun TaskSubtaskEditor(
                         Spacer(Modifier.width(8.dp))
                         IconButton(onClick = { onRemove(index) }) {
                             Icon(
-                                painter = painterResource(UiKitR.drawable.ic_delete),
+                                painter = tdPainter(UiKitR.drawable.ic_delete),
                                 contentDescription = stringResource(R.string.creation_remove_step_cd),
                                 tint = TDTheme.colors.crossRed,
                             )

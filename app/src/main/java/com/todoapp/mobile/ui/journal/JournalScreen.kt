@@ -21,7 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -38,6 +37,7 @@ import com.todoapp.uikit.components.TDButtonSize
 import com.todoapp.uikit.components.TDLoadingBar
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.extensions.collectWithLifecycle
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreviewWide
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.flow.Flow
@@ -127,7 +127,7 @@ private fun JournalLockedState() {
         verticalArrangement = Arrangement.Center,
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_settings),
+            painter = tdPainter(R.drawable.ic_settings),
             contentDescription = null,
             tint = TDTheme.colors.pendingGray,
             modifier = Modifier.size(48.dp),
@@ -212,7 +212,7 @@ private fun FloatingAddButton(
         onClick = onClick,
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_plus),
+            painter = tdPainter(R.drawable.ic_plus),
             contentDescription = stringResource(string.journal_add_entry_cd),
             tint = TDTheme.colors.background,
             modifier = Modifier.size(28.dp),

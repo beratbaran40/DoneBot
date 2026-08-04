@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,14 +30,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 import com.todoapp.uikit.theme.timePickerColors
 import com.todoapp.uikit.util.deviceUses24HourClock
 import java.time.LocalTime
@@ -65,7 +65,7 @@ fun TDPlanTimePickerField(
         Row(
             modifier =
             Modifier
-                .clip(RoundedCornerShape(16.dp))
+                .clip(TDTheme.shapes.large)
                 .background(TDTheme.colors.background)
                 .clickable { isDialogOpen = true }
                 .padding(vertical = 8.dp),
@@ -97,14 +97,14 @@ fun TDPlanTimePickerField(
             Row(
                 modifier =
                 Modifier
-                    .clip(RoundedCornerShape(999.dp))
+                    .clip(tdCorner(999.dp))
                     .background(TDTheme.colors.pendingGray)
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_clock),
+                    painter = tdPainter(R.drawable.ic_clock),
                     contentDescription = null,
                     tint = TDTheme.colors.onBackground,
                     modifier = Modifier.size(16.dp),
@@ -129,7 +129,7 @@ fun TDPlanTimePickerField(
 
                     Surface(
                         modifier = Modifier.padding(16.dp),
-                        shape = RoundedCornerShape(16.dp),
+                        shape = TDTheme.shapes.large,
                         tonalElevation = 8.dp,
                         contentColor = TDTheme.colors.onBackground,
                         color = TDTheme.colors.background,

@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -51,8 +50,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.uikit.R.drawable
 import com.todoapp.uikit.extensions.ObscuredTouchGuard
+import com.todoapp.uikit.image.rememberPixelPainter
 import com.todoapp.uikit.previews.TDPreviewDialog
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 
 /**
  * Soft-tone destructive confirmation dialog where DoneBot speaks to the user.
@@ -132,7 +133,7 @@ fun TDGoodbyeDialog(
         Surface(
             modifier = modifier
                 .widthIn(min = 280.dp, max = 360.dp),
-            shape = RoundedCornerShape(24.dp),
+            shape = tdCorner(24.dp),
             color = TDTheme.colors.lightPending,
             tonalElevation = 8.dp,
         ) {
@@ -235,7 +236,7 @@ private fun AvatarWithHalo(
             contentAlignment = Alignment.Center,
         ) {
             androidx.compose.foundation.Image(
-                painter = painterResource(avatarRes),
+                painter = rememberPixelPainter(painterResource(avatarRes), 88.dp),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -251,7 +252,7 @@ private fun SpeechBubble(text: String) {
     Column(
         modifier = Modifier
             .widthIn(max = 280.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(TDTheme.shapes.large)
             .background(TDTheme.colors.lightPending)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

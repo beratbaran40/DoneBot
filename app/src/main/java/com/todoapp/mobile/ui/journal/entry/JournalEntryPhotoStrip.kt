@@ -9,17 +9,16 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
 import com.todoapp.mobile.R.string
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -53,18 +52,18 @@ private fun AddPhotoTile(onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .size(ADD_TILE_SIZE.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(TDTheme.shapes.medium)
             .background(TDTheme.colors.bgColorPurple)
             .border(
                 width = 1.dp,
                 color = TDTheme.colors.lightGray,
-                shape = RoundedCornerShape(12.dp),
+                shape = TDTheme.shapes.medium,
             )
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_plus),
+            painter = tdPainter(R.drawable.ic_plus),
             contentDescription = stringResource(string.journal_entry_add_photo_cd),
             tint = TDTheme.colors.pendingGray,
             modifier = Modifier.size(28.dp),

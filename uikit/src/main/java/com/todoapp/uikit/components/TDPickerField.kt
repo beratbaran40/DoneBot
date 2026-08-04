@@ -10,9 +10,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreviewForm
 import com.todoapp.uikit.theme.TDTheme
 
@@ -77,7 +77,7 @@ private fun TDPickerFieldEmptyPreview() {
             modifier = Modifier.fillMaxWidth(),
             leadingIcon = {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_calendar2),
+                    painter = tdPainter(id = R.drawable.ic_calendar2),
                     contentDescription = null,
                 )
             },
@@ -96,7 +96,7 @@ private fun TDPickerFieldFilledPreview() {
             modifier = Modifier.fillMaxWidth(),
             leadingIcon = {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_calendar2),
+                    painter = tdPainter(id = R.drawable.ic_calendar2),
                     contentDescription = null,
                 )
             },
@@ -117,13 +117,13 @@ fun TDPickerFieldErrorPreview() {
             modifier = Modifier.fillMaxWidth(),
             leadingIcon = {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_calendar2),
+                    painter = tdPainter(id = R.drawable.ic_calendar2),
                     contentDescription = null,
                 )
             },
             trailingIcon = {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_close),
+                    painter = tdPainter(id = R.drawable.ic_close),
                     contentDescription = null,
                 )
             },

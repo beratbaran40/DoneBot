@@ -425,6 +425,7 @@ internal fun DrawScope.drawBranding(
     shadowPaint: Paint,
     colors: PolaroidColors,
     brandIcon: ImageBitmap,
+    brandFilterQuality: FilterQuality,
 ) {
     val stickerSize = bounds.width
     val stickerX = bounds.left
@@ -460,7 +461,7 @@ internal fun DrawScope.drawBranding(
         srcSize = IntSize(brandIcon.width, brandIcon.height),
         dstOffset = IntOffset((stickerX + pad).roundToInt(), (stickerY + pad).roundToInt()),
         dstSize = IntSize(iconSize, iconSize),
-        filterQuality = FilterQuality.High,
+        filterQuality = brandFilterQuality,
     )
 }
 

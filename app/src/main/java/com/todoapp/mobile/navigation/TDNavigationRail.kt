@@ -12,12 +12,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.todoapp.mobile.LocalNavController
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
 
@@ -60,22 +60,31 @@ fun TDNavigationRail() {
                     }
                 },
                 icon = {
-                    val useCalendarOutline =
-                        TDTheme.palette == PaletteKit.MONOCHROME && selected && screen is AppDestination.Calendar
+                    // Mirrors TDBottomBar — see the rationale there.
+                    val useCalendarOutline = when (TDTheme.palette) {
+                        PaletteKit.ORIGINAL, PaletteKit.PIXEL -> false
+                        PaletteKit.MONOCHROME -> selected && screen is AppDestination.Calendar
+                    }
                     val iconId = (if (selected && !useCalendarOutline) screen.selectedIcon else screen.icon)
                         ?: return@NavigationRailItem
                     Icon(
-                        painter = painterResource(id = iconId),
+                        painter = tdPainter(id = iconId),
                         contentDescription = stringResource(screen.title),
-                        tint =
-                        when {
-                            TDTheme.palette == PaletteKit.ORIGINAL -> Color.Unspecified
-                            selected -> TDTheme.colors.primary
-                            else -> TDTheme.colors.gray
+                        tint = when (TDTheme.palette) {
+                            PaletteKit.ORIGINAL -> Color.Unspecified
+                            PaletteKit.MONOCHROME, PaletteKit.PIXEL ->
+                                if (selected) TDTheme.colors.primary else TDTheme.colors.gray
                         },
                     )
                 },
-                label = { Text(text = stringResource(id = screen.title)) },
+                // Explicit style — NavigationRailItem's ProvideTextStyle would otherwise override the
+                // kit's LocalTextStyle with MaterialTheme's default (Roboto). See TDBottomBar.
+                label = {
+                    Text(
+                        text = stringResource(id = screen.title),
+                        style = TDTheme.typography.subheading2,
+                    )
+                },
                 alwaysShowLabel = false,
             )
         }

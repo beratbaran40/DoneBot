@@ -19,9 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
@@ -109,7 +109,7 @@ fun TDSettingsItem(
             onClick != null -> {
                 Spacer(modifier = Modifier.width(12.dp))
                 Icon(
-                    painter = painterResource(R.drawable.ic_arrow_forward),
+                    painter = tdPainter(R.drawable.ic_arrow_forward),
                     contentDescription = null,
                     tint = TDTheme.colors.gray,
                     modifier = Modifier.size(20.dp),
@@ -126,7 +126,7 @@ private fun TdSettingsItemNavigationPreview() {
         Column(modifier = Modifier.background(TDTheme.colors.settingsCard)) {
             TDSettingsItem(
                 title = "Push notifications",
-                icon = painterResource(R.drawable.ic_notification),
+                icon = tdPainter(R.drawable.ic_notification),
                 iconTint = TDTheme.colors.darkPending,
                 iconContainerColor = TDTheme.colors.lightPending,
                 onClick = {},
@@ -134,7 +134,7 @@ private fun TdSettingsItemNavigationPreview() {
             TDSettingsItem(
                 title = "Send feedback",
                 subtitle = "Questions, ideas, bug reports",
-                icon = painterResource(R.drawable.ic_mail),
+                icon = tdPainter(R.drawable.ic_mail),
                 iconTint = TDTheme.colors.primary,
                 iconContainerColor = TDTheme.colors.bgColorPurple,
                 onClick = {},
@@ -151,14 +151,14 @@ private fun TdSettingsItemSwitchPreview() {
             TDSettingsItem(
                 title = "Reduce motion",
                 subtitle = "Disables non-essential animations",
-                icon = painterResource(R.drawable.ic_info),
+                icon = tdPainter(R.drawable.ic_info),
                 iconTint = TDTheme.colors.primary,
                 iconContainerColor = TDTheme.colors.infoCardBgColor,
                 trailingContent = { TDSwitch(checked = true, onCheckedChange = {}) },
             )
             TDSettingsItem(
                 title = "Share usage data",
-                icon = painterResource(R.drawable.ic_warning),
+                icon = tdPainter(R.drawable.ic_warning),
                 iconTint = TDTheme.colors.darkGreen,
                 iconContainerColor = TDTheme.colors.lightGreen,
                 trailingContent = { TDSwitch(checked = false, onCheckedChange = {}) },
@@ -174,7 +174,7 @@ private fun TdSettingsItemBareGlyphPreview() {
         Column(modifier = Modifier.background(TDTheme.colors.settingsCard)) {
             TDSettingsItem(
                 title = "App language",
-                icon = painterResource(R.drawable.ic_globe),
+                icon = tdPainter(R.drawable.ic_globe),
                 iconTint = TDTheme.colors.purple,
                 onClick = {},
             )
@@ -189,7 +189,7 @@ private fun TdSettingsItemDestructivePreview() {
         Column(modifier = Modifier.background(TDTheme.colors.settingsCard)) {
             TDSettingsItem(
                 title = "Delete account",
-                icon = painterResource(R.drawable.ic_delete),
+                icon = tdPainter(R.drawable.ic_delete),
                 iconTint = TDTheme.colors.crossRed,
                 iconContainerColor = TDTheme.colors.lightRed,
                 titleColor = TDTheme.colors.crossRed,
@@ -207,7 +207,7 @@ private fun TdSettingsItemStatusPreview() {
             TDSettingsItem(
                 title = "Exact reminders",
                 subtitle = "Enabled",
-                icon = painterResource(R.drawable.ic_clock),
+                icon = tdPainter(R.drawable.ic_clock),
                 iconTint = TDTheme.colors.darkPending,
                 iconContainerColor = TDTheme.colors.lightPending,
             )

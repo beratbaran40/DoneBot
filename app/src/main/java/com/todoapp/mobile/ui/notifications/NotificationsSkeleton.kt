@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,7 +45,7 @@ internal fun NotificationsSkeletonList() {
 
 @Composable
 private fun NotificationsSkeletonCard() {
-    val shape = RoundedCornerShape(16.dp)
+    val shape = TDTheme.shapes.large
     val borderAlpha = if (TDTheme.isDark) 0.25f else 0.4f
     Row(
         modifier = Modifier

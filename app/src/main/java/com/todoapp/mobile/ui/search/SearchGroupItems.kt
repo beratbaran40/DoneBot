@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +26,7 @@ import com.todoapp.uikit.components.TDTaskCardWithCheckbox
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -131,7 +130,7 @@ internal fun SearchGroupTaskItem(
                     Modifier
                         .background(
                             color = TDTheme.colors.onBackground.copy(alpha = 0.06f),
-                            shape = RoundedCornerShape(6.dp),
+                            shape = tdCorner(6.dp),
                         ).padding(horizontal = 6.dp, vertical = 3.dp),
                 ) {
                     GroupInitialsAvatar(name = assignee.displayName, size = 16)
@@ -154,7 +153,7 @@ private fun BadgePill(content: @Composable () -> Unit) {
         Modifier
             .background(
                 color = TDTheme.colors.onBackground.copy(alpha = 0.06f),
-                shape = RoundedCornerShape(6.dp),
+                shape = tdCorner(6.dp),
             ).padding(horizontal = 6.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -165,16 +164,16 @@ private fun BadgePill(content: @Composable () -> Unit) {
 @Composable
 private fun PriorityBadge(priority: String) {
     val (bgColor, textColor) =
-        // ORIGINAL shows the classic red/orange/blue ramp; MONOCHROME keeps HIGH red + gray intensity.
-        if (TDTheme.palette == PaletteKit.ORIGINAL) {
-            when (priority.uppercase()) {
+        // Mirrors PrioritySelector: the chromatic kits get the red/orange/blue ramp, MONOCHROME
+        // keeps HIGH red and encodes the rest by gray intensity.
+        when (TDTheme.palette) {
+            PaletteKit.ORIGINAL, PaletteKit.PIXEL -> when (priority.uppercase()) {
                 "HIGH" -> TDTheme.colors.lightRed to TDTheme.colors.crossRed
                 "MEDIUM" -> TDTheme.colors.lightOrange to TDTheme.colors.orange
                 "LOW" -> TDTheme.colors.lightPending to TDTheme.colors.darkPending
                 else -> TDTheme.colors.onBackground.copy(alpha = 0.06f) to TDTheme.colors.gray
             }
-        } else {
-            when (priority.uppercase()) {
+            PaletteKit.MONOCHROME -> when (priority.uppercase()) {
                 "HIGH" -> TDTheme.colors.lightRed to TDTheme.colors.crossRed
                 "MEDIUM" -> TDTheme.colors.lightPending to TDTheme.colors.darkPending
                 "LOW" -> TDTheme.colors.lightPending to TDTheme.colors.gray
@@ -184,7 +183,7 @@ private fun PriorityBadge(priority: String) {
     Row(
         modifier =
         Modifier
-            .background(color = bgColor, shape = RoundedCornerShape(6.dp))
+            .background(color = bgColor, shape = tdCorner(6.dp))
             .padding(horizontal = 6.dp, vertical = 3.dp),
     ) {
         TDText(
@@ -212,7 +211,7 @@ private fun GroupRolePill(role: String) {
     Box(
         modifier =
         Modifier
-            .background(color = bgColor, shape = RoundedCornerShape(4.dp))
+            .background(color = bgColor, shape = TDTheme.shapes.tiny)
             .padding(horizontal = 6.dp, vertical = 2.dp),
     ) {
         TDText(
@@ -238,7 +237,7 @@ private fun GroupInitialsAvatar(
         modifier =
         Modifier
             .size(size.dp)
-            .background(color = TDTheme.colors.pendingGray, shape = CircleShape),
+            .background(color = TDTheme.colors.pendingGray, shape = TDTheme.shapes.circle),
         contentAlignment = Alignment.Center,
     ) {
         TDText(

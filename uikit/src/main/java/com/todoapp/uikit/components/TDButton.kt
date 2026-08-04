@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
@@ -21,40 +20,29 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.previews.TDPreviewNoBg
 import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
 
-private val poppinsFontFamily =
-    FontFamily(
-        Font(R.font.poppins_regular, FontWeight.Normal),
-        Font(R.font.poppins_medium, FontWeight.Medium),
-        Font(R.font.poppins_semi_bold, FontWeight.SemiBold),
-        Font(R.font.poppins_bold, FontWeight.Bold),
-    )
-
-private val buttonSmallTextStyle =
-    TextStyle(
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Medium,
-        fontFamily = poppinsFontFamily,
-    )
-
-private val buttonMediumTextStyle =
-    TextStyle(
-        fontSize = 18.sp,
-        fontWeight = FontWeight.SemiBold,
-        fontFamily = poppinsFontFamily,
-    )
+/**
+ * Button label style. Deliberately built here rather than reused from `TDTheme.typography` — those
+ * styles also carry a `lineHeightStyle` these labels never had, which would nudge the baseline. The
+ * size and weight are unchanged; only the family now follows the active kit (it was a private
+ * top-level `FontFamily` val, which cannot read composition and so pinned every label to Poppins).
+ */
+@Composable
+private fun buttonTextStyle(size: TDButtonSize): TextStyle = TextStyle(
+    fontSize = if (size == TDButtonSize.SMALL) 14.sp else 18.sp,
+    fontWeight = if (size == TDButtonSize.SMALL) FontWeight.Medium else FontWeight.SemiBold,
+    fontFamily = TDTheme.style.fontFamily,
+)
 
 private val buttonSmallPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)
 private val buttonMediumPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp)
@@ -74,7 +62,7 @@ fun TDButton(
     fullWidth: Boolean = false,
     onClick: () -> Unit,
 ) {
-    val textStyle = if (size == TDButtonSize.SMALL) buttonSmallTextStyle else buttonMediumTextStyle
+    val textStyle = buttonTextStyle(size)
     val height = if (size == TDButtonSize.SMALL) 40.dp else 60.dp
     val width = if (size == TDButtonSize.SMALL) 140.dp else 200.dp
     val paddingValues = if (size == TDButtonSize.SMALL) buttonSmallPadding else buttonMediumPadding
@@ -87,22 +75,25 @@ fun TDButton(
 
     when (type) {
         TDButtonType.PRIMARY -> {
-            // MONOCHROME: black fill in light / gray in dark, with `onPrimary` label so the text
-            // stays readable in both modes. ORIGINAL keeps the classic pendingGray fill + white label.
-            val isMono = TDTheme.palette == PaletteKit.MONOCHROME
-            val primaryFill =
-                if (isMono) {
+            // ORIGINAL keeps the classic pendingGray fill + white label. MONOCHROME uses a black fill
+            // in light / gray in dark. PIXEL is a saturated accent block — an 8-bit button is a solid
+            // colour field, not neutral chrome. Exhaustive so a fourth kit has to make this choice.
+            val primaryFill = when (TDTheme.palette) {
+                PaletteKit.ORIGINAL -> TDTheme.colors.pendingGray
+                PaletteKit.MONOCHROME ->
                     if (TDTheme.isDark) TDTheme.colors.gray else TDTheme.colors.black
-                } else {
-                    TDTheme.colors.pendingGray
-                }
-            val primaryContent = if (isMono) TDTheme.colors.onPrimary else TDTheme.colors.white
+                PaletteKit.PIXEL -> TDTheme.colors.primary
+            }
+            val primaryContent = when (TDTheme.palette) {
+                PaletteKit.ORIGINAL -> TDTheme.colors.white
+                PaletteKit.MONOCHROME, PaletteKit.PIXEL -> TDTheme.colors.onPrimary
+            }
             Button(
                 modifier = sizeModifier,
                 onClick = onClick,
                 enabled = isEnable,
                 contentPadding = paddingValues,
-                shape = RoundedCornerShape(12.dp),
+                shape = TDTheme.shapes.medium,
                 colors =
                 ButtonColors(
                     containerColor = primaryFill,
@@ -134,7 +125,7 @@ fun TDButton(
                 onClick = onClick,
                 enabled = isEnable,
                 contentPadding = paddingValues,
-                shape = RoundedCornerShape(12.dp),
+                shape = TDTheme.shapes.medium,
                 border =
                 BorderStroke(
                     2.dp,
@@ -164,7 +155,7 @@ fun TDButton(
                 onClick = onClick,
                 enabled = isEnable,
                 contentPadding = paddingValues,
-                shape = RoundedCornerShape(12.dp),
+                shape = TDTheme.shapes.medium,
                 border =
                 BorderStroke(
                     width = 1.5.dp,
@@ -201,7 +192,7 @@ fun TDButton(
                 onClick = onClick,
                 enabled = isEnable,
                 contentPadding = paddingValues,
-                shape = RoundedCornerShape(12.dp),
+                shape = TDTheme.shapes.medium,
                 colors =
                 ButtonColors(
                     containerColor = TDTheme.colors.crossRed,
@@ -233,7 +224,7 @@ fun TDButton(
                 onClick = onClick,
                 enabled = isEnable,
                 contentPadding = paddingValues,
-                shape = RoundedCornerShape(12.dp),
+                shape = TDTheme.shapes.medium,
                 colors =
                 ButtonColors(
                     containerColor = TDTheme.colors.pendingGray,
@@ -417,7 +408,7 @@ private fun TDButtonWithIconPreview() {
             text = "Add",
             onClick = {},
             type = TDButtonType.PRIMARY,
-            icon = painterResource(id = R.drawable.ic_plus),
+            icon = tdPainter(id = R.drawable.ic_plus),
         )
     }
 }

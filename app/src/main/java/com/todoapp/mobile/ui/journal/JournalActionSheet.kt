@@ -16,12 +16,12 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
 import com.todoapp.mobile.R.string
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -75,7 +75,7 @@ private fun ActionRow(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Icon(
-            painter = painterResource(iconRes),
+            painter = tdPainter(iconRes),
             contentDescription = null,
             tint = tint,
             modifier = Modifier.size(22.dp),

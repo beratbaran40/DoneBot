@@ -1,12 +1,14 @@
 package com.todoapp.uikit.theme
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.example.uikit.R
 
@@ -20,12 +22,43 @@ val Poppins =
         Font(R.font.poppins_bold, FontWeight.Bold),
     )
 
-class TDTypography {
+/**
+ * The 8-Bit kit's face (Pixelify Sans, SIL OFL 1.1) — a pixel typeface drawn for UI sizes rather
+ * than a strict 8x8 arcade grid, which is what keeps this app's dense 12sp rows legible.
+ *
+ * Only the two authored masters ship. Interpolating a pixel outline lands its stems off the pixel
+ * grid and turns them to mush, so `W500` resolves to Regular and `W600`/`W800` to Bold via Compose's
+ * nearest-weight matching — a deliberate two-tier hierarchy, which is period-correct anyway.
+ */
+val PixelifySans =
+    FontFamily(
+        Font(R.font.pixelify_sans_regular, FontWeight.Normal),
+        Font(R.font.pixelify_sans_bold, FontWeight.Bold),
+    )
+
+/**
+ * Raises only the small end of the type ramp. Pixel typefaces have a fixed one-pixel stem; below
+ * roughly 12sp the stems land between device pixels and the glyphs turn to mush. Styles at 14sp and
+ * above are left alone so nothing laid out against a heading size moves. `0.sp` is the identity.
+ */
+private fun TextUnit.atLeast(min: TextUnit): TextUnit = if (value < min.value) min else this
+
+/**
+ * The app's text styles. The colour of each style already follows the active kit (every getter reads
+ * `TDTheme.colors`); [fontFamily], [displayFontFamily] and [minFontSize] let the *face* follow it
+ * too. All three default to today's values, so `TDTypography()` is unchanged.
+ */
+@Immutable
+class TDTypography(
+    private val fontFamily: FontFamily = Poppins,
+    private val displayFontFamily: FontFamily = fontFamily,
+    private val minFontSize: TextUnit = 0.sp,
+) {
     val pomodoro: TextStyle
         @Composable
         get() =
             TextStyle(
-                fontFamily = Poppins,
+                fontFamily = displayFontFamily,
                 fontSize = 96.sp,
                 fontWeight = FontWeight.W800,
                 lineHeightStyle =
@@ -39,7 +72,7 @@ class TDTypography {
         @Composable
         get() =
             TextStyle(
-                fontFamily = Poppins,
+                fontFamily = fontFamily,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.W600,
                 lineHeightStyle =
@@ -53,7 +86,7 @@ class TDTypography {
         @Composable
         get() =
             TextStyle(
-                fontFamily = Poppins,
+                fontFamily = fontFamily,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.W600,
                 lineHeightStyle =
@@ -67,7 +100,7 @@ class TDTypography {
         @Composable
         get() =
             TextStyle(
-                fontFamily = Poppins,
+                fontFamily = fontFamily,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.W600,
                 lineHeightStyle =
@@ -81,7 +114,7 @@ class TDTypography {
         @Composable
         get() =
             TextStyle(
-                fontFamily = Poppins,
+                fontFamily = fontFamily,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.W500,
                 lineHeightStyle =
@@ -95,7 +128,7 @@ class TDTypography {
         @Composable
         get() =
             TextStyle(
-                fontFamily = Poppins,
+                fontFamily = fontFamily,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.W600,
                 lineHeightStyle =
@@ -109,7 +142,7 @@ class TDTypography {
         @Composable
         get() =
             TextStyle(
-                fontFamily = Poppins,
+                fontFamily = fontFamily,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.W500,
                 lineHeightStyle =
@@ -123,7 +156,7 @@ class TDTypography {
         @Composable
         get() =
             TextStyle(
-                fontFamily = Poppins,
+                fontFamily = fontFamily,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.W500,
                 lineHeightStyle =
@@ -137,8 +170,8 @@ class TDTypography {
         @Composable
         get() =
             TextStyle(
-                fontFamily = Poppins,
-                fontSize = 12.sp,
+                fontFamily = fontFamily,
+                fontSize = 12.sp.atLeast(minFontSize),
                 fontWeight = FontWeight.W600,
                 lineHeightStyle =
                 LineHeightStyle(
@@ -152,7 +185,7 @@ class TDTypography {
         @Composable
         get() =
             TextStyle(
-                fontFamily = Poppins,
+                fontFamily = fontFamily,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.W500,
                 lineHeightStyle =
@@ -166,8 +199,8 @@ class TDTypography {
         @Composable
         get() =
             TextStyle(
-                fontFamily = Poppins,
-                fontSize = 12.sp,
+                fontFamily = fontFamily,
+                fontSize = 12.sp.atLeast(minFontSize),
                 fontWeight = FontWeight.W400,
                 lineHeightStyle =
                 LineHeightStyle(
@@ -180,8 +213,8 @@ class TDTypography {
         @Composable
         get() =
             TextStyle(
-                fontFamily = Poppins,
-                fontSize = 10.sp,
+                fontFamily = fontFamily,
+                fontSize = 10.sp.atLeast(minFontSize),
                 fontWeight = FontWeight.W400,
                 lineHeightStyle =
                 LineHeightStyle(
@@ -193,7 +226,7 @@ class TDTypography {
         @Composable
         get() =
             TextStyle(
-                fontFamily = Poppins,
+                fontFamily = fontFamily,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.W500,
                 lineHeightStyle =
@@ -207,8 +240,8 @@ class TDTypography {
         @Composable
         get() =
             TextStyle(
-                fontFamily = Poppins,
-                fontSize = 12.sp,
+                fontFamily = fontFamily,
+                fontSize = 12.sp.atLeast(minFontSize),
                 fontWeight = FontWeight.W500,
                 lineHeightStyle =
                 LineHeightStyle(
@@ -226,7 +259,7 @@ class TDTypography {
         @Composable
         get() =
             TextStyle(
-                fontFamily = Poppins,
+                fontFamily = fontFamily,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Normal,
                 lineHeight = 28.sp,

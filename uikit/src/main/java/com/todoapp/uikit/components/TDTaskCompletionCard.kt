@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,12 +24,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 
 /**
  * A prominent, full-width completion toggle for task detail screens.
@@ -51,7 +51,7 @@ fun TDTaskCompletionCard(
     disabledHint: String? = null,
     onToggle: () -> Unit,
 ) {
-    val shape = RoundedCornerShape(12.dp)
+    val shape = TDTheme.shapes.medium
     val backgroundColor by animateColorAsState(
         targetValue = when {
             !enabled -> TDTheme.colors.lightPending.copy(alpha = 0.5f)
@@ -135,7 +135,7 @@ fun TDTaskCompletionCard(
 /** Trailing checkbox-style indicator mirroring the summary card's checkbox; purely decorative. */
 @Composable
 private fun CompletionIndicator(isCompleted: Boolean) {
-    val shape = RoundedCornerShape(6.dp)
+    val shape = tdCorner(6.dp)
     val indicatorBg by animateColorAsState(
         targetValue =
         if (isCompleted) {
@@ -169,7 +169,7 @@ private fun CompletionIndicator(isCompleted: Boolean) {
         if (isCompleted) {
             Icon(
                 modifier = Modifier.size(16.dp),
-                painter = painterResource(R.drawable.ic_check_svg),
+                painter = tdPainter(R.drawable.ic_check_svg),
                 contentDescription = null,
                 tint = TDTheme.colors.white,
             )

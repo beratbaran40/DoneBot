@@ -1,6 +1,7 @@
 package com.todoapp.mobile.ui.profile
 
 import androidx.compose.runtime.Immutable
+import com.todoapp.mobile.domain.repository.MAX_HALF_HEARTS
 
 object ProfileContract {
     @Immutable
@@ -14,6 +15,8 @@ object ProfileContract {
         val avatarVersion: Long = 0L,
         val isSaving: Boolean = false,
         val isUploading: Boolean = false,
+        /** Health-points streak, 0..MAX_HALF_HEARTS — the avatar ring mirrors the Activity hearts. */
+        val healthHalfHearts: Int = MAX_HALF_HEARTS,
         val errorMessage: String? = null,
     )
 

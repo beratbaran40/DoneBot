@@ -5,10 +5,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalView
 
@@ -35,6 +37,21 @@ object TDTheme {
         @Composable
         @ReadOnlyComposable
         get() = LocalTypography.current
+
+    val style: TDStyle
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalStyle.current
+
+    val shapes: TDShapes
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalStyle.current.shapes
+
+    val motion: TDMotion
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalStyle.current.motion
 }
 
 @Composable
@@ -70,20 +87,38 @@ fun TDTheme(
         }
     }
 
-    val lightColors = when (palette) {
-        PaletteKit.ORIGINAL -> defaultLightColors()
-        PaletteKit.MONOCHROME -> monochromeLightColors()
-    }
-    val darkColors = when (palette) {
-        PaletteKit.ORIGINAL -> defaultDarkColors()
-        PaletteKit.MONOCHROME -> monochromeDarkColors()
-    }
+    // remember: TDColor is a 45-field data class and TDStyle carries the whole non-colour language.
+    // Rebuilding them on every recomposition of this root is pure waste, and stable instances are
+    // what let the static locals below invalidate exactly once per palette change.
+    val lightColors = remember(palette) { palette.colors(dark = false) }
+    val darkColors = remember(palette) { palette.colors(dark = true) }
+    val style = remember(palette) { palette.style() }
+    val typography =
+        remember(style) {
+            TDTypography(
+                fontFamily = style.fontFamily,
+                displayFontFamily = style.displayFontFamily,
+                minFontSize = style.minFontSize,
+            )
+        }
+    // Catches the handful of bare `Text(...)` / `TextField` sites that never set a style. A kit with
+    // no fallback family re-provides the parent value unchanged, so this is a no-op for those kits.
+    val parentTextStyle = LocalTextStyle.current
+    val kitTextStyle =
+        remember(parentTextStyle, style.fallbackFontFamily) {
+            style.fallbackFontFamily?.let { parentTextStyle.copy(fontFamily = it) } ?: parentTextStyle
+        }
+
     CompositionLocalProvider(
         LocalIsDarkTheme provides darkTheme,
         LocalPalette provides palette,
         LocalLightColors provides lightColors,
         LocalDarkColors provides darkColors,
-        LocalTypography provides TDTheme.typography,
+        // Was `LocalTypography provides TDTheme.typography` — a self-referential identity no-op that
+        // re-provided the parent value forever, making typography permanently un-themeable.
+        LocalTypography provides typography,
+        LocalStyle provides style,
+        LocalTextStyle provides kitTextStyle,
     ) {
         content()
     }

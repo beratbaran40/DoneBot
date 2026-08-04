@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
@@ -33,7 +32,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
@@ -46,6 +44,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.todoapp.mobile.R
 import com.todoapp.mobile.ui.common.locationpicker.LocationSearchContract.UiState.Status
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 
 /**
@@ -153,7 +152,7 @@ private fun LocationSearchBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            painter = painterResource(com.example.uikit.R.drawable.ic_arrow_back),
+            painter = tdPainter(com.example.uikit.R.drawable.ic_arrow_back),
             contentDescription = stringResource(R.string.location_search_back),
             tint = TDTheme.colors.onBackground,
             modifier = Modifier
@@ -167,13 +166,13 @@ private fun LocationSearchBar(
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp)
-                .clip(RoundedCornerShape(16.dp))
+                .clip(TDTheme.shapes.large)
                 .background(TDTheme.colors.lightPending)
                 .padding(horizontal = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                painter = painterResource(com.example.uikit.R.drawable.ic_search),
+                painter = tdPainter(com.example.uikit.R.drawable.ic_search),
                 contentDescription = null,
                 tint = TDTheme.colors.darkPending,
                 modifier = Modifier.size(20.dp),
@@ -206,7 +205,7 @@ private fun LocationSearchBar(
             if (query.isNotEmpty()) {
                 Spacer(Modifier.width(8.dp))
                 Icon(
-                    painter = painterResource(com.example.uikit.R.drawable.ic_close),
+                    painter = tdPainter(com.example.uikit.R.drawable.ic_close),
                     contentDescription = stringResource(R.string.location_search_clear_query),
                     tint = TDTheme.colors.gray,
                     modifier = Modifier

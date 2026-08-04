@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -33,14 +32,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
-import com.todoapp.uikit.modifier.neumorphicShadow
+import com.todoapp.uikit.image.rememberPixelImageModel
+import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.image.tdPixelFilterQuality
+import com.todoapp.uikit.modifier.tdShadow
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdOutlineColor
 
 @Composable
 fun TDFamilyGroupCard(
@@ -97,7 +99,7 @@ fun TDFamilyGroupCard(
     )
 
     val isDark = TDTheme.isDark
-    val cardShape = RoundedCornerShape(16.dp)
+    val cardShape = TDTheme.shapes.large
 
     Box(
         modifier =
@@ -116,9 +118,13 @@ fun TDFamilyGroupCard(
                 .fillMaxWidth()
                 .then(
                     if (isDark) {
-                        Modifier.border(1.dp, TDTheme.colors.lightGray.copy(alpha = 0.18f), cardShape)
+                        Modifier.border(
+                            TDTheme.style.borderWidth,
+                            tdOutlineColor(TDTheme.colors.lightGray.copy(alpha = 0.18f)),
+                            cardShape,
+                        )
                     } else {
-                        Modifier.neumorphicShadow(
+                        Modifier.tdShadow(
                             lightShadow = TDTheme.colors.white.copy(alpha = 0.88f),
                             darkShadow = TDTheme.colors.lightGray.copy(alpha = 0.35f),
                             cornerRadius = 16.dp,
@@ -144,7 +150,8 @@ fun TDFamilyGroupCard(
                         ) {
                             if (!avatarUrl.isNullOrBlank()) {
                                 coil.compose.AsyncImage(
-                                    model = avatarUrl,
+                                    model = rememberPixelImageModel(avatarUrl, 56.dp),
+                                    filterQuality = tdPixelFilterQuality(),
                                     contentDescription = null,
                                     contentScale = androidx.compose.ui.layout.ContentScale.Crop,
                                     modifier = Modifier.size(56.dp).clip(CircleShape),
@@ -173,7 +180,7 @@ fun TDFamilyGroupCard(
                             Box(
                                 modifier =
                                 Modifier
-                                    .border(1.dp, roleColor, RoundedCornerShape(4.dp))
+                                    .border(1.dp, roleColor, TDTheme.shapes.tiny)
                                     .padding(horizontal = 10.dp, vertical = 2.dp),
                             ) {
                                 TDText(
@@ -255,7 +262,7 @@ fun TDFamilyGroupCard(
                         modifier = Modifier.align(Alignment.TopEnd),
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_delete),
+                            painter = tdPainter(R.drawable.ic_delete),
                             contentDescription = stringResource(R.string.group_card_delete_cd),
                             modifier = Modifier.size(25.dp),
                             tint = TDTheme.colors.crossRed,
@@ -277,15 +284,19 @@ private fun StatBox(
     onClick: (() -> Unit)? = null,
 ) {
     val isDark = TDTheme.isDark
-    val statBoxShape = RoundedCornerShape(12.dp)
+    val statBoxShape = TDTheme.shapes.medium
     Surface(
         modifier =
         modifier
             .then(
                 if (isDark) {
-                    Modifier.border(1.dp, TDTheme.colors.lightGray.copy(alpha = 0.2f), statBoxShape)
+                    Modifier.border(
+                        TDTheme.style.borderWidth,
+                        tdOutlineColor(TDTheme.colors.lightGray.copy(alpha = 0.2f)),
+                        statBoxShape,
+                    )
                 } else {
-                    Modifier.neumorphicShadow(
+                    Modifier.tdShadow(
                         lightShadow = TDTheme.colors.white.copy(alpha = 0.85f),
                         darkShadow = TDTheme.colors.darkPending.copy(alpha = 0.15f),
                         cornerRadius = 12.dp,
@@ -310,7 +321,7 @@ private fun StatBox(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Icon(
-                painter = painterResource(id = iconRes),
+                painter = tdPainter(id = iconRes),
                 contentDescription = null,
                 tint = iconTint,
                 modifier = Modifier.size(22.dp),

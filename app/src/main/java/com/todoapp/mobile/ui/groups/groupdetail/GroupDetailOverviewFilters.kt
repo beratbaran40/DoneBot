@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -22,7 +21,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -31,6 +29,7 @@ import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract.GroupTaskTim
 import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract.TaskFilter
 import com.todoapp.uikit.components.TDSegmentedControl
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.previews.TDPreviewDevices
 import com.todoapp.uikit.theme.TDTheme
@@ -85,7 +84,7 @@ private fun GroupTimeMenuChip(
         Surface(
             onClick = { expanded = true },
             modifier = Modifier.fillMaxHeight(),
-            shape = RoundedCornerShape(12.dp),
+            shape = TDTheme.shapes.medium,
             color = TDTheme.colors.onBackground.copy(alpha = 0.06f),
         ) {
             Row(
@@ -96,7 +95,7 @@ private fun GroupTimeMenuChip(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_calendar),
+                    painter = tdPainter(R.drawable.ic_calendar),
                     contentDescription = null,
                     modifier = Modifier.size(14.dp),
                     tint = TDTheme.colors.onBackground,
@@ -109,7 +108,7 @@ private fun GroupTimeMenuChip(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Icon(
-                    painter = painterResource(UiKitR.drawable.ic_arrow_down),
+                    painter = tdPainter(UiKitR.drawable.ic_arrow_down),
                     contentDescription = null,
                     modifier = Modifier.size(12.dp),
                     tint = TDTheme.colors.onBackground,
@@ -119,7 +118,7 @@ private fun GroupTimeMenuChip(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            shape = RoundedCornerShape(12.dp),
+            shape = TDTheme.shapes.medium,
             containerColor = TDTheme.colors.surface,
         ) {
             GroupTaskTimeFilter.entries.forEach { option ->
@@ -135,7 +134,7 @@ private fun GroupTimeMenuChip(
                     trailingIcon = if (isSelected) {
                         {
                             Icon(
-                                painter = painterResource(UiKitR.drawable.ic_check),
+                                painter = tdPainter(UiKitR.drawable.ic_check),
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp),
                                 tint = TDTheme.colors.darkPending,

@@ -16,13 +16,11 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -30,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.todoapp.mobile.R
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
@@ -86,14 +85,14 @@ private fun NotificationsMarkAllReadPill(enabled: Boolean, onClick: () -> Unit) 
     Row(
         modifier = Modifier
             .heightIn(min = 40.dp)
-            .clip(RoundedCornerShape(20.dp))
+            .clip(TDTheme.shapes.xLarge)
             .background(containerColor)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            painter = painterResource(com.example.uikit.R.drawable.ic_double_check),
+            painter = tdPainter(com.example.uikit.R.drawable.ic_double_check),
             contentDescription = null,
             tint = contentColor,
             modifier = Modifier.size(16.dp),
@@ -117,7 +116,7 @@ private fun NotificationsUndoMarkAllText(onClick: () -> Unit) {
         maxLines = 1,
         modifier = Modifier
             .padding(top = 2.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .clip(TDTheme.shapes.small)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 6.dp),
     )

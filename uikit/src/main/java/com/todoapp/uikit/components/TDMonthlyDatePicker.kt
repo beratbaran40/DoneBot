@@ -18,8 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -32,15 +30,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.previews.TDPreviewWide
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -131,7 +130,7 @@ private fun MonthNavigationHeader(
         Box {
             IconButton(onClick = onPreviousMonth) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_arrow_back),
+                    painter = tdPainter(R.drawable.ic_arrow_back),
                     contentDescription =
                     if (hasOverdueBeforeDisplayedMonth) overdueBadgeCd else "Previous month",
                     tint = TDTheme.colors.onBackground,
@@ -144,7 +143,7 @@ private fun MonthNavigationHeader(
                         .align(Alignment.TopEnd)
                         .offset(x = (-6).dp, y = 6.dp)
                         .size(8.dp)
-                        .background(TDTheme.colors.crossRed, CircleShape),
+                        .background(TDTheme.colors.crossRed, TDTheme.shapes.circle),
                 )
             }
         }
@@ -155,7 +154,7 @@ private fun MonthNavigationHeader(
         )
         IconButton(onClick = onNextMonth) {
             Icon(
-                painter = painterResource(R.drawable.ic_arrow_forward),
+                painter = tdPainter(R.drawable.ic_arrow_forward),
                 contentDescription = "Next month",
                 tint = TDTheme.colors.onBackground,
             )
@@ -190,7 +189,7 @@ private fun DatePickerCard(
         modifier =
         modifier
             .background(
-                shape = RoundedCornerShape(12.dp),
+                shape = TDTheme.shapes.medium,
                 color = if (isSelected) TDTheme.colors.pendingGray.copy(alpha = 0.8f) else Color.Transparent,
             )
             .size(width = 48.dp, height = 80.dp)
@@ -219,7 +218,7 @@ private fun DatePickerCard(
                 Modifier
                     .height(4.dp)
                     .width(32.dp)
-                    .background(barColor, RoundedCornerShape(2.dp))
+                    .background(barColor, tdCorner(2.dp))
                     .then(
                         if (barCd != null) {
                             Modifier.semantics { contentDescription = barCd }

@@ -8,11 +8,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.modifier.pixelSurface
 import com.todoapp.uikit.previews.TDPreview
+import com.todoapp.uikit.theme.TDElevationStyle
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -28,17 +30,37 @@ fun TDAddTaskButton(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                modifier = Modifier.fillMaxSize(1f),
-                painter = painterResource(R.drawable.ic_ellipse),
-                contentDescription = null,
-                tint = TDTheme.colors.pendingGray,
-            )
+            when (TDTheme.style.elevationStyle) {
+                // The ellipse drawable is a smooth vector disc — it cannot take a stepped corner, so
+                // a hard-elevation kit paints its own block instead: accent fill, ink outline, bevel.
+                TDElevationStyle.HARD ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .pixelSurface(
+                                fill = TDTheme.colors.primary,
+                                outline = TDTheme.colors.onBackground,
+                                shape = TDTheme.shapes.circle,
+                                borderWidth = TDTheme.style.borderWidth,
+                                shadowOffset = TDTheme.style.hardShadowOffset,
+                            ),
+                    )
+                TDElevationStyle.SOFT ->
+                    Icon(
+                        modifier = Modifier.fillMaxSize(1f),
+                        painter = tdPainter(R.drawable.ic_ellipse),
+                        contentDescription = null,
+                        tint = TDTheme.colors.pendingGray,
+                    )
+            }
             Icon(
                 modifier = Modifier.fillMaxSize(0.57f),
-                painter = painterResource(R.drawable.ic_plus),
+                painter = tdPainter(R.drawable.ic_plus),
                 contentDescription = stringResource(R.string.cd_add_task),
-                tint = TDTheme.colors.background,
+                tint = when (TDTheme.style.elevationStyle) {
+                    TDElevationStyle.SOFT -> TDTheme.colors.background
+                    TDElevationStyle.HARD -> TDTheme.colors.onPrimary
+                },
             )
         }
     }

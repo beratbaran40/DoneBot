@@ -32,13 +32,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import com.example.uikit.R
 import com.todoapp.mobile.R.string
+import com.todoapp.uikit.image.tdPainter
 
 /**
  * Stateless layout: framed live viewfinder on top, skeuomorphic camera body below it, and the
@@ -169,7 +169,7 @@ internal fun PolaroidCameraBody(
                 .zIndex(11f),
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_arrow_back),
+                painter = tdPainter(R.drawable.ic_arrow_back),
                 contentDescription = stringResource(string.cd_navigate_back),
                 tint = Color.White,
             )
@@ -185,7 +185,7 @@ internal fun PolaroidCameraBody(
                     .zIndex(11f),
             ) {
                 Icon(
-                    painter = painterResource(com.todoapp.mobile.R.drawable.ic_flip_camera),
+                    painter = tdPainter(com.todoapp.mobile.R.drawable.ic_flip_camera),
                     contentDescription = stringResource(string.polaroid_camera_flip_content_description),
                     tint = Color.White,
                 )

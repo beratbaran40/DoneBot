@@ -1,6 +1,7 @@
 package com.todoapp.uikit.components
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,7 +22,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
+import kotlin.math.round
 import kotlin.math.roundToInt
+
+/** Whole cells a stepped kit's progress fill snaps to — 20 reads as chunky without being coarse. */
+private const val PIXEL_SEGMENTS = 20f
 
 @Composable
 fun TDGeneralProgressBar(
@@ -33,12 +38,18 @@ fun TDGeneralProgressBar(
     val barColor = TDTheme.colors.pendingGray
     val progressColor = TDTheme.colors.mediumGreen
     val p = progress.coerceIn(0f, 1f)
+    val stepped = TDTheme.motion.stepped
+    // A pixel machine has no partial cells: quantise the fill to whole blocks so the bar advances in
+    // discrete jumps, and drive it with the kit's stepped easing so the travel matches the form.
+    val target = if (stepped) (round(p * PIXEL_SEGMENTS) / PIXEL_SEGMENTS) else p
     val animatedP by animateFloatAsState(
-        targetValue = p,
+        targetValue = target,
+        animationSpec = tween(easing = TDTheme.motion.standardEasing),
         label = "progressBar",
     )
 
-    val shape = RoundedCornerShape(percent = 50)
+    // The capsule is a soft-kit affordance; a stepped kit fills the whole rectangle instead.
+    val shape = if (stepped) TDTheme.shapes.none else RoundedCornerShape(percent = 50)
     Column {
         Box(
             modifier =

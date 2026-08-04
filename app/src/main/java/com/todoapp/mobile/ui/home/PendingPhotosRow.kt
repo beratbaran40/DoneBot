@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,13 +27,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.todoapp.mobile.R
 import com.todoapp.mobile.ui.common.components.ImageCropOverlay
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -66,7 +65,7 @@ fun PendingPhotosRow(
                     modifier =
                     Modifier
                         .size(72.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(TDTheme.shapes.medium)
                         .background(TDTheme.colors.lightPending)
                         .clickable {
                             picker.launch(
@@ -78,7 +77,7 @@ fun PendingPhotosRow(
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        painter = painterResource(com.example.uikit.R.drawable.ic_plus),
+                        painter = tdPainter(com.example.uikit.R.drawable.ic_plus),
                         contentDescription = stringResource(R.string.add_photo),
                         tint = TDTheme.colors.pendingGray,
                     )
@@ -93,7 +92,7 @@ fun PendingPhotosRow(
                     modifier =
                     Modifier
                         .size(72.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(TDTheme.shapes.medium)
                         .background(TDTheme.colors.lightPending)
                         .clickable { onRemoveAt(index) },
                 ) {

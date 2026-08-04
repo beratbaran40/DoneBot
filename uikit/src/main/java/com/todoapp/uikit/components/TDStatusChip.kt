@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,7 +35,7 @@ fun TDStatusChip(
     Row(
         modifier =
         modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(TDTheme.shapes.small)
             .background(bg)
             .padding(horizontal = 10.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -58,7 +56,7 @@ private fun StatusDot(color: Color) {
         modifier =
         Modifier
             .size(6.dp)
-            .clip(CircleShape)
+            .clip(TDTheme.shapes.circle)
             .background(color),
     )
 }

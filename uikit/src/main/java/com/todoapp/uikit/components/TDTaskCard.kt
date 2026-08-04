@@ -11,23 +11,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.modifier.tdDropShadow
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdOutlineColor
 
 @Composable
 fun TDTaskCard(
@@ -52,22 +52,22 @@ fun TDTaskCard(
     val contentAlpha = if (isCompleted) 0.5f else 1f
     val titleDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None
 
+    val cardShape = TDTheme.shapes.xLarge
     Column(
         modifier =
         modifier
             .fillMaxWidth()
-            .shadow(
+            .tdDropShadow(
                 elevation = 12.dp,
-                shape = RoundedCornerShape(20.dp),
+                shape = cardShape,
                 ambientColor = TDTheme.colors.purple.copy(alpha = 0.18f),
-                spotColor = TDTheme.colors.purple.copy(alpha = 0.18f),
             )
-            .clip(RoundedCornerShape(20.dp))
+            .clip(cardShape)
             .background(TDTheme.colors.lightPending)
             .border(
-                width = 1.dp,
-                color = TDTheme.colors.lightPurple.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(20.dp),
+                width = TDTheme.style.borderWidth,
+                color = tdOutlineColor(TDTheme.colors.lightPurple.copy(alpha = 0.3f)),
+                shape = cardShape,
             )
             .clickable(onClick = onClick),
     ) {
@@ -143,7 +143,7 @@ private fun InnerContent(
             TDStatusChip(tone = statusTone, label = statusLabel)
             if (isPendingSync) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_refresh),
+                    painter = tdPainter(R.drawable.ic_refresh),
                     contentDescription = stringResource(R.string.cd_sync_pending),
                     tint = TDTheme.colors.pendingGray,
                     modifier = Modifier.size(16.dp),
@@ -178,13 +178,13 @@ private fun InnerContent(
 
         if (!locationLabel.isNullOrBlank()) {
             val pillModifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
+                .clip(TDTheme.shapes.small)
                 .background(TDTheme.colors.bgColorPurple)
                 .let { base -> if (onLocationClick != null) base.clickable(onClick = onLocationClick) else base }
                 .padding(horizontal = 8.dp, vertical = 4.dp)
             Row(modifier = pillModifier, verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_pin),
+                    painter = tdPainter(R.drawable.ic_pin),
                     contentDescription = null,
                     tint = TDTheme.colors.darkPending.copy(alpha = contentAlpha),
                     modifier = Modifier.size(14.dp),

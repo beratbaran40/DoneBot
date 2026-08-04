@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,8 +27,9 @@ import com.todoapp.uikit.theme.TDTheme
  * Static open-source attribution list (§6.20). Library names and license identifiers are proper
  * nouns / standard terms that are identical in every locale, so they stay in code — only the
  * screen's own copy (title, intro, settings row) is translated. Curated from the shipped runtime
- * dependencies in gradle/libs.versions.toml; test-only deps are intentionally excluded. Keep in
- * sync when a shipped dependency is added or removed.
+ * dependencies in gradle/libs.versions.toml plus the bundled OFL typefaces in
+ * `uikit/src/main/res/font/`; test-only deps are intentionally excluded. Keep in sync when a shipped
+ * dependency or font is added or removed.
  */
 private data class OssLicense(
     val name: String,
@@ -40,6 +40,7 @@ private data class OssLicense(
 
 private const val APACHE_2 = "Apache License 2.0"
 private const val ANDROID_SDK_LICENSE = "Android Software Development Kit License"
+private const val OFL_1_1 = "SIL Open Font License 1.1"
 
 @Suppress("ktlint:standard:max-line-length", "MaxLineLength")
 private val ossLicenses = listOf(
@@ -61,6 +62,8 @@ private val ossLicenses = listOf(
     OssLicense("Maps Compose", "Google", APACHE_2, "https://github.com/googlemaps/android-maps-compose"),
     OssLicense("Places SDK for Android", "Google", ANDROID_SDK_LICENSE, "https://developers.google.com/maps/documentation/places/android-sdk"),
     OssLicense("Reorderable", "Calvin Liang", APACHE_2, "https://github.com/Calvin-LL/Reorderable"),
+    OssLicense("Poppins", "Indian Type Foundry, Jonny Pinhorn", OFL_1_1, "https://fonts.google.com/specimen/Poppins"),
+    OssLicense("Pixelify Sans", "The Pixelify Sans Project Authors", OFL_1_1, "https://github.com/eifetx/Pixelify-Sans"),
 )
 
 @Composable
@@ -98,7 +101,7 @@ private fun LicenseCard(library: OssLicense, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(TDTheme.shapes.large)
             .background(TDTheme.colors.lightPending)
             .clickable(onClick = onClick)
             .padding(16.dp),

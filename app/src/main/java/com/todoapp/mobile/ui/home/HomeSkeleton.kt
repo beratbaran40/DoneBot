@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,6 +24,7 @@ import com.todoapp.uikit.components.TDSkeletonBox
 import com.todoapp.uikit.components.TDSkeletonText
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 
 @Composable
 internal fun HomeSkeleton(modifier: Modifier = Modifier) {
@@ -96,7 +96,7 @@ private fun HomeSkeletonCalendarStrip() {
             repeat(HOME_SKELETON_DATE_PILL_COUNT) {
                 TDSkeletonBox(
                     modifier = Modifier.size(width = 44.dp, height = 56.dp),
-                    shape = RoundedCornerShape(14.dp),
+                    shape = tdCorner(14.dp),
                 )
             }
         }
@@ -115,13 +115,13 @@ private fun HomeSkeletonStatsRow() {
             modifier = Modifier
                 .weight(1f)
                 .height(96.dp),
-            shape = RoundedCornerShape(20.dp),
+            shape = TDTheme.shapes.xLarge,
         )
         TDSkeletonBox(
             modifier = Modifier
                 .weight(1f)
                 .height(96.dp),
-            shape = RoundedCornerShape(20.dp),
+            shape = TDTheme.shapes.xLarge,
         )
     }
 }
@@ -136,13 +136,13 @@ private fun HomeSkeletonTabRow() {
             modifier = Modifier
                 .weight(1f)
                 .height(36.dp),
-            shape = RoundedCornerShape(10.dp),
+            shape = tdCorner(10.dp),
         )
         TDSkeletonBox(
             modifier = Modifier
                 .weight(1f)
                 .height(36.dp),
-            shape = RoundedCornerShape(10.dp),
+            shape = tdCorner(10.dp),
         )
     }
 }
@@ -157,14 +157,14 @@ private fun HomeSkeletonTaskCard(variantIndex: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(TDTheme.shapes.medium)
             .background(TDTheme.colors.lightPending.copy(alpha = 0.4f))
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         TDSkeletonBox(
             modifier = Modifier.size(28.dp),
-            shape = RoundedCornerShape(8.dp),
+            shape = TDTheme.shapes.small,
         )
         Spacer(Modifier.width(12.dp))
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {

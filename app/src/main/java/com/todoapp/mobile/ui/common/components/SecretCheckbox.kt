@@ -12,7 +12,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -26,9 +25,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
@@ -42,7 +41,7 @@ fun SecretCheckbox(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val shape = RoundedCornerShape(4.dp)
+    val shape = TDTheme.shapes.tiny
     val bgColor by animateColorAsState(
         targetValue = if (checked) TDTheme.colors.pendingGray else Color.Transparent,
         animationSpec = tween(durationMillis = 200),
@@ -92,7 +91,7 @@ fun SecretCheckbox(
         contentAlignment = Alignment.Center,
     ) {
         Image(
-            painter = painterResource(R.drawable.ic_secret_mode),
+            painter = tdPainter(R.drawable.ic_secret_mode),
             contentDescription = null,
             colorFilter = ColorFilter.tint(TDTheme.colors.white),
             modifier = Modifier

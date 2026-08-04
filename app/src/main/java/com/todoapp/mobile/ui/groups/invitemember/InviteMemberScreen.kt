@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
@@ -21,7 +20,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -33,6 +31,7 @@ import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDInfoCard
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.extensions.collectWithLifecycle
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -70,7 +69,7 @@ private fun InviteMemberContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         Icon(
-            painter = painterResource(R.drawable.ic_members),
+            painter = tdPainter(R.drawable.ic_members),
             contentDescription = null,
             tint = TDTheme.colors.pendingGray,
             modifier = Modifier.size(100.dp),
@@ -112,12 +111,12 @@ private fun InviteMemberContent(
             },
             leadingIcon = {
                 Icon(
-                    painter = painterResource(R.drawable.ic_mail),
+                    painter = tdPainter(R.drawable.ic_mail),
                     contentDescription = null,
                     tint = TDTheme.colors.gray,
                 )
             },
-            shape = RoundedCornerShape(12.dp),
+            shape = TDTheme.shapes.medium,
             colors =
             OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = if (uiState.emailError != null) TDTheme.colors.crossRed else TDTheme.colors.pendingGray,
@@ -173,7 +172,7 @@ private fun InviteMemberContent(
             )
             Spacer(modifier = Modifier.size(8.dp))
             Icon(
-                painter = painterResource(R.drawable.ic_arrow_forward),
+                painter = tdPainter(R.drawable.ic_arrow_forward),
                 contentDescription = null,
                 tint = TDTheme.colors.pendingGray,
                 modifier = Modifier.size(20.dp),

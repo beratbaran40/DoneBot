@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -43,7 +42,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -58,7 +56,9 @@ import com.todoapp.uikit.components.TDStatisticCard
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDUndoSnackbar
 import com.todoapp.uikit.extensions.ObscuredTouchGuard
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -187,14 +187,14 @@ fun HomeContent(
                                 TDTheme.colors.pendingGray.copy(
                                     alpha = (pullState.distanceFraction * 1.5f).coerceIn(0.4f, 1f),
                                 ),
-                                shape = RoundedCornerShape(50.dp),
+                                shape = tdCorner(50.dp),
                             )
                             .padding(horizontal = 16.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center,
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_info),
+                            painter = tdPainter(R.drawable.ic_info),
                             contentDescription = null,
                             tint = Color.White,
                             modifier = Modifier.size(14.dp),
@@ -567,7 +567,7 @@ private fun HomeGreetingRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            painter = painterResource(iconRes),
+            painter = tdPainter(iconRes),
             contentDescription = null,
             tint = iconTint,
             modifier = Modifier.size(24.dp),
@@ -687,12 +687,12 @@ private fun HomeHintCard(
             Modifier
                 .fillMaxWidth()
                 .padding(bottom = 12.dp)
-                .background(TDTheme.colors.infoCardBgColor, RoundedCornerShape(12.dp))
+                .background(TDTheme.colors.infoCardBgColor, TDTheme.shapes.medium)
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.Top,
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_info),
+                painter = tdPainter(R.drawable.ic_info),
                 contentDescription = null,
                 tint = TDTheme.colors.pendingGray,
                 modifier =
@@ -730,14 +730,14 @@ private fun HomeBackToTodayPill(onClick: () -> Unit) {
             modifier = Modifier
                 .background(
                     color = TDTheme.colors.bgColorPurple,
-                    shape = RoundedCornerShape(20.dp),
+                    shape = TDTheme.shapes.xLarge,
                 )
                 .clickable(onClick = onClick)
                 .padding(horizontal = 14.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                painter = painterResource(com.todoapp.mobile.R.drawable.ic_calendar),
+                painter = tdPainter(com.todoapp.mobile.R.drawable.ic_calendar),
                 contentDescription = null,
                 tint = TDTheme.colors.primary,
                 modifier = Modifier.size(16.dp),

@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -22,14 +21,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 
 /**
  * Tall, characterful feature card for the Creation Hub carousel. The whole card carries the feature's
@@ -49,7 +49,7 @@ fun TDFeatureCard(
     Surface(
         onClick = onClick,
         modifier = modifier,
-        shape = RoundedCornerShape(28.dp),
+        shape = tdCorner(28.dp),
         color = cardColor,
         border = if (TDTheme.isDark) BorderStroke(1.dp, TDTheme.colors.lightGray.copy(alpha = 0.18f)) else null,
         tonalElevation = 0.dp,
@@ -110,7 +110,7 @@ private fun TDFeatureCardRowPreview() {
             TDFeatureCard(
                 title = "Görev ekle",
                 subtitle = "Tek seferlik, rutin ya da aşamalı",
-                icon = painterResource(R.drawable.ic_edit_task),
+                icon = tdPainter(R.drawable.ic_edit_task),
                 cardColor = TDTheme.colors.lightPending,
                 accentColor = TDTheme.colors.darkPending,
                 modifier = Modifier
@@ -120,7 +120,7 @@ private fun TDFeatureCardRowPreview() {
             TDFeatureCard(
                 title = "Pomodoro başlat",
                 subtitle = "Bir odaklanma seansı başlat",
-                icon = painterResource(R.drawable.ic_pomodoro),
+                icon = tdPainter(R.drawable.ic_pomodoro),
                 cardColor = TDTheme.colors.warmContainer,
                 accentColor = TDTheme.colors.orange,
                 modifier = Modifier

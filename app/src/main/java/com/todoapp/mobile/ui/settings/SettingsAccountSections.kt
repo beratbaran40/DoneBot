@@ -7,13 +7,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
 import com.todoapp.mobile.ui.settings.SettingsContract.UiAction
 import com.todoapp.uikit.components.TDSettingsGroup
 import com.todoapp.uikit.components.TDSettingsItem
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
@@ -25,7 +25,7 @@ internal fun SettingsAccountSections(
     TDSettingsGroup(title = stringResource(R.string.settings_section_account)) {
         TDSettingsItem(
             title = stringResource(R.string.logout),
-            icon = painterResource(R.drawable.ic_logout),
+            icon = tdPainter(R.drawable.ic_logout),
             iconTint = TDTheme.colors.crossRed,
             iconContainerColor = TDTheme.colors.lightRed,
             titleColor = TDTheme.colors.crossRed,
@@ -36,7 +36,7 @@ internal fun SettingsAccountSections(
     TDSettingsGroup(title = stringResource(R.string.settings_section_danger_zone)) {
         TDSettingsItem(
             title = stringResource(R.string.settings_delete_account),
-            icon = painterResource(com.example.uikit.R.drawable.ic_delete),
+            icon = tdPainter(com.example.uikit.R.drawable.ic_delete),
             iconTint = TDTheme.colors.crossRed,
             iconContainerColor = TDTheme.colors.lightRed,
             titleColor = TDTheme.colors.crossRed,

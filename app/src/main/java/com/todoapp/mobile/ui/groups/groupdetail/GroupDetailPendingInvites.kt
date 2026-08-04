@@ -11,18 +11,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
 import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract.PendingInviteUiItem
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 import com.example.uikit.R as UiKitR
@@ -54,7 +53,7 @@ private fun PendingInviteRow(invite: PendingInviteUiItem) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(TDTheme.shapes.medium)
             .background(TDTheme.colors.lightPending.copy(alpha = 0.55f))
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -67,7 +66,7 @@ private fun PendingInviteRow(invite: PendingInviteUiItem) {
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(UiKitR.drawable.ic_pending_invite),
+                painter = tdPainter(UiKitR.drawable.ic_pending_invite),
                 contentDescription = null,
                 tint = TDTheme.colors.darkPending,
                 modifier = Modifier.size(22.dp),
@@ -89,7 +88,7 @@ private fun PendingInviteRow(invite: PendingInviteUiItem) {
         Spacer(modifier = Modifier.width(8.dp))
         Box(
             modifier = Modifier
-                .clip(RoundedCornerShape(4.dp))
+                .clip(TDTheme.shapes.tiny)
                 .background(TDTheme.colors.pendingGray.copy(alpha = 0.2f))
                 .padding(horizontal = 8.dp, vertical = 2.dp),
         ) {

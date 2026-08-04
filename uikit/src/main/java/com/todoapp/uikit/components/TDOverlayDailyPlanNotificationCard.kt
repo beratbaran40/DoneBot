@@ -30,13 +30,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.uikit.image.rememberPixelPainter
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreviewDialog
 import com.todoapp.uikit.theme.TDTheme
+import com.todoapp.uikit.theme.tdCorner
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
@@ -84,7 +86,7 @@ fun TDOverlayDailyPlanNotificationCard(
             }.padding(horizontal = 16.dp, vertical = 16.dp)
             .widthIn(max = 520.dp)
             .clickable { onOpenApp() },
-        shape = RoundedCornerShape(22.dp),
+        shape = tdCorner(22.dp),
         tonalElevation = 6.dp,
         color = overlaySurfaceColor,
         contentColor = overlayTextColor,
@@ -120,13 +122,15 @@ fun TDOverlayDailyPlanNotificationCard(
                     contentAlignment = Alignment.Center,
                 ) {
                     Image(
-                        painter =
-                        painterResource(
-                            if (TDTheme.isDark) {
-                                R.drawable.img_donebot_overlay_notification_light
-                            } else {
-                                R.drawable.img_donebot_overlay_notification_dark
-                            },
+                        painter = rememberPixelPainter(
+                            tdPainter(
+                                if (TDTheme.isDark) {
+                                    R.drawable.img_donebot_overlay_notification_light
+                                } else {
+                                    R.drawable.img_donebot_overlay_notification_dark
+                                },
+                            ),
+                            70.dp,
                         ),
                         contentDescription = "Logo",
                         modifier = Modifier.size(70.dp),
@@ -162,7 +166,7 @@ fun TDOverlayDailyPlanNotificationCard(
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_close),
+                        painter = tdPainter(id = R.drawable.ic_close),
                         contentDescription = "Close",
                         tint = overlayTextColor.copy(alpha = 0.85f),
                         modifier = Modifier.size(16.dp),

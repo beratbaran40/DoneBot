@@ -22,19 +22,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
 import com.todoapp.mobile.ui.appcolors.AppColorsContract.UiAction
 import com.todoapp.mobile.ui.appcolors.AppColorsContract.UiState
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.modifier.gridBackground
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
 import com.todoapp.uikit.theme.gridColors
 import com.todoapp.uikit.theme.stripColors
+import com.todoapp.uikit.theme.style
 import com.example.uikit.R as UikitR
 
 @Composable
@@ -65,17 +66,24 @@ internal fun PaletteKitCard(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
-    val shape = RoundedCornerShape(16.dp)
-    // Each card previews its OWN kit's body (grid for MONOCHROME, plain fill for ORIGINAL) regardless
-    // of the currently active theme.
+    val shape = TDTheme.shapes.large
+    // Each card previews its OWN kit's body — a plain fill for ORIGINAL, the wide graph paper for
+    // MONOCHROME, the tight 12dp lattice for 8-Bit — regardless of the currently active theme.
     val (kitBase, kitLine) = kit.gridColors(TDTheme.isDark)
+    val kitStyle = kit.style()
     val borderColor = if (isSelected) TDTheme.colors.primary else TDTheme.colors.lightGray
     Column(
         modifier =
         Modifier
             .fillMaxWidth()
             .clip(shape)
-            .gridBackground(baseColor = kitBase, lineColor = kitLine)
+            .gridBackground(
+                baseColor = kitBase,
+                lineColor = kitLine,
+                spacing = kitStyle.gridSpacing,
+                lineWidth = kitStyle.gridLineWidth,
+                style = kitStyle.gridStyle,
+            )
             .border(if (isSelected) 2.dp else 1.dp, borderColor, shape)
             .clickable(onClick = onClick),
     ) {
@@ -102,7 +110,7 @@ internal fun PaletteKitCard(
             if (isSelected) {
                 Spacer(Modifier.width(12.dp))
                 Icon(
-                    painter = painterResource(UikitR.drawable.ic_check),
+                    painter = tdPainter(UikitR.drawable.ic_check),
                     contentDescription = null,
                     tint = TDTheme.colors.primary,
                 )
@@ -132,11 +140,13 @@ internal fun PaletteKitCard(
 private fun paletteTitleRes(kit: PaletteKit): Int = when (kit) {
     PaletteKit.ORIGINAL -> R.string.palette_original
     PaletteKit.MONOCHROME -> R.string.palette_monochrome
+    PaletteKit.PIXEL -> R.string.palette_pixel
 }
 
 private fun paletteDescRes(kit: PaletteKit): Int = when (kit) {
     PaletteKit.ORIGINAL -> R.string.palette_original_desc
     PaletteKit.MONOCHROME -> R.string.palette_monochrome_desc
+    PaletteKit.PIXEL -> R.string.palette_pixel_desc
 }
 
 @TDPreview
@@ -152,5 +162,15 @@ private fun AppColorsOriginalPreview() {
 private fun AppColorsMonochromePreview() {
     TDTheme {
         AppColorsScreen(uiState = UiState(selected = PaletteKit.MONOCHROME), onAction = {})
+    }
+}
+
+// Rendered inside the 8-Bit kit itself, so the chrome around the cards previews the kit too — the
+// bare `TDTheme { }` above always resolves to ORIGINAL.
+@TDPreview
+@Composable
+private fun AppColorsPixelPreview() {
+    TDTheme(palette = PaletteKit.PIXEL) {
+        AppColorsScreen(uiState = UiState(selected = PaletteKit.PIXEL), onAction = {})
     }
 }

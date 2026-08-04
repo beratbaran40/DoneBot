@@ -7,6 +7,7 @@ import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.data.repository.DataStoreHelper
 import com.todoapp.mobile.data.storage.AvatarPhotoStorage
 import com.todoapp.mobile.domain.repository.UserRepository
+import com.todoapp.mobile.domain.usecase.ComputeHealthPointsUseCase
 import com.todoapp.mobile.navigation.NavigationEffect
 import com.todoapp.mobile.navigation.Screen
 import com.todoapp.mobile.ui.profile.ProfileContract.UiAction
@@ -30,6 +31,7 @@ constructor(
     private val userRepository: UserRepository,
     private val dataStoreHelper: DataStoreHelper,
     private val avatarPhotoStorage: AvatarPhotoStorage,
+    private val computeHealthPoints: ComputeHealthPointsUseCase,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(UiState())
@@ -42,6 +44,12 @@ constructor(
     val navEffect = _navEffect.receiveAsFlow()
 
     init {
+        // Same source as the Activity hearts, so the ring and the bar can never disagree.
+        viewModelScope.launch {
+            computeHealthPoints().collect { points ->
+                _uiState.update { it.copy(healthHalfHearts = points.halfHearts) }
+            }
+        }
         load()
     }
 

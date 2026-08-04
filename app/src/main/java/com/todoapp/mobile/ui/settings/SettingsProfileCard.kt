@@ -14,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
@@ -22,6 +21,7 @@ import com.todoapp.mobile.ui.groups.groupdetail.MemberAvatar
 import com.todoapp.uikit.components.TDSettingsGroup
 import com.todoapp.uikit.components.TDSettingsItem
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
@@ -77,7 +77,7 @@ internal fun SettingsProfileCard(
             }
             Spacer(modifier = Modifier.width(12.dp))
             Icon(
-                painter = painterResource(com.example.uikit.R.drawable.ic_arrow_forward),
+                painter = tdPainter(com.example.uikit.R.drawable.ic_arrow_forward),
                 contentDescription = null,
                 tint = TDTheme.colors.gray,
                 modifier = Modifier.size(20.dp),
@@ -91,7 +91,7 @@ internal fun SettingsLoginCard(onClick: () -> Unit) {
     TDSettingsGroup {
         TDSettingsItem(
             title = stringResource(R.string.login_or_create_account),
-            icon = painterResource(com.example.uikit.R.drawable.ic_profile),
+            icon = tdPainter(com.example.uikit.R.drawable.ic_profile),
             iconTint = TDTheme.colors.primary,
             iconContainerColor = TDTheme.colors.bgColorPurple,
             titleColor = TDTheme.colors.darkPending,

@@ -42,7 +42,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -62,6 +61,7 @@ import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiState
 import com.todoapp.uikit.components.TDFeatureCard
 import com.todoapp.uikit.components.TDFeatureExplainer
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.flow.Flow
@@ -181,7 +181,7 @@ private fun CreationHubHeader(
 private fun BackButton(onBack: () -> Unit) {
     IconButton(onClick = onBack, modifier = Modifier.size(40.dp)) {
         Icon(
-            painter = painterResource(UiKitR.drawable.ic_arrow_back),
+            painter = tdPainter(UiKitR.drawable.ic_arrow_back),
             contentDescription = stringResource(R.string.creation_back_cd),
             tint = TDTheme.colors.onBackground,
         )
@@ -192,7 +192,7 @@ private fun BackButton(onBack: () -> Unit) {
 private fun InfoButton(onInfo: () -> Unit) {
     IconButton(onClick = onInfo, modifier = Modifier.size(40.dp)) {
         Icon(
-            painter = painterResource(UiKitR.drawable.ic_info),
+            painter = tdPainter(UiKitR.drawable.ic_info),
             contentDescription = stringResource(R.string.creation_info_cd),
             tint = TDTheme.colors.onBackground,
         )
@@ -239,25 +239,25 @@ private fun TypeHeaderBlock(taskType: TaskType) {
     val subtitleRes: Int
     when (taskType) {
         TaskType.ONE_TIME -> {
-            icon = painterResource(UiKitR.drawable.ic_edit_task)
+            icon = tdPainter(UiKitR.drawable.ic_edit_task)
             accent = taskTypeAccent(TaskFormType.ONE_TIME)
             nameRes = R.string.type_one_time_title
             subtitleRes = R.string.type_one_time_subtitle
         }
         TaskType.ROUTINE -> {
-            icon = painterResource(R.drawable.ic_calendar)
+            icon = tdPainter(R.drawable.ic_calendar)
             accent = taskTypeAccent(TaskFormType.ROUTINE)
             nameRes = R.string.type_routine_title
             subtitleRes = R.string.type_routine_subtitle
         }
         TaskType.STAGED -> {
-            icon = painterResource(R.drawable.ic_staged)
+            icon = tdPainter(R.drawable.ic_staged)
             accent = taskTypeAccent(TaskFormType.STAGED)
             nameRes = R.string.type_staged_title
             subtitleRes = R.string.type_staged_subtitle
         }
         TaskType.CUSTOM -> {
-            icon = painterResource(R.drawable.ic_custom)
+            icon = tdPainter(R.drawable.ic_custom)
             accent = taskTypeAccent(TaskFormType.CUSTOM)
             nameRes = R.string.type_custom_title
             subtitleRes = R.string.type_custom_subtitle
@@ -313,7 +313,7 @@ private fun CreationHubCarousel(onAction: (UiAction) -> Unit) {
         HubFeature(
             R.string.create_task_card_title,
             R.string.create_task_card_subtitle,
-            painterResource(UiKitR.drawable.ic_edit_task),
+            tdPainter(UiKitR.drawable.ic_edit_task),
             TDTheme.colors.lightPending,
             taskTypeAccent(TaskFormType.ONE_TIME),
             UiAction.OnCreateTaskCardTap,
@@ -321,7 +321,7 @@ private fun CreationHubCarousel(onAction: (UiAction) -> Unit) {
         HubFeature(
             R.string.journal_card_title,
             R.string.journal_card_subtitle,
-            painterResource(UiKitR.drawable.ic_journal),
+            tdPainter(UiKitR.drawable.ic_journal),
             TDTheme.colors.lightGreen,
             TDTheme.colors.darkGreen,
             UiAction.OnJournalCardTap,
@@ -329,7 +329,7 @@ private fun CreationHubCarousel(onAction: (UiAction) -> Unit) {
         HubFeature(
             R.string.pomodoro_card_title,
             R.string.pomodoro_card_subtitle,
-            painterResource(UiKitR.drawable.ic_pomodoro),
+            tdPainter(UiKitR.drawable.ic_pomodoro),
             TDTheme.colors.warmContainer,
             TDTheme.colors.orange,
             UiAction.OnPomodoroCardTap,
@@ -337,7 +337,7 @@ private fun CreationHubCarousel(onAction: (UiAction) -> Unit) {
         HubFeature(
             R.string.group_card_title,
             R.string.group_card_subtitle,
-            painterResource(R.drawable.ic_groups),
+            tdPainter(R.drawable.ic_groups),
             TDTheme.colors.purpleContainer,
             TDTheme.colors.darkPurple,
             UiAction.OnGroupCardTap,

@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.TextButton
@@ -35,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -50,7 +48,8 @@ import com.todoapp.mobile.ui.pomodoro.PomodoroContract.UiEffect
 import com.todoapp.mobile.ui.pomodoro.PomodoroContract.UiState
 import com.todoapp.uikit.components.AnimatedTimeMmSs
 import com.todoapp.uikit.components.TDText
-import com.todoapp.uikit.modifier.neumorphicShadow
+import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.modifier.tdShadow
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.flow.Flow
 
@@ -189,7 +188,7 @@ private fun PomodoroPortraitContent(
             Row(
                 modifier =
                 Modifier
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(TDTheme.shapes.large)
                     .clickable { onAction(UiAction.OnEndSessionTap) }
                     .background(contentColor.copy(alpha = 0.08f))
                     .padding(horizontal = 16.dp, vertical = 6.dp),
@@ -197,7 +196,7 @@ private fun PomodoroPortraitContent(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Icon(
-                    painter = painterResource(com.example.uikit.R.drawable.ic_delete),
+                    painter = tdPainter(com.example.uikit.R.drawable.ic_delete),
                     contentDescription = null,
                     tint = contentColor.copy(alpha = 0.65f),
                     modifier = Modifier.size(14.dp),
@@ -372,7 +371,7 @@ private fun PomodoroLandscapeContent(
                 Row(
                     modifier =
                     Modifier
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(TDTheme.shapes.large)
                         .clickable { onAction(UiAction.OnEndSessionTap) }
                         .background(contentColor.copy(alpha = 0.08f))
                         .padding(horizontal = 16.dp, vertical = 6.dp),
@@ -380,7 +379,7 @@ private fun PomodoroLandscapeContent(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Icon(
-                        painter = painterResource(com.example.uikit.R.drawable.ic_delete),
+                        painter = tdPainter(com.example.uikit.R.drawable.ic_delete),
                         contentDescription = null,
                         tint = contentColor.copy(alpha = 0.65f),
                         modifier = Modifier.size(14.dp),
@@ -497,19 +496,19 @@ private fun ModeCard(
     Row(
         modifier =
         modifier
-            .neumorphicShadow(
+            .tdShadow(
                 lightShadow = lightShadow,
                 darkShadow = darkShadow,
                 cornerRadius = 20.dp,
                 elevation = 8.dp,
-            ).clip(RoundedCornerShape(20.dp))
+            ).clip(TDTheme.shapes.xLarge)
             .background(surfaceColor)
             .padding(horizontal = 24.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Icon(
-            painter = painterResource(mode.iconRes),
+            painter = tdPainter(mode.iconRes),
             contentDescription = null,
             tint = contentColor,
             modifier = Modifier.size(22.dp),
