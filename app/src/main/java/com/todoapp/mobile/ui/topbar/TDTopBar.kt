@@ -184,7 +184,7 @@ fun ShowTopBar(
                         groupDetailArgs?.let { args ->
                             add(
                                 TDTopBarAction(
-                                    icon = com.example.uikit.R.drawable.ic_settings,
+                                    icon = R.drawable.ic_settings,
                                     contentDescription = com.todoapp.mobile.R.string.cd_top_bar_group_settings,
                                     onClick = { onEvent(UiAction.OnGroupSettingsClick(args.groupId)) },
                                 ),
