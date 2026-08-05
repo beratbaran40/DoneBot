@@ -53,7 +53,6 @@ object DetailsContract {
                 recurs = false,
                 hasSteps = false,
                 hasMultipleReminders = false,
-                isBounded = false,
             ),
             // Extra reminder times of a multi-reminder task; empty = the single offset reminder.
             val reminderTimes: List<LocalTime> = emptyList(),

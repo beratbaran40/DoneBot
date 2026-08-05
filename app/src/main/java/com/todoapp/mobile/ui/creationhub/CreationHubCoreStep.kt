@@ -72,7 +72,14 @@ internal fun CreationHubCoreStep(
                     selected = state.recurrence,
                     onSelect = { onAction(UiAction.OnFrequencySelect(it)) },
                 )
-                TaskFormDateField(date = state.date, onSelect = { onAction(UiAction.OnDateSelect(it)) })
+                // A routine repeats by definition — its chips carry no "doesn't repeat" option — so
+                // the span gesture and the end field are always live, with no capability gate.
+                CreationDateField(state = state, onAction = onAction, rangeEnabled = true)
+                TaskRepeatUntilField(
+                    anchor = state.date,
+                    until = state.recurrenceUntil,
+                    onSelect = { onAction(UiAction.OnRecurrenceUntilSelect(it)) },
+                )
             }
             TaskType.STAGED -> {
                 TaskFormDateField(date = state.date, onSelect = { onAction(UiAction.OnDateSelect(it)) })
@@ -110,24 +117,7 @@ internal fun CreationHubCoreStep(
                         )
                     }
                 }
-                TaskFormDateField(
-                    date = state.date,
-                    onSelect = { onAction(UiAction.OnDateSelect(it)) },
-                    // Holding two days sets the routine's end, so the gesture is only offered once
-                    // the task actually repeats — an end date on a one-off means nothing.
-                    onRangeSelect = if (recurs) {
-                        { start, end ->
-                            onAction(UiAction.OnDateSelect(start))
-                            onAction(UiAction.OnRecurrenceUntilSelect(end))
-                        }
-                    } else {
-                        null
-                    },
-                    rangeEnd = state.recurrenceUntil,
-                    // Tapping one day drops the span. Without this the end date lived on in state,
-                    // so the band and the "between … and …" sentence never went away.
-                    onRangeClear = { onAction(UiAction.OnRecurrenceUntilSelect(null)) },
-                )
+                CreationDateField(state = state, onAction = onAction, rangeEnabled = recurs)
                 // An end date and absolute reminder times only make sense once it repeats; before
                 // that a one-off reminds relative to its own start, like every other single task.
                 if (recurs) {
@@ -167,4 +157,35 @@ internal fun CreationHubCoreStep(
             onClick = { onAction(UiAction.OnCreate) },
         )
     }
+}
+
+/**
+ * The start-date field, with the calendar's hold-two-days gesture wired to where the repeat stops.
+ *
+ * [rangeEnabled] is the one question worth asking: an end date on something that doesn't repeat means
+ * nothing — `firesOn` never reads it — so the gesture, the hint and the band are all withheld there.
+ * Routine answers yes unconditionally; custom answers it per what the user has switched on.
+ */
+@Composable
+private fun CreationDateField(
+    state: UiState,
+    onAction: (UiAction) -> Unit,
+    rangeEnabled: Boolean,
+) {
+    TaskFormDateField(
+        date = state.date,
+        onSelect = { onAction(UiAction.OnDateSelect(it)) },
+        onRangeSelect = if (rangeEnabled) {
+            { start, end ->
+                onAction(UiAction.OnDateSelect(start))
+                onAction(UiAction.OnRecurrenceUntilSelect(end))
+            }
+        } else {
+            null
+        },
+        rangeEnd = state.recurrenceUntil,
+        // Confirming a single day drops the span. Without this the end date lived on in state, so the
+        // band and the "between … and …" sentence never went away.
+        onRangeClear = { onAction(UiAction.OnRecurrenceUntilSelect(null)) },
+    )
 }
