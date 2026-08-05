@@ -3,6 +3,12 @@ config:
   warningsAsErrors: false
   excludes: ''
 
+potential-bugs:
+  # Mirrors app/detekt.yml — see the rationale there. Kept in sync so the same K1-frontend false
+  # positive on `?: return` behind a getter/delegate cannot surface here later.
+  UnreachableCode:
+    active: false
+
 naming:
   ClassNaming:
     excludes: &testFolders

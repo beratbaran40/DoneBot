@@ -42,6 +42,17 @@ exceptions:
     active: false
   PrintStackTrace:
     active: false
+potential-bugs:
+  # Off because it is wrong here, not because it is inconvenient. detekt 1.23.4 still analyses with
+  # the K1 frontend while this project compiles on Kotlin 2.2.21, so its binding context cannot type
+  # a property read that goes through a getter or a delegate. `audioManager ?: return false`
+  # (a `by lazy`) and `task.startDate ?: return@runCatching` (an extension property) both get read as
+  # "elvis always taken", which marks the rest of the function unreachable — 14 findings on code that
+  # compiles and runs correctly. A plain backing-field `var` in the same file is NOT flagged, which is
+  # the tell. Nothing is lost by turning it off: kotlinc emits its own UNREACHABLE_CODE warning for
+  # genuinely dead code. Re-enable when detekt moves to the K2 frontend (2.x).
+  UnreachableCode:
+    active: false
 naming:
   ClassNaming:
     excludes: &testFolders
