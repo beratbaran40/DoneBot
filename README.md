@@ -11,7 +11,7 @@ built with Jetpack Compose, Clean Architecture and MVI.
 
 **English** · [Türkçe](README.tr.md)
 
-[![CI](https://github.com/beratbaran40/DoneBot/actions/workflows/ci.yml/badge.svg)](https://github.com/beratbaran40/DoneBot/actions/workflows/ci.yml)
+[![CI](https://github.com/beratbaran40/DoneBot-Android/actions/workflows/ci.yml/badge.svg)](https://github.com/beratbaran40/DoneBot-Android/actions/workflows/ci.yml)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.2.21-7F52FF?logo=kotlin&logoColor=white)
 ![Compose BOM](https://img.shields.io/badge/Compose%20BOM-2025.12-4285F4?logo=jetpackcompose&logoColor=white)
 ![API](https://img.shields.io/badge/API-26%2B-3DDC84?logo=android&logoColor=white)
@@ -246,8 +246,8 @@ Unit tests cover ViewModels, repositories, workers, the recurrence engine and cr
 > Build with **JDK 21** (Android Studio's bundled JetBrains Runtime is exactly that). JDK 24 crashes Gradle with a cryptic `Type T not present` error. Bytecode still targets Java 17.
 
 ```bash
-git clone https://github.com/beratbaran40/DoneBot.git
-cd DoneBot
+git clone https://github.com/beratbaran40/DoneBot-Android.git
+cd DoneBot-Android
 ./gradlew assembleDebug
 ```
 

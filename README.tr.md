@@ -11,7 +11,7 @@ Jetpack Compose, Clean Architecture ve MVI ile geliştirildi.
 
 [English](README.md) · **Türkçe**
 
-[![CI](https://github.com/beratbaran40/DoneBot/actions/workflows/ci.yml/badge.svg)](https://github.com/beratbaran40/DoneBot/actions/workflows/ci.yml)
+[![CI](https://github.com/beratbaran40/DoneBot-Android/actions/workflows/ci.yml/badge.svg)](https://github.com/beratbaran40/DoneBot-Android/actions/workflows/ci.yml)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.2.21-7F52FF?logo=kotlin&logoColor=white)
 ![Compose BOM](https://img.shields.io/badge/Compose%20BOM-2025.12-4285F4?logo=jetpackcompose&logoColor=white)
 ![API](https://img.shields.io/badge/API-26%2B-3DDC84?logo=android&logoColor=white)
@@ -246,8 +246,8 @@ Birim testleri ViewModel'ları, repository'leri, worker'ları, tekrar motorunu v
 > **JDK 21** ile derleyin (Android Studio'nun kendi JetBrains Runtime'ı tam olarak budur). JDK 24, Gradle'ı şifreli bir `Type T not present` hatasıyla çökertir. Bytecode hedefi Java 17'de kalır.
 
 ```bash
-git clone https://github.com/beratbaran40/DoneBot.git
-cd DoneBot
+git clone https://github.com/beratbaran40/DoneBot-Android.git
+cd DoneBot-Android
 ./gradlew assembleDebug
 ```
 
