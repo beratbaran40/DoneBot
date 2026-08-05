@@ -15,7 +15,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # §3.6 AAB size budget. Current release AAB ≈ 16.78 MiB → 20 MiB leaves ~19% headroom.
+  # §3.6 AAB size budget. Current release AAB ≈ 18.17 MiB (measured 2026-08-05, after the
+  # Pomodoro ambience loops) → 20 MiB leaves ~9% headroom, down from ~19% when this was written.
   # Single source of truth; raise deliberately when a real feature justifies it.
   AAB_MAX_BYTES: "20971520"   # 20 * 1024 * 1024
 
