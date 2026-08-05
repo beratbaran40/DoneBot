@@ -92,6 +92,8 @@ BUG_HUNT_*.md
 /DoneBot Play Store Uygulama Görselleri/
 /DoneBot Play Store Uygulama Görselleri TR/
 /app/release/app-release.aab
-/pomodoro_background_noises/fireplace.MP3
-/pomodoro_background_noises/handpan.MP3
-/pomodoro_background_noises/rain.MP3
+# Unprocessed Pomodoro ambience sources. The whole folder, not the three files that
+# happen to be in it today: tools/prep_ambience.sh turns these into the loops under
+# app/src/main/res/raw/ (which ARE tracked — they ship), so the originals only need to
+# exist on the machine that regenerates them.
+/pomodoro_background_noises/
