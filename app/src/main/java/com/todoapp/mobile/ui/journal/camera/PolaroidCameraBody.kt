@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -98,13 +99,33 @@ internal fun PolaroidCameraBody(
                     .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                // Sharp 1:1 viewfinder — what you frame here is exactly the square that's captured.
-                PolaroidViewfinder(
-                    previewView = previewView,
+                Box(
                     modifier = Modifier
                         .fillMaxHeight()
                         .aspectRatio(1f),
-                )
+                ) {
+                    // Sharp 1:1 viewfinder — what you frame here is exactly the square that's captured.
+                    PolaroidViewfinder(previewView = previewView, modifier = Modifier.fillMaxSize())
+
+                    // Framing controls live inside the frame, on the preview they act on. Hidden once
+                    // a print is out: it covers the viewfinder, and the print layer would paint over
+                    // this anyway. Retake returns to Idle and brings the control back.
+                    if (photoState == PhotoState.Idle) {
+                        IconButton(
+                            onClick = onFlip,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(8.dp)
+                                .background(Color.Black.copy(alpha = 0.35f), CircleShape),
+                        ) {
+                            Icon(
+                                painter = tdPainter(com.todoapp.mobile.R.drawable.ic_flip_camera),
+                                contentDescription = stringResource(string.polaroid_camera_flip_content_description),
+                                tint = Color.White,
+                            )
+                        }
+                    }
+                }
             }
 
             Box(
@@ -173,23 +194,6 @@ internal fun PolaroidCameraBody(
                 contentDescription = stringResource(string.cd_navigate_back),
                 tint = Color.White,
             )
-        }
-
-        if (photoState == PhotoState.Idle || photoState == PhotoState.Done) {
-            IconButton(
-                onClick = onFlip,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .statusBarsPadding()
-                    .padding(8.dp)
-                    .zIndex(11f),
-            ) {
-                Icon(
-                    painter = tdPainter(com.todoapp.mobile.R.drawable.ic_flip_camera),
-                    contentDescription = stringResource(string.polaroid_camera_flip_content_description),
-                    tint = Color.White,
-                )
-            }
         }
     }
 }
