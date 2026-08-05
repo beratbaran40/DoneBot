@@ -141,6 +141,20 @@ android {
                 "proguard-rules.pro",
             )
         }
+
+        // A release build you can actually install: same R8 shrinking, same resources, same baseline
+        // profile — only the signature differs. Exists so `release` never needs a debug signingConfig
+        // bolted onto it, which is the one edit that silently produces a Play-rejected AAB.
+        //
+        // Debug-signed on purpose, not as a shortcut: the (com.todoapp.mobile, debug SHA-1) pair is
+        // registered in google-services.json, so Google Sign-In and App Check keep working here.
+        // Signing with the upload key instead would break both.
+        create("releaseLocal") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            // :uikit and the test modules only define debug/release, so tell AGP which of theirs to use.
+            matchingFallbacks += "release"
+        }
     }
 
     // AAB: let Play serve per-device splits (smaller installs than one universal APK).
@@ -293,6 +307,10 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.appcheck.playintegrity)
     debugImplementation(libs.firebase.appcheck.debug)
+    // releaseLocal is release code installed by hand, so Play Integrity has nothing to attest and
+    // every App Check call would be rejected. It uses the debug provider (see its AppCheckInstaller),
+    // which needs the library on its classpath too — `release` deliberately still does NOT get it.
+    "releaseLocalImplementation"(libs.firebase.appcheck.debug)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.lottie.compose)
     implementation(libs.coil.compose)
