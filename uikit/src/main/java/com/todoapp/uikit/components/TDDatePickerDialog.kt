@@ -219,9 +219,22 @@ fun TDDatePickerDialog(
                                 text = stringResource(R.string.today),
                                 type = TDButtonType.OUTLINE,
                                 size = TDButtonSize.SMALL,
+                                // Exactly what the label says: today, as a single day. It used to fire
+                                // onDateSelect alone, which left an existing span's END behind — the
+                                // field then read "today – <old end>", and an end before the start makes
+                                // firesOn reject every day, so the task saved but never appeared.
+                                //
+                                // It also no longer dismisses. Tapping a day cell doesn't, so having the
+                                // one shortcut ALSO mean "confirm and exit" is what made a selection the
+                                // user was still working on feel committed. Staying open costs the anchor
+                                // its old escape route (reopening cleared it), hence the explicit reset:
+                                // otherwise the next tap would finish a span from an abandoned hold.
                                 onClick = {
-                                    onDateSelect(LocalDate.now())
-                                    isPickerOpen = false
+                                    val today = LocalDate.now()
+                                    anchorDate = null
+                                    if (effectiveRangeEnd != null) onRangeClear?.invoke()
+                                    selectedMonth = YearMonth.from(today)
+                                    onDateSelect(today)
                                 },
                             )
                             TDButton(
