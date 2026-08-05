@@ -133,7 +133,9 @@
         </service>
 
         <!-- Two types on purpose: the live countdown is the specialUse part, the ambience loop the
-             mediaPlayback part. Both are user-initiated from the Pomodoro screen. -->
+             mediaPlayback part, both user-initiated from the Pomodoro screen. The manifest lists
+             what the service MAY do; at runtime it declares mediaPlayback only while a soundscape
+             is actually loaded — see PomodoroForegroundService.foregroundTypeMask(). -->
         <service
             android:name=".data.notification.PomodoroForegroundService"
             android:foregroundServiceType="specialUse|mediaPlayback"
