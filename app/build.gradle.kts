@@ -336,3 +336,16 @@ baselineProfile {
     // with the APK without a per-build regeneration step.
     mergeIntoMain = true
 }
+
+// The baseline-profile plugin derives a `benchmark*` and a `nonMinified*` variant from EVERY
+// release-like build type, so adding `releaseLocal` silently created two more of them. Nothing
+// targets those: :macrobenchmark benchmarks `benchmarkRelease`, and benchmarking a build you
+// installed by hand is meaningless anyway. They were not free — they compile the `releaseLocal`
+// source set without inheriting its `releaseLocalImplementation` dependency, so
+// `DebugAppCheckProviderFactory` in AppCheckInstaller.kt was an unresolved reference, and
+// `detektMain` fans out over every variant, which is how it broke CI. Disabling them fixes that
+// at the root and takes two whole variants out of every build.
+androidComponents {
+    beforeVariants(selector().withBuildType("benchmarkReleaseLocal")) { it.enable = false }
+    beforeVariants(selector().withBuildType("nonMinifiedReleaseLocal")) { it.enable = false }
+}
