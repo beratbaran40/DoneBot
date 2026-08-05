@@ -19,7 +19,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ToDoApp"
+rootProject.name = "DoneBot-Android"
 include(":app")
 include(":uikit")
 include(":baselineprofile")
