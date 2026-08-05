@@ -896,7 +896,6 @@
     <string name="chat_error_rate_limited_cooldown_format">Try again in %1$ds…</string>
     <string name="chat_error_server_waking_retrying_format">Server is waking up — retrying in %1$ds…</string>
     <string name="chat_char_count_format">%1$d/%2$d</string>
-    <string name="chat_tool_busy_generic">Looking up your tasks…</string>
     <string name="chat_action_copy">Copy text</string>
     <string name="chat_action_try_again">Try again</string>
     <string name="chat_action_copied_toast">Copied</string>
@@ -942,6 +941,8 @@
     <string name="chat_local_week_count_format">You\'ve completed %1$d task(s) this week.</string>
     <string name="chat_local_week_remaining_format">You have %1$d pending task(s) this week.</string>
     <string name="chat_local_week_remaining_empty">All caught up for this week — nice.</string>
+    <string name="chat_local_health_format">You have %1$s of %2$d hearts.</string>
+    <string name="chat_local_health_empty">You\'re out of hearts — finish one task today to start earning them back.</string>
     <string name="chat_local_greeting">Hi! What\'s on your mind today?</string>
     <string name="chat_local_pomodoro_started_format">%1$d-minute pomodoro started — focus mode on. Good luck!</string>
     <string name="chat_local_pomodoro_already_running_format">A pomodoro is already running, %1$d minute(s) left. Manage it from the Pomodoro tab.</string>

@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -37,7 +36,6 @@ internal fun ChatMessageList(
     messages: List<ChatMessage>,
     isThinking: Boolean,
     modifier: Modifier = Modifier,
-    toolInFlight: String? = null,
     onQuickReplyClick: (String) -> Unit = {},
     onAssistantMessageLongPress: (ChatMessage) -> Unit = {},
     listState: LazyListState = rememberLazyListState(),
@@ -70,19 +68,11 @@ internal fun ChatMessageList(
                 maxWidth = bubbleMaxWidth,
             )
         }
+        // No per-tool label: /chat/message is one blocking POST, so the client genuinely cannot know
+        // which tool is running. It faked a label from state that was never set, and the line never
+        // rendered. Bring it back the day the endpoint streams.
         if (isThinking) {
-            item(key = "thinking") {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    if (toolInFlight != null) {
-                        TDText(
-                            text = stringResource(R.string.chat_tool_busy_generic),
-                            color = TDTheme.colors.gray,
-                            style = TDTheme.typography.subheading1,
-                        )
-                    }
-                    TDChatThinkingIndicator()
-                }
-            }
+            item(key = "thinking") { TDChatThinkingIndicator() }
         }
         if (showQuickReplies) {
             item(key = "quick-reply") {

@@ -42,10 +42,16 @@ class ChatRepositoryImpl @Inject constructor(
         prompt: String,
         locale: String,
         history: List<ChatHistoryTurn>,
+        healthHalfHearts: Int?,
     ): Result<ChatMessageResponseData> = firebaseTrace("chat_round_trip") {
         handleRequest {
             todoApi.sendChatMessage(
-                ChatMessageRequest(prompt = prompt, locale = locale, history = history),
+                ChatMessageRequest(
+                    prompt = prompt,
+                    locale = locale,
+                    history = history,
+                    healthHalfHearts = healthHalfHearts,
+                ),
             )
         }
     }

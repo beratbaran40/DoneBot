@@ -11,6 +11,8 @@ import com.todoapp.mobile.data.repository.DataStoreHelper
 import com.todoapp.mobile.domain.repository.ChatRepository
 import com.todoapp.mobile.domain.repository.SessionPreferences
 import com.todoapp.mobile.domain.repository.TaskSyncRepository
+import com.todoapp.mobile.domain.usecase.ComputeHealthPointsUseCase
+import com.todoapp.mobile.domain.usecase.HealthPoints
 import com.todoapp.mobile.util.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -51,6 +53,7 @@ class ChatViewModelTest {
     private val taskSyncRepository = mockk<TaskSyncRepository>(relaxed = true)
     private val sessionPreferences = mockk<SessionPreferences>()
     private val backendWarmUp = mockk<BackendWarmUp>(relaxed = true)
+    private val computeHealthPoints = mockk<ComputeHealthPointsUseCase>()
 
     private var fakeElapsedMs = 0L
 
@@ -70,6 +73,7 @@ class ChatViewModelTest {
         coEvery { dataStoreHelper.getPendingChatPrompt() } returns ""
         coEvery { intentClassifier.tryAnswer(any()) } returns null
         coEvery { sessionPreferences.getAccessToken() } returns "token"
+        every { computeHealthPoints() } returns flowOf(HealthPoints(halfHearts = 13, showDepletionDialog = false))
     }
 
     @After
@@ -86,6 +90,7 @@ class ChatViewModelTest {
         sessionPreferences = sessionPreferences,
         analyticsHelper = mockk(relaxed = true),
         backendWarmUp = backendWarmUp,
+        computeHealthPoints = computeHealthPoints,
     )
 
     private fun ChatViewModel.sendPrompt(prompt: String) {
@@ -97,7 +102,7 @@ class ChatViewModelTest {
 
     @Test
     fun `timeout while online surfaces SERVER_WAKING with the failed prompt`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
-        coEvery { chatRepository.sendMessage(any(), any(), any()) } returns
+        coEvery { chatRepository.sendMessage(any(), any(), any(), any()) } returns
             Result.failure(DomainException.ServerUnreachable("timeout", requestNeverReachedServer = false))
         val viewModel = buildViewModel()
         advanceUntilIdle()
@@ -111,12 +116,12 @@ class ChatViewModelTest {
         assertFalse(state.isThinking)
         // Timeouts are never auto-resent: the server may have processed the request after the
         // client stopped waiting, and a resend could double-run the chat's tool writes.
-        coVerify(exactly = 1) { chatRepository.sendMessage(any(), any(), any()) }
+        coVerify(exactly = 1) { chatRepository.sendMessage(any(), any(), any(), any()) }
     }
 
     @Test
     fun `going offline mid-flight surfaces OFFLINE, not SERVER_WAKING`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
-        coEvery { chatRepository.sendMessage(any(), any(), any()) } coAnswers {
+        coEvery { chatRepository.sendMessage(any(), any(), any(), any()) } coAnswers {
             onlineFlow.value = false
             Result.failure(DomainException.ServerUnreachable("timeout", requestNeverReachedServer = false))
         }
@@ -131,7 +136,7 @@ class ChatViewModelTest {
 
     @Test
     fun `backend vertex_unavailable 503 keeps its dedicated SERVER_UNAVAILABLE banner`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
-        coEvery { chatRepository.sendMessage(any(), any(), any()) } returns
+        coEvery { chatRepository.sendMessage(any(), any(), any(), any()) } returns
             Result.failure(DomainException.Server("[vertex_unavailable] AI is temporarily unavailable"))
         val viewModel = buildViewModel()
         advanceUntilIdle()
@@ -150,18 +155,129 @@ class ChatViewModelTest {
         coVerify(exactly = 1) { backendWarmUp.pingIfStale(any()) }
     }
 
+    // ---- Health points travel with the prompt ----
+
+    @Test
+    fun `the current half-heart count is sent with the prompt`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        coEvery { chatRepository.sendMessage(any(), any(), any(), any()) } returns Result.success(successResponse())
+        val viewModel = buildViewModel()
+        advanceUntilIdle()
+
+        viewModel.sendPrompt("How am I doing?")
+        advanceUntilIdle()
+
+        // The server can't derive hearts — device-local history folded over a persisted checkpoint —
+        // so if this stops travelling the bot silently loses the ability to answer about them.
+        coVerify { chatRepository.sendMessage(any(), any(), any(), healthHalfHearts = 13) }
+    }
+
+    @Test
+    fun `a failing health-points read never blocks the send`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        every { computeHealthPoints() } throws IllegalStateException("datastore unavailable")
+        coEvery { chatRepository.sendMessage(any(), any(), any(), any()) } returns Result.success(successResponse())
+        val viewModel = buildViewModel()
+        advanceUntilIdle()
+
+        viewModel.sendPrompt("How am I doing?")
+        advanceUntilIdle()
+
+        // Degrade to "no health line", never to "no answer".
+        coVerify { chatRepository.sendMessage(any(), any(), any(), healthHalfHearts = null) }
+        assertFalse(viewModel.readyState().isThinking)
+    }
+
+    @Test
+    fun `a failing local intent falls through to the backend instead of crashing`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        // tryAnswer runs bare inside viewModelScope, and every intent ends in a .first() on Room or
+        // DataStore. Unguarded, a corrupt-DataStore IOException is an uncaught exception in a
+        // coroutine with no handler — the app dies when the user taps a suggestion chip.
+        coEvery { intentClassifier.tryAnswer(any()) } throws java.io.IOException("datastore corrupt")
+        coEvery { chatRepository.sendMessage(any(), any(), any(), any()) } returns Result.success(successResponse())
+        val viewModel = buildViewModel()
+        advanceUntilIdle()
+
+        viewModel.sendPrompt("Kalplerim nasıl?")
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { chatRepository.sendMessage(any(), any(), any(), any()) }
+        assertFalse(viewModel.readyState().isThinking)
+    }
+
+    // ---- Post-turn task sync is gated on WRITE tools, not on round-trip count ----
+
+    @Test
+    fun `a read-only turn does not force a task sync`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        coEvery { chatRepository.sendMessage(any(), any(), any(), any()) } returns
+            Result.success(successResponse(roundTrips = 2, tools = listOf("getTodaysTasks")))
+        val viewModel = buildViewModel()
+        advanceUntilIdle()
+
+        viewModel.sendPrompt("What's due today?")
+        advanceUntilIdle()
+
+        // roundTrips is 2 for every tool turn including pure reads — that heuristic alone cost a full
+        // task re-fetch over the network on the single most common question asked.
+        coVerify(exactly = 0) { taskSyncRepository.fetchTasks(any()) }
+    }
+
+    @Test
+    fun `a turn that ran a write tool forces a task sync`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        coEvery { chatRepository.sendMessage(any(), any(), any(), any()) } returns
+            Result.success(successResponse(roundTrips = 2, tools = listOf("findTaskByTitle", "setTaskSchedule")))
+        val viewModel = buildViewModel()
+        advanceUntilIdle()
+
+        viewModel.sendPrompt("Make the vitamin routine every other day")
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { taskSyncRepository.fetchTasks(force = true) }
+    }
+
+    @Test
+    fun `an unrecognised tool is assumed to write, so the sync still fires`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        coEvery { chatRepository.sendMessage(any(), any(), any(), any()) } returns
+            Result.success(successResponse(roundTrips = 2, tools = listOf("setTaskPriority")))
+        val viewModel = buildViewModel()
+        advanceUntilIdle()
+
+        viewModel.sendPrompt("Make it high priority")
+        advanceUntilIdle()
+
+        // The day the backend adds or renames a write tool, the client must fail OPEN. A spurious
+        // fetch costs one request; a missed one leaves the user staring at stale data after the bot
+        // said "done", with nothing logged anywhere.
+        coVerify(exactly = 1) { taskSyncRepository.fetchTasks(force = true) }
+    }
+
+    @Test
+    fun `an older backend sending no tool list falls back to the round-trip heuristic`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        coEvery { chatRepository.sendMessage(any(), any(), any(), any()) } returns
+            Result.success(successResponse(roundTrips = 2, tools = emptyList()))
+        val viewModel = buildViewModel()
+        advanceUntilIdle()
+
+        viewModel.sendPrompt("Add a meeting tomorrow")
+        advanceUntilIdle()
+
+        // A new client against a not-yet-deployed backend must stay correct, just chattier.
+        coVerify(exactly = 1) { taskSyncRepository.fetchTasks(force = true) }
+    }
+
     // ---- Bounded auto-retry chain (only for provably-unprocessed failures) ----
 
     private fun neverReached() = DomainException.ServerUnreachable("edge 502", requestNeverReachedServer = true)
 
-    private fun successResponse() = ChatMessageResponseData(
+    private fun successResponse(
+        roundTrips: Int = 1,
+        tools: List<String> = emptyList(),
+    ) = ChatMessageResponseData(
         text = "Done!",
-        meta = ChatTurnMeta(roundTrips = 1, refused = false, serverMs = 42),
+        meta = ChatTurnMeta(roundTrips = roundTrips, refused = false, serverMs = 42, toolsCalled = tools),
     )
 
     @Test
     fun `persistent connect-refusal auto-retries 3 times then goes quiet`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
-        coEvery { chatRepository.sendMessage(any(), any(), any()) } returns Result.failure(neverReached())
+        coEvery { chatRepository.sendMessage(any(), any(), any(), any()) } returns Result.failure(neverReached())
         val viewModel = buildViewModel()
         advanceUntilIdle()
 
@@ -169,7 +285,7 @@ class ChatViewModelTest {
         advanceUntilIdle()
 
         // Initial send + 3 auto-attempts (5s/15s/30s), then the chain stops for good.
-        coVerify(exactly = 4) { chatRepository.sendMessage(any(), any(), any()) }
+        coVerify(exactly = 4) { chatRepository.sendMessage(any(), any(), any(), any()) }
         val state = viewModel.readyState()
         assertEquals(ChatContract.ChatError.SERVER_WAKING, state.error)
         assertEquals(0, state.autoRetrySecondsRemaining)
@@ -178,7 +294,7 @@ class ChatViewModelTest {
 
     @Test
     fun `countdown ticks down before the next attempt`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
-        coEvery { chatRepository.sendMessage(any(), any(), any()) } returns Result.failure(neverReached())
+        coEvery { chatRepository.sendMessage(any(), any(), any(), any()) } returns Result.failure(neverReached())
         val viewModel = buildViewModel()
         advanceUntilIdle()
 
@@ -193,7 +309,7 @@ class ChatViewModelTest {
 
     @Test
     fun `rate limit mid-chain takes over and stops the auto-retry`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
-        coEvery { chatRepository.sendMessage(any(), any(), any()) } returnsMany listOf(
+        coEvery { chatRepository.sendMessage(any(), any(), any(), any()) } returnsMany listOf(
             Result.failure(neverReached()),
             Result.failure(DomainException.Server("DoneBot is very busy (quota reached). [vertex_quota] Retry in 30s")),
         )
@@ -204,7 +320,7 @@ class ChatViewModelTest {
         advanceUntilIdle()
 
         // The second (auto) attempt hit the quota — its cooldown takes over; no third attempt.
-        coVerify(exactly = 2) { chatRepository.sendMessage(any(), any(), any()) }
+        coVerify(exactly = 2) { chatRepository.sendMessage(any(), any(), any(), any()) }
         val state = viewModel.readyState()
         assertEquals(ChatContract.ChatError.RATE_LIMITED, state.error)
         assertEquals(0, state.autoRetrySecondsRemaining)
@@ -212,7 +328,7 @@ class ChatViewModelTest {
 
     @Test
     fun `dismissing the banner mid-countdown cancels the chain`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
-        coEvery { chatRepository.sendMessage(any(), any(), any()) } returns Result.failure(neverReached())
+        coEvery { chatRepository.sendMessage(any(), any(), any(), any()) } returns Result.failure(neverReached())
         val viewModel = buildViewModel()
         advanceUntilIdle()
 
@@ -221,7 +337,7 @@ class ChatViewModelTest {
         viewModel.onAction(ChatContract.UiAction.OnDismissError)
         advanceUntilIdle()
 
-        coVerify(exactly = 1) { chatRepository.sendMessage(any(), any(), any()) }
+        coVerify(exactly = 1) { chatRepository.sendMessage(any(), any(), any(), any()) }
         val state = viewModel.readyState()
         assertEquals(null, state.error)
         assertEquals(0, state.autoRetrySecondsRemaining)
@@ -229,7 +345,7 @@ class ChatViewModelTest {
 
     @Test
     fun `success on the second attempt clears the error and resets the chain`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
-        coEvery { chatRepository.sendMessage(any(), any(), any()) } returnsMany listOf(
+        coEvery { chatRepository.sendMessage(any(), any(), any(), any()) } returnsMany listOf(
             Result.failure(neverReached()),
             Result.success(successResponse()),
         )
@@ -239,7 +355,7 @@ class ChatViewModelTest {
         viewModel.sendPrompt("Anything overdue?")
         advanceUntilIdle()
 
-        coVerify(exactly = 2) { chatRepository.sendMessage(any(), any(), any()) }
+        coVerify(exactly = 2) { chatRepository.sendMessage(any(), any(), any(), any()) }
         coVerify(exactly = 1) { chatRepository.appendAssistantMessage("Done!") }
         val state = viewModel.readyState()
         assertEquals(null, state.error)
@@ -250,7 +366,7 @@ class ChatViewModelTest {
     @Test
     fun `a new user prompt supersedes the pending chain`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
         val prompts = mutableListOf<String>()
-        coEvery { chatRepository.sendMessage(capture(prompts), any(), any()) } returnsMany listOf(
+        coEvery { chatRepository.sendMessage(capture(prompts), any(), any(), any()) } returnsMany listOf(
             Result.failure(neverReached()),
             Result.success(successResponse()),
         )

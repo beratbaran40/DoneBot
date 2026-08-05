@@ -897,7 +897,6 @@
     <string name="chat_error_rate_limited_cooldown_format">Tekrar denemek için %1$ds…</string>
     <string name="chat_error_server_waking_retrying_format">Sunucu uyanıyor — %1$ds içinde tekrar denenecek…</string>
     <string name="chat_char_count_format">%1$d/%2$d</string>
-    <string name="chat_tool_busy_generic">Görevlerine bakıyorum…</string>
     <string name="chat_action_copy">Metni kopyala</string>
     <string name="chat_action_try_again">Tekrar dene</string>
     <string name="chat_action_copied_toast">Kopyalandı</string>
@@ -943,6 +942,8 @@
     <string name="chat_local_week_count_format">Bu hafta %1$d görev tamamladın.</string>
     <string name="chat_local_week_remaining_format">Bu hafta %1$d bekleyen işin var.</string>
     <string name="chat_local_week_remaining_empty">Bu haftanın hepsi tamam — süpersin.</string>
+    <string name="chat_local_health_format">%2$d kalpten %1$s tanesi sende.</string>
+    <string name="chat_local_health_empty">Kalbin kalmadı — bugün bir görev bitirirsen geri kazanmaya başlarsın.</string>
     <string name="chat_local_greeting">Selam! Bugün aklında ne var?</string>
     <string name="chat_local_pomodoro_started_format">%1$d dakikalık pomodoro başladı — odak modu açık. Kolay gelsin!</string>
     <string name="chat_local_pomodoro_already_running_format">Zaten bir pomodoro çalışıyor, %1$d dakika kaldı. Pomodoro sekmesinden yönet.</string>

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.todoapp.mobile.common.DomainException
 import com.todoapp.mobile.data.ai.LocalIntentClassifier
 import com.todoapp.mobile.data.model.network.request.ChatHistoryTurn
+import com.todoapp.mobile.data.model.network.response.ChatMessageResponseData
 import com.todoapp.mobile.data.network.BackendWarmUp
 import com.todoapp.mobile.data.network.NetworkMonitor
 import com.todoapp.mobile.data.repository.DataStoreHelper
@@ -13,9 +14,11 @@ import com.todoapp.mobile.domain.model.ChatMessage
 import com.todoapp.mobile.domain.repository.ChatRepository
 import com.todoapp.mobile.domain.repository.SessionPreferences
 import com.todoapp.mobile.domain.repository.TaskSyncRepository
+import com.todoapp.mobile.domain.usecase.ComputeHealthPointsUseCase
 import com.todoapp.mobile.navigation.NavigationEffect
 import com.todoapp.mobile.navigation.Screen
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -46,6 +49,7 @@ class ChatViewModel @Inject constructor(
     private val sessionPreferences: SessionPreferences,
     private val analyticsHelper: com.todoapp.mobile.domain.analytics.AnalyticsHelper,
     private val backendWarmUp: BackendWarmUp,
+    private val computeHealthPoints: ComputeHealthPointsUseCase,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<ChatContract.UiState>(ChatContract.UiState.Loading)
     val uiState: StateFlow<ChatContract.UiState> = _uiState.asStateFlow()
@@ -143,7 +147,6 @@ class ChatViewModel @Inject constructor(
             when (current) {
                 is ChatContract.UiState.Ready -> current.copy(
                     isThinking = false,
-                    toolInFlight = null,
                     autoRetrySecondsRemaining = 0,
                 )
                 else -> current
@@ -220,7 +223,7 @@ class ChatViewModel @Inject constructor(
         sendJob = viewModelScope.launch {
             dataStoreHelper.setChatDraft("")
             chatRepository.appendUserMessage(prompt)
-            val localMatch = intentClassifier.tryAnswer(prompt)
+            val localMatch = tryLocalIntent(prompt)
             if (localMatch != null) {
                 Timber.tag(METRICS_TAG).i("local_intent_hit:%s", localMatch.intent.name)
                 chatRepository.appendAssistantMessage(localMatch.response)
@@ -229,7 +232,6 @@ class ChatViewModel @Inject constructor(
                     when (latest) {
                         is ChatContract.UiState.Ready -> latest.copy(
                             isThinking = false,
-                            toolInFlight = null,
                         )
                         else -> latest
                     }
@@ -246,7 +248,7 @@ class ChatViewModel @Inject constructor(
                 setError(ChatContract.ChatError.NOT_AUTHENTICATED, lastFailedPrompt = null)
                 _uiState.update { latest ->
                     when (latest) {
-                        is ChatContract.UiState.Ready -> latest.copy(isThinking = false, toolInFlight = null)
+                        is ChatContract.UiState.Ready -> latest.copy(isThinking = false)
                         else -> latest
                     }
                 }
@@ -336,13 +338,14 @@ class ChatViewModel @Inject constructor(
         val turnStartNs = System.nanoTime()
         val locale = currentLocale()
         val history = buildHistorySnapshot()
+        val hearts = readHealthHalfHearts()
         chatRepository
-            .sendMessage(prompt = prompt, locale = locale, history = history)
+            .sendMessage(prompt = prompt, locale = locale, history = history, healthHalfHearts = hearts)
             .onSuccess { response ->
                 autoRetryAttempt = 0
                 chatRepository.appendAssistantMessage(response.text)
                 logTurnSummary(response.meta.roundTrips, turnStartNs, response.text)
-                if (response.meta.roundTrips > 1) {
+                if (response.changedServerState()) {
                     taskSyncRepository.resetCooldown()
                     taskSyncRepository.fetchTasks(force = true)
                     Timber.tag(METRICS_TAG).d("post-chat sync rt=%d", response.meta.roundTrips)
@@ -353,10 +356,68 @@ class ChatViewModel @Inject constructor(
             }
         _uiState.update { latest ->
             when (latest) {
-                is ChatContract.UiState.Ready -> latest.copy(isThinking = false, toolInFlight = null)
+                is ChatContract.UiState.Ready -> latest.copy(isThinking = false)
                 else -> latest
             }
         }
+    }
+
+    /**
+     * The local-intent layer, guarded. Every intent ends in a `.first()` on a Room or DataStore flow
+     * (the hearts one also writes a checkpoint), and this runs bare inside [viewModelScope] — an
+     * IOException from a corrupt DataStore would otherwise be an uncaught exception in a coroutine
+     * with no handler, i.e. the app dies when the user taps a suggestion chip.
+     *
+     * Returning null degrades to the backend, which is the right answer for the task intents. It
+     * can't answer the hearts one, but a polite "I can only help with…" beats a crash.
+     */
+    private suspend fun tryLocalIntent(prompt: String): LocalIntentClassifier.Match? = try {
+        intentClassifier.tryAnswer(prompt)
+    } catch (e: CancellationException) {
+        // Never swallowed: the user hit stop or left the screen, and the send must unwind with them.
+        throw e
+    } catch (e: Exception) {
+        Timber.tag(LOG_TAG).w(e, "local intent failed; falling through to the backend")
+        null
+    }
+
+    /**
+     * The Activity health-points bar, in half-hearts, for the server's `[Context]` block.
+     *
+     * Read once per send rather than observed: the value only matters at request-build time, and the
+     * use case's second phase is a `combine` that never completes — an init-time collector would live
+     * as long as the ViewModel and re-query Room on every task change while the user is merely typing.
+     *
+     * Guarded so a failure can never block a send; null just means the server omits one line. Not
+     * `runCatching` — that catches `Throwable`, so it would eat the `CancellationException` from a
+     * send the user cancelled and let the request go out anyway.
+     */
+    private suspend fun readHealthHalfHearts(): Int? = try {
+        computeHealthPoints().first().halfHearts
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.tag(LOG_TAG).w(e, "health points unavailable; sending without them")
+        null
+    }
+
+    /**
+     * True when this turn could have changed anything on the server. The old test was
+     * `roundTrips > 1`, which is true of every read-tool turn too — so asking "what's due today?" cost
+     * a full task re-fetch over the network for nothing.
+     *
+     * Phrased as "not a known read" rather than "a known write", so it **fails open**: the day the
+     * backend adds or renames a mutating tool, an unrecognised name still triggers the sync. The two
+     * mistakes are not symmetric — a spurious sync costs one fetch, a missed one leaves the user
+     * looking at stale data after the bot said "done", with no error anywhere.
+     *
+     * An empty [ChatTurnMeta.toolsCalled] means the backend predates the field; fall back to the old
+     * heuristic there so a new client against an old server stays correct, just chattier.
+     */
+    private fun ChatMessageResponseData.changedServerState(): Boolean = if (meta.toolsCalled.isEmpty()) {
+        meta.roundTrips > 1
+    } else {
+        meta.toolsCalled.any { it !in READ_TOOLS }
     }
 
     /**
@@ -490,7 +551,6 @@ class ChatViewModel @Inject constructor(
                     lastFailedPrompt = lastFailedPrompt,
                     rateLimitCooldownSecondsRemaining = cooldownSec,
                     autoRetrySecondsRemaining = 0,
-                    toolInFlight = null,
                 )
                 else -> current
             }
@@ -603,7 +663,6 @@ class ChatViewModel @Inject constructor(
                         lastFailedPrompt = null,
                         rateLimitCooldownSecondsRemaining = 0,
                         autoRetrySecondsRemaining = 0,
-                        toolInFlight = null,
                     )
                     else -> current
                 }
@@ -645,5 +704,30 @@ class ChatViewModel @Inject constructor(
         // Backend embeds this token in the 503 reason (ChatService.vertexUnavailableMessage) so we can
         // tell a Vertex outage apart from a generic server error without reading the numeric HTTP status.
         private val SERVER_UNAVAILABLE_MARKERS = listOf("vertex_unavailable")
+
+        /**
+         * Every backend tool that can mutate a task, mirroring `ChatToolDeclarations.tool`. Only these
+         * warrant a post-turn task re-fetch. Keep it in step when a write tool is added there —
+         * a missing name means the bot's change lands on the server and never reaches the device.
+         */
+        /**
+         * The backend chat tools that only read, mirroring `ChatToolDeclarations`. Anything NOT listed
+         * here is assumed to mutate, so a tool added or renamed on the server still triggers the
+         * post-turn task sync instead of silently leaving the device stale — see [changedServerState].
+         *
+         * Read tools are the safer half to enumerate: this list going stale costs one extra fetch,
+         * where a stale list of *writes* would cost correctness.
+         */
+        private val READ_TOOLS = setOf(
+            "getCurrentDate",
+            "getTodaysTasks",
+            "getOverdueTasks",
+            "getTasksForDateRange",
+            "getGroups",
+            "getGroupTasks",
+            "getCompletedTasksThisWeek",
+            "getProductivityInsights",
+            "findTaskByTitle",
+        )
     }
 }

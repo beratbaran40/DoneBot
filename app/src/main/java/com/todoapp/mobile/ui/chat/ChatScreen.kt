@@ -169,7 +169,6 @@ private fun ChatReadyContent(
                 ChatMessageList(
                     messages = state.messages,
                     isThinking = state.isThinking,
-                    toolInFlight = state.toolInFlight,
                     onQuickReplyClick = { prompt ->
                         onAction(ChatContract.UiAction.OnDraftChanged(prompt))
                         onAction(ChatContract.UiAction.OnSendClicked)
