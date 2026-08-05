@@ -476,10 +476,13 @@ def main() -> int:
                 stale.append(f.stem)
 
     if args.kotlin_out:
+        # The R class is imported, so entries reference it by its simple name — emitting the
+        # fully-qualified form as well would leave the import unused and ktlint rejects that.
+        r_simple = args.kotlin_r.rsplit(".", 1)[-1]
         # Only icons that actually HAVE a variant. Mapping a dropped icon would point the resolver
         # at a drawable that no longer exists and break the build.
         entries = "\n".join(
-            f"    {args.kotlin_r}.drawable.{n} to {args.kotlin_r}.drawable.ic_pixel_{n[3:]},"
+            f"    {r_simple}.drawable.{n} to {r_simple}.drawable.ic_pixel_{n[3:]},"
             for n in sorted(mapped)
         )
         kt = (
