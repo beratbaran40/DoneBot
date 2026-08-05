@@ -14,6 +14,7 @@ import com.google.android.libraries.places.api.Places
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.perf.FirebasePerformance
+import com.todoapp.mobile.data.ambience.AmbienceCoordinator
 import com.todoapp.mobile.data.log.CrashlyticsTree
 import com.todoapp.mobile.data.network.BackendWarmUp
 import com.todoapp.mobile.data.network.NetworkMonitor
@@ -22,6 +23,7 @@ import com.todoapp.mobile.data.notification.PomodoroNotificationChannels
 import com.todoapp.mobile.data.perf.StartupColdStartTrace
 import com.todoapp.mobile.di.IoDispatcher
 import com.todoapp.mobile.domain.alarm.RescheduleAllAlarmsUseCase
+import com.todoapp.mobile.domain.ambience.AmbiencePlayer
 import com.todoapp.mobile.domain.engine.PomodoroEngine
 import com.todoapp.mobile.domain.repository.CrashAnalyticsPreferences
 import com.todoapp.mobile.domain.repository.SecretPreferences
@@ -71,6 +73,12 @@ class Application :
     @Inject
     lateinit var crashAnalyticsPreferences: CrashAnalyticsPreferences
 
+    @Inject
+    lateinit var ambienceCoordinator: AmbienceCoordinator
+
+    @Inject
+    lateinit var ambiencePlayer: AmbiencePlayer
+
     override val workManagerConfiguration: Configuration
         get() =
             Configuration
@@ -97,6 +105,8 @@ class Application :
             createNotificationChannel()
             PomodoroNotificationChannels.ensurePomodoroChannel(this)
         }.onFailure { Timber.tag("AppInit").w(it, "notification channel init failed") }
+        runCatching { ambienceCoordinator.start() }
+            .onFailure { Timber.tag("AppInit").w(it, "ambienceCoordinator init failed") }
         ProcessLifecycleOwner.get().lifecycleScope.launch(ioDispatcher) {
             runCatching { rescheduleAllAlarmsUseCase() }
                 .onFailure { Timber.tag("RescheduleAllAlarms").w(it, "reschedule on app start failed") }
@@ -204,6 +214,9 @@ class Application :
     override fun onStart(owner: LifecycleOwner) {
         super.onStart(owner)
         owner.lifecycleScope.launch { backendWarmUp.pingIfStale() }
+        // Half of the ambience "keep playing in the background" rule — the coordinator ANDs this
+        // with the user's toggle, so with the toggle off the bed follows the app on screen.
+        ambienceCoordinator.onAppForegrounded()
     }
 
     override fun onStop(owner: LifecycleOwner) {
@@ -211,11 +224,14 @@ class Application :
         owner.lifecycleScope.launch {
             OnSecretModeEventUseCase(secretPreferences).invoke(SecretModeEndEvent.APP_CLOSED)
         }
+        ambienceCoordinator.onAppBackgrounded()
     }
 
     override fun onDestroy(owner: LifecycleOwner) {
         super.onDestroy(owner)
         pomodoroEngine.shutdown()
+        ambienceCoordinator.shutdown()
+        ambiencePlayer.shutdown()
         networkMonitor.shutdown()
     }
 

@@ -8,6 +8,7 @@ import com.todoapp.mobile.domain.engine.PomodoroEvent
 import com.todoapp.mobile.domain.engine.PomodoroMode
 import com.todoapp.mobile.domain.engine.Session
 import com.todoapp.mobile.domain.model.Pomodoro
+import com.todoapp.mobile.domain.repository.AmbiencePreferences
 import com.todoapp.mobile.domain.repository.PomodoroRepository
 import com.todoapp.mobile.navigation.NavigationEffect
 import com.todoapp.mobile.navigation.Screen
@@ -27,6 +28,7 @@ class PomodoroViewModel
 constructor(
     private val pomodoroRepository: PomodoroRepository,
     private val engine: PomodoroEngine,
+    private val ambiencePreferences: AmbiencePreferences,
     private val analyticsHelper: com.todoapp.mobile.domain.analytics.AnalyticsHelper,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PomodoroContract.UiState())
@@ -60,7 +62,22 @@ constructor(
             UiAction.OnEndSessionTap -> _uiState.update { it.copy(showFinishEarlyDialog = true) }
             UiAction.DismissEndSessionDialog -> _uiState.update { it.copy(showFinishEarlyDialog = false) }
             UiAction.ConfirmEndSession -> onConfirmEndSession()
+            UiAction.OnAmbienceButtonTap -> _uiState.update { it.copy(showAmbienceSheet = true) }
+            UiAction.DismissAmbienceSheet -> _uiState.update { it.copy(showAmbienceSheet = false) }
+            is UiAction.OnAmbienceSelected -> persist { ambiencePreferences.setSelection(action.ambience) }
+            is UiAction.OnAmbienceVolumeChange -> persist { ambiencePreferences.setVolume(action.volume) }
+            is UiAction.OnAmbienceBackgroundToggle ->
+                persist { ambiencePreferences.setPlayInBackground(action.enabled) }
         }
+    }
+
+    /**
+     * Ambience choices are written straight to DataStore and flow back through the observers in
+     * [observeAmbiencePreferences] — the same path AmbienceCoordinator listens on, so what plays
+     * and what the sheet shows can't disagree.
+     */
+    private fun persist(write: suspend () -> Unit) {
+        viewModelScope.launch { write() }
     }
 
     init {
@@ -91,6 +108,29 @@ constructor(
         }
         observeEngineEvents()
         observeEngineState()
+        observeAmbiencePreferences()
+    }
+
+    /**
+     * Three separate collectors rather than one `combine`: each writes its own field with `copy`,
+     * so a preference emission can never clobber UI-owned state like [UiState.showAmbienceSheet].
+     */
+    private fun observeAmbiencePreferences() {
+        viewModelScope.launch {
+            ambiencePreferences.observeSelection().collect { ambience ->
+                _uiState.update { it.copy(ambience = ambience) }
+            }
+        }
+        viewModelScope.launch {
+            ambiencePreferences.observeVolume().collect { volume ->
+                _uiState.update { it.copy(ambienceVolume = volume) }
+            }
+        }
+        viewModelScope.launch {
+            ambiencePreferences.observePlayInBackground().collect { enabled ->
+                _uiState.update { it.copy(ambienceBackgroundEnabled = enabled) }
+            }
+        }
     }
 
     // ── Actions ────────────────────────────────────────────────────────────────

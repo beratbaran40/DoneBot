@@ -416,6 +416,17 @@
     <string name="pomodoro_mode_long_break">Long Break</string>
     <string name="pomodoro_mode_overtime">Overtime</string>
     <string name="pomodoro_value_min">%1$d min</string>
+    <string name="pomodoro_ambience_title">Background sound</string>
+    <string name="pomodoro_ambience_subtitle">Pick a soundscape to focus to</string>
+    <string name="pomodoro_ambience_none">Silence</string>
+    <string name="pomodoro_ambience_fireplace">Fireplace</string>
+    <string name="pomodoro_ambience_rain">Rain</string>
+    <string name="pomodoro_ambience_handpan">Handpan</string>
+    <string name="pomodoro_ambience_volume">Volume</string>
+    <string name="pomodoro_ambience_background_title">Keep playing in the background</string>
+    <string name="pomodoro_ambience_background_desc">Sound continues when you leave the app or lock the screen. Needs notification permission.</string>
+    <string name="pomodoro_ambience_open">Background sound settings</string>
+    <string name="pomodoro_ambience_done">Done</string>
     <string name="pomodoro_minutes_abbrev">%1$dm</string>
     <string name="fab_label_add_task">Add Task</string>
     <string name="group_move_up">Move Up</string>

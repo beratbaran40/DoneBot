@@ -208,4 +208,16 @@ abstract class RepositoryModule {
     abstract fun bindBlockedUsersPreferences(
         impl: com.todoapp.mobile.data.repository.BlockedUsersPreferencesImpl,
     ): com.todoapp.mobile.domain.repository.BlockedUsersPreferences
+
+    @Binds
+    @Singleton
+    abstract fun bindAmbiencePreferences(
+        impl: com.todoapp.mobile.data.repository.AmbiencePreferencesImpl,
+    ): com.todoapp.mobile.domain.repository.AmbiencePreferences
+
+    @Binds
+    @Singleton
+    abstract fun bindAmbiencePlayer(
+        impl: com.todoapp.mobile.data.ambience.AmbiencePlayerImpl,
+    ): com.todoapp.mobile.domain.ambience.AmbiencePlayer
 }

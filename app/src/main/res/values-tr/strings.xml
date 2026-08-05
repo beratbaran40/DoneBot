@@ -420,6 +420,17 @@
     <string name="pomodoro_mode_long_break">Uzun Mola</string>
     <string name="pomodoro_mode_overtime">Süre Aşımı</string>
     <string name="pomodoro_value_min">%1$d dk</string>
+    <string name="pomodoro_ambience_title">Arka plan sesi</string>
+    <string name="pomodoro_ambience_subtitle">Odaklanmak için bir ortam sesi seç</string>
+    <string name="pomodoro_ambience_none">Sessiz</string>
+    <string name="pomodoro_ambience_fireplace">Şömine</string>
+    <string name="pomodoro_ambience_rain">Yağmur</string>
+    <string name="pomodoro_ambience_handpan">Handpan</string>
+    <string name="pomodoro_ambience_volume">Ses seviyesi</string>
+    <string name="pomodoro_ambience_background_title">Arka planda çalmaya devam et</string>
+    <string name="pomodoro_ambience_background_desc">Uygulamadan çıktığında veya ekranı kilitlediğinde ses devam eder. Bildirim izni gerekir.</string>
+    <string name="pomodoro_ambience_open">Arka plan sesi ayarları</string>
+    <string name="pomodoro_ambience_done">Tamam</string>
     <string name="pomodoro_minutes_abbrev">%1$d dk</string>
     <string name="fab_label_add_task">Görev Ekle</string>
     <string name="group_move_up">Yukarı Taşı</string>

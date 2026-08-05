@@ -3,6 +3,8 @@ package com.todoapp.mobile.ui.pomodoro
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import com.todoapp.mobile.R
+import com.todoapp.mobile.domain.ambience.PomodoroAmbience
+import com.todoapp.mobile.domain.repository.AmbiencePreferences
 
 object PomodoroContract {
     @Immutable
@@ -17,6 +19,10 @@ object PomodoroContract {
         val currentSessionIndex: Int = 0,
         val totalSessions: Int = 0,
         val showFinishEarlyDialog: Boolean = false,
+        val ambience: PomodoroAmbience = PomodoroAmbience.None,
+        val ambienceVolume: Float = AmbiencePreferences.DEFAULT_VOLUME,
+        val ambienceBackgroundEnabled: Boolean = false,
+        val showAmbienceSheet: Boolean = false,
     )
 
     sealed interface UiAction {
@@ -35,6 +41,22 @@ object PomodoroContract {
         data object ConfirmEndSession : UiAction
 
         data object DismissEndSessionDialog : UiAction
+
+        data object OnAmbienceButtonTap : UiAction
+
+        data object DismissAmbienceSheet : UiAction
+
+        data class OnAmbienceSelected(
+            val ambience: PomodoroAmbience,
+        ) : UiAction
+
+        data class OnAmbienceVolumeChange(
+            val volume: Float,
+        ) : UiAction
+
+        data class OnAmbienceBackgroundToggle(
+            val enabled: Boolean,
+        ) : UiAction
     }
 
     sealed interface UiEffect {

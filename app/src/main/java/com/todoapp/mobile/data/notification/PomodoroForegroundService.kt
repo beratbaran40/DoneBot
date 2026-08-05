@@ -55,10 +55,14 @@ class PomodoroForegroundService : Service() {
         if (startedAsForeground) return
         runCatching {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                // MEDIA_PLAYBACK rides along with SPECIAL_USE because this service also hosts the
+                // ambience loop when the user enables background playback. Declaring both keeps the
+                // runtime type consistent with the manifest whichever of the two is doing work.
                 startForeground(
                     PomodoroNotificationBuilder.NOTIFICATION_ID,
                     notification,
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE or
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK,
                 )
             } else {
                 startForeground(PomodoroNotificationBuilder.NOTIFICATION_ID, notification)

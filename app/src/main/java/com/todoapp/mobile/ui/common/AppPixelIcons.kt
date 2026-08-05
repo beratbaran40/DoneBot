@@ -10,6 +10,11 @@ import com.todoapp.mobile.R
  * `when` — which is also why it can be merged across modules.
  */
 val AppPixelIcons: Map<Int, Int> = mapOf(
+    R.drawable.ic_ambience to R.drawable.ic_pixel_ambience,
+    R.drawable.ic_ambience_fireplace to R.drawable.ic_pixel_ambience_fireplace,
+    R.drawable.ic_ambience_handpan to R.drawable.ic_pixel_ambience_handpan,
+    R.drawable.ic_ambience_none to R.drawable.ic_pixel_ambience_none,
+    R.drawable.ic_ambience_rain to R.drawable.ic_pixel_ambience_rain,
     R.drawable.ic_calendar to R.drawable.ic_pixel_calendar,
     R.drawable.ic_chat to R.drawable.ic_pixel_chat,
     R.drawable.ic_custom to R.drawable.ic_pixel_custom,

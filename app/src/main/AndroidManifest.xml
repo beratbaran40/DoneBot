@@ -11,6 +11,9 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- Pomodoro ambience: the focus-timer service also plays a looping soundscape when the user
+         turns on "keep playing in the background". specialUse does not cover audio playback. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -129,9 +132,11 @@
             </intent-filter>
         </service>
 
+        <!-- Two types on purpose: the live countdown is the specialUse part, the ambience loop the
+             mediaPlayback part. Both are user-initiated from the Pomodoro screen. -->
         <service
             android:name=".data.notification.PomodoroForegroundService"
-            android:foregroundServiceType="specialUse"
+            android:foregroundServiceType="specialUse|mediaPlayback"
             android:exported="false">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
