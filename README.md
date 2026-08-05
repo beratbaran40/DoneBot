@@ -16,7 +16,7 @@ built with Jetpack Compose, Clean Architecture and MVI.
 ![Compose BOM](https://img.shields.io/badge/Compose%20BOM-2025.12-4285F4?logo=jetpackcompose&logoColor=white)
 ![API](https://img.shields.io/badge/API-26%2B-3DDC84?logo=android&logoColor=white)
 ![Release AAB](https://img.shields.io/badge/release%20AAB-%E2%89%A4%2020%20MiB%2C%20CI--enforced-0A7BBB)
-![Google Play](https://img.shields.io/badge/Google%20Play-closed%20beta-0F9D58?logo=googleplay&logoColor=white)
+[![Google Play](https://img.shields.io/badge/Google%20Play-live-0F9D58?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=com.todoapp.mobile)
 ![License](https://img.shields.io/badge/license-all%20rights%20reserved-555555)
 
 </div>
@@ -25,8 +25,8 @@ built with Jetpack Compose, Clean Architecture and MVI.
 
 DoneBot is a to-do app that keeps thinking after you stop typing. Plan one-time, recurring and multi-step tasks, share lists with family, friends or teammates, keep a biometric-locked journal with a built-in polaroid camera, run pomodoro focus sessions, and watch your consistency grow on a GitHub-style activity heatmap. An AI assistant — DoneBot itself — manages your tasks in plain English or Turkish, and the whole app works offline and without an account.
 
-> [!IMPORTANT]
-> **DoneBot v1.0 is in closed beta on Google Play** (since July 2026). A public listing link will land here at launch — until then, beta access requests are welcome at **donebotapp@gmail.com**.
+> [!TIP]
+> **DoneBot is live on Google Play** — [download it here](https://play.google.com/store/apps/details?id=com.todoapp.mobile). Free, no ads, no advertising ID. Current release: **v1.1.1**.
 
 ## Contents
 
@@ -284,7 +284,7 @@ English and Turkish are first-class: **1,032 app strings + 74 design-system stri
 
 ## Project status
 
-`v1.0` is feature-complete and in **closed beta on Google Play** ahead of a production launch. Found something broken, or want in on the beta? Open an issue or write to **donebotapp@gmail.com**.
+**Shipped.** DoneBot went to production on Google Play in July 2026 after a 12-tester closed beta, and is under active development — `v1.1.1` is the current public release. Found something broken, or want a feature? Open an issue or write to **donebotapp@gmail.com**.
 
 ## License & legal
 

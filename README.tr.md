@@ -16,7 +16,7 @@ Jetpack Compose, Clean Architecture ve MVI ile geliştirildi.
 ![Compose BOM](https://img.shields.io/badge/Compose%20BOM-2025.12-4285F4?logo=jetpackcompose&logoColor=white)
 ![API](https://img.shields.io/badge/API-26%2B-3DDC84?logo=android&logoColor=white)
 ![Release AAB](https://img.shields.io/badge/release%20AAB-%E2%89%A4%2020%20MiB%2C%20CI%20korumal%C4%B1-0A7BBB)
-![Google Play](https://img.shields.io/badge/Google%20Play-kapal%C4%B1%20beta-0F9D58?logo=googleplay&logoColor=white)
+[![Google Play](https://img.shields.io/badge/Google%20Play-yay%C4%B1nda-0F9D58?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=com.todoapp.mobile)
 ![License](https://img.shields.io/badge/lisans-t%C3%BCm%20haklar%C4%B1%20sakl%C4%B1d%C4%B1r-555555)
 
 </div>
@@ -25,8 +25,8 @@ Jetpack Compose, Clean Architecture ve MVI ile geliştirildi.
 
 DoneBot, sen yazmayı bıraktıktan sonra da düşünmeye devam eden bir görev uygulaması. Tek seferlik, rutin ve çok adımlı görevler planla; listelerini ailen, arkadaşların ya da takım arkadaşlarınla paylaş; içine polaroid kamera gömülü, biyometrik kilitli bir günlük tut; pomodoro odak seansları çalıştır; istikrarını GitHub tarzı bir aktivite ısı haritasında izle. Yapay zekâ asistanı — yani DoneBot'un kendisi — görevlerini Türkçe ya da İngilizce düz cümlelerle yönetiyor; uygulamanın tamamı internetsiz ve hesapsız da çalışıyor.
 
-> [!IMPORTANT]
-> **DoneBot v1.0 şu anda Google Play'de kapalı betada** (Temmuz 2026'dan beri). Yayına çıkınca mağaza bağlantısı buraya eklenecek — o zamana kadar beta erişim istekleri için: **donebotapp@gmail.com**.
+> [!TIP]
+> **DoneBot Google Play'de yayında** — [buradan indir](https://play.google.com/store/apps/details?id=com.todoapp.mobile). Ücretsiz, reklamsız, reklam kimliği yok. Güncel sürüm: **v1.1.1**.
 
 ## İçindekiler
 
@@ -284,7 +284,7 @@ Türkçe ve İngilizce birinci sınıf vatandaş: **dil başına 1.032 uygulama 
 
 ## Proje durumu
 
-`v1.0` özellik açısından tamamlandı ve üretim lansmanı öncesi **Google Play'de kapalı betada**. Bozuk bir şey mi buldun, betaya katılmak mı istiyorsun? Issue aç ya da **donebotapp@gmail.com** adresine yaz.
+**Yayında.** DoneBot, 12 kişilik kapalı betanın ardından Temmuz 2026'da Google Play'de üretime çıktı ve aktif olarak geliştirilmeye devam ediyor — güncel yayın sürümü `v1.1.1`. Bozuk bir şey mi buldun, bir özellik mi istiyorsun? Issue aç ya da **donebotapp@gmail.com** adresine yaz.
 
 ## Lisans & yasal
 
