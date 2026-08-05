@@ -45,5 +45,23 @@ class ProfilePreviewProvider : PreviewParameterProvider<ProfileContract.UiState>
                     editedDisplayName = "",
                     errorMessage = "Network error",
                 ),
+                // Partial health — an odd half-heart count, so the badge renders the "½".
+                ProfileContract.UiState(
+                    isLoading = false,
+                    userId = 1L,
+                    email = "berat.baran@example.com",
+                    displayName = "Berat Baran",
+                    editedDisplayName = "Berat Baran",
+                    healthHalfHearts = 13,
+                ),
+                // Depleted health — the badge must still read cleanly at "0".
+                ProfileContract.UiState(
+                    isLoading = false,
+                    userId = 1L,
+                    email = "berat.baran@example.com",
+                    displayName = "Berat Baran",
+                    editedDisplayName = "Berat Baran",
+                    healthHalfHearts = 0,
+                ),
             )
 }

@@ -37,11 +37,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.todoapp.mobile.BuildConfig
 import com.todoapp.mobile.R
-import com.todoapp.mobile.domain.repository.MAX_HALF_HEARTS
 import com.todoapp.mobile.ui.profile.ProfileContract.UiAction
 import com.todoapp.mobile.ui.profile.ProfileContract.UiState
 import com.todoapp.uikit.components.TDButton
-import com.todoapp.uikit.components.TDHealthRing
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.extensions.collectWithLifecycle
 import com.todoapp.uikit.image.rememberPixelImageModel
@@ -49,11 +47,8 @@ import com.todoapp.uikit.image.tdPixelFilterQuality
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
-/** Avatar diameter. The health ring frames this, so the two must agree. */
+/** Avatar diameter. [ProfileHealthBadge] sits on its bottom-right corner. */
 private val AVATAR_SIZE = 120.dp
-
-/** Extra diameter the ring needs so it frames the avatar rather than overlapping it. */
-private val AVATAR_RING_INSET = 24.dp
 
 @Composable
 fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
@@ -107,17 +102,19 @@ private fun ProfileContent(
             return@Column
         }
 
-        // The ring surfaces the same health-points streak the Activity screen shows as hearts.
-        TDHealthRing(
-            filled = uiState.healthHalfHearts,
-            total = MAX_HALF_HEARTS,
-            size = AVATAR_SIZE + AVATAR_RING_INSET,
-        ) {
+        // No clip on this Box: AvatarDisplay clips itself to a circle, and the badge has to be able
+        // to overhang that edge.
+        Box {
             AvatarDisplay(
                 url = uiState.avatarUrl?.let { absoluteAvatarUrl(it, uiState.avatarVersion) },
                 initials = initialsFrom(uiState.displayName),
                 isUploading = uiState.isUploading,
                 onClick = onPickAvatar,
+            )
+            // Surfaces the same health-points streak the Activity screen shows as hearts.
+            ProfileHealthBadge(
+                halfHearts = uiState.healthHalfHearts,
+                modifier = Modifier.align(Alignment.BottomEnd),
             )
         }
 

@@ -72,9 +72,11 @@ constructor(
     private fun load() {
         viewModelScope.launch {
             val avatarVersion = dataStoreHelper.observeAvatarVersion().first()
+            // `copy`, not a fresh UiState: the health flow above races with this and a whole-state
+            // replacement would reset healthHalfHearts to its full-health default.
             dataStoreHelper.observeUser().first()?.let { cached ->
-                _uiState.value =
-                    UiState(
+                _uiState.update {
+                    it.copy(
                         isLoading = false,
                         userId = cached.id,
                         email = cached.email,
@@ -83,12 +85,13 @@ constructor(
                         avatarUrl = cached.avatarUrl,
                         avatarVersion = avatarVersion,
                     )
+                }
             }
             userRepository
                 .getUserInfo()
                 .onSuccess { user ->
-                    _uiState.value =
-                        UiState(
+                    _uiState.update {
+                        it.copy(
                             isLoading = false,
                             userId = user.id,
                             email = user.email,
@@ -97,6 +100,7 @@ constructor(
                             avatarUrl = user.avatarUrl,
                             avatarVersion = avatarVersion,
                         )
+                    }
                 }.onFailure { t ->
                     _uiState.update {
                         it.copy(isLoading = false, errorMessage = it.errorMessage ?: t.toUserMessage(context))

@@ -15,7 +15,7 @@ object ProfileContract {
         val avatarVersion: Long = 0L,
         val isSaving: Boolean = false,
         val isUploading: Boolean = false,
-        /** Health-points streak, 0..MAX_HALF_HEARTS — the avatar ring mirrors the Activity hearts. */
+        /** Health-points streak, 0..MAX_HALF_HEARTS — the avatar badge mirrors the Activity hearts. */
         val healthHalfHearts: Int = MAX_HALF_HEARTS,
         val errorMessage: String? = null,
     )

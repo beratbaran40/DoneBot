@@ -2,7 +2,7 @@ package com.todoapp.mobile.domain.repository
 
 import kotlinx.coroutines.flow.Flow
 
-/** Activity "health points" bar: 10 hearts, tracked in half-heart units (0..[MAX_HALF_HEARTS]). */
+/** Activity "health points" bar: [HEART_COUNT] hearts, tracked in half-heart units (0..[MAX_HALF_HEARTS]). */
 const val HEART_COUNT: Int = 12
 const val MAX_HALF_HEARTS: Int = HEART_COUNT * 2
 

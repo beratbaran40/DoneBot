@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
+import com.todoapp.mobile.common.heartsLabel
 import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.domain.repository.HEART_COUNT
 import com.todoapp.mobile.domain.repository.MAX_HALF_HEARTS
@@ -508,12 +509,6 @@ private fun healthHintRes(halfHearts: Int): Int = when {
     halfHearts >= MAX_HALF_HEARTS -> com.todoapp.mobile.R.string.activity_health_hint_full
     halfHearts <= LOW_HEALTH_HALF_HEARTS -> com.todoapp.mobile.R.string.activity_health_hint_low
     else -> com.todoapp.mobile.R.string.activity_health_hint_earn
-}
-
-// Full-heart label from half-heart units: "25" when whole, "12½" for an odd (half) count.
-private fun heartsLabel(halfHearts: Int): String {
-    val fullHearts = halfHearts / 2
-    return if (halfHearts % 2 == 1) "$fullHearts½" else fullHearts.toString()
 }
 
 @Composable

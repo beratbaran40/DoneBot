@@ -13,7 +13,7 @@ import java.time.Clock
 import java.time.LocalDate
 import javax.inject.Inject
 
-/** Health-points bar snapshot for the UI. [halfHearts] is 0..[MAX_HALF_HEARTS] (10 hearts). */
+/** Health-points bar snapshot for the UI. [halfHearts] is 0..[MAX_HALF_HEARTS] — twelve hearts. */
 data class HealthPoints(
     val halfHearts: Int,
     val showDepletionDialog: Boolean,

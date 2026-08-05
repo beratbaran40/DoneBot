@@ -50,6 +50,14 @@ constructor(
      */
     private val sessionAddedPaths = mutableSetOf<String>()
 
+    /**
+     * Latched by the first back press. The save is a suspending Room write and the screen stays
+     * interactive until it resolves, so a second press (easy to land on the top-bar arrow) would
+     * re-enter with `entryId` still 0 and insert the entry a second time. Actions arrive on the
+     * main thread, so a plain flag is enough.
+     */
+    private var isExiting = false
+
     init {
         if (entryId != 0L) loadEntry()
     }
@@ -118,6 +126,8 @@ constructor(
     }
 
     private fun handleBackPress() {
+        if (isExiting) return
+        isExiting = true
         val editing = (_uiState.value as? UiState.Editing) ?: run {
             _navEffect.trySend(NavigationEffect.Back)
             return

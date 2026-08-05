@@ -4,6 +4,7 @@
 
 package com.todoapp.mobile.ui.topbar
 
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
@@ -20,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -125,6 +127,7 @@ fun ShowTopBar(
     val destination = appDestinationFromRoute(normalizedRoute) ?: return
     val titleText = stringResource(destination.title)
     val currentEntry = navController.currentBackStackEntryAsState().value
+    val onBackClick = rememberBackDispatchingClick(onEvent)
     val infoAction = TDTopBarAction(
         icon = R.drawable.ic_info,
         contentDescription = com.todoapp.mobile.R.string.cd_top_bar_info,
@@ -173,7 +176,7 @@ fun ShowTopBar(
                 val groupDetailArgs = runCatching { currentEntry?.toRoute<Screen.GroupDetail>() }.getOrNull()
                 TDTopBarState(
                     title = groupDetailArgs?.groupName ?: titleText,
-                    onNavigationClick = { onEvent(UiAction.OnBackClick) },
+                    onNavigationClick = onBackClick,
                     navigationIcon = R.drawable.ic_arrow_back,
                     navigationContentDescription = com.todoapp.mobile.R.string.cd_navigate_back,
                     actions =
@@ -195,7 +198,7 @@ fun ShowTopBar(
             else -> {
                 TDTopBarState(
                     title = titleText,
-                    onNavigationClick = { onEvent(UiAction.OnBackClick) },
+                    onNavigationClick = onBackClick,
                     navigationIcon = R.drawable.ic_arrow_back,
                     navigationContentDescription = com.todoapp.mobile.R.string.cd_navigate_back,
                     actions = if (destination.hasInfoDialog) listOf(infoAction) else emptyList(),
@@ -204,6 +207,30 @@ fun ShowTopBar(
         }
 
     TDTopBar(state = state, isBannerActivated)
+}
+
+/**
+ * The top-bar back arrow must be indistinguishable from system back. Screens register a
+ * [androidx.activity.compose.BackHandler] to do exit work — the journal entry auto-saves,
+ * task details raise the discard prompt, the tablet two-pane deselects first — and popping the
+ * NavController straight from [UiAction.OnBackClick] skipped every one of them, silently
+ * dropping the user's edits. Dispatching through the same [androidx.activity.OnBackPressedDispatcher]
+ * the gesture uses lets those handlers run; NavHost's own callback still pops when no screen
+ * claims the press. The [UiAction.OnBackClick] fallback fires only when nothing is enabled, so
+ * the arrow stays inert on a root destination instead of finishing the Activity.
+ */
+@Composable
+private fun rememberBackDispatchingClick(onEvent: (UiAction) -> Unit): () -> Unit {
+    val dispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+    return remember(dispatcher, onEvent) {
+        {
+            if (dispatcher != null && dispatcher.hasEnabledCallbacks()) {
+                dispatcher.onBackPressed()
+            } else {
+                onEvent(UiAction.OnBackClick)
+            }
+        }
+    }
 }
 
 data class TDTopBarState(
