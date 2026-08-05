@@ -15,7 +15,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.todoapp.mobile.theme.ToDoAppTheme
+import com.todoapp.uikit.theme.TDTheme
 
 @Composable
 fun PomodoroTimerRing(
@@ -68,7 +68,7 @@ fun PomodoroTimerRing(
 @com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun PomodoroTimerRingPreview() {
-    ToDoAppTheme {
+    TDTheme {
         val palette = PomodoroModeTheme.resolve(ModeColorKey.Focus, isSystemInDarkTheme())
         Box(modifier = Modifier.padding(16.dp)) {
             PomodoroTimerRing(
@@ -83,7 +83,7 @@ private fun PomodoroTimerRingPreview() {
 @com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun PomodoroTimerRingEmptyPreview() {
-    ToDoAppTheme {
+    TDTheme {
         val palette = PomodoroModeTheme.resolve(ModeColorKey.Focus, isSystemInDarkTheme())
         Box(modifier = Modifier.padding(16.dp)) {
             PomodoroTimerRing(
@@ -98,7 +98,7 @@ private fun PomodoroTimerRingEmptyPreview() {
 @com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun PomodoroTimerRingFullPreview() {
-    ToDoAppTheme {
+    TDTheme {
         val palette = PomodoroModeTheme.resolve(ModeColorKey.Focus, isSystemInDarkTheme())
         Box(modifier = Modifier.padding(16.dp)) {
             PomodoroTimerRing(
@@ -113,7 +113,7 @@ private fun PomodoroTimerRingFullPreview() {
 @com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun PomodoroTimerRingShortBreakPreview() {
-    ToDoAppTheme {
+    TDTheme {
         val palette = PomodoroModeTheme.resolve(ModeColorKey.ShortBreak, isSystemInDarkTheme())
         Box(modifier = Modifier.padding(16.dp)) {
             PomodoroTimerRing(
@@ -128,7 +128,7 @@ private fun PomodoroTimerRingShortBreakPreview() {
 @com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun PomodoroTimerRingOverTimePreview() {
-    ToDoAppTheme {
+    TDTheme {
         val palette = PomodoroModeTheme.resolve(ModeColorKey.OverTime, isSystemInDarkTheme())
         Box(modifier = Modifier.padding(16.dp)) {
             PomodoroTimerRing(
