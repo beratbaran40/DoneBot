@@ -706,10 +706,10 @@
     <string name="pomodoro_info_bullet_3">Long break: a longer rest after a few rounds</string>
     <string name="chat_info_title">Talk to DoneBot</string>
     <string name="chat_info_description">DoneBot reads your tasks and can answer questions, create new ones, mark them done. Secret tasks stay invisible — they\'re yours.</string>
-    <string name="chat_info_bullet_1">Ask: \"What\'s due today?\" or \"How was my week?\"</string>
-    <string name="chat_info_bullet_2">Create: \"Add a meeting tomorrow at 3pm\"</string>
-    <string name="chat_info_bullet_3">Limit: secret tasks and journal are invisible to DoneBot</string>
-    <string name="chat_info_bullet_4">Scope: only answers questions about your tasks and groups</string>
+    <string name="chat_info_bullet_1">Ask: \"What\'s due today?\" or \"How are my hearts?\"</string>
+    <string name="chat_info_bullet_2">Create &amp; edit: routines, steps, reminders and locations</string>
+    <string name="chat_info_bullet_3">Confirms first: it always asks before deleting a task</string>
+    <string name="chat_info_bullet_4">Limits: group tasks are read-only; secret tasks and journal stay invisible</string>
 
     <string name="calendar_info_title">Calendar View</string>
     <string name="calendar_info_description">See your tasks laid out by day. Tap any date to jump to its tasks; long-press a task to edit it.</string>
@@ -911,6 +911,7 @@
     <string name="chat_suggested_overdue">Anything overdue?</string>
     <string name="chat_suggested_progress">How am I doing this week?</string>
     <string name="chat_suggested_week_remaining">What\'s left this week?</string>
+    <string name="chat_suggested_hearts">How are my hearts?</string>
     <string name="chat_clear_confirm_title">Clear conversation?</string>
     <string name="chat_clear_confirm_message">This deletes your chat history with DoneBot but does not affect your tasks.</string>
     <string name="chat_clear_confirm_button">Clear</string>

@@ -85,10 +85,11 @@ internal fun ChatMessageList(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun QuickReplyChipRow(onClick: (String) -> Unit) {
+    // All four hit LocalIntentClassifier, so a follow-up tap costs no network round-trip.
     val chips = listOf(
         stringResource(R.string.chat_suggested_tomorrow),
         stringResource(R.string.chat_suggested_overdue),
-        stringResource(R.string.chat_suggested_progress),
+        stringResource(R.string.chat_suggested_hearts),
         stringResource(R.string.chat_suggested_week_remaining),
     )
     FlowRow(
