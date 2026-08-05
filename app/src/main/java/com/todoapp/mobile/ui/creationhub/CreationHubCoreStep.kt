@@ -88,23 +88,10 @@ internal fun CreationHubCoreStep(
             // alone simply don't apply — nothing here has to be unlocked first.
             TaskType.CUSTOM -> {
                 val recurs = state.recurrence != Recurrence.NONE
-                // Date first: "when is this?" is the question a user can always answer, while
-                // "how often?" only makes sense once they have a day in mind.
-                TaskFormDateField(
-                    date = state.date,
-                    onSelect = { onAction(UiAction.OnDateSelect(it)) },
-                    // Holding two days sets the routine's end, so the gesture is only offered once
-                    // the task actually repeats — an end date on a one-off means nothing.
-                    onRangeSelect = if (recurs) {
-                        { start, end ->
-                            onAction(UiAction.OnDateSelect(start))
-                            onAction(UiAction.OnRecurrenceUntilSelect(end))
-                        }
-                    } else {
-                        null
-                    },
-                    rangeEnd = state.recurrenceUntil,
-                )
+                // The repeat rule comes first and stays in one block — frequency, then how often,
+                // then which weekdays. Asking the date first split the rule around it, and it also
+                // meant the calendar's hold-two-days gesture was dead on the first open (the gesture
+                // only exists for something that repeats). This way it is live straight away.
                 TaskFrequencyChips(
                     selected = state.recurrence,
                     onSelect = { onAction(UiAction.OnFrequencySelect(it)) },
@@ -123,6 +110,24 @@ internal fun CreationHubCoreStep(
                         )
                     }
                 }
+                TaskFormDateField(
+                    date = state.date,
+                    onSelect = { onAction(UiAction.OnDateSelect(it)) },
+                    // Holding two days sets the routine's end, so the gesture is only offered once
+                    // the task actually repeats — an end date on a one-off means nothing.
+                    onRangeSelect = if (recurs) {
+                        { start, end ->
+                            onAction(UiAction.OnDateSelect(start))
+                            onAction(UiAction.OnRecurrenceUntilSelect(end))
+                        }
+                    } else {
+                        null
+                    },
+                    rangeEnd = state.recurrenceUntil,
+                    // Tapping one day drops the span. Without this the end date lived on in state,
+                    // so the band and the "between … and …" sentence never went away.
+                    onRangeClear = { onAction(UiAction.OnRecurrenceUntilSelect(null)) },
+                )
                 // An end date and absolute reminder times only make sense once it repeats; before
                 // that a one-off reminds relative to its own start, like every other single task.
                 if (recurs) {

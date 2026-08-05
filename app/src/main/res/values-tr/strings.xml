@@ -1122,10 +1122,10 @@
     <string name="creation_end_9_months">9 ay</string>
     <string name="creation_end_1_year">1 yıl</string>
     <string name="creation_end_on_date">Bitiş: %1$s</string>
-    <string name="creation_calendar_range_hint">İki farklı güne basılı tutarak bu görevin uzunluğunu belirle</string>
+    <string name="creation_calendar_range_hint">Bir güne basılı tutup sonra başka bir güne dokunarak bu görevin uzunluğunu belirle</string>
     <string name="creation_date_summary_single">Bu görev tek günlük: %1$s tarihinde gerçekleşecek ve hatırlatılacak.</string>
     <string name="creation_date_summary_range">Bu görev %1$s ve %2$s tarihleri arasında gerçekleşecek ve hatırlatılacak.</string>
-    <string name="creation_date_summary_awaiting_end">Şimdi bitiş için ikinci bir güne basılı tut.</string>
+    <string name="creation_date_summary_awaiting_end">Şimdi bitiş için ikinci bir güne dokun.</string>
     <string name="creation_reminder_times_label">Hatırlatma saatleri</string>
     <string name="creation_reminder_add">Hatırlatma ekle</string>
     <string name="creation_reminder_max">Günde en fazla %1$d hatırlatma</string>

@@ -1121,10 +1121,10 @@
     <string name="creation_end_9_months">9 months</string>
     <string name="creation_end_1_year">1 year</string>
     <string name="creation_end_on_date">Ends on %1$s</string>
-    <string name="creation_calendar_range_hint">Hold two different days to set how long this task runs</string>
+    <string name="creation_calendar_range_hint">Hold a day to start, then tap another to set how long this task runs</string>
     <string name="creation_date_summary_single">This is a one-day task: it happens and reminds you on %1$s.</string>
     <string name="creation_date_summary_range">This task runs and reminds you between %1$s and %2$s.</string>
-    <string name="creation_date_summary_awaiting_end">Now hold a second day to set the end.</string>
+    <string name="creation_date_summary_awaiting_end">Now tap a second day to set the end.</string>
     <string name="creation_reminder_times_label">Reminder times</string>
     <string name="creation_reminder_add">Add a reminder</string>
     <string name="creation_reminder_max">Up to %1$d reminders a day</string>

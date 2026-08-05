@@ -123,6 +123,8 @@ fun TaskFormDateField(
     /** Non-null enables hold-two-days span selection. See TDDatePickerDialog. */
     onRangeSelect: ((start: LocalDate, end: LocalDate) -> Unit)? = null,
     rangeEnd: LocalDate? = null,
+    /** Fired when a plain tap should drop an existing span back to a single day. */
+    onRangeClear: (() -> Unit)? = null,
 ) {
     TDDatePickerDialog(
         modifier = modifier,
@@ -131,6 +133,7 @@ fun TaskFormDateField(
         onDateDeselect = onDeselect,
         onRangeSelect = onRangeSelect,
         rangeEnd = rangeEnd,
+        onRangeClear = onRangeClear,
         rangeHint = onRangeSelect?.let { stringResource(R.string.creation_calendar_range_hint) },
         summaryText = { start, end, awaitingEnd -> taskDateSummary(start, end, awaitingEnd) },
     )

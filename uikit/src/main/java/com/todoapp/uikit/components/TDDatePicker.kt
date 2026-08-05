@@ -28,7 +28,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -401,10 +405,6 @@ fun TDDatePickerSingleInput(
                     val isRangeEnd = rangeEnd != null && currentDate == rangeEnd
                     val isSelected = selectedDate == currentDate || isRangeEnd
                     val isAnchor = anchorDate == currentDate && rangeEnd == null
-                    val isInsideRange = selectedDate != null &&
-                        rangeEnd != null &&
-                        currentDate > selectedDate &&
-                        currentDate < rangeEnd
                     TDAnimatedCell(
                         modifier = Modifier.weight(1f),
                         backgroundColor = when {
@@ -412,7 +412,12 @@ fun TDDatePickerSingleInput(
                             isAnchor -> TDTheme.colors.lightPending
                             else -> Color.Transparent
                         },
-                        bandColor = if (isInsideRange || isSelected) TDTheme.colors.lightPending else Color.Transparent,
+                        band = rangeBandFor(currentDate, selectedDate, rangeEnd),
+                        // The selection colour faded, not a fixed token: pendingGray is the selected
+                        // day's fill, so it is already guaranteed to contrast with the background in
+                        // both themes and all three palette kits. lightPending was #1A1A1A on a
+                        // #0D0D0D dialog in dark mode — 13 levels apart, effectively invisible.
+                        bandColor = TDTheme.colors.pendingGray.copy(alpha = RANGE_BAND_ALPHA),
                         delayMillis = 0,
                         onClick = { if (isSelected && rangeEnd == null) onDayDeselect() else onDaySelect(currentDate) },
                         onLongClick = onDayLongPress?.let { press -> { press(currentDate) } },
@@ -442,6 +447,7 @@ private fun TDAnimatedCell(
     delayMillis: Int,
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
+    band: RangeBand = RangeBand.NONE,
     bandColor: Color = Color.Transparent,
     content: @Composable () -> Unit,
 ) {
@@ -452,16 +458,48 @@ private fun TDAnimatedCell(
     )
 
     Box(
-        // The band is drawn on the FULL cell width and the circle only on the inner 36.dp, so a
-        // selected range reads as one continuous bar with solid ends rather than detached dots.
+        // Drawn behind rather than as a background so the two ends can cover HALF the cell: a
+        // full-width band spills out past the 36.dp circle and shows a square edge beside it.
+        // Height matches the circle exactly, so neighbouring cells join into one unbroken bar.
         modifier = modifier
-            .background(bandColor)
+            .drawBehind {
+                if (band == RangeBand.NONE) return@drawBehind
+                val barHeight = CELL_DIAMETER_DP.dp.toPx()
+                val radius = barHeight / 2f
+                val top = (size.height - barHeight) / 2f
+                val circleLeft = (size.width - barHeight) / 2f
+                // The bar starts and ends at the CIRCLE's edge, not the cell's centre, and its outer
+                // corners are rounded to the circle's own radius. That makes the cap concentric with
+                // the day circle, so the two read as one pill — square caps left visible corners
+                // poking out where the circle's curve pulled away from the straight edge.
+                val left = if (band == RangeBand.START) circleLeft else 0f
+                val right = if (band == RangeBand.END) circleLeft + barHeight else size.width
+                val capStart = if (band == RangeBand.START) CornerRadius(radius) else CornerRadius.Zero
+                val capEnd = if (band == RangeBand.END) CornerRadius(radius) else CornerRadius.Zero
+                drawPath(
+                    path = Path().apply {
+                        addRoundRect(
+                            RoundRect(
+                                left = left,
+                                top = top,
+                                right = right,
+                                bottom = top + barHeight,
+                                topLeftCornerRadius = capStart,
+                                bottomLeftCornerRadius = capStart,
+                                topRightCornerRadius = capEnd,
+                                bottomRightCornerRadius = capEnd,
+                            ),
+                        )
+                    },
+                    color = bandColor,
+                )
+            }
             .combinedClickable(onClick = onClick, onLongClick = onLongClick),
         contentAlignment = Alignment.Center,
     ) {
         Box(
             modifier = Modifier
-                .size(36.dp)
+                .size(CELL_DIAMETER_DP.dp)
                 .background(color = animatedColor, shape = TDTheme.shapes.circle),
             contentAlignment = Alignment.Center,
         ) {
@@ -469,6 +507,12 @@ private fun TDAnimatedCell(
         }
     }
 }
+
+/** The day circle's diameter. The range band matches it so the bar lines up with the circles. */
+private const val CELL_DIAMETER_DP = 36
+
+/** Faint enough to read as "between the ends", solid enough to survive a dark background. */
+private const val RANGE_BAND_ALPHA = 0.25f
 
 @RequiresApi(Build.VERSION_CODES.O)
 @TDPreviewWide
