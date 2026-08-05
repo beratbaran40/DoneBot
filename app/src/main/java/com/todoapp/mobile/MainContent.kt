@@ -59,7 +59,7 @@ fun MainContent() {
         val isLoggedIn = mainViewModel.isLoggedIn
         LaunchedEffect(pendingDeepLink, isLoggedIn, backStackEntry) {
             val link = pendingDeepLink ?: return@LaunchedEffect
-            // The NavHost graph isn't set until the splash ends (ToDoApp shows a splash while
+            // The NavHost graph isn't set until the splash ends (DoneBotApp shows a splash while
             // isLoggedIn == null || !splashDone). On a cold reminder tap isLoggedIn can flip to true
             // before that; navigating now would fail and consumePendingDeepLink() would drop the
             // link. Wait until the start destination is on the back stack.

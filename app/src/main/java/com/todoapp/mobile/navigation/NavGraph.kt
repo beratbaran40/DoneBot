@@ -953,7 +953,7 @@ fun NavGraph(
 @OptIn(ExperimentalLayoutApi::class)
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
-fun ToDoApp(
+fun DoneBotApp(
     darkTheme: Boolean,
     palette: PaletteKit,
 ) {

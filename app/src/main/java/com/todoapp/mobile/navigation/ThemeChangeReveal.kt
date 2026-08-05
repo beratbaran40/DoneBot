@@ -38,7 +38,7 @@ import com.todoapp.uikit.theme.style
  *
  * - **Reduce-motion:** when [LocalReduceMotion] is on the theme swaps instantly (no capture/anim).
  * - **No launch flash:** `displayed` starts equal to the target and this host mounts after the
- *   splash (past [ToDoApp]'s early return), so the persisted theme has already settled — the first
+ *   splash (past [DoneBotApp]'s early return), so the persisted theme has already settled — the first
  *   composition finds target == displayed and never animates.
  */
 @Composable

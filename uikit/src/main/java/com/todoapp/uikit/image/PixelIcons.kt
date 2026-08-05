@@ -14,7 +14,7 @@ import com.todoapp.uikit.theme.TDTheme
  *
  * Defaults to `:uikit`'s own icons so uikit components and previews resolve standalone. `:app` owns
  * drawables under a different `R` class, so it provides the MERGED map (uikit + app) once at the
- * theme root — see `ToDoApp`. A resource id that is not in the map resolves to itself.
+ * theme root — see `DoneBotApp`. A resource id that is not in the map resolves to itself.
  */
 val LocalPixelIconMap = staticCompositionLocalOf { UikitPixelIcons }
 

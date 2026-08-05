@@ -27,8 +27,8 @@ fun ThemedApp() {
             ThemePreference.SYSTEM_DEFAULT -> isSystemInDarkTheme()
         }
 
-    // TDTheme is applied inside ToDoApp (per-branch: the splash directly, the main UI via
+    // TDTheme is applied inside DoneBotApp (per-branch: the splash directly, the main UI via
     // ThemeChangeReveal, which swaps the theme through a top-down wipe). Passing the target theme
     // down lets the reveal capture the old frame BEFORE the theme switches — see ThemeChangeReveal.
-    ToDoApp(darkTheme = darkTheme, palette = palette)
+    DoneBotApp(darkTheme = darkTheme, palette = palette)
 }
