@@ -4,7 +4,7 @@
 
 # DoneBot
 
-**Seninle birlikte düşünen görev yönetimi.**
+**Seninle birlikte düşünen görev yöneticisi.**
 
 Yerleşik yapay zekâ asistanlı, offline-first bir Android görev & üretkenlik uygulaması —
 Jetpack Compose, Clean Architecture ve MVI ile geliştirildi.
