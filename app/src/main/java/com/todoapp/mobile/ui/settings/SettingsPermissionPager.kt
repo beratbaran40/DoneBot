@@ -1,7 +1,6 @@
 package com.todoapp.mobile.ui.settings
 
 import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,7 +22,6 @@ import com.todoapp.mobile.ui.permissions.NotificationPermissionPrompt
 import com.todoapp.mobile.ui.permissions.OverlayPermissionPrompt
 import com.todoapp.uikit.theme.TDTheme
 
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 internal fun SettingsPermissionPager(
     permissions: List<PermissionType>,
@@ -39,11 +37,16 @@ internal fun SettingsPermissionPager(
             modifier = Modifier.fillMaxWidth(),
         ) { index ->
             when (permissions[index]) {
+                // POST_NOTIFICATIONS only exists on 33+; the ViewModel never adds this entry below
+                // that, but the guard is what lets the whole Settings tree drop its @RequiresApi
+                // chain — and that chain was hiding a real crash (see SettingsNotificationsSection).
                 PermissionType.NOTIFICATION ->
-                    NotificationPermissionPrompt(
-                        onGranted = { onDismiss(PermissionType.NOTIFICATION) },
-                        onDismiss = { onDismiss(PermissionType.NOTIFICATION) },
-                    )
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        NotificationPermissionPrompt(
+                            onGranted = { onDismiss(PermissionType.NOTIFICATION) },
+                            onDismiss = { onDismiss(PermissionType.NOTIFICATION) },
+                        )
+                    }
 
                 PermissionType.OVERLAY ->
                     OverlayPermissionPrompt(

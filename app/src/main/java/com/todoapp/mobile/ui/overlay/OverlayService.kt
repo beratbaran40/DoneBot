@@ -293,6 +293,9 @@ class OverlayService :
 
     private fun rescheduleNextDailyPlan() {
         serviceScope.launch {
+            // The card chains tomorrow's alarm as it appears, so honouring the switch here is what
+            // makes "off" stick after the last already-armed reminder has fired.
+            if (!dailyPlanPreferences.observeEnabled().first()) return@launch
             val time =
                 dailyPlanPreferences.observePlanTime().first()
                     ?: DailyPlanDefaults.DEFAULT_PLAN_TIME

@@ -134,6 +134,13 @@ constructor(
     }
 
     private suspend fun rescheduleDailyPlan() {
+        // Cancel first so turning the reminder off before a reboot actually keeps it off: the alarm
+        // is re-armed from here on every launch and every boot, and nothing else clears it.
+        alarmScheduler.cancelScheduledAlarm(AlarmType.DAILY_PLAN)
+        if (!dailyPlanPreferences.observeEnabled().first()) {
+            Timber.tag(TAG).d("Daily plan reminder is off; left unscheduled")
+            return
+        }
         val time =
             dailyPlanPreferences.observePlanTime().first()
                 ?: DailyPlanDefaults.DEFAULT_PLAN_TIME

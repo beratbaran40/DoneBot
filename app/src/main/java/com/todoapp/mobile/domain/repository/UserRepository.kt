@@ -10,6 +10,16 @@ import com.todoapp.mobile.data.model.network.request.RefreshTokenRequest
 import com.todoapp.mobile.data.model.network.request.RegisterRequest
 import kotlinx.coroutines.flow.SharedFlow
 
+/**
+ * The user's server-side push settings: the master switch, plus the NotificationType names they have
+ * muted individually. A muted type still writes its in-app inbox row — muting silences the
+ * interruption, not the record.
+ */
+data class PushPreferences(
+    val enabled: Boolean,
+    val mutedTypes: Set<String> = emptySet(),
+)
+
 interface UserRepository {
     suspend fun fcmToken(request: FCMTokenRequest): Result<FCMTokenResponseData>
 
@@ -38,9 +48,10 @@ interface UserRepository {
 
     suspend fun changePassword(currentPassword: String, newPassword: String): Result<Unit>
 
-    suspend fun getPushEnabled(): Result<Boolean>
+    suspend fun getPushPreferences(): Result<PushPreferences>
 
-    suspend fun setPushEnabled(enabled: Boolean): Result<Boolean>
+    /** [mutedTypes] null = leave the stored per-type choices alone (only the master switch moved). */
+    suspend fun setPushPreferences(enabled: Boolean, mutedTypes: Set<String>? = null): Result<PushPreferences>
 
     suspend fun deleteAccount(): Result<Unit>
 

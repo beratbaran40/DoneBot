@@ -625,6 +625,13 @@
     <string name="settings_larger_text">Text size</string>
     <string name="settings_larger_text_desc">Adjust system font scaling</string>
     <string name="settings_push_notifications">Push notifications</string>
+    <string name="settings_push_type_subtitle">Still appears in your notification list</string>
+    <string name="settings_push_type_assignments">Tasks assigned to me</string>
+    <string name="settings_push_type_completions">Tasks others complete</string>
+    <string name="settings_push_type_due_soon">Tasks due soon</string>
+    <string name="settings_push_type_invitations">Invitations &amp; group changes</string>
+    <string name="settings_daily_plan_reminder">Daily plan reminder</string>
+    <string name="settings_daily_plan_reminder_subtitle">A nudge to plan your day at the time you set</string>
     <string name="settings_exact_alarms_title">Exact reminders</string>
     <string name="settings_exact_alarms_description">Allow this app to fire reminders at the precise time you set.</string>
     <string name="settings_exact_alarms_status_enabled">Exact reminders are enabled.</string>

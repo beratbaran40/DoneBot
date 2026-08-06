@@ -25,6 +25,12 @@ object SettingsContract {
         val isUserAuthenticated: Boolean = false,
         val pushNotificationsEnabled: Boolean = true,
         val isPushTogglePending: Boolean = false,
+        /**
+         * NotificationType names the user has muted. A muted type still lands in the in-app inbox —
+         * the preference silences the interruption, it does not erase the history.
+         */
+        val mutedPushTypes: Set<String> = emptySet(),
+        val dailyPlanEnabled: Boolean = true,
         val reduceMotionEnabled: Boolean = false,
         val journalBiometricProtected: Boolean = false,
         val sharePerformanceDiagnostics: Boolean = false,
@@ -83,6 +89,11 @@ object SettingsContract {
         data object OnNavigateToAppColors : UiAction
 
         data class OnPushNotificationsToggle(val enabled: Boolean) : UiAction
+
+        /** [type] is a [com.todoapp.mobile.domain.model.NotificationType] name. */
+        data class OnPushTypeToggle(val type: String, val enabled: Boolean) : UiAction
+
+        data class OnDailyPlanToggle(val enabled: Boolean) : UiAction
 
         data class OnReduceMotionToggle(val enabled: Boolean) : UiAction
 

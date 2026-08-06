@@ -31,12 +31,31 @@ import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
-@RequiresApi(Build.VERSION_CODES.S)
+/**
+ * The four groups the per-type mutes are offered under. Deliberately coarser than
+ * [com.todoapp.mobile.domain.model.NotificationType]: "invitation accepted" and "invitation
+ * declined" are one idea to a user, and a settings screen that mirrors an enum one-for-one asks them
+ * to reason about our data model.
+ */
+private val PUSH_TYPE_GROUPS = listOf(
+    PushTypeGroup(R.string.settings_push_type_assignments, listOf("TASK_ASSIGNED")),
+    PushTypeGroup(R.string.settings_push_type_completions, listOf("TASK_COMPLETED")),
+    PushTypeGroup(R.string.settings_push_type_due_soon, listOf("TASK_DUE_SOON")),
+    PushTypeGroup(
+        R.string.settings_push_type_invitations,
+        listOf("INVITATION_RECEIVED", "INVITATION_ACCEPTED", "INVITATION_DECLINED", "GROUP_OWNERSHIP_TRANSFERRED"),
+    ),
+)
+
+private data class PushTypeGroup(val titleRes: Int, val types: List<String>)
+
 @Composable
 internal fun SettingsNotificationsSection(
     isUserAuthenticated: Boolean,
     pushNotificationsEnabled: Boolean,
     isPushTogglePending: Boolean,
+    mutedPushTypes: Set<String>,
+    dailyPlanEnabled: Boolean,
     onAction: (UiAction) -> Unit,
 ) {
     TDSettingsGroup(title = stringResource(R.string.settings_section_notifications)) {
@@ -54,8 +73,48 @@ internal fun SettingsNotificationsSection(
                     )
                 },
             )
+            // Only meaningful while push is on at all, so they follow the master switch rather than
+            // sitting there greyed out.
+            if (pushNotificationsEnabled) {
+                PUSH_TYPE_GROUPS.forEach { group ->
+                    val muted = group.types.all { it in mutedPushTypes }
+                    TDSettingsItem(
+                        title = stringResource(group.titleRes),
+                        subtitle = stringResource(R.string.settings_push_type_subtitle),
+                        icon = tdPainter(com.example.uikit.R.drawable.ic_notification),
+                        iconTint = TDTheme.colors.pendingGray,
+                        iconContainerColor = TDTheme.colors.lightPending,
+                        trailingContent = {
+                            TDSwitch(
+                                checked = !muted,
+                                onCheckedChange = { enabled ->
+                                    group.types.forEach { onAction(UiAction.OnPushTypeToggle(it, enabled)) }
+                                },
+                                enabled = !isPushTogglePending,
+                            )
+                        },
+                    )
+                }
+            }
         }
-        SettingsExactAlarmsRow()
+        TDSettingsItem(
+            title = stringResource(R.string.settings_daily_plan_reminder),
+            subtitle = stringResource(R.string.settings_daily_plan_reminder_subtitle),
+            icon = tdPainter(com.example.uikit.R.drawable.ic_sand_clock),
+            iconTint = TDTheme.colors.darkPending,
+            iconContainerColor = TDTheme.colors.lightPending,
+            trailingContent = {
+                TDSwitch(
+                    checked = dailyPlanEnabled,
+                    onCheckedChange = { onAction(UiAction.OnDailyPlanToggle(it)) },
+                )
+            },
+        )
+        // API 31 is where canScheduleExactAlarms() exists; below it the permission cannot be
+        // revoked, so there is nothing to show and calling the method would throw.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            SettingsExactAlarmsRow()
+        }
         TDSettingsItem(
             title = stringResource(R.string.alarm_sounds),
             icon = tdPainter(R.drawable.ic_settings_sound),
@@ -108,7 +167,6 @@ private fun SettingsExactAlarmsRow() {
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.S)
 @TDPreview
 @Composable
 private fun SettingsNotificationsSectionPreview() {
@@ -118,6 +176,42 @@ private fun SettingsNotificationsSectionPreview() {
                 isUserAuthenticated = true,
                 pushNotificationsEnabled = true,
                 isPushTogglePending = false,
+                mutedPushTypes = setOf("TASK_COMPLETED"),
+                dailyPlanEnabled = true,
+                onAction = {},
+            )
+        }
+    }
+}
+
+@TDPreview
+@Composable
+private fun SettingsNotificationsSectionPushOffPreview() {
+    TDTheme {
+        Column(modifier = Modifier.background(TDTheme.colors.background).padding(16.dp)) {
+            SettingsNotificationsSection(
+                isUserAuthenticated = true,
+                pushNotificationsEnabled = false,
+                isPushTogglePending = false,
+                mutedPushTypes = emptySet(),
+                dailyPlanEnabled = false,
+                onAction = {},
+            )
+        }
+    }
+}
+
+@TDPreview
+@Composable
+private fun SettingsNotificationsSectionSignedOutPreview() {
+    TDTheme {
+        Column(modifier = Modifier.background(TDTheme.colors.background).padding(16.dp)) {
+            SettingsNotificationsSection(
+                isUserAuthenticated = false,
+                pushNotificationsEnabled = true,
+                isPushTogglePending = false,
+                mutedPushTypes = emptySet(),
+                dailyPlanEnabled = true,
                 onAction = {},
             )
         }

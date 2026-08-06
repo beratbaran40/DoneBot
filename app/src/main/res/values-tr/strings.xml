@@ -626,6 +626,13 @@
     <string name="settings_larger_text">Yazı boyutu</string>
     <string name="settings_larger_text_desc">Sistem yazı tipi boyutunu ayarla</string>
     <string name="settings_push_notifications">Anlık bildirimler</string>
+    <string name="settings_push_type_subtitle">Bildirim listende yine görünür</string>
+    <string name="settings_push_type_assignments">Bana atanan görevler</string>
+    <string name="settings_push_type_completions">Başkalarının tamamladığı görevler</string>
+    <string name="settings_push_type_due_soon">Zamanı yaklaşan görevler</string>
+    <string name="settings_push_type_invitations">Davetler ve grup değişiklikleri</string>
+    <string name="settings_daily_plan_reminder">Günü planla hatırlatıcısı</string>
+    <string name="settings_daily_plan_reminder_subtitle">Belirlediğin saatte gününü planlaman için bir dürtü</string>
     <string name="settings_exact_alarms_title">Tam zamanlı hatırlatıcılar</string>
     <string name="settings_exact_alarms_description">Hatırlatmaların belirlediğin zamanda tam olarak çalışmasına izin ver.</string>
     <string name="settings_exact_alarms_status_enabled">Tam zamanlı hatırlatıcılar etkin.</string>

@@ -16,6 +16,7 @@ constructor(
 ) : DailyPlanPreferences {
     companion object {
         private const val PLAN_TIME_KEY = "daily_plan_time"
+        private const val ENABLED_KEY = "daily_plan_enabled"
         private const val CARD_POSITION_X_KEY = "daily_plan_card_position_x"
         private const val CARD_POSITION_Y_KEY = "daily_plan_card_position_y"
         private val FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
@@ -33,6 +34,15 @@ constructor(
 
     override suspend fun savePlanTime(time: LocalTime) {
         dataStoreHelper.saveString(PLAN_TIME_KEY, time.format(FORMATTER))
+    }
+
+    // Stored as a string rather than a boolean so "never set" stays distinguishable from "off", and
+    // an absent key reads as enabled — the behaviour every existing install already has.
+    override fun observeEnabled(): Flow<Boolean> = dataStoreHelper.observeOptionalString(ENABLED_KEY)
+        .map { it?.toBooleanStrictOrNull() ?: true }
+
+    override suspend fun setEnabled(enabled: Boolean) {
+        dataStoreHelper.saveString(ENABLED_KEY, enabled.toString())
     }
 
     override fun observeCardPosition(): Flow<DailyCardPosition> = combine(

@@ -1,7 +1,5 @@
 package com.todoapp.mobile.ui.settings
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -26,7 +24,6 @@ import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 internal fun SettingsContent(
     modifier: Modifier = Modifier,
@@ -95,6 +92,8 @@ internal fun SettingsContent(
             isUserAuthenticated = uiState.isUserAuthenticated,
             pushNotificationsEnabled = uiState.pushNotificationsEnabled,
             isPushTogglePending = uiState.isPushTogglePending,
+            mutedPushTypes = uiState.mutedPushTypes,
+            dailyPlanEnabled = uiState.dailyPlanEnabled,
             onAction = onAction,
         )
 
@@ -162,7 +161,6 @@ internal fun SettingsContent(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @TDPreview
 @Composable
 private fun SettingsContentAuthenticatedPreview() {
@@ -176,7 +174,6 @@ private fun SettingsContentAuthenticatedPreview() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @TDPreview
 @Composable
 private fun SettingsContentGuestPreview() {
@@ -190,7 +187,6 @@ private fun SettingsContentGuestPreview() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @TDPreview
 @Composable
 private fun SettingsContentPermissionsPreview() {
