@@ -425,6 +425,8 @@
     <string name="pomodoro_ambience_volume">Volume</string>
     <string name="pomodoro_ambience_background_title">Keep playing in the background</string>
     <string name="pomodoro_ambience_background_desc">Sound continues when you leave the app or lock the screen. Needs notification permission.</string>
+    <string name="pomodoro_ambience_background_needs_notifications">Unavailable while notifications are off — without them the sound stops as soon as you leave the app.</string>
+    <string name="pomodoro_ambience_background_allow_notifications">Allow notifications</string>
     <string name="pomodoro_ambience_open">Background sound settings</string>
     <string name="pomodoro_ambience_done">Done</string>
     <string name="pomodoro_minutes_abbrev">%1$dm</string>

@@ -2,7 +2,6 @@ package com.todoapp.mobile.ui.permissions
 
 import android.Manifest
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
@@ -17,6 +16,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.core.app.ActivityCompat
 import androidx.core.net.toUri
 import com.todoapp.mobile.R
+import com.todoapp.mobile.common.openAppNotificationSettings
 import com.todoapp.uikit.components.TDPermissionPromptCard
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
@@ -57,7 +57,7 @@ internal fun NotificationPermissionPrompt(
         ctaText = stringResource(com.example.uikit.R.string.grant_permission),
         onCtaClick = {
             if (shouldOpenSettings.value) {
-                openAppNotificationSettings(context)
+                context.openAppNotificationSettings()
             } else {
                 launcher.launch(permission)
             }
@@ -94,16 +94,6 @@ internal fun OverlayPermissionPrompt(
         },
         onDismiss = onDismiss,
     )
-}
-
-@RequiresApi(Build.VERSION_CODES.O)
-private fun openAppNotificationSettings(context: Context) {
-    val intent =
-        Intent().apply {
-            action = Settings.ACTION_APP_NOTIFICATION_SETTINGS
-            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-        }
-    context.startActivity(intent)
 }
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)

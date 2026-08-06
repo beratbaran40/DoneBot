@@ -23,6 +23,21 @@ fun Context.needsCameraPermission(): Boolean = ContextCompat.checkSelfPermission
 ) != PackageManager.PERMISSION_GRANTED
 
 /**
+ * Opens this app's notification settings, where POST_NOTIFICATIONS can be granted after the OS has
+ * stopped offering to prompt for it. More specific than [openAppDetailsSettings] — it lands on the
+ * notification screen itself rather than the app's permission list.
+ */
+fun Context.openAppNotificationSettings() {
+    runCatching {
+        startActivity(
+            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+    }
+}
+
+/**
  * Opens this app's details page in system Settings, where the user can grant a
  * permission the OS refuses to prompt for (e.g. permanently-denied CAMERA).
  */

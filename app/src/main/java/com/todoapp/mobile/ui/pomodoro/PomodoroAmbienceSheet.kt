@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,12 +59,17 @@ fun PomodoroAmbience.iconRes(): Int = when (this) {
  *
  * There is no separate "preview" affordance: reaching this sheet means a session is running, so a
  * tap swaps what is already playing and the choice is audible immediately.
+ *
+ * [notificationsBlocked] is passed in rather than read here so the previews can render both sides of
+ * it. See [com.todoapp.mobile.ui.permissions.rememberNotificationPermissionGate].
  */
 @Composable
 fun PomodoroAmbienceSheet(
     selected: PomodoroAmbience,
     volume: Float,
     backgroundEnabled: Boolean,
+    notificationsBlocked: Boolean,
+    onFixNotifications: () -> Unit,
     onAction: (UiAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -128,19 +135,42 @@ fun PomodoroAmbienceSheet(
                 TDText(
                     text = stringResource(R.string.pomodoro_ambience_background_title),
                     style = TDTheme.typography.subheading1,
-                    color = TDTheme.colors.onBackground,
+                    color = if (notificationsBlocked) TDTheme.colors.gray else TDTheme.colors.onBackground,
                 )
                 Spacer(Modifier.height(2.dp))
                 TDText(
-                    text = stringResource(R.string.pomodoro_ambience_background_desc),
+                    text = stringResource(
+                        if (notificationsBlocked) {
+                            R.string.pomodoro_ambience_background_needs_notifications
+                        } else {
+                            R.string.pomodoro_ambience_background_desc
+                        },
+                    ),
                     style = TDTheme.typography.subheading2,
                     color = TDTheme.colors.gray,
                 )
             }
+            // Without notification permission there is no foreground service, and background audio
+            // with nothing holding the process up gets cut off mid-loop. A switch that cannot do
+            // what it says should not pretend otherwise.
             TDSwitch(
-                checked = backgroundEnabled,
+                checked = backgroundEnabled && !notificationsBlocked,
                 onCheckedChange = { onAction(UiAction.OnAmbienceBackgroundToggle(it)) },
+                enabled = !notificationsBlocked,
             )
+        }
+
+        if (notificationsBlocked) {
+            TextButton(
+                onClick = onFixNotifications,
+                contentPadding = PaddingValues(horizontal = 0.dp, vertical = 8.dp),
+            ) {
+                TDText(
+                    text = stringResource(R.string.pomodoro_ambience_background_allow_notifications),
+                    style = TDTheme.typography.subheading1,
+                    color = TDTheme.colors.purple,
+                )
+            }
         }
     }
 }
@@ -224,6 +254,8 @@ private fun PomodoroAmbienceSheetPreview() {
             selected = PomodoroAmbience.Rain,
             volume = 0.6f,
             backgroundEnabled = false,
+            notificationsBlocked = false,
+            onFixNotifications = {},
             onAction = {},
         )
     }
@@ -237,6 +269,25 @@ private fun PomodoroAmbienceSheetSilentPreview() {
             selected = PomodoroAmbience.None,
             volume = 0.6f,
             backgroundEnabled = true,
+            notificationsBlocked = false,
+            onFixNotifications = {},
+            onAction = {},
+        )
+    }
+}
+
+/** Notifications denied: the background toggle is off the table and says why. */
+@TDPreviewDialog
+@Composable
+private fun PomodoroAmbienceSheetNotificationsBlockedPreview() {
+    TDTheme {
+        PomodoroAmbienceSheet(
+            selected = PomodoroAmbience.Fireplace,
+            volume = 0.6f,
+            // Stored as on from before the permission was revoked — the row must still read as off.
+            backgroundEnabled = true,
+            notificationsBlocked = true,
+            onFixNotifications = {},
             onAction = {},
         )
     }

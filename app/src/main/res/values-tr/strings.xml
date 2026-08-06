@@ -429,6 +429,8 @@
     <string name="pomodoro_ambience_volume">Ses seviyesi</string>
     <string name="pomodoro_ambience_background_title">Arka planda çalmaya devam et</string>
     <string name="pomodoro_ambience_background_desc">Uygulamadan çıktığında veya ekranı kilitlediğinde ses devam eder. Bildirim izni gerekir.</string>
+    <string name="pomodoro_ambience_background_needs_notifications">Bildirimler kapalıyken kullanılamaz — onlar olmadan uygulamadan çıkar çıkmaz ses kesilir.</string>
+    <string name="pomodoro_ambience_background_allow_notifications">Bildirimlere izin ver</string>
     <string name="pomodoro_ambience_open">Arka plan sesi ayarları</string>
     <string name="pomodoro_ambience_done">Tamam</string>
     <string name="pomodoro_minutes_abbrev">%1$d dk</string>

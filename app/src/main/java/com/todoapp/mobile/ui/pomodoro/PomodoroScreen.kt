@@ -6,6 +6,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.todoapp.mobile.common.RingtoneHolder
+import com.todoapp.mobile.ui.permissions.rememberNotificationPermissionGate
 import com.todoapp.mobile.ui.pomodoro.PomodoroContract.UiAction
 import com.todoapp.mobile.ui.pomodoro.PomodoroContract.UiEffect
 import com.todoapp.mobile.ui.pomodoro.PomodoroContract.UiState
@@ -48,10 +49,13 @@ fun PomodoroScreen(
         isSheetOpen = uiState.showAmbienceSheet,
         onDismissSheet = { onAction(UiAction.DismissAmbienceSheet) },
         sheetContent = {
+            val notificationGate = rememberNotificationPermissionGate()
             PomodoroAmbienceSheet(
                 selected = uiState.ambience,
                 volume = uiState.ambienceVolume,
                 backgroundEnabled = uiState.ambienceBackgroundEnabled,
+                notificationsBlocked = notificationGate.isBlocked,
+                onFixNotifications = notificationGate.fix,
                 onAction = onAction,
             )
         },
