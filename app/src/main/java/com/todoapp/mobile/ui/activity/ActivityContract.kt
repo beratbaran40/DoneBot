@@ -5,9 +5,7 @@ import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.domain.repository.DailyBucket
 import com.todoapp.mobile.domain.repository.MAX_HALF_HEARTS
 import com.todoapp.mobile.domain.repository.MonthlyWeekBucket
-import com.todoapp.mobile.ui.home.TaskFormState
 import java.time.LocalDate
-import java.time.LocalTime
 import java.time.YearMonth
 
 object ActivityContract {
@@ -61,8 +59,6 @@ object ActivityContract {
             val yearlyCompleted: Int = 0,
             val yearlyTotal: Int = 0,
             val yearlyProgress: Float = 0f,
-            val isSheetOpen: Boolean = false,
-            val taskFormState: TaskFormState = TaskFormState(),
             val overdueCount: Int = 0,
         ) : UiState
 
@@ -84,40 +80,6 @@ object ActivityContract {
         ) : UiAction
 
         data object OnBarChartBack : UiAction
-
-        data object OnShowBottomSheet : UiAction
-
-        data object OnDismissBottomSheet : UiAction
-
-        data object OnTaskCreate : UiAction
-
-        data class OnTaskTitleChange(
-            val title: String,
-        ) : UiAction
-
-        data class OnDialogDateSelect(
-            val date: LocalDate,
-        ) : UiAction
-
-        data object OnDialogDateDeselect : UiAction
-
-        data class OnTaskTimeStartChange(
-            val time: LocalTime,
-        ) : UiAction
-
-        data class OnTaskTimeEndChange(
-            val time: LocalTime,
-        ) : UiAction
-
-        data class OnTaskDescriptionChange(
-            val description: String,
-        ) : UiAction
-
-        data object OnToggleAdvancedSettings : UiAction
-
-        data class OnTaskSecretChange(
-            val isSecret: Boolean,
-        ) : UiAction
 
         data object OnPomodoroTap : UiAction
 

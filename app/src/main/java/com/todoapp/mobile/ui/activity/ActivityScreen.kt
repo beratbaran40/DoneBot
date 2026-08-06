@@ -45,9 +45,7 @@ import com.todoapp.mobile.ui.activity.ActivityContract.UiAction
 import com.todoapp.mobile.ui.activity.ActivityContract.UiState
 import com.todoapp.mobile.ui.common.LocalReduceMotion
 import com.todoapp.mobile.ui.common.components.OverdueBanner
-import com.todoapp.mobile.ui.home.AddTaskSheet
 import com.todoapp.mobile.ui.home.HomeFabMenu
-import com.todoapp.mobile.ui.home.TaskFormUiAction
 import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonSize
 import com.todoapp.uikit.components.TDGeneralProgressBar
@@ -56,7 +54,6 @@ import com.todoapp.uikit.components.TDHeartsDepletedDialog
 import com.todoapp.uikit.components.TDLoadingBar
 import com.todoapp.uikit.components.TDMonthNavigator
 import com.todoapp.uikit.components.TDMonthlyBarChart
-import com.todoapp.uikit.components.TDScreenWithSheet
 import com.todoapp.uikit.components.TDSwitch
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.image.tdPainter
@@ -122,137 +119,111 @@ private fun ActivitySuccessContent(
     uiState: UiState.Success,
     onAction: (UiAction) -> Unit,
 ) {
-    TDScreenWithSheet(
-        isSheetOpen = uiState.isSheetOpen,
-        sheetContent = {
-            AddTaskSheet(
-                formState = uiState.taskFormState,
-                onAction = { action ->
-                    when (action) {
-                        is TaskFormUiAction.Dismiss -> onAction(UiAction.OnDismissBottomSheet)
-                        is TaskFormUiAction.Create -> onAction(UiAction.OnTaskCreate)
-                        is TaskFormUiAction.TitleChange -> onAction(UiAction.OnTaskTitleChange(action.title))
-                        is TaskFormUiAction.DateSelect -> onAction(UiAction.OnDialogDateSelect(action.date))
-                        is TaskFormUiAction.DateDeselect -> onAction(UiAction.OnDialogDateDeselect)
-                        is TaskFormUiAction.TimeStartChange -> onAction(UiAction.OnTaskTimeStartChange(action.time))
-                        is TaskFormUiAction.TimeEndChange -> onAction(UiAction.OnTaskTimeEndChange(action.time))
-                        is TaskFormUiAction.DescriptionChange -> onAction(UiAction.OnTaskDescriptionChange(action.description))
-
-                        is TaskFormUiAction.ToggleAdvancedSettings -> onAction(UiAction.OnToggleAdvancedSettings)
-                        is TaskFormUiAction.SecretChange -> onAction(UiAction.OnTaskSecretChange(action.isSecret))
-                        else -> Unit
-                    }
-                },
-            )
-        },
-        onDismissSheet = { onAction(UiAction.OnDismissBottomSheet) },
+    Box(
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        Box(
-            modifier = Modifier.fillMaxWidth(),
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState()),
         ) {
-            Column(
+            if (uiState.overdueCount > 0) {
+                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    OverdueBanner(
+                        count = uiState.overdueCount,
+                        onView = { onAction(UiAction.OnViewOverdue) },
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            ActivityCard {
+                HealthPointsCard(
+                    halfHearts = uiState.healthHalfHearts,
+                    animate = !LocalReduceMotion.current,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            TDMonthNavigator(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-            ) {
-                if (uiState.overdueCount > 0) {
-                    Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                        OverdueBanner(
-                            count = uiState.overdueCount,
-                            onView = { onAction(UiAction.OnViewOverdue) },
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                ActivityCard {
-                    HealthPointsCard(
-                        halfHearts = uiState.healthHalfHearts,
-                        animate = !LocalReduceMotion.current,
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                TDMonthNavigator(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    month = uiState.selectedMonth,
-                    onPreviousMonth = {
-                        onAction(UiAction.OnMonthSelected(uiState.selectedMonth.minusMonths(1)))
-                    },
-                    onNextMonth = {
-                        onAction(UiAction.OnMonthSelected(uiState.selectedMonth.plusMonths(1)))
-                    },
-                )
-
-                IncludeRecurringRow(
-                    checked = uiState.includeRecurring,
-                    onCheckedChange = { onAction(UiAction.OnToggleIncludeRecurring(it)) },
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                ActivityCard {
-                    if (uiState.expandedWeekIndex == null) {
-                        MonthSummaryHeader(
-                            monthCompleted = uiState.monthCompleted,
-                            monthPending = uiState.monthPending,
-                            monthTrend = uiState.monthTrend,
-                            bestDay = uiState.bestDay,
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
-                    BarChartContent(uiState = uiState, onAction = onAction)
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                ActivityHeatmapSection(state = uiState, onAction = onAction)
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                ActivityCard {
-                    ActivityYearStrip(
-                        selectedMonth = uiState.selectedMonth,
-                        buckets = uiState.yearStripBuckets.map { it.month to it.totalCompleted },
-                        onMonthClick = { month -> onAction(UiAction.OnMonthSelected(month)) },
-                    )
-                }
-
-                if (uiState.categoryBreakdown.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    ActivityCard {
-                        CategoryBreakdownSection(stats = uiState.categoryBreakdown)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                ActivityCard {
-                    YearlyProgressSection(
-                        yearlyCompleted = uiState.yearlyCompleted,
-                        yearlyTotal = uiState.yearlyTotal,
-                        yearlyProgress = uiState.yearlyProgress,
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(80.dp))
-            }
-            HomeFabMenu(
-                onCreate = { onAction(UiAction.OnCreateHubTap) },
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                month = uiState.selectedMonth,
+                onPreviousMonth = {
+                    onAction(UiAction.OnMonthSelected(uiState.selectedMonth.minusMonths(1)))
+                },
+                onNextMonth = {
+                    onAction(UiAction.OnMonthSelected(uiState.selectedMonth.plusMonths(1)))
+                },
             )
 
-            if (uiState.showDepletionDialog) {
-                TDHeartsDepletedDialog(
-                    speechBubbleText = stringResource(com.todoapp.mobile.R.string.activity_hearts_depleted_speech),
-                    buttonText = stringResource(com.todoapp.mobile.R.string.activity_hearts_depleted_button),
-                    reduceMotion = LocalReduceMotion.current,
-                    onDismiss = { onAction(UiAction.OnHeartsDepletedDialogDismiss) },
+            IncludeRecurringRow(
+                checked = uiState.includeRecurring,
+                onCheckedChange = { onAction(UiAction.OnToggleIncludeRecurring(it)) },
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            ActivityCard {
+                if (uiState.expandedWeekIndex == null) {
+                    MonthSummaryHeader(
+                        monthCompleted = uiState.monthCompleted,
+                        monthPending = uiState.monthPending,
+                        monthTrend = uiState.monthTrend,
+                        bestDay = uiState.bestDay,
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+                BarChartContent(uiState = uiState, onAction = onAction)
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            ActivityHeatmapSection(state = uiState, onAction = onAction)
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            ActivityCard {
+                ActivityYearStrip(
+                    selectedMonth = uiState.selectedMonth,
+                    buckets = uiState.yearStripBuckets.map { it.month to it.totalCompleted },
+                    onMonthClick = { month -> onAction(UiAction.OnMonthSelected(month)) },
                 )
             }
+
+            if (uiState.categoryBreakdown.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                ActivityCard {
+                    CategoryBreakdownSection(stats = uiState.categoryBreakdown)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            ActivityCard {
+                YearlyProgressSection(
+                    yearlyCompleted = uiState.yearlyCompleted,
+                    yearlyTotal = uiState.yearlyTotal,
+                    yearlyProgress = uiState.yearlyProgress,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(80.dp))
+        }
+        HomeFabMenu(
+            onCreate = { onAction(UiAction.OnCreateHubTap) },
+        )
+
+        if (uiState.showDepletionDialog) {
+            TDHeartsDepletedDialog(
+                speechBubbleText = stringResource(com.todoapp.mobile.R.string.activity_hearts_depleted_speech),
+                buttonText = stringResource(com.todoapp.mobile.R.string.activity_hearts_depleted_button),
+                reduceMotion = LocalReduceMotion.current,
+                onDismiss = { onAction(UiAction.OnHeartsDepletedDialogDismiss) },
+            )
         }
     }
 }

@@ -45,15 +45,12 @@ import com.todoapp.mobile.ui.calendar.CalendarContract.UiEffect
 import com.todoapp.mobile.ui.calendar.CalendarContract.UiState
 import com.todoapp.mobile.ui.common.ResponsiveContainer
 import com.todoapp.mobile.ui.common.components.OverdueBanner
-import com.todoapp.mobile.ui.home.AddTaskSheet
 import com.todoapp.mobile.ui.home.HomeFabMenu
-import com.todoapp.mobile.ui.home.TaskFormUiAction
 import com.todoapp.mobile.ui.security.biometric.BiometricAuthenticator
 import com.todoapp.uikit.components.TDDatePicker
 import com.todoapp.uikit.components.TDErrorState
 import com.todoapp.uikit.components.TDFullscreenImageViewer
 import com.todoapp.uikit.components.TDGroupTaskCard
-import com.todoapp.uikit.components.TDScreenWithSheet
 import com.todoapp.uikit.components.TDStatusChipTone
 import com.todoapp.uikit.components.TDTaskCard
 import com.todoapp.uikit.components.TDText
@@ -97,103 +94,74 @@ fun CalendarScreen(
     }
 }
 
-@Suppress("CyclomaticComplexMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CalendarSuccessContent(
     uiState: UiState.Success,
     onAction: (UiAction) -> Unit,
 ) {
-    TDScreenWithSheet(
-        isSheetOpen = uiState.isSheetOpen,
-        sheetContent = {
-            AddTaskSheet(
-                formState = uiState.taskFormState,
-                onAction = { action ->
-                    when (action) {
-                        is TaskFormUiAction.Dismiss -> onAction(UiAction.OnDismissBottomSheet)
-                        is TaskFormUiAction.Create -> onAction(UiAction.OnTaskCreate)
-                        is TaskFormUiAction.TitleChange -> onAction(UiAction.OnTaskTitleChange(action.title))
-                        is TaskFormUiAction.DateSelect -> onAction(UiAction.OnDialogDateSelect(action.date))
-                        is TaskFormUiAction.DateDeselect -> onAction(UiAction.OnDialogDateDeselect)
-                        is TaskFormUiAction.TimeStartChange -> onAction(UiAction.OnTaskTimeStartChange(action.time))
-                        is TaskFormUiAction.TimeEndChange -> onAction(UiAction.OnTaskTimeEndChange(action.time))
-                        is TaskFormUiAction.DescriptionChange ->
-                            onAction(
-                                UiAction.OnTaskDescriptionChange(action.description),
-                            )
-                        is TaskFormUiAction.ToggleAdvancedSettings -> onAction(UiAction.OnToggleAdvancedSettings)
-                        is TaskFormUiAction.SecretChange -> onAction(UiAction.OnTaskSecretChange(action.isSecret))
-                        else -> Unit
-                    }
-                },
-            )
-        },
-        onDismissSheet = { onAction(UiAction.OnDismissBottomSheet) },
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            PullToRefreshBox(
-                isRefreshing = uiState.isRefreshing,
-                onRefresh = { onAction(UiAction.OnRefresh) },
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                val widthClass = LocalWindowSizeClass.current.widthSizeClass
-                if (widthClass == WindowWidthSizeClass.Expanded) {
-                    // Two-pane on large screens: calendar (list) on the left, the selected day's
-                    // tasks (detail) on the right.
-                    Row(
+    Box(modifier = Modifier.fillMaxSize()) {
+        PullToRefreshBox(
+            isRefreshing = uiState.isRefreshing,
+            onRefresh = { onAction(UiAction.OnRefresh) },
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            val widthClass = LocalWindowSizeClass.current.widthSizeClass
+            if (widthClass == WindowWidthSizeClass.Expanded) {
+                // Two-pane on large screens: calendar (list) on the left, the selected day's
+                // tasks (detail) on the right.
+                Row(
+                    modifier =
+                    Modifier
+                        .fillMaxSize(),
+                ) {
+                    CalendarHeader(
+                        uiState = uiState,
+                        onAction = onAction,
                         modifier =
                         Modifier
-                            .fillMaxSize(),
+                            .width(400.dp)
+                            .fillMaxHeight()
+                            .verticalScroll(rememberScrollState())
+                            .padding(bottom = 24.dp),
+                    )
+                    LazyColumn(
+                        modifier =
+                        Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        CalendarHeader(
-                            uiState = uiState,
-                            onAction = onAction,
-                            modifier =
-                            Modifier
-                                .width(400.dp)
-                                .fillMaxHeight()
-                                .verticalScroll(rememberScrollState())
-                                .padding(bottom = 24.dp),
-                        )
-                        LazyColumn(
-                            modifier =
-                            Modifier
-                                .weight(1f)
-                                .fillMaxHeight(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            if (uiState.selectedDate == null) {
-                                item { CalendarSelectDayPlaceholder() }
-                            } else {
-                                calendarTaskSections(uiState = uiState, onAction = onAction)
-                            }
-                        }
-                    }
-                } else {
-                    ResponsiveContainer {
-                        LazyColumn(
-                            modifier =
-                            Modifier
-                                .fillMaxSize(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            item { CalendarHeader(uiState = uiState, onAction = onAction) }
+                        if (uiState.selectedDate == null) {
+                            item { CalendarSelectDayPlaceholder() }
+                        } else {
                             calendarTaskSections(uiState = uiState, onAction = onAction)
                         }
                     }
                 }
+            } else {
+                ResponsiveContainer {
+                    LazyColumn(
+                        modifier =
+                        Modifier
+                            .fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        item { CalendarHeader(uiState = uiState, onAction = onAction) }
+                        calendarTaskSections(uiState = uiState, onAction = onAction)
+                    }
+                }
             }
-            HomeFabMenu(
-                onCreate = { onAction(UiAction.OnCreateHubTap) },
+        }
+        HomeFabMenu(
+            onCreate = { onAction(UiAction.OnCreateHubTap) },
+        )
+        val viewerUrl = uiState.viewerPhotoUrl
+        if (!viewerUrl.isNullOrBlank()) {
+            TDFullscreenImageViewer(
+                model = viewerUrl,
+                onDismiss = { onAction(UiAction.OnGroupTaskPhotoDismiss) },
             )
-            val viewerUrl = uiState.viewerPhotoUrl
-            if (!viewerUrl.isNullOrBlank()) {
-                TDFullscreenImageViewer(
-                    model = viewerUrl,
-                    onDismiss = { onAction(UiAction.OnGroupTaskPhotoDismiss) },
-                )
-            }
         }
     }
 }
