@@ -1,10 +1,8 @@
 package com.todoapp.mobile.ui.creationhub
 
 import androidx.lifecycle.SavedStateHandle
-import com.todoapp.mobile.domain.alarm.AlarmScheduler
 import com.todoapp.mobile.domain.engine.PomodoroEngine
 import com.todoapp.mobile.domain.model.Recurrence
-import com.todoapp.mobile.domain.repository.DailyPlanPreferences
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.TaskRepository
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiAction
@@ -39,10 +37,7 @@ class CreationHubRecurrenceResetTest {
         return CreationHubViewModel(
             taskRepository = mockk<TaskRepository>(relaxed = true),
             groupRepository = groupRepository,
-            alarmScheduler = mockk<AlarmScheduler>(relaxed = true),
-            dailyPlanPreferences = mockk<DailyPlanPreferences>(relaxed = true),
             pomodoroEngine = mockk<PomodoroEngine>(relaxed = true),
-            ioDispatcher = mainDispatcherRule.dispatcher,
             savedStateHandle = SavedStateHandle(),
         )
     }

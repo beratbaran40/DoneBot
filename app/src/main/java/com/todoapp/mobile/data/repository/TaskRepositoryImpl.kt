@@ -362,15 +362,11 @@ constructor(
         // syncUpdatedTask preserves the local row, so finishedOn survives the SYNCED transition.
         val updated = current.copy(finishedOn = epochDay, syncStatus = current.syncStatus.afterEdit())
         localDataSource.update(updated)
-        if (finishedOn != null) {
-            // Finishing: the routine arms no more alarms. The finish-day occurrence renders completed in
-            // the Today tab + week/month stats by deriving from finishedOn (which syncs), so no per-day
-            // write is needed — keeping it consistent cross-device and off the daily-only completion endpoint.
-            runCatching { alarmScheduler.cancelRecurring(taskId) }
-        } else {
-            // Un-finishing: the routine resumes, so re-arm its recurring alarm.
-            scheduleRecurringAlarmIfNeeded(updated.id, updated.toDomain())
-        }
+        // Finishing arms nothing (scheduleRecurringAlarmIfNeeded returns early on finishedOn != null);
+        // un-finishing resumes the routine. One call covers both, and the cancel inside it is what
+        // clears the slots either way. The finish-day occurrence still renders completed in the Today
+        // tab and the week/month stats, derived from finishedOn — which syncs, so no per-day write.
+        syncAlarms(updated.id, updated.toDomain())
         Unit
     }
 
@@ -551,7 +547,7 @@ constructor(
         }
         // Must precede the alarm arming — scheduleRecurringAlarmIfNeeded reads these rows back.
         localDataSource.replaceReminders(localId, task.reminderTimes.map { it.toMinuteOfDay() })
-        scheduleRecurringAlarmIfNeeded(localId, task)
+        syncAlarms(localId, task)
         analyticsHelper.logTaskCreated(hasDue = !task.isAllDay, recurrence = task.recurrence.name)
 
         remoteDataSource
@@ -587,6 +583,11 @@ constructor(
                 },
             )
         }
+        // Both of these were missing here while insert() had them, so a task created WITH a photo
+        // got no reminder rows and no alarm at all — the only difference between the two paths was
+        // supposed to be the upload.
+        localDataSource.replaceReminders(localId, task.reminderTimes.map { it.toMinuteOfDay() })
+        syncAlarms(localId, task)
         analyticsHelper.logTaskCreated(hasDue = !task.isAllDay, recurrence = task.recurrence.name)
 
         remoteDataSource
@@ -621,7 +622,10 @@ constructor(
 
     override suspend fun delete(task: Task) {
         val entity = localDataSource.getTaskById(task.id) ?: return
-        cancelRecurringAlarmIfNeeded(entity.id, entity.toDomain())
+        // Both spaces, not just the recurring one: this used to call a helper that returned early for
+        // non-recurring tasks, so deleting a plain task left its one-shot alarm armed and the
+        // reminder still fired — for a task that no longer existed.
+        cancelAllAlarms(entity.id)
         // Branch on remoteId, NOT syncStatus. A PENDING_UPDATE/PENDING_DELETE row still carries a remoteId,
         // so the task exists on the server and must be deleted there. The old `syncStatus != SYNCED` check
         // deleted such a row locally-only, leaving the server copy intact; the next pull then re-inserted
@@ -663,7 +667,12 @@ constructor(
         // it to the (still-uncompleted) server row, and overwrites the user's checkbox.
         // PENDING_CREATE/UPDATE/DELETE must NOT be downgraded — SyncWorker pipeline expects
         // those states to be processed in order.
-        localDataSource.update(current.copy(isCompleted = isCompleted, syncStatus = current.syncStatus.afterEdit()))
+        val updated = current.copy(isCompleted = isCompleted, syncStatus = current.syncStatus.afterEdit())
+        localDataSource.update(updated)
+        // Ticking a task off silences its reminder, and un-ticking brings it back. Previously neither
+        // happened, so a task you had already done still rang — while the boot sweep skipped completed
+        // tasks, which made the behaviour depend on whether the process had restarted.
+        syncAlarms(updated.id, updated.toDomain())
     }
 
     /**
@@ -752,16 +761,10 @@ constructor(
         // reads them back from the table, so writing after would arm the previous set.
         localDataSource.replaceReminders(preserved.id, preserved.reminderTimes.map { it.toMinuteOfDay() })
 
-        // Re-arm or cancel the recurring alarm based on the new recurrence. Always cancel first
-        // (no-op if there was no alarm) so a change to NONE clears it, and so a reminder dropped by
-        // this edit doesn't leave its slot armed. A finished routine stays alarm-less
-        // (scheduleRecurringAlarmIfNeeded skips finishedOn != null).
-        runCatching { alarmScheduler.cancelRecurring(preserved.id) }
-        scheduleRecurringAlarmIfNeeded(preserved.id, preserved)
-        // Edits to a non-recurring task can change date/timeStart/reminderOffsetMinutes, all of which
-        // affect when the one-shot alarm fires. Cancel + reschedule so the user-visible reminder stays
-        // in sync with what they just saved. cancelTask is taskId-based and idempotent (no-op if none scheduled).
-        rescheduleOneShotAlarm(preserved)
+        // An edit can change the date, the time, the reminder offset, the reminder times or the
+        // recurrence itself — and turning a routine into a one-off (or back) moves the alarm between
+        // request-code spaces entirely. syncAlarms cancels both and re-arms whichever now applies.
+        syncAlarms(preserved.id, preserved)
 
         if (taskEntity?.syncStatus != SyncStatus.SYNCED) {
             // Preserve the pending KIND by remoteId; don't collapse to PENDING_CREATE. A row that already
@@ -879,9 +882,40 @@ constructor(
         }.onFailure { Log.w("scheduleRecurring", "failed: ${it.message}") }
     }
 
-    private fun cancelRecurringAlarmIfNeeded(taskId: Long, task: Task) {
-        if (task.recurrence == Recurrence.NONE) return
-        runCatching { alarmScheduler.cancelRecurring(taskId) }
+    /**
+     * Makes the alarms armed on this device match what [task] is **now**. Every mutation path goes
+     * through here, which is the whole point: the one-shot alarm used to be armed by each creating
+     * ViewModel instead, from the Task they had just handed to [insert] — a Task whose `id` is still
+     * 0 because Room mints the real one. Every task therefore landed on the request code of id 0 and
+     * silently unscheduled the previous one, so only the most recently created task ever rang.
+     *
+     * [localId] is the authority, never `task.id`: callers legitimately pass a pre-insert Task.
+     *
+     * Cancel-then-arm rather than diffing: a recurrence that changed shape, a reminder slot that was
+     * dropped, a task that was just completed — all of them need the old alarms gone, and an armed
+     * recurring alarm re-arms itself from its own intent extras forever if it is left behind.
+     */
+    private suspend fun syncAlarms(localId: Long, task: Task) {
+        val current = if (task.id == localId) task else task.copy(id = localId)
+        cancelAllAlarms(localId)
+        // A completed one-off has nothing left to remind about. Recurring tasks are exempt: their
+        // completion is per-day, so today's tick must not silence tomorrow's occurrence.
+        if (current.recurrence == Recurrence.NONE && current.isCompleted) return
+        if (current.recurrence != Recurrence.NONE) {
+            scheduleRecurringAlarmIfNeeded(localId, current)
+        } else {
+            rescheduleOneShotAlarm(current)
+        }
+    }
+
+    /**
+     * Cancels every alarm a task can own — the one-shot code AND all recurring slots. The two live in
+     * disjoint request-code spaces (see AlarmRequestCodes), so cancelling one leaves the other armed;
+     * that is how a deleted non-recurring task kept ringing.
+     */
+    private fun cancelAllAlarms(localId: Long) {
+        runCatching { alarmScheduler.cancelTask(localId) }
+        runCatching { alarmScheduler.cancelRecurring(localId) }
     }
 
     private suspend fun rescheduleOneShotAlarm(task: Task) {
@@ -1032,9 +1066,10 @@ constructor(
             val updatedRemoteIds = toUpdate.mapNotNull { it.remoteId }.toSet()
 
             // Apply remote-side deletes. Cancel alarms first so they don't fire for a row
-            // that's about to disappear.
+            // that's about to disappear — both spaces, since a one-off deleted on another device
+            // would otherwise keep its reminder armed here with nothing left to open.
             if (orphaned.isNotEmpty()) {
-                orphaned.forEach { runCatching { alarmScheduler.cancelRecurring(it.id) } }
+                orphaned.forEach { cancelAllAlarms(it.id) }
                 localDataSource.deleteByRemoteIds(orphaned.mapNotNull { it.remoteId })
                 timber.log.Timber
                     .tag("TaskFetch")
@@ -1227,7 +1262,15 @@ constructor(
 
     override suspend fun deleteAllTasks(): Result<Unit> = withContext(ioDispatcher) {
         try {
+            // Read the ids BEFORE the wipe: after it, nothing on the device knows these tasks ever
+            // existed, and an armed alarm needs no database to fire. A recurring one re-arms itself
+            // from its own intent extras, so it would outlive the account forever — the previous
+            // user's task titles popping up as reminders in the next user's session.
+            //
+            // This runs on logout and on account deletion, which is exactly when that matters.
+            val ids = localDataSource.observeAll().first().map { it.id }
             localDataSource.deleteAll()
+            ids.forEach { cancelAllAlarms(it) }
             Result.success(Unit)
         } catch (t: Throwable) {
             Result.failure(DomainException.fromThrowable(t))
@@ -1557,9 +1600,12 @@ constructor(
         // The guard belongs here, not at the call sites, so no future caller can forget it.
         if (parent.recurrence != Recurrence.NONE.name) return
         if (parent.isCompleted != allDone) {
-            localDataSource.update(
-                parent.copy(isCompleted = allDone, syncStatus = parent.syncStatus.afterEdit()),
-            )
+            val updated = parent.copy(isCompleted = allDone, syncStatus = parent.syncStatus.afterEdit())
+            localDataSource.update(updated)
+            // Same reasoning as the guard above: this is the one funnel a staged parent's completion
+            // flows through — the parent checkbox AND every individual step tick — so the reminder
+            // follows it from here rather than from each caller.
+            syncAlarms(updated.id, updated.toDomain())
         }
     }
 

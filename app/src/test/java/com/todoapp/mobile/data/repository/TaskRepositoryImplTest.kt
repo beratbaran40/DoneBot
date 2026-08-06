@@ -13,6 +13,7 @@ import com.todoapp.mobile.data.source.local.TaskDailyCompletionDao
 import com.todoapp.mobile.data.source.local.datasource.TaskLocalDataSource
 import com.todoapp.mobile.data.source.remote.datasource.TaskRemoteDataSource
 import com.todoapp.mobile.domain.alarm.AlarmScheduler
+import com.todoapp.mobile.domain.model.AlarmItem
 import com.todoapp.mobile.domain.model.Task
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -446,7 +447,8 @@ class TaskRepositoryImplTest {
             localAfter = listOf(syncedTask(recurrence = "DAILY")),
         )
 
-        verify(exactly = 1) { alarmScheduler.cancelTask(any()) }
+        // Overload-qualified: cancelTask now also has an id-only form used by the delete/logout paths.
+        verify(exactly = 1) { alarmScheduler.cancelTask(any<AlarmItem>()) }
     }
 
     @Test
