@@ -9,6 +9,17 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
+/**
+ * "No reminder", for the two places that cannot hold a null: the Room column (`NOT NULL` — Room's
+ * auto-migration generator is cleaner with primitive columns) and the wire DTOs.
+ *
+ * It has to be a negative number rather than 0, because 0 is already taken: it means "remind me at
+ * the task's start time", which the form offers as its own chip right next to "Off". Collapsing the
+ * two — which is what `?: 0L` did on both boundaries — meant a task whose reminder the user switched
+ * off rang anyway, exactly on time.
+ */
+const val REMINDER_OFF: Long = -1L
+
 @Immutable
 data class Task(
     val id: Long = 0L,
@@ -32,6 +43,10 @@ data class Task(
      * positive = N minutes before, null = no reminder. Synced with the backend
      * since V9 so chat-set reminders survive cross-device usage. The actual
      * alarm is still scheduled device-side via AlarmScheduler.
+     *
+     * `null` is the ONLY representation of "off" in the domain. Room and the wire cannot hold a null
+     * here, so both carry [REMINDER_OFF] instead and every boundary converts — see [toDomain] and
+     * `Task.toEntity`. Nothing downstream should have to know about two spellings of the same thing.
      */
     val reminderOffsetMinutes: Long? = 0L,
     val category: TaskCategory = TaskCategory.PERSONAL,
@@ -128,7 +143,10 @@ fun Task.toCreateTaskRequestDto(
     recurrence = recurrence.name,
     finishedOn = finishedOn?.toEpochDay(),
     isAllDay = isAllDay,
-    reminderOffsetMinutes = reminderOffsetMinutes ?: 0L,
+    // REMINDER_OFF, not 0: 0 means "remind me at the task's start time", so collapsing a switched-off
+    // reminder onto it told the server to remind the user — and the next reconcile brought that back
+    // down as a real alarm on every device.
+    reminderOffsetMinutes = reminderOffsetMinutes ?: REMINDER_OFF,
     locationLat = locationLat,
     locationLng = locationLng,
     locationName = locationName,
@@ -163,7 +181,10 @@ fun TaskData.toDomain(): Task = Task(
     isCompleted = isCompleted,
     isSecret = isSecret,
     photoUrls = photoUrls,
-    reminderOffsetMinutes = reminderOffsetMinutes,
+    // Any negative is read as "off", not just the sentinel exactly: an older or third-party writer
+    // sending -5 means the same thing, and a task that rings when the user muted it is the failure
+    // worth being generous about.
+    reminderOffsetMinutes = reminderOffsetMinutes.takeIf { it >= 0L },
     category = TaskCategory.fromStorage(category),
     customCategoryName = customCategoryName,
     recurrence = Recurrence.fromStorage(recurrence),

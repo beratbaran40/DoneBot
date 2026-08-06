@@ -2,6 +2,7 @@ package com.todoapp.mobile.data.mapper
 
 import com.todoapp.mobile.data.model.entity.SyncStatus
 import com.todoapp.mobile.data.model.entity.TaskEntity
+import com.todoapp.mobile.domain.model.REMINDER_OFF
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.RecurrenceRule
 import com.todoapp.mobile.domain.model.Task
@@ -47,7 +48,9 @@ fun TaskEntity.toDomain(): Task = Task(
     isCompleted = isCompleted,
     isSecret = isSecret,
     photoUrls = photoUrls.split(',').filter { it.isNotBlank() },
-    reminderOffsetMinutes = reminderOffsetMinutes,
+    // Room stores REMINDER_OFF where the domain wants null. Any negative counts, so a row written by
+    // an older build (or hand-edited) still reads as "off" rather than scheduling something.
+    reminderOffsetMinutes = reminderOffsetMinutes.takeIf { it >= 0L },
     category = TaskCategory.fromStorage(category),
     customCategoryName = customCategoryName,
     recurrence = Recurrence.fromStorage(recurrence),
@@ -77,7 +80,7 @@ fun Task.toEntity(syncStatus: SyncStatus = SyncStatus.SYNCED): TaskEntity {
         clientTaskId = clientTaskId,
         syncStatus = syncStatus,
         photoUrls = photoUrls.joinToString(","),
-        reminderOffsetMinutes = reminderOffsetMinutes ?: 0L,
+        reminderOffsetMinutes = reminderOffsetMinutes ?: REMINDER_OFF,
         category = category.name,
         customCategoryName = if (category == TaskCategory.OTHER) customCategoryName?.takeIf { it.isNotBlank() } else null,
         recurrence = recurrence.name,
