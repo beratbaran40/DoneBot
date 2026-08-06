@@ -20,7 +20,6 @@ import com.todoapp.mobile.ui.home.HomeContract.UiEffect
 import com.todoapp.mobile.ui.home.HomeContract.UiState
 import com.todoapp.mobile.ui.security.biometric.BiometricAuthenticator
 import com.todoapp.uikit.components.TDErrorState
-import com.todoapp.uikit.components.TDScreenWithSheet
 import com.todoapp.uikit.extensions.collectWithLifecycle
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.flow.Flow
@@ -80,94 +79,19 @@ fun HomeScreen(
     }
 }
 
-@Suppress("CyclomaticComplexMethod")
 @Composable
 private fun HomeSuccessContent(
     uiState: UiState.Success,
     onAction: (UiAction) -> Unit,
 ) {
-    TDScreenWithSheet(
-        isSheetOpen = uiState.isSheetOpen,
-        sheetContent = {
-            AddTaskSheet(
-                formState = uiState.taskFormState,
-                availableGroups = uiState.availableGroups,
-                onAction = { action ->
-                    when (action) {
-                        is TaskFormUiAction.Dismiss -> onAction(UiAction.OnDismissBottomSheet)
-                        is TaskFormUiAction.Create -> onAction(UiAction.OnTaskCreate)
-                        is TaskFormUiAction.TitleChange -> onAction(UiAction.OnTaskTitleChange(action.title))
-                        is TaskFormUiAction.DateSelect -> onAction(UiAction.OnDialogDateSelect(action.date))
-                        is TaskFormUiAction.DateDeselect -> onAction(UiAction.OnDialogDateDeselect)
-                        is TaskFormUiAction.TimeStartChange -> onAction(UiAction.OnTaskTimeStartChange(action.time))
-                        is TaskFormUiAction.TimeEndChange -> onAction(UiAction.OnTaskTimeEndChange(action.time))
-                        is TaskFormUiAction.DescriptionChange ->
-                            onAction(
-                                UiAction.OnTaskDescriptionChange(action.description),
-                            )
-
-                        is TaskFormUiAction.ToggleAdvancedSettings -> onAction(UiAction.OnToggleAdvancedSettings)
-                        is TaskFormUiAction.SecretChange -> onAction(UiAction.OnTaskSecretChange(action.isSecret))
-                        is TaskFormUiAction.ReminderOffsetChange ->
-                            onAction(UiAction.OnReminderOffsetChange(action.minutes))
-
-                        is TaskFormUiAction.GroupSelectionChanged ->
-                            onAction(
-                                UiAction.OnGroupSelectionChanged(action.groupId),
-                            )
-
-                        is TaskFormUiAction.PriorityChange -> Unit
-                        is TaskFormUiAction.AssigneeChange -> Unit
-                        is TaskFormUiAction.PhotoPicked ->
-                            onAction(
-                                UiAction.OnPendingPhotoAdd(action.bytes, action.mimeType),
-                            )
-
-                        is TaskFormUiAction.PhotoRemoveAt ->
-                            onAction(
-                                UiAction.OnPendingPhotoRemove(action.index),
-                            )
-
-                        is TaskFormUiAction.ExistingPhotoToggleDelete -> Unit
-                        is TaskFormUiAction.CategoryChange ->
-                            onAction(UiAction.OnCategoryChange(action.category))
-
-                        is TaskFormUiAction.CustomCategoryNameChange ->
-                            onAction(UiAction.OnCustomCategoryNameChange(action.name))
-
-                        is TaskFormUiAction.RecurrenceChange ->
-                            onAction(UiAction.OnRecurrenceChange(action.recurrence))
-
-                        is TaskFormUiAction.AllDayChange ->
-                            onAction(UiAction.OnAllDayChange(action.isAllDay))
-
-                        is TaskFormUiAction.LocationPicked ->
-                            onAction(
-                                UiAction.OnLocationPicked(
-                                    name = action.name,
-                                    address = action.address,
-                                    lat = action.lat,
-                                    lng = action.lng,
-                                ),
-                            )
-
-                        is TaskFormUiAction.LocationCleared ->
-                            onAction(UiAction.OnLocationCleared)
-                    }
-                },
-            )
-        },
-        onDismissSheet = { onAction(UiAction.OnDismissBottomSheet) },
-    ) {
-        HomeContent(
-            modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            uiState = uiState,
-            onAction = onAction,
-        )
-    }
+    HomeContent(
+        modifier =
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        uiState = uiState,
+        onAction = onAction,
+    )
 }
 
 private suspend fun handleBiometricAuthentication(

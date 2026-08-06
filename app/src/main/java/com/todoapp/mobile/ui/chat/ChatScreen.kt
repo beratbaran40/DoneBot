@@ -169,7 +169,6 @@ private fun ChatReadyContent(
                 ChatMessageList(
                     messages = state.messages,
                     isThinking = state.isThinking,
-                    toolInFlight = state.toolInFlight,
                     onQuickReplyClick = { prompt ->
                         onAction(ChatContract.UiAction.OnDraftChanged(prompt))
                         onAction(ChatContract.UiAction.OnSendClicked)
@@ -467,12 +466,15 @@ private fun ChatEmptyState(
         )
         Spacer(Modifier.height(24.dp))
 
+        // Every one of these is answered on-device by LocalIntentClassifier, which is why the wording
+        // matches its anchors — and why the first-run screen keeps working signed out. A write prompt
+        // here would dead-end a guest into the sign-in gate on the screen they see most.
         val suggestions = listOf(
             stringResource(R.string.chat_suggested_today),
             stringResource(R.string.chat_suggested_tomorrow),
             stringResource(R.string.chat_suggested_overdue),
+            stringResource(R.string.chat_suggested_hearts),
             stringResource(R.string.chat_suggested_progress),
-            stringResource(R.string.chat_suggested_week_remaining),
         )
         suggestions.forEach { prompt ->
             SuggestedPromptChip(prompt = prompt, onClick = { onSuggestedPromptClick(prompt) })

@@ -53,7 +53,7 @@ fun TDOverlayNotificationCard(
     modifier: Modifier = Modifier,
     message: String,
     show: Boolean,
-    minutesBefore: Long = 0,
+    leadLabel: String = "",
     onDismissClick: () -> Unit = {},
     onOpenClick: () -> Unit = {},
 ) {
@@ -84,7 +84,7 @@ fun TDOverlayNotificationCard(
             message = message,
             onDismissClick = onDismissClick,
             onOpenClick = onOpenClick,
-            minutesBefore = minutesBefore,
+            leadLabel = leadLabel,
             modifier =
             Modifier
                 .offset { IntOffset(offsetX.value.roundToInt(), 0) }
@@ -119,7 +119,7 @@ fun TDOverlayNotificationCard(
 private fun NotificationCardContent(
     modifier: Modifier = Modifier,
     message: String,
-    minutesBefore: Long = 0,
+    leadLabel: String = "",
     onDismissClick: () -> Unit = {},
     onOpenClick: () -> Unit = {},
 ) {
@@ -176,16 +176,13 @@ private fun NotificationCardContent(
                                 ),
                                 color = TDTheme.colors.pendingGray,
                             )
+                            // Pre-formatted by the caller (app-side common/TimeFormat.kt) rather than
+                            // built here from a minute count: this card and the tray notification are
+                            // the same event and must word it identically, and the string this used to
+                            // interpolate read "%dm ago" — the wrong direction in time for a reminder
+                            // that fires BEFORE its task.
                             TDText(
-                                text =
-                                if (minutesBefore == 0L) {
-                                    stringResource(id = R.string.overlay_notification_now)
-                                } else {
-                                    stringResource(
-                                        id = R.string.overlay_notification_minutes_ago,
-                                        minutesBefore.toInt(),
-                                    )
-                                },
+                                text = leadLabel,
                                 style = TDTheme.typography.subheading2,
                                 color = TDTheme.colors.gray.copy(alpha = 0.8f),
                             )
@@ -301,7 +298,7 @@ private fun NotificationCardContent5MinPreview() {
         ) {
             NotificationCardContent(
                 message = "Pick up groceries on the way home",
-                minutesBefore = 5,
+                leadLabel = "in 5 minutes",
             )
         }
     }
@@ -321,7 +318,7 @@ private fun NotificationCardContentLongMessagePreview() {
         ) {
             NotificationCardContent(
                 message = "Submit the quarterly financial review and reconcile the expense reports for the Berlin trip",
-                minutesBefore = 15,
+                leadLabel = "in 15 minutes",
             )
         }
     }

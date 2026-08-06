@@ -20,6 +20,13 @@ interface AlarmScheduler {
 
     fun cancelTask(item: AlarmItem)
 
+    /**
+     * Cancels a task's one-shot alarm by id. The [AlarmItem] overload needs a fully-built item just
+     * to reach the same request code, which the delete and logout paths cannot produce — the row is
+     * already gone by the time they run.
+     */
+    fun cancelTask(taskId: Long)
+
     fun cancelScheduledAlarm(type: AlarmType)
 
     /**

@@ -62,11 +62,28 @@ class AlarmRequestCodesTest {
     @Test
     fun `one-shot personal codes do not overlap the recurring or group spaces`() {
         for (id in 1L..2_000L) {
-            val oneShot = (TASK_REQUEST_BASE + id).toInt()
+            val oneShot = oneShotAlarmRequestCode(id)
             for (slot in 0 until MAX_REMINDER_SLOTS) {
                 assertTrue(oneShot != recurringAlarmRequestCode(id, slot, isGroupTask = false))
                 assertTrue(oneShot != recurringAlarmRequestCode(id, slot, isGroupTask = true))
             }
+        }
+    }
+
+    @Test
+    fun `one-shot codes keep the base they were shipped with`() {
+        // The arithmetic moved out of AlarmSchedulerImpl to be testable; it must not have changed on
+        // the way, or every alarm armed by the previous build becomes uncancellable.
+        assertEquals((TASK_REQUEST_BASE + 42L).toInt(), oneShotAlarmRequestCode(42L))
+    }
+
+    @Test
+    fun `every task gets its own one-shot code`() {
+        // The bug this whole area existed to hide: creating tasks armed them all under id 0, so each
+        // new one silently replaced the last. Distinctness is the property that makes that impossible.
+        val seen = mutableSetOf<Int>()
+        for (id in 0L..5_000L) {
+            assertTrue("duplicate one-shot code at id=$id", seen.add(oneShotAlarmRequestCode(id)))
         }
     }
 }

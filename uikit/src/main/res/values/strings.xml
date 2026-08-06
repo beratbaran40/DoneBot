@@ -33,8 +33,6 @@
     <string name="notify_me_at">Notify me at %1$s</string>
     <string name="notify_hint">I will notify you when clock hits!</string>
     <string name="overlay_notification_reminder">Reminder</string>
-    <string name="overlay_notification_now">Now</string>
-    <string name="overlay_notification_minutes_ago">%1$dm ago</string>
     <string name="overlay_notification_tap_to_open">Tap to open details</string>
     <string name="overlay_notification_dismiss">Dismiss</string>
     <string name="general_progress_tasks_done">%1$d tasks done</string>

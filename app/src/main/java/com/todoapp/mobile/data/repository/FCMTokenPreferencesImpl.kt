@@ -48,6 +48,12 @@ constructor(
         prefs.edit { putString(KEY_LAST_SENT_TOKEN, token) }
     }
 
+    override fun getLastSentTimeZone(): String? = prefs.getString(KEY_LAST_SENT_TIME_ZONE, null)
+
+    override fun setLastSentTimeZone(zoneId: String) {
+        prefs.edit { putString(KEY_LAST_SENT_TIME_ZONE, zoneId) }
+    }
+
     override fun clearAll() {
         prefs.edit { clear() }
     }
@@ -57,5 +63,6 @@ constructor(
         private const val KEY_PENDING_TOKEN = "key_pending_token"
         private const val KEY_DEVICE_ID = "key_device_id"
         private const val KEY_LAST_SENT_TOKEN = "key_last_sent_token"
+        private const val KEY_LAST_SENT_TIME_ZONE = "key_last_sent_time_zone"
     }
 }

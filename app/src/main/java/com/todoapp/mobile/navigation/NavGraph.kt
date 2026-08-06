@@ -115,6 +115,7 @@ import com.todoapp.mobile.ui.resetpassword.ResetPasswordScreen
 import com.todoapp.mobile.ui.resetpassword.ResetPasswordViewModel
 import com.todoapp.mobile.ui.search.SearchScreen
 import com.todoapp.mobile.ui.search.SearchViewModel
+import com.todoapp.mobile.ui.settings.NotificationSettingsScreen
 import com.todoapp.mobile.ui.settings.SecretModeSettingsScreen
 import com.todoapp.mobile.ui.settings.SettingsContract
 import com.todoapp.mobile.ui.settings.SettingsScreen
@@ -325,6 +326,18 @@ fun NavGraph(
                     com.todoapp.mobile.R.string.secret_mode_info_bullet_3,
                 ),
             )
+        }
+
+        composable<Screen.NotificationSettings> {
+            val viewModel: SettingsViewModel = hiltViewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            NavigationEffectController(viewModel.navEffect)
+            ResponsiveContainer {
+                NotificationSettingsScreen(
+                    uiState = uiState,
+                    onAction = viewModel::onAction,
+                )
+            }
         }
 
         composable<Screen.PlanYourDay> {

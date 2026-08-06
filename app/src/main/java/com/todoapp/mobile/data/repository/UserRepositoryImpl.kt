@@ -9,6 +9,7 @@ import com.todoapp.mobile.data.model.network.data.AuthResponseData
 import com.todoapp.mobile.data.model.network.data.FCMTokenResponseData
 import com.todoapp.mobile.data.model.network.data.RefreshTokenData
 import com.todoapp.mobile.data.model.network.data.UserData
+import com.todoapp.mobile.data.model.network.data.UserPreferencesData
 import com.todoapp.mobile.data.model.network.request.ChangePasswordRequest
 import com.todoapp.mobile.data.model.network.request.FCMTokenRequest
 import com.todoapp.mobile.data.model.network.request.FcmTokenDeleteRequest
@@ -24,6 +25,7 @@ import com.todoapp.mobile.data.source.remote.api.TodoAuthApi
 import com.todoapp.mobile.domain.repository.AuthEvent
 import com.todoapp.mobile.domain.repository.AuthRepository
 import com.todoapp.mobile.domain.repository.FCMTokenPreferences
+import com.todoapp.mobile.domain.repository.PushPreferences
 import com.todoapp.mobile.domain.repository.SessionPreferences
 import com.todoapp.mobile.domain.repository.UserRepository
 import kotlinx.coroutines.delay
@@ -69,10 +71,15 @@ constructor(
         val lastSentToken = fcmTokenPreferences.getLastSentToken()
         val deviceId = fcmTokenPreferences.getDeviceId()
         val deviceName = fcmTokenPreferences.getDeviceName()
+        val timeZone = java.time.ZoneId.systemDefault().id
 
         if (pendingToken.isNullOrBlank()) return Result.success(Unit)
 
-        if (pendingToken == lastSentToken) {
+        // The zone is part of what this registration carries, and it changes without the token
+        // changing — someone who flies to another country keeps the same FCM token, so a
+        // token-only check would leave the backend scheduling their due-soon reminders in the zone
+        // they left.
+        if (pendingToken == lastSentToken && timeZone == fcmTokenPreferences.getLastSentTimeZone()) {
             fcmTokenPreferences.clearPendingToken()
             return Result.success(Unit)
         }
@@ -83,12 +90,14 @@ constructor(
                     token = pendingToken,
                     deviceId = deviceId,
                     deviceName = deviceName,
+                    timeZone = timeZone,
                 ),
             )
 
         apiResult
             .onSuccess {
                 fcmTokenPreferences.setLastSentToken(pendingToken)
+                fcmTokenPreferences.setLastSentTimeZone(timeZone)
                 fcmTokenPreferences.clearPendingToken()
             }.onFailure { e ->
                 Log.e("FCM_SYNC", "Token send FAILED. Pending token preserved.", e)
@@ -182,15 +191,18 @@ constructor(
         )
     }
 
-    override suspend fun getPushEnabled(): Result<Boolean> = handleRequest { todoApi.getUserPreferences() }.map { it.pushEnabled }
+    override suspend fun getPushPreferences(): Result<PushPreferences> = handleRequest { todoApi.getUserPreferences() }.map { it.toDomain() }
 
-    override suspend fun setPushEnabled(enabled: Boolean): Result<Boolean> = handleRequest {
+    override suspend fun setPushPreferences(enabled: Boolean, mutedTypes: Set<String>?): Result<PushPreferences> = handleRequest {
         todoApi.updateUserPreferences(
             com.todoapp.mobile.data.model.network.request.UpdateUserPreferencesRequest(
                 pushEnabled = enabled,
+                disabledTypes = mutedTypes,
             ),
         )
-    }.map { it.pushEnabled }
+    }.map { it.toDomain() }
+
+    private fun UserPreferencesData.toDomain() = PushPreferences(enabled = pushEnabled, mutedTypes = disabledTypes)
 
     override suspend fun deleteAccount(): Result<Unit> = handleEmptyRequest {
         todoApi.deleteAccount()

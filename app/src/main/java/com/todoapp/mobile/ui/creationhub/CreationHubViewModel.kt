@@ -4,18 +4,12 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.todoapp.mobile.R
-import com.todoapp.mobile.di.IoDispatcher
-import com.todoapp.mobile.domain.alarm.AlarmScheduler
-import com.todoapp.mobile.domain.alarm.AlarmType
-import com.todoapp.mobile.domain.constants.DailyPlanDefaults
 import com.todoapp.mobile.domain.engine.PomodoroEngine
 import com.todoapp.mobile.domain.model.GroupMember
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.Subtask
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.domain.model.TaskCategory
-import com.todoapp.mobile.domain.model.toAlarmItem
-import com.todoapp.mobile.domain.repository.DailyPlanPreferences
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.TaskRepository
 import com.todoapp.mobile.navigation.NavigationEffect
@@ -30,7 +24,6 @@ import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiEffect
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiState
 import com.todoapp.mobile.ui.home.PendingPhoto
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,13 +34,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneId
 import javax.inject.Inject
 import kotlin.random.Random
 
@@ -57,10 +48,7 @@ class CreationHubViewModel
 constructor(
     private val taskRepository: TaskRepository,
     private val groupRepository: GroupRepository,
-    private val alarmScheduler: AlarmScheduler,
-    private val dailyPlanPreferences: DailyPlanPreferences,
     private val pomodoroEngine: PomodoroEngine,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     private val _state = MutableStateFlow(UiState())
@@ -333,12 +321,14 @@ constructor(
 
         _state.update { it.copy(isSaving = true) }
         viewModelScope.launch {
+            // Both insert paths arm the reminder themselves, from the id Room just minted. Doing it
+            // here meant arming from `task`, whose id is still 0 — so every new task shared one
+            // request code and quietly unscheduled the previous one.
             if (s.pendingPhotos.isNotEmpty()) {
                 taskRepository.insertWithPhotos(task, s.pendingPhotos.map { it.bytes to it.mimeType })
             } else {
                 taskRepository.insert(task)
             }
-            scheduleOneShotReminder(task)
             _effect.trySend(UiEffect.ShowToast(R.string.creation_task_created))
             _navEffect.trySend(NavigationEffect.Back)
         }
@@ -446,30 +436,6 @@ constructor(
                 _state.update { it.copy(isSaving = false) }
                 _effect.trySend(UiEffect.ShowToast(R.string.failed_to_create_task))
             }
-        }
-    }
-
-    /**
-     * Mirrors TaskRepositoryImpl.rescheduleOneShotAlarm for the create path: all-day tasks fire at the
-     * user's daily-plan hour, and past triggers are skipped (AlarmManager fires those immediately).
-     * Recurring tasks are scheduled inside the repository, so this is a no-op for them.
-     */
-    private suspend fun scheduleOneShotReminder(task: Task) {
-        if (task.recurrence != Recurrence.NONE) return
-        val offset = task.reminderOffsetMinutes ?: return
-        val effectiveTime = if (task.isAllDay) {
-            dailyPlanPreferences.observePlanTime().first() ?: DailyPlanDefaults.DEFAULT_PLAN_TIME
-        } else {
-            task.timeStart
-        }
-        val item = task.toAlarmItem(
-            remindBeforeMinutes = offset,
-            overrideStartTime = effectiveTime.takeIf { task.isAllDay },
-        )
-        val triggerMillis = item.time.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-        if (triggerMillis <= System.currentTimeMillis()) return
-        withContext(ioDispatcher) {
-            runCatching { alarmScheduler.schedule(item, AlarmType.TASK) }
         }
     }
 

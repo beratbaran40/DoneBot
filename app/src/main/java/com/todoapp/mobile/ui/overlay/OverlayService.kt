@@ -34,6 +34,7 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.todoapp.mobile.MainActivity
 import com.todoapp.mobile.MainViewModel
 import com.todoapp.mobile.R
+import com.todoapp.mobile.common.reminderLeadLabel
 import com.todoapp.mobile.data.notification.NotificationService
 import com.todoapp.mobile.di.IoDispatcher
 import com.todoapp.mobile.di.MainDispatcher
@@ -251,7 +252,7 @@ class OverlayService :
                             OVERLAY_TYPE_TASK -> {
                                 TDOverlayNotificationCard(
                                     message = message,
-                                    minutesBefore = minutesBefore,
+                                    leadLabel = reminderLeadLabel(this@OverlayService, minutesBefore),
                                     show = show,
                                     onDismissClick = { show = false },
                                     onOpenClick = {
@@ -292,6 +293,9 @@ class OverlayService :
 
     private fun rescheduleNextDailyPlan() {
         serviceScope.launch {
+            // The card chains tomorrow's alarm as it appears, so honouring the switch here is what
+            // makes "off" stick after the last already-armed reminder has fired.
+            if (!dailyPlanPreferences.observeEnabled().first()) return@launch
             val time =
                 dailyPlanPreferences.observePlanTime().first()
                     ?: DailyPlanDefaults.DEFAULT_PLAN_TIME

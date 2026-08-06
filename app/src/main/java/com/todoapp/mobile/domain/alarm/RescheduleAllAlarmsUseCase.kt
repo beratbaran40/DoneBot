@@ -70,6 +70,10 @@ constructor(
         var scheduled = 0
         tasks.forEach { task ->
             if (task.recurrence != Recurrence.NONE) return@forEach
+            // Cancel first, unconditionally. Every `return@forEach` below is a task that must NOT
+            // ring — completed, past, opted out — and a boot sweep that only ever adds alarms leaves
+            // whatever an older build armed still armed. Cancelling is a no-op when nothing is there.
+            alarmScheduler.cancelTask(task.id)
             val offset = task.reminderOffsetMinutes ?: return@forEach
             if (offset < 0) return@forEach
             if (task.isCompleted) return@forEach
@@ -130,6 +134,13 @@ constructor(
     }
 
     private suspend fun rescheduleDailyPlan() {
+        // Cancel first so turning the reminder off before a reboot actually keeps it off: the alarm
+        // is re-armed from here on every launch and every boot, and nothing else clears it.
+        alarmScheduler.cancelScheduledAlarm(AlarmType.DAILY_PLAN)
+        if (!dailyPlanPreferences.observeEnabled().first()) {
+            Timber.tag(TAG).d("Daily plan reminder is off; left unscheduled")
+            return
+        }
         val time =
             dailyPlanPreferences.observePlanTime().first()
                 ?: DailyPlanDefaults.DEFAULT_PLAN_TIME

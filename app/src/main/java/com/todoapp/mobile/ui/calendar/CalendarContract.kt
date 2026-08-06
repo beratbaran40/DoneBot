@@ -1,9 +1,7 @@
 package com.todoapp.mobile.ui.calendar
 
 import androidx.compose.runtime.Immutable
-import com.todoapp.mobile.ui.home.TaskFormState
 import java.time.LocalDate
-import java.time.LocalTime
 import java.time.YearMonth
 
 object CalendarContract {
@@ -18,8 +16,6 @@ object CalendarContract {
             val personalTaskItems: List<PersonalTaskCalendarItem> = emptyList(),
             val groupTaskItems: List<GroupTaskCalendarItem> = emptyList(),
             val viewerPhotoUrl: String? = null,
-            val isSheetOpen: Boolean = false,
-            val taskFormState: TaskFormState = TaskFormState(),
             val overdueDates: Set<LocalDate> = emptySet(),
             val hasOverdueBeforeDisplayedMonth: Boolean = false,
             val overdueCount: Int = 0,
@@ -48,40 +44,6 @@ object CalendarContract {
 
         data class OnTaskClick(
             val taskId: Long,
-        ) : UiAction
-
-        data object OnShowBottomSheet : UiAction
-
-        data object OnDismissBottomSheet : UiAction
-
-        data object OnTaskCreate : UiAction
-
-        data class OnTaskTitleChange(
-            val title: String,
-        ) : UiAction
-
-        data class OnDialogDateSelect(
-            val date: LocalDate,
-        ) : UiAction
-
-        data object OnDialogDateDeselect : UiAction
-
-        data class OnTaskTimeStartChange(
-            val time: LocalTime,
-        ) : UiAction
-
-        data class OnTaskTimeEndChange(
-            val time: LocalTime,
-        ) : UiAction
-
-        data class OnTaskDescriptionChange(
-            val description: String,
-        ) : UiAction
-
-        data object OnToggleAdvancedSettings : UiAction
-
-        data class OnTaskSecretChange(
-            val isSecret: Boolean,
         ) : UiAction
 
         data object OnPomodoroTap : UiAction

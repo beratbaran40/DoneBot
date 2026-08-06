@@ -24,6 +24,8 @@ interface Screen {
     @Serializable
     data object SecretMode : Screen
 
+    data object NotificationSettings : Screen
+
     @Serializable
     data object PlanYourDay : Screen
 

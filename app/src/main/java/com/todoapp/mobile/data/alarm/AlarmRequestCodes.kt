@@ -29,6 +29,16 @@ internal fun recurringAlarmRequestCode(
     else -> (MULTI_REMINDER_REQUEST_BASE + taskId * MAX_REMINDER_SLOTS + slot).toInt()
 }
 
+/**
+ * The one-shot ("remind me N minutes before") alarm of a personal task.
+ *
+ * Derived from the task id alone so scheduling the same task twice REPLACES the armed alarm instead
+ * of adding a second one — and, just as importantly, so that cancelling needs nothing but the id.
+ * The id must be the **local Room id**: passing a task that has not been inserted yet gives every
+ * such task the code of id 0, and each new one silently unschedules the last.
+ */
+internal fun oneShotAlarmRequestCode(taskId: Long): Int = (TASK_REQUEST_BASE + taskId).toInt()
+
 internal const val TASK_REQUEST_BASE = 0x0200_0000L
 internal const val RECURRING_TASK_REQUEST_BASE = 0x0100_0000L
 internal const val MULTI_REMINDER_REQUEST_BASE = 0x1000_0000L

@@ -144,6 +144,11 @@ constructor(
             }
         }
         viewModelScope.launch {
+            dailyPlanPreferences.observeEnabled().collect { enabled ->
+                _uiState.update { it.copy(dailyPlanEnabled = enabled) }
+            }
+        }
+        viewModelScope.launch {
             dataStoreHelper.observeReduceMotion().collect { enabled ->
                 _uiState.update { it.copy(reduceMotionEnabled = enabled) }
             }
@@ -239,11 +244,15 @@ constructor(
             UiAction.OnLoginOrRegisterClick -> _navEffect.trySend(NavigationEffect.Navigate(Screen.Login()))
             UiAction.OnNavigateToAlarmSounds ->
                 _navEffect.trySend(NavigationEffect.Navigate(Screen.AlarmSounds))
+            UiAction.OnNavigateToNotificationSettings ->
+                _navEffect.trySend(NavigationEffect.Navigate(Screen.NotificationSettings))
             UiAction.OnNavigateToLicenses ->
                 _navEffect.trySend(NavigationEffect.Navigate(Screen.Licenses))
             UiAction.OnNavigateToAppColors ->
                 _navEffect.trySend(NavigationEffect.Navigate(Screen.AppColors))
             is UiAction.OnPushNotificationsToggle -> togglePushNotifications(action.enabled)
+            is UiAction.OnPushTypeToggle -> togglePushType(action.type, action.enabled)
+            is UiAction.OnDailyPlanToggle -> toggleDailyPlan(action.enabled)
             is UiAction.OnReduceMotionToggle -> toggleReduceMotion(action.enabled)
             is UiAction.OnJournalBiometricProtectionToggle ->
                 viewModelScope.launch { journalBiometricPreferences.set(action.enabled) }
@@ -307,25 +316,58 @@ constructor(
 
     private fun loadPushPreferences() {
         viewModelScope.launch {
-            userRepository.getPushEnabled().onSuccess { enabled ->
-                _uiState.update { it.copy(pushNotificationsEnabled = enabled) }
+            userRepository.getPushPreferences().onSuccess { prefs ->
+                _uiState.update {
+                    it.copy(pushNotificationsEnabled = prefs.enabled, mutedPushTypes = prefs.mutedTypes)
+                }
             }
         }
     }
 
     private fun togglePushNotifications(enabled: Boolean) {
-        val previous = _uiState.value.pushNotificationsEnabled
-        _uiState.update { it.copy(pushNotificationsEnabled = enabled, isPushTogglePending = true) }
+        applyPushPreferences(enabled = enabled, mutedTypes = null)
+    }
+
+    private fun togglePushType(type: String, enabled: Boolean) {
+        val next = if (enabled) {
+            _uiState.value.mutedPushTypes - type
+        } else {
+            _uiState.value.mutedPushTypes + type
+        }
+        applyPushPreferences(enabled = _uiState.value.pushNotificationsEnabled, mutedTypes = next)
+    }
+
+    /**
+     * Optimistic, with a rollback to the exact previous pair on failure — a half-applied state here
+     * would tell the user they had muted something the server still pushes.
+     */
+    private fun applyPushPreferences(enabled: Boolean, mutedTypes: Set<String>?) {
+        val previous = _uiState.value
+        _uiState.update {
+            it.copy(
+                pushNotificationsEnabled = enabled,
+                mutedPushTypes = mutedTypes ?: it.mutedPushTypes,
+                isPushTogglePending = true,
+            )
+        }
         viewModelScope.launch {
-            userRepository.setPushEnabled(enabled)
+            userRepository.setPushPreferences(enabled, mutedTypes)
                 .onSuccess { effective ->
                     _uiState.update {
-                        it.copy(pushNotificationsEnabled = effective, isPushTogglePending = false)
+                        it.copy(
+                            pushNotificationsEnabled = effective.enabled,
+                            mutedPushTypes = effective.mutedTypes,
+                            isPushTogglePending = false,
+                        )
                     }
                 }
                 .onFailure {
                     _uiState.update {
-                        it.copy(pushNotificationsEnabled = previous, isPushTogglePending = false)
+                        it.copy(
+                            pushNotificationsEnabled = previous.pushNotificationsEnabled,
+                            mutedPushTypes = previous.mutedPushTypes,
+                            isPushTogglePending = false,
+                        )
                     }
                 }
         }
@@ -372,8 +414,17 @@ constructor(
         }
     }
 
-    private fun rescheduleDailyPlanAlarm(time: LocalTime) {
+    private fun toggleDailyPlan(enabled: Boolean) {
+        viewModelScope.launch {
+            dailyPlanPreferences.setEnabled(enabled)
+            rescheduleDailyPlanAlarm(_uiState.value.dailyPlanTime, enabled)
+        }
+    }
+
+    private fun rescheduleDailyPlanAlarm(time: LocalTime, enabled: Boolean = _uiState.value.dailyPlanEnabled) {
         alarmScheduler.cancelScheduledAlarm(AlarmType.DAILY_PLAN)
+        // Turning it off is just the cancel above; leaving early is what makes that stick.
+        if (!enabled) return
 
         val item =
             buildDailyPlanAlarmItem(

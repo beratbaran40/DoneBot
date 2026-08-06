@@ -20,11 +20,17 @@ interface ChatRepository {
      * Sends a chat message to the server-side DoneBot proxy. The server runs
      * function calling against Vertex AI on its end; the client only deals
      * with prompt/history in/text out.
+     *
+     * [healthHalfHearts] is the Activity health-points bar in half-heart units. It travels with the
+     * prompt because the server cannot derive it — the bar is folded from device-local completion
+     * history over a persisted checkpoint — and the server renders one line of the `[Context]` block
+     * from it. Null (the default) simply omits that line.
      */
     suspend fun sendMessage(
         prompt: String,
         locale: String,
         history: List<ChatHistoryTurn>,
+        healthHalfHearts: Int? = null,
     ): Result<ChatMessageResponseData>
 
     /**

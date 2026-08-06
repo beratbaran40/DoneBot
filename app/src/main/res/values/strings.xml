@@ -625,6 +625,24 @@
     <string name="settings_larger_text">Text size</string>
     <string name="settings_larger_text_desc">Adjust system font scaling</string>
     <string name="settings_push_notifications">Push notifications</string>
+    <!-- Settings row that opens the notification screen, plus its at-a-glance state summary. -->
+    <string name="settings_notifications_entry_title">Notifications &amp; reminders</string>
+    <string name="settings_notifications_summary_all_on">All on</string>
+    <string name="settings_notifications_summary_push_off">Push notifications off</string>
+    <plurals name="settings_notifications_summary_off">
+        <item quantity="one">%1$d turned off</item>
+        <item quantity="other">%1$d turned off</item>
+    </plurals>
+    <string name="settings_notifications_group_device">On this device</string>
+    <string name="settings_notifications_group_push">Group notifications</string>
+    <string name="settings_push_group_scope_note">These only cover notifications from your groups. Reminders for your own tasks are set on each task.</string>
+    <string name="settings_push_type_subtitle">Still appears in your notification list</string>
+    <string name="settings_push_type_assignments">Tasks assigned to me</string>
+    <string name="settings_push_type_completions">Tasks others complete</string>
+    <string name="settings_push_type_due_soon">Tasks due soon</string>
+    <string name="settings_push_type_invitations">Invitations &amp; group changes</string>
+    <string name="settings_daily_plan_reminder">Daily plan reminder</string>
+    <string name="settings_daily_plan_reminder_subtitle">A nudge to plan your day at the time you set</string>
     <string name="settings_exact_alarms_title">Exact reminders</string>
     <string name="settings_exact_alarms_description">Allow this app to fire reminders at the precise time you set.</string>
     <string name="settings_exact_alarms_status_enabled">Exact reminders are enabled.</string>
@@ -688,8 +706,26 @@
     <string name="notification_channel_tasks_description">Used for task reminders and updates</string>
     <string name="notification_channel_info_name">Updates &amp; activity</string>
     <string name="notification_channel_info_description">Non-urgent notices: completed tasks, invitation responses and group changes</string>
+    <!-- Collapsed-stack header when several pushes are outstanding. -->
+    <string name="notification_group_summary">New group activity</string>
     <string name="notification_task_reminder_title_now">You have a task to do now!</string>
-    <string name="notification_task_reminder_title_in_minutes">You have a task to do in %1$d minutes</string>
+    <string name="notification_task_reminder_title_in_format">You have a task to do in %1$s</string>
+    <!-- Reminder lead time. Formatted by common/TimeFormat.kt and shared by the tray notification
+         and the overlay card, so "1 day before" never renders as "1440 minutes" again. -->
+    <string name="reminder_lead_now">Now</string>
+    <string name="reminder_lead_in_format">in %1$s</string>
+    <plurals name="reminder_lead_minutes">
+        <item quantity="one">%1$d minute</item>
+        <item quantity="other">%1$d minutes</item>
+    </plurals>
+    <plurals name="reminder_lead_hours">
+        <item quantity="one">%1$d hour</item>
+        <item quantity="other">%1$d hours</item>
+    </plurals>
+    <plurals name="reminder_lead_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
     <string name="task_all_day_label">All Day</string>
     <string name="deadline_all_day">All day</string>
     <string name="zone_morning">Before noon</string>
@@ -706,10 +742,10 @@
     <string name="pomodoro_info_bullet_3">Long break: a longer rest after a few rounds</string>
     <string name="chat_info_title">Talk to DoneBot</string>
     <string name="chat_info_description">DoneBot reads your tasks and can answer questions, create new ones, mark them done. Secret tasks stay invisible — they\'re yours.</string>
-    <string name="chat_info_bullet_1">Ask: \"What\'s due today?\" or \"How was my week?\"</string>
-    <string name="chat_info_bullet_2">Create: \"Add a meeting tomorrow at 3pm\"</string>
-    <string name="chat_info_bullet_3">Limit: secret tasks and journal are invisible to DoneBot</string>
-    <string name="chat_info_bullet_4">Scope: only answers questions about your tasks and groups</string>
+    <string name="chat_info_bullet_1">Ask: \"What\'s due today?\" or \"How\'s my productivity health?\"</string>
+    <string name="chat_info_bullet_2">Create &amp; edit: routines, steps, reminders and locations</string>
+    <string name="chat_info_bullet_3">Confirms first: it always asks before deleting a task</string>
+    <string name="chat_info_bullet_4">Limits: group tasks are read-only; secret tasks and journal stay invisible</string>
 
     <string name="calendar_info_title">Calendar View</string>
     <string name="calendar_info_description">See your tasks laid out by day. Tap any date to jump to its tasks; long-press a task to edit it.</string>
@@ -896,7 +932,6 @@
     <string name="chat_error_rate_limited_cooldown_format">Try again in %1$ds…</string>
     <string name="chat_error_server_waking_retrying_format">Server is waking up — retrying in %1$ds…</string>
     <string name="chat_char_count_format">%1$d/%2$d</string>
-    <string name="chat_tool_busy_generic">Looking up your tasks…</string>
     <string name="chat_action_copy">Copy text</string>
     <string name="chat_action_try_again">Try again</string>
     <string name="chat_action_copied_toast">Copied</string>
@@ -912,6 +947,7 @@
     <string name="chat_suggested_overdue">Anything overdue?</string>
     <string name="chat_suggested_progress">How am I doing this week?</string>
     <string name="chat_suggested_week_remaining">What\'s left this week?</string>
+    <string name="chat_suggested_hearts">How\'s my productivity health?</string>
     <string name="chat_clear_confirm_title">Clear conversation?</string>
     <string name="chat_clear_confirm_message">This deletes your chat history with DoneBot but does not affect your tasks.</string>
     <string name="chat_clear_confirm_button">Clear</string>
@@ -942,6 +978,8 @@
     <string name="chat_local_week_count_format">You\'ve completed %1$d task(s) this week.</string>
     <string name="chat_local_week_remaining_format">You have %1$d pending task(s) this week.</string>
     <string name="chat_local_week_remaining_empty">All caught up for this week — nice.</string>
+    <string name="chat_local_health_format">Your productivity health is %1$d%% — %2$s of %3$d hearts.</string>
+    <string name="chat_local_health_empty">You\'re out of hearts — finish one task today to start earning them back.</string>
     <string name="chat_local_greeting">Hi! What\'s on your mind today?</string>
     <string name="chat_local_pomodoro_started_format">%1$d-minute pomodoro started — focus mode on. Good luck!</string>
     <string name="chat_local_pomodoro_already_running_format">A pomodoro is already running, %1$d minute(s) left. Manage it from the Pomodoro tab.</string>

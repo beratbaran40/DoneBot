@@ -822,24 +822,6 @@ private fun HomeContentPreview_Dark() {
 
 @com.todoapp.uikit.previews.TDPreview
 @Composable
-private fun HomeContentSheetOpenPreview() {
-    TDTheme {
-        HomeContent(
-            uiState =
-            HomePreviewData.successState(
-                tasks = HomePreviewData.sampleTasks,
-                completedTaskCountThisWeek = 5,
-                pendingTaskCountThisWeek = 8,
-                isSheetOpen = true,
-            ),
-            onAction = {},
-            modifier = Modifier.padding(horizontal = 24.dp),
-        )
-    }
-}
-
-@com.todoapp.uikit.previews.TDPreview
-@Composable
 private fun HomeContentDeleteDialogPreview() {
     TDTheme {
         HomeContent(
@@ -867,25 +849,6 @@ private fun HomeContentSecretModeOffPreview() {
                 completedTaskCountThisWeek = 5,
                 pendingTaskCountThisWeek = 8,
                 isSecretModeEnabled = false,
-            ),
-            onAction = {},
-            modifier = Modifier.padding(horizontal = 24.dp),
-        )
-    }
-}
-
-@com.todoapp.uikit.previews.TDPreview
-@Composable
-private fun HomeContentValidationErrorPreview() {
-    TDTheme {
-        HomeContent(
-            uiState =
-            HomePreviewData.successState(
-                tasks = HomePreviewData.sampleTasks,
-                completedTaskCountThisWeek = 5,
-                pendingTaskCountThisWeek = 8,
-                isSheetOpen = true,
-                titleErrorRes = com.todoapp.mobile.R.string.error_task_title_required,
             ),
             onAction = {},
             modifier = Modifier.padding(horizontal = 24.dp),

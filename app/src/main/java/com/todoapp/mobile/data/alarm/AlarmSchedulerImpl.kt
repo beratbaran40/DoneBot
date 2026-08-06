@@ -44,6 +44,10 @@ class AlarmSchedulerImpl(
         cancelAlarm(taskRequestCode(item))
     }
 
+    override fun cancelTask(taskId: Long) {
+        cancelAlarm(oneShotAlarmRequestCode(taskId))
+    }
+
     override fun cancelScheduledAlarm(type: AlarmType) {
         val requestCode =
             when (type) {
@@ -86,7 +90,7 @@ class AlarmSchedulerImpl(
     // Deduping seed: prefer a stable per-task code so re-scheduling the same task
     // (e.g. user edits the time) updates the existing PendingIntent (FLAG_UPDATE_CURRENT)
     // instead of leaving the previous alarm armed alongside the new one.
-    private fun taskRequestCode(item: AlarmItem): Int = item.taskId?.let { (TASK_REQUEST_BASE + it).toInt() } ?: item.hashCode()
+    private fun taskRequestCode(item: AlarmItem): Int = item.taskId?.let { oneShotAlarmRequestCode(it) } ?: item.hashCode()
 
     private fun AlarmType.buildBroadcastIntent(item: AlarmItem): Intent = when (this) {
         AlarmType.TASK -> buildPreferredBroadcast(item, OverlayService.OVERLAY_TYPE_TASK)

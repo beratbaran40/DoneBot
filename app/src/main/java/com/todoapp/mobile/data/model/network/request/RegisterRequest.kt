@@ -30,4 +30,11 @@ data class FCMTokenRequest(
     val deviceId: String?,
     @SerialName("deviceName")
     val deviceName: String?,
+    /**
+     * The device's IANA zone. The backend's due-soon job compares group-task due times in it; without
+     * one it falls back to a single configured zone, which fires the reminder off by the user's own
+     * UTC offset. Sent on every token sync so it follows the user when they travel.
+     */
+    @SerialName("timeZone")
+    val timeZone: String? = null,
 )

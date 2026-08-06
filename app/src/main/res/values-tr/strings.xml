@@ -626,6 +626,24 @@
     <string name="settings_larger_text">Yazı boyutu</string>
     <string name="settings_larger_text_desc">Sistem yazı tipi boyutunu ayarla</string>
     <string name="settings_push_notifications">Anlık bildirimler</string>
+    <!-- Bildirim ekranını açan Ayarlar satırı ve tek bakışta durum özeti. -->
+    <string name="settings_notifications_entry_title">Bildirimler ve hatırlatıcılar</string>
+    <string name="settings_notifications_summary_all_on">Tümü açık</string>
+    <string name="settings_notifications_summary_push_off">Anlık bildirimler kapalı</string>
+    <plurals name="settings_notifications_summary_off">
+        <item quantity="one">%1$d tanesi kapalı</item>
+        <item quantity="other">%1$d tanesi kapalı</item>
+    </plurals>
+    <string name="settings_notifications_group_device">Bu cihazda</string>
+    <string name="settings_notifications_group_push">Grup bildirimleri</string>
+    <string name="settings_push_group_scope_note">Bunlar yalnızca gruplarından gelen bildirimleri kapsar. Kendi görevlerinin hatırlatıcısı görev bazında ayarlanır.</string>
+    <string name="settings_push_type_subtitle">Bildirim listende yine görünür</string>
+    <string name="settings_push_type_assignments">Bana atanan görevler</string>
+    <string name="settings_push_type_completions">Başkalarının tamamladığı görevler</string>
+    <string name="settings_push_type_due_soon">Zamanı yaklaşan görevler</string>
+    <string name="settings_push_type_invitations">Davetler ve grup değişiklikleri</string>
+    <string name="settings_daily_plan_reminder">Günü planla hatırlatıcısı</string>
+    <string name="settings_daily_plan_reminder_subtitle">Belirlediğin saatte gününü planlaman için bir dürtü</string>
     <string name="settings_exact_alarms_title">Tam zamanlı hatırlatıcılar</string>
     <string name="settings_exact_alarms_description">Hatırlatmaların belirlediğin zamanda tam olarak çalışmasına izin ver.</string>
     <string name="settings_exact_alarms_status_enabled">Tam zamanlı hatırlatıcılar etkin.</string>
@@ -689,8 +707,26 @@
     <string name="notification_channel_tasks_description">Görev hatırlatmaları ve güncellemeleri için kullanılır</string>
     <string name="notification_channel_info_name">Güncellemeler ve etkinlik</string>
     <string name="notification_channel_info_description">Acil olmayan bildirimler: tamamlanan görevler, davet yanıtları ve grup değişiklikleri</string>
+    <!-- Birden fazla bildirim beklerken görünen katlanmış yığın başlığı. -->
+    <string name="notification_group_summary">Yeni grup etkinliği</string>
     <string name="notification_task_reminder_title_now">Şu an yapılacak bir görevin var!</string>
-    <string name="notification_task_reminder_title_in_minutes">%1$d dakika içinde yapılacak bir görevin var</string>
+    <string name="notification_task_reminder_title_in_format">%1$s içinde yapılacak bir görevin var</string>
+    <!-- Hatırlatıcıya kalan süre. common/TimeFormat.kt biçimlendirir; hem bildirim hem overlay kartı
+         aynı metni kullanır, böylece "1 gün önce" bir daha "1440 dakika" olarak görünmez. -->
+    <string name="reminder_lead_now">Şimdi</string>
+    <string name="reminder_lead_in_format">%1$s kaldı</string>
+    <plurals name="reminder_lead_minutes">
+        <item quantity="one">%1$d dakika</item>
+        <item quantity="other">%1$d dakika</item>
+    </plurals>
+    <plurals name="reminder_lead_hours">
+        <item quantity="one">%1$d saat</item>
+        <item quantity="other">%1$d saat</item>
+    </plurals>
+    <plurals name="reminder_lead_days">
+        <item quantity="one">%1$d gün</item>
+        <item quantity="other">%1$d gün</item>
+    </plurals>
     <string name="task_all_day_label">Gün Boyu</string>
     <string name="deadline_all_day">Gün boyu</string>
     <string name="zone_morning">Öğleden önce</string>
@@ -707,10 +743,10 @@
     <string name="pomodoro_info_bullet_3">Uzun mola: birkaç turun sonunda daha uzun bir dinlenme</string>
     <string name="chat_info_title">DoneBot ile Sohbet</string>
     <string name="chat_info_description">DoneBot görevlerini okur; sorularını yanıtlar, yenilerini oluşturur, tamamlanmış olarak işaretler. Gizli görevlerin görünmez kalır — sadece sana özel.</string>
-    <string name="chat_info_bullet_1">Sor: \"Bugün ne var?\" veya \"Haftam nasıl geçti?\"</string>
-    <string name="chat_info_bullet_2">Oluştur: \"Yarın saat 15:00\'e toplantı ekle\"</string>
-    <string name="chat_info_bullet_3">Sınır: gizli görevler ve günlüğün DoneBot için görünmez</string>
-    <string name="chat_info_bullet_4">Kapsam: sadece görevlerin ve grupların hakkındaki sorulara yanıt verir</string>
+    <string name="chat_info_bullet_1">Sor: \"Bugün ne var?\" veya \"Üretkenlik sağlığım nasıl?\"</string>
+    <string name="chat_info_bullet_2">Oluştur ve düzenle: rutinler, adımlar, hatırlatmalar ve konumlar</string>
+    <string name="chat_info_bullet_3">Önce onay: bir görevi silmeden önce mutlaka sorar</string>
+    <string name="chat_info_bullet_4">Sınırlar: grup görevleri salt okunur; gizli görevler ve günlüğün görünmez</string>
 
     <string name="calendar_info_title">Takvim Görünümü</string>
     <string name="calendar_info_description">Görevlerini günlere yayılmış şekilde gör. Bir tarihe dokunarak o günün görevlerine atla; düzenlemek için göreve uzun bas.</string>
@@ -897,7 +933,6 @@
     <string name="chat_error_rate_limited_cooldown_format">Tekrar denemek için %1$ds…</string>
     <string name="chat_error_server_waking_retrying_format">Sunucu uyanıyor — %1$ds içinde tekrar denenecek…</string>
     <string name="chat_char_count_format">%1$d/%2$d</string>
-    <string name="chat_tool_busy_generic">Görevlerine bakıyorum…</string>
     <string name="chat_action_copy">Metni kopyala</string>
     <string name="chat_action_try_again">Tekrar dene</string>
     <string name="chat_action_copied_toast">Kopyalandı</string>
@@ -913,6 +948,7 @@
     <string name="chat_suggested_overdue">Geciken iş var mı?</string>
     <string name="chat_suggested_progress">Bu hafta nasıl gidiyorum?</string>
     <string name="chat_suggested_week_remaining">Bu hafta kaç işim kaldı?</string>
+    <string name="chat_suggested_hearts">Üretkenlik sağlığım nasıl?</string>
     <string name="chat_clear_confirm_title">Sohbet temizlensin mi?</string>
     <string name="chat_clear_confirm_message">Bu, DoneBot ile sohbet geçmişini siler ama görevlerini etkilemez.</string>
     <string name="chat_clear_confirm_button">Temizle</string>
@@ -943,6 +979,8 @@
     <string name="chat_local_week_count_format">Bu hafta %1$d görev tamamladın.</string>
     <string name="chat_local_week_remaining_format">Bu hafta %1$d bekleyen işin var.</string>
     <string name="chat_local_week_remaining_empty">Bu haftanın hepsi tamam — süpersin.</string>
+    <string name="chat_local_health_format">Üretkenlik sağlığın %%%1$d — %3$d kalpten %2$s tanesi sende.</string>
+    <string name="chat_local_health_empty">Kalbin kalmadı — bugün bir görev bitirirsen geri kazanmaya başlarsın.</string>
     <string name="chat_local_greeting">Selam! Bugün aklında ne var?</string>
     <string name="chat_local_pomodoro_started_format">%1$d dakikalık pomodoro başladı — odak modu açık. Kolay gelsin!</string>
     <string name="chat_local_pomodoro_already_running_format">Zaten bir pomodoro çalışıyor, %1$d dakika kaldı. Pomodoro sekmesinden yönet.</string>

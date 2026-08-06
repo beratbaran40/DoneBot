@@ -1,20 +1,15 @@
 package com.todoapp.mobile.ui.calendar
 
-import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.todoapp.mobile.BuildConfig
-import com.todoapp.mobile.R
 import com.todoapp.mobile.common.maskDescription
 import com.todoapp.mobile.common.maskTitle
 import com.todoapp.mobile.data.repository.DataStoreHelper
-import com.todoapp.mobile.domain.alarm.AlarmScheduler
-import com.todoapp.mobile.domain.alarm.AlarmType
 import com.todoapp.mobile.domain.engine.PomodoroEngine
 import com.todoapp.mobile.domain.model.GroupTask
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.domain.model.firesOnDate
-import com.todoapp.mobile.domain.model.toAlarmItem
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.SecretPreferences
 import com.todoapp.mobile.domain.repository.TaskRepository
@@ -29,7 +24,6 @@ import com.todoapp.mobile.ui.calendar.CalendarContract.PersonalTaskCalendarItem
 import com.todoapp.mobile.ui.calendar.CalendarContract.UiAction
 import com.todoapp.mobile.ui.calendar.CalendarContract.UiEffect
 import com.todoapp.mobile.ui.calendar.CalendarContract.UiState
-import com.todoapp.mobile.ui.home.TaskFormState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -62,7 +56,6 @@ constructor(
     private val groupRepository: GroupRepository,
     private val taskSyncRepository: TaskSyncRepository,
     private val secretModePreferences: SecretPreferences,
-    private val alarmScheduler: AlarmScheduler,
     private val pomodoroEngine: PomodoroEngine,
     private val observeOverdueSummary: ObserveOverdueSummaryUseCase,
     private val clock: Clock,
@@ -112,46 +105,6 @@ constructor(
                 }
             is UiAction.OnRetry -> retry()
             is UiAction.OnTaskClick -> navigateToTask(uiAction.taskId)
-            is UiAction.OnShowBottomSheet -> showBottomSheet()
-            is UiAction.OnDismissBottomSheet -> dismissBottomSheet()
-            is UiAction.OnTaskCreate -> createTask()
-            is UiAction.OnTaskTitleChange ->
-                updateSuccessState {
-                    it.copy(taskFormState = it.taskFormState.copy(taskTitle = uiAction.title))
-                }
-            is UiAction.OnDialogDateSelect ->
-                updateSuccessState {
-                    it.copy(taskFormState = it.taskFormState.copy(dialogSelectedDate = uiAction.date))
-                }
-            is UiAction.OnDialogDateDeselect ->
-                updateSuccessState {
-                    it.copy(taskFormState = it.taskFormState.copy(dialogSelectedDate = null))
-                }
-            is UiAction.OnTaskTimeStartChange ->
-                updateSuccessState {
-                    it.copy(taskFormState = it.taskFormState.copy(taskTimeStart = uiAction.time))
-                }
-            is UiAction.OnTaskTimeEndChange ->
-                updateSuccessState {
-                    it.copy(taskFormState = it.taskFormState.copy(taskTimeEnd = uiAction.time))
-                }
-            is UiAction.OnTaskDescriptionChange ->
-                updateSuccessState {
-                    it.copy(taskFormState = it.taskFormState.copy(taskDescription = uiAction.description))
-                }
-            is UiAction.OnToggleAdvancedSettings ->
-                updateSuccessState {
-                    it.copy(
-                        taskFormState =
-                        it.taskFormState.copy(
-                            isAdvancedSettingsExpanded = !it.taskFormState.isAdvancedSettingsExpanded,
-                        ),
-                    )
-                }
-            is UiAction.OnTaskSecretChange ->
-                updateSuccessState {
-                    it.copy(taskFormState = it.taskFormState.copy(isTaskSecret = uiAction.isSecret))
-                }
             is UiAction.OnPomodoroTap -> navigateToPomodoro()
             is UiAction.OnSuccessfulBiometricAuthenticationHandle -> handleSuccessfulBiometricAuthentication()
             is UiAction.OnGroupTaskPhotoOpen -> updateSuccessState { it.copy(viewerPhotoUrl = uiAction.url) }
@@ -221,98 +174,6 @@ constructor(
             _navEffect.trySend(NavigationEffect.Navigate(Screen.Pomodoro))
         } else {
             _navEffect.trySend(NavigationEffect.Navigate(Screen.AddPomodoroTimer))
-        }
-    }
-
-    private fun showBottomSheet() {
-        updateSuccessState { it.copy(isSheetOpen = true) }
-    }
-
-    private fun dismissBottomSheet() {
-        updateSuccessState { it.copy(isSheetOpen = false) }
-    }
-
-    private fun createTask() {
-        val currentState = _uiState.value
-        if (currentState !is UiState.Success) return
-        if (!validateTaskForm(currentState)) return
-
-        viewModelScope.launch {
-            val form = currentState.taskFormState
-            val task =
-                Task(
-                    title = form.taskTitle,
-                    description = form.taskDescription,
-                    date = requireNotNull(form.dialogSelectedDate) {
-                        "validateTaskForm should have ensured dialogSelectedDate is non-null"
-                    },
-                    timeStart = requireNotNull(form.taskTimeStart) {
-                        "validateTaskForm should have ensured taskTimeStart is non-null"
-                    },
-                    timeEnd = requireNotNull(form.taskTimeEnd) {
-                        "validateTaskForm should have ensured taskTimeEnd is non-null"
-                    },
-                    isCompleted = false,
-                    isSecret = form.isTaskSecret,
-                )
-            taskRepository.insert(task)
-            scheduleTaskReminders(task)
-            updateSuccessState { it.copy(taskFormState = TaskFormState(), isSheetOpen = false) }
-        }
-    }
-
-    private fun validateTaskForm(state: UiState.Success): Boolean {
-        val form = state.taskFormState
-        return when {
-            form.taskTitle.isBlank() -> {
-                showTransientError(R.string.error_task_title_required) { s, v ->
-                    s.copy(taskFormState = s.taskFormState.copy(titleErrorRes = v))
-                }
-                false
-            }
-            form.dialogSelectedDate == null -> {
-                showTransientError(R.string.error_task_date_required) { s, v ->
-                    s.copy(taskFormState = s.taskFormState.copy(dateErrorRes = v))
-                }
-                false
-            }
-            form.taskTimeStart == null || form.taskTimeEnd == null -> {
-                showTransientError(R.string.error_task_time_required) { s, v ->
-                    s.copy(taskFormState = s.taskFormState.copy(timeErrorRes = v))
-                }
-                false
-            }
-            form.taskTimeStart.isAfter(form.taskTimeEnd) -> {
-                showTransientError(R.string.error_task_end_before_start) { s, v ->
-                    s.copy(taskFormState = s.taskFormState.copy(timeErrorRes = v))
-                }
-                false
-            }
-            else -> true
-        }
-    }
-
-    private fun scheduleTaskReminders(
-        task: Task,
-        remindBeforeMinutes: List<Long> = DEFAULT_REMINDER_MINUTES,
-    ) {
-        remindBeforeMinutes.forEach { minutes ->
-            alarmScheduler.schedule(
-                task.toAlarmItem(remindBeforeMinutes = minutes),
-                type = AlarmType.TASK,
-            )
-        }
-    }
-
-    private fun showTransientError(
-        @StringRes errorRes: Int,
-        durationMs: Long = 2000L,
-        setErrorRes: (UiState.Success, Int?) -> UiState.Success,
-    ) {
-        viewModelScope.launch {
-            updateSuccessState { setErrorRes(it, errorRes) }
-            delay(durationMs)
-            updateSuccessState { setErrorRes(it, null) }
         }
     }
 
@@ -558,8 +419,6 @@ constructor(
     }
 
     companion object {
-        private val DEFAULT_REMINDER_MINUTES = listOf(0L, 1L, 2L, 5L, 10L)
-
         /** Six week rows, inclusive of both ends — matches CALENDAR_WEEK_ROWS in the picker grid. */
         private const val GRID_SPAN_DAYS = 41L
         private const val OVERDUE_TICK_MILLIS = 60_000L

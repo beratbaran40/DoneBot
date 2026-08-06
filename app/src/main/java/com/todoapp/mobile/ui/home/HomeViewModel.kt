@@ -2,22 +2,16 @@ package com.todoapp.mobile.ui.home
 
 import android.content.Context
 import android.util.Log
-import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.todoapp.mobile.R
 import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.common.move
 import com.todoapp.mobile.common.needsOverlayPermission
 import com.todoapp.mobile.common.needsPostNotificationsPermission
 import com.todoapp.mobile.data.repository.DataStoreHelper
 import com.todoapp.mobile.di.IoDispatcher
-import com.todoapp.mobile.domain.alarm.AlarmScheduler
-import com.todoapp.mobile.domain.alarm.AlarmType
 import com.todoapp.mobile.domain.engine.PomodoroEngine
 import com.todoapp.mobile.domain.model.Task
-import com.todoapp.mobile.domain.model.toAlarmItem
-import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.SecretPreferences
 import com.todoapp.mobile.domain.repository.TaskRepository
 import com.todoapp.mobile.domain.repository.TaskSyncRepository
@@ -66,9 +60,7 @@ constructor(
     private val taskSyncRepository: TaskSyncRepository,
     private val setTaskCompletion: SetTaskCompletionUseCase,
     private val secretModePreferences: SecretPreferences,
-    private val alarmScheduler: AlarmScheduler,
     private val pomodoroEngine: PomodoroEngine,
-    private val groupRepository: GroupRepository,
     private val dataStoreHelper: DataStoreHelper,
     private val clock: Clock,
     @ApplicationContext private val appContext: Context,
@@ -120,7 +112,6 @@ constructor(
             is UiAction.OnRetry -> retry()
             is UiAction.OnPullToRefresh -> refreshFromPull()
             is UiAction.OnDateSelect -> changeSelectedDate(uiAction)
-            is UiAction.OnTaskCreate -> createTask()
             is UiAction.OnTaskCheck -> checkTask(uiAction)
             is UiAction.OnTaskLongPress -> onTaskLongPressed(uiAction)
             is UiAction.OnDeleteDialogConfirm -> onDeleteDialogConfirmed()
@@ -128,29 +119,11 @@ constructor(
             is UiAction.OnFinishRoutineDialogConfirm -> onFinishRoutineConfirmed()
             is UiAction.OnFinishRoutineDialogDismiss -> dismissFinishRoutineDialog()
             is UiAction.OnMoveTask -> updateTaskIndices(uiAction)
-            is UiAction.OnTaskTitleChange -> changeTaskTitle(uiAction)
-            is UiAction.OnTaskDescriptionChange -> changeTaskDescription(uiAction)
-            is UiAction.OnTaskDateChange -> changeTaskDate(uiAction)
-            is UiAction.OnTaskTimeStartChange -> changeTaskTimeStart(uiAction)
-            is UiAction.OnTaskTimeEndChange -> changeTaskTimeEnd(uiAction)
-            is UiAction.OnTaskSecretChange -> toggleTaskSecret(uiAction)
-            is UiAction.OnReminderOffsetChange -> changeReminderOffset(uiAction.minutes)
-            is UiAction.OnCategoryChange -> changeCategory(uiAction.category)
-            is UiAction.OnCustomCategoryNameChange -> changeCustomCategoryName(uiAction.name)
-            is UiAction.OnRecurrenceChange -> changeRecurrence(uiAction.recurrence)
-            is UiAction.OnAllDayChange -> changeAllDay(uiAction.isAllDay)
-            is UiAction.OnLocationPicked -> setFormLocation(uiAction.name, uiAction.address, uiAction.lat, uiAction.lng)
-            is UiAction.OnLocationCleared -> setFormLocation(null, null, null, null)
             is UiAction.OnFilterChange -> changeFilter(uiAction.filter)
             is UiAction.OnSuggestCardPrimaryAction -> handleSuggestCardPrimary()
             is UiAction.OnSuggestCardSecondaryAction -> handleSuggestCardSecondary()
             is UiAction.OnSuggestCardDismiss -> dismissSuggestCard()
             is UiAction.OnTimeTick -> Unit
-            is UiAction.OnDialogDateSelect -> updateDialogDate(uiAction)
-            is UiAction.OnDialogDateDeselect -> deselectDialogDate()
-            is UiAction.OnShowBottomSheet -> showBottomSheet()
-            is UiAction.OnDismissBottomSheet -> dismissBottomSheet()
-            is UiAction.OnToggleAdvancedSettings -> toggleAdvancedSettings()
             is UiAction.OnTaskClick -> openTaskDetail(uiAction.task)
             is UiAction.OnPomodoroTap -> navigateToPomodoro()
             is UiAction.OnJournalTap -> _navEffect.trySend(NavigationEffect.Navigate(Screen.Journal))
@@ -171,28 +144,6 @@ constructor(
             is UiAction.OnPreviousMonth -> navigateToPreviousMonth()
             is UiAction.OnNextMonth -> navigateToNextMonth()
             is UiAction.OnJumpToEarliestOverdue -> jumpToEarliestOverdue()
-            is UiAction.OnGroupSelectionChanged -> updateSuccessState { it.copy(taskFormState = it.taskFormState.copy(selectedGroupId = uiAction.groupId)) }
-            is UiAction.OnPendingPhotoAdd -> updateSuccessState { s ->
-                s.copy(
-                    taskFormState = s.taskFormState.copy(
-                        pendingPhotos = s.taskFormState.pendingPhotos + PendingPhoto(
-                            uiAction.bytes,
-                            uiAction.mimeType,
-                        ),
-                    ),
-                )
-            }
-
-            is UiAction.OnPendingPhotoRemove ->
-                updateSuccessState { s ->
-                    s.copy(
-                        taskFormState =
-                        s.taskFormState.copy(
-                            pendingPhotos = s.taskFormState.pendingPhotos.filterIndexed { i, _ -> i != uiAction.index },
-                        ),
-                    )
-                }
-
             is UiAction.DismissPermission -> dismissPermission(uiAction.type)
             is UiAction.PermissionGranted -> dismissPermission(uiAction.type)
             is UiAction.RefreshPermissions -> refreshPermissions()
@@ -393,10 +344,8 @@ constructor(
         tasks = data.tasks,
         completedTaskCountThisWeek = data.completedTaskCountThisWeek,
         pendingTaskCountThisWeek = data.pendingTaskCountThisWeek,
-        isSheetOpen = false,
         isDeleteDialogOpen = false,
         isSecretModeEnabled = false,
-        taskFormState = TaskFormState(),
         displayName = displayName,
         dayMode = com.todoapp.mobile.common.computeDayMode(java.time.LocalTime.now(clock)),
         currentTimeFormatted = java.time.LocalTime.now(clock).format(timeFormatter),
@@ -474,65 +423,6 @@ constructor(
                     val dates = tasks.map { it.date }.toSet()
                     updateSuccessState { it.copy(taskDatesInMonth = dates) }
                 }
-        }
-    }
-
-    private fun createTask() {
-        val currentState = _uiState.value
-        if (currentState !is UiState.Success) return
-        if (!validateTaskForm(currentState)) return
-
-        viewModelScope.launch {
-            val form = currentState.taskFormState
-            val selectedDate = requireNotNull(form.dialogSelectedDate) {
-                "validateTaskForm should have ensured dialogSelectedDate is non-null"
-            }
-            val task =
-                Task(
-                    title = form.taskTitle,
-                    description = form.taskDescription.ifBlank { null },
-                    date = selectedDate,
-                    timeStart = if (form.isAllDay) {
-                        java.time.LocalTime.MIDNIGHT
-                    } else {
-                        requireNotNull(form.taskTimeStart) { "validateTaskForm should have ensured taskTimeStart is non-null" }
-                    },
-                    timeEnd = if (form.isAllDay) {
-                        java.time.LocalTime.of(23, 59)
-                    } else {
-                        requireNotNull(form.taskTimeEnd) { "validateTaskForm should have ensured taskTimeEnd is non-null" }
-                    },
-                    isCompleted = false,
-                    isSecret = form.isTaskSecret,
-                    reminderOffsetMinutes = form.reminderOffsetMinutes,
-                    category = form.selectedCategory,
-                    customCategoryName = form.customCategoryName.takeIf {
-                        form.selectedCategory == com.todoapp.mobile.domain.model.TaskCategory.OTHER &&
-                            it.isNotBlank()
-                    },
-                    recurrence = form.selectedRecurrence,
-                    isAllDay = form.isAllDay,
-                    locationName = form.locationName,
-                    locationAddress = form.locationAddress,
-                    locationLat = form.locationLat,
-                    locationLng = form.locationLng,
-                    clientTaskId = form.clientTaskId,
-                )
-            if (form.selectedGroupId != null) {
-                groupRepository.createGroupTask(form.selectedGroupId, task)
-            } else if (form.pendingPhotos.isNotEmpty()) {
-                taskRepository.insertWithPhotos(
-                    task,
-                    form.pendingPhotos.map { it.bytes to it.mimeType },
-                )
-                scheduleTaskReminders(task)
-            } else {
-                taskRepository.insert(task)
-                scheduleTaskReminders(task)
-            }
-            dataStoreHelper.setLastUsedReminderOffset(form.reminderOffsetMinutes)
-            clearTaskForm()
-            dismissBottomSheet()
         }
     }
 
@@ -625,123 +515,9 @@ constructor(
         openDeleteDialog()
     }
 
-    private fun changeTaskTitle(uiAction: UiAction.OnTaskTitleChange) {
-        updateSuccessState { it.copy(taskFormState = it.taskFormState.copy(taskTitle = uiAction.title)) }
-    }
-
-    private fun changeTaskDescription(uiAction: UiAction.OnTaskDescriptionChange) {
-        updateSuccessState {
-            it.copy(
-                taskFormState = it.taskFormState.copy(taskDescription = uiAction.description),
-            )
-        }
-    }
-
-    private fun changeTaskDate(uiAction: UiAction.OnTaskDateChange) {
-        updateSuccessState { it.copy(taskFormState = it.taskFormState.copy(dialogSelectedDate = uiAction.date)) }
-    }
-
-    private fun changeTaskTimeStart(uiAction: UiAction.OnTaskTimeStartChange) {
-        updateSuccessState { it.copy(taskFormState = it.taskFormState.copy(taskTimeStart = uiAction.time)) }
-    }
-
     private fun onDeleteDialogConfirmed() {
         deleteTask(selectedTask)
         closeDeleteDialog()
-    }
-
-    private fun changeTaskTimeEnd(uiAction: UiAction.OnTaskTimeEndChange) {
-        updateSuccessState { it.copy(taskFormState = it.taskFormState.copy(taskTimeEnd = uiAction.time)) }
-    }
-
-    private fun toggleTaskSecret(uiAction: UiAction.OnTaskSecretChange) {
-        updateSuccessState { it.copy(taskFormState = it.taskFormState.copy(isTaskSecret = uiAction.isSecret)) }
-    }
-
-    private fun changeReminderOffset(minutes: Long?) {
-        updateSuccessState {
-            it.copy(taskFormState = it.taskFormState.copy(reminderOffsetMinutes = minutes))
-        }
-    }
-
-    private fun changeCategory(category: com.todoapp.mobile.domain.model.TaskCategory) {
-        updateSuccessState { state ->
-            val form = state.taskFormState
-            // BIRTHDAY auto-defaults to YEARLY when the user hasn't picked one;
-            // moving off BIRTHDAY reverts that auto-set so the explainer doesn't linger.
-            val nextRecurrence = when {
-                category == com.todoapp.mobile.domain.model.TaskCategory.BIRTHDAY &&
-                    form.selectedRecurrence == com.todoapp.mobile.domain.model.Recurrence.NONE ->
-                    com.todoapp.mobile.domain.model.Recurrence.YEARLY
-
-                form.selectedCategory == com.todoapp.mobile.domain.model.TaskCategory.BIRTHDAY &&
-                    category != com.todoapp.mobile.domain.model.TaskCategory.BIRTHDAY &&
-                    form.selectedRecurrence == com.todoapp.mobile.domain.model.Recurrence.YEARLY ->
-                    com.todoapp.mobile.domain.model.Recurrence.NONE
-
-                else -> form.selectedRecurrence
-            }
-            state.copy(
-                taskFormState = form.copy(
-                    selectedCategory = category,
-                    selectedRecurrence = nextRecurrence,
-                    customCategoryName = if (category == com.todoapp.mobile.domain.model.TaskCategory.OTHER) {
-                        form.customCategoryName
-                    } else {
-                        ""
-                    },
-                ),
-            )
-        }
-    }
-
-    private fun changeCustomCategoryName(name: String) {
-        updateSuccessState {
-            it.copy(taskFormState = it.taskFormState.copy(customCategoryName = name))
-        }
-    }
-
-    private fun changeRecurrence(recurrence: com.todoapp.mobile.domain.model.Recurrence) {
-        updateSuccessState { state ->
-            val form = state.taskFormState
-            // Recurring tasks anchor on a date (start date). Default to today if none set.
-            val anchor = form.dialogSelectedDate
-                ?: if (recurrence != com.todoapp.mobile.domain.model.Recurrence.NONE) LocalDate.now() else null
-            state.copy(
-                taskFormState = form.copy(
-                    selectedRecurrence = recurrence,
-                    dialogSelectedDate = anchor,
-                ),
-            )
-        }
-    }
-
-    private fun changeAllDay(isAllDay: Boolean) {
-        updateSuccessState { state ->
-            val form = state.taskFormState
-            state.copy(
-                taskFormState = form.copy(
-                    isAllDay = isAllDay,
-                    // Hiding time pickers; clear any prior selection + lingering time error.
-                    taskTimeStart = if (isAllDay) null else form.taskTimeStart,
-                    taskTimeEnd = if (isAllDay) null else form.taskTimeEnd,
-                    timeErrorRes = if (isAllDay) null else form.timeErrorRes,
-                ),
-            )
-        }
-    }
-
-    private fun setFormLocation(name: String?, address: String?, lat: Double?, lng: Double?) {
-        updateSuccessState { state ->
-            state.copy(
-                taskFormState = state.taskFormState.copy(
-                    locationName = name?.takeIf { it.isNotBlank() },
-                    locationAddress = address?.takeIf { it.isNotBlank() },
-                    locationLat = lat,
-                    locationLng = lng,
-                ),
-            )
-        }
     }
 
     private fun changeFilter(filter: HomeContract.HomeFilter) {
@@ -927,124 +703,6 @@ constructor(
     private fun performSecretToggle(action: UiAction.OnBiometricSuccessForSecretToggle) {
         viewModelScope.launch {
             taskRepository.update(action.task.copy(isSecret = !action.task.isSecret))
-        }
-    }
-
-    private fun updateDialogDate(uiAction: UiAction.OnDialogDateSelect) {
-        updateSuccessState { it.copy(taskFormState = it.taskFormState.copy(dialogSelectedDate = uiAction.date)) }
-    }
-
-    private fun deselectDialogDate() {
-        updateSuccessState { it.copy(taskFormState = it.taskFormState.copy(dialogSelectedDate = null)) }
-    }
-
-    private fun clearTaskForm() {
-        updateSuccessState { it.copy(taskFormState = TaskFormState()) }
-    }
-
-    private fun validateTaskForm(state: UiState.Success): Boolean {
-        val form = state.taskFormState
-        return when {
-            form.taskTitle.isBlank() -> {
-                showTransientError(R.string.error_task_title_required) { s, v ->
-                    s.copy(taskFormState = s.taskFormState.copy(titleErrorRes = v))
-                }
-                false
-            }
-
-            form.dialogSelectedDate == null -> {
-                showTransientError(R.string.error_task_date_required) { s, v ->
-                    s.copy(taskFormState = s.taskFormState.copy(dateErrorRes = v))
-                }
-                false
-            }
-
-            !form.isAllDay && (form.taskTimeStart == null || form.taskTimeEnd == null) -> {
-                showTransientError(R.string.error_task_time_required) { s, v ->
-                    s.copy(taskFormState = s.taskFormState.copy(timeErrorRes = v))
-                }
-                false
-            }
-
-            !form.isAllDay &&
-                form.taskTimeStart != null &&
-                form.taskTimeEnd != null &&
-                !form.taskTimeEnd.isAfter(form.taskTimeStart) -> {
-                showTransientError(R.string.error_task_end_before_start) { s, v ->
-                    s.copy(taskFormState = s.taskFormState.copy(timeErrorRes = v))
-                }
-                false
-            }
-
-            else -> true
-        }
-    }
-
-    private fun scheduleTaskReminders(task: Task) {
-        // Recurring tasks are scheduled by TaskRepositoryImpl via AlarmScheduler.scheduleRecurring
-        // and self-rescheduled in AlarmFireReceiver — skip the one-shot path here.
-        if (task.recurrence != com.todoapp.mobile.domain.model.Recurrence.NONE) return
-        val offset = task.reminderOffsetMinutes ?: return // null = user opted out
-        viewModelScope.launch(ioDispatcher) {
-            alarmScheduler.schedule(
-                task.toAlarmItem(remindBeforeMinutes = offset),
-                type = AlarmType.TASK,
-            )
-        }
-    }
-
-    private fun showTransientError(
-        @StringRes errorRes: Int,
-        durationMs: Long = 2000L,
-        setErrorRes: (UiState.Success, Int?) -> UiState.Success,
-    ) {
-        viewModelScope.launch {
-            updateSuccessState { setErrorRes(it, errorRes) }
-            delay(durationMs)
-            updateSuccessState { setErrorRes(it, null) }
-        }
-    }
-
-    private fun showBottomSheet() {
-        viewModelScope.launch {
-            val lastOffset = dataStoreHelper.observeLastUsedReminderOffset().first()
-            val smartDefault = TaskFormState.smartDefault(
-                today = LocalDate.now(clock),
-                now = java.time.LocalTime.now(clock),
-                lastReminderOffset = lastOffset,
-            )
-            updateSuccessState { it.copy(isSheetOpen = true, taskFormState = smartDefault) }
-        }
-        viewModelScope.launch {
-            groupRepository
-                .observeAllGroups()
-                .collect { groups ->
-                    val items =
-                        groups.mapNotNull { group ->
-                            group.remoteId?.let { remoteId ->
-                                HomeContract.GroupSelectionItem(
-                                    remoteId,
-                                    group.name,
-                                )
-                            }
-                        }
-                    updateSuccessState { it.copy(availableGroups = items) }
-                }
-        }
-    }
-
-    private fun dismissBottomSheet() {
-        updateSuccessState { it.copy(isSheetOpen = false) }
-    }
-
-    private fun toggleAdvancedSettings() {
-        updateSuccessState {
-            it.copy(
-                taskFormState =
-                it.taskFormState.copy(
-                    isAdvancedSettingsExpanded = !it.taskFormState.isAdvancedSettingsExpanded,
-                ),
-            )
         }
     }
 

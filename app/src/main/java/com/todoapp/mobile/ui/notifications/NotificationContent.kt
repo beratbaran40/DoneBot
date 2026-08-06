@@ -85,6 +85,14 @@ object NotificationContent {
                 }
                 Rendered(title, body)
             }
+            NotificationType.GROUP_OWNERSHIP_TRANSFERRED -> {
+                val title = if (groupName != null) {
+                    context.getString(R.string.notification_group_ownership_title_format, groupName)
+                } else {
+                    fallbackTitle
+                }
+                Rendered(title, context.getString(R.string.notification_group_ownership_body))
+            }
             NotificationType.UNKNOWN -> Rendered(fallbackTitle, fallbackBody)
         }
     }
