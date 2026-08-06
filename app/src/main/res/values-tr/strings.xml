@@ -743,7 +743,7 @@
     <string name="pomodoro_info_bullet_3">Uzun mola: birkaç turun sonunda daha uzun bir dinlenme</string>
     <string name="chat_info_title">DoneBot ile Sohbet</string>
     <string name="chat_info_description">DoneBot görevlerini okur; sorularını yanıtlar, yenilerini oluşturur, tamamlanmış olarak işaretler. Gizli görevlerin görünmez kalır — sadece sana özel.</string>
-    <string name="chat_info_bullet_1">Sor: \"Bugün ne var?\" veya \"Kalplerim nasıl?\"</string>
+    <string name="chat_info_bullet_1">Sor: \"Bugün ne var?\" veya \"Üretkenlik sağlığım nasıl?\"</string>
     <string name="chat_info_bullet_2">Oluştur ve düzenle: rutinler, adımlar, hatırlatmalar ve konumlar</string>
     <string name="chat_info_bullet_3">Önce onay: bir görevi silmeden önce mutlaka sorar</string>
     <string name="chat_info_bullet_4">Sınırlar: grup görevleri salt okunur; gizli görevler ve günlüğün görünmez</string>
@@ -948,7 +948,7 @@
     <string name="chat_suggested_overdue">Geciken iş var mı?</string>
     <string name="chat_suggested_progress">Bu hafta nasıl gidiyorum?</string>
     <string name="chat_suggested_week_remaining">Bu hafta kaç işim kaldı?</string>
-    <string name="chat_suggested_hearts">Kalplerim nasıl?</string>
+    <string name="chat_suggested_hearts">Üretkenlik sağlığım nasıl?</string>
     <string name="chat_clear_confirm_title">Sohbet temizlensin mi?</string>
     <string name="chat_clear_confirm_message">Bu, DoneBot ile sohbet geçmişini siler ama görevlerini etkilemez.</string>
     <string name="chat_clear_confirm_button">Temizle</string>

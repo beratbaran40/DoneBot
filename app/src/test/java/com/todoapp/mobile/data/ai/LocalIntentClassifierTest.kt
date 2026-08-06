@@ -148,6 +148,25 @@ class LocalIntentClassifierTest {
     }
 
     @Test
+    fun `both vocabularies reach the same intent`() = runTest {
+        // The chips say "üretkenlik sağlığım" because that names what the number measures, but the
+        // Activity screen draws hearts — so whichever word the user picked up, the question lands.
+        listOf(
+            "Üretkenlik sağlığım nasıl?",
+            "üretkenlik sağlığım ne durumda",
+            "how's my productivity health?",
+            "kalplerim nasıl?",
+            "how are my hearts?",
+        ).forEach { prompt ->
+            assertEquals(
+                "expected HEALTH_POINTS for \"$prompt\"",
+                LocalIntentClassifier.Intent.HEALTH_POINTS,
+                classifier().tryAnswer(prompt)?.intent,
+            )
+        }
+    }
+
+    @Test
     fun `inflected hearts questions are still answered on-device`() = runTest {
         listOf(
             "kalbimi nasıl doldururum",

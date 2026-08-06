@@ -269,11 +269,20 @@ class LocalIntentClassifier @Inject constructor(
          * including the shipped suggestion chip "Bu hafta kaç işim kaldı?" — it looked like a local
          * intent and had always been paying for a full backend round-trip instead.
          *
-         * A leading `\b` is safe **only because** every anchor word starts with an ASCII letter *and*
+         * A leading `\b` is safe only where the anchor word starts with an ASCII letter *and*
          * [COMBINING_DOT_ABOVE] is stripped first — without that strip, a word the user began with `İ`
-         * starts with `i` + a combining mark and the leading `\b` lands in the wrong place.
+         * starts with `i` + a combining mark and the leading `\b` lands in the wrong place. For a word
+         * that genuinely starts with a Turkish letter, use [WORD_START] instead.
          */
         private const val WORD_END = "(?![\\p{L}\\p{N}])"
+
+        /**
+         * The leading counterpart, for any anchor word that STARTS with a Turkish letter. `\b` fails
+         * there for the same reason it fails at the end — "üretkenlik" begins with `ü`, which Java does
+         * not count as a word character, so `\büretkenlik` can never match. Use `\b` where the word
+         * starts with an ASCII letter and this where it doesn't.
+         */
+        private const val WORD_START = "(?<![\\p{L}\\p{N}])"
 
         private val MINUTE_PATTERN = Regex("(\\d{1,3})\\s*(dk|dakika|min(?:ute)?s?|m\\b)")
         private val POMODORO_STOP_REGEX = Regex(
@@ -284,16 +293,19 @@ class LocalIntentClassifier @Inject constructor(
         )
 
         /**
-         * Requires a possessive ("kalbim", "kalplerim", "kalp puanım"), never a bare "kalp" — otherwise
-         * a real task like "kalp doktoru randevum ne zaman" would be answered with a heart count.
-         * `kal[pb]` covers the Turkish p→b softening in the possessive form, and the optional tail
-         * carries the case suffixes a natural question adds on top of it ("kalbimi", "kalbime",
-         * "kalbimde", "kalbimden", "kalbimin") — without it every inflected phrasing paid for a Vertex
-         * round-trip to fetch a number the device already had.
+         * Two vocabularies on purpose. The chips say "üretkenlik sağlığım" because that names what the
+         * number measures, but the Activity screen draws hearts — so a user who has seen that screen
+         * will say "kalplerim" and must be understood just the same.
+         *
+         * The heart branch requires a possessive ("kalbim", "kalplerim", "kalp puanım"), never a bare
+         * "kalp" — otherwise a real task like "kalp doktoru randevum ne zaman" would be answered with a
+         * heart count. `kal[pb]` covers the Turkish p→b softening, and the optional tail carries the
+         * case suffixes a natural question adds on top ("kalbimi", "kalbime", "kalbimden", "kalbimin").
          */
         private val HEALTH_TR_ANCHOR = Regex(
             "\\bkal[pb](ler)?(im|in)(i|e|de|den|in)?$WORD_END|" +
-                "\\b(can|sağlık|kalp)\\s*puan(ım|im|ı|ımı|ini)?$WORD_END",
+                "\\b(can|sağlık|kalp)\\s*puan(ım|im|ı|ımı|ini)?$WORD_END|" +
+                "${WORD_START}üretkenlik\\s*sağlığ(ım|im|ı)?$WORD_END",
         )
 
         /**
@@ -307,7 +319,8 @@ class LocalIntentClassifier @Inject constructor(
                 "\\bmy\\s+heart$WORD_END\\s*[?.!]?\\s*$|" +
                 "\\bmy\\s+health\\s*points?\\b|" +
                 "\\bhow\\s+many\\s+hearts\\b|" +
-                "\\bhealth\\s*points?\\b.*\\b(left|now|status)\\b",
+                "\\bhealth\\s*points?\\b.*\\b(left|now|status)\\b|" +
+                "\\bproductivity\\s*health\\b",
         )
         private val GREETING = Regex(
             "^(merhaba|selam|s\\.?a\\.?|naber|iyi\\s+(günler|sabahlar|akşamlar)|" +
