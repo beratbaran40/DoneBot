@@ -402,23 +402,19 @@ class ChatViewModel @Inject constructor(
     }
 
     /**
-     * True when this turn could have changed anything on the server. The old test was
-     * `roundTrips > 1`, which is true of every read-tool turn too — so asking "what's due today?" cost
-     * a full task re-fetch over the network for nothing.
+     * True when this turn changed anything on the server, which is the only reason to re-pull tasks.
      *
-     * Phrased as "not a known read" rather than "a known write", so it **fails open**: the day the
-     * backend adds or renames a mutating tool, an unrecognised name still triggers the sync. The two
-     * mistakes are not symmetric — a spurious sync costs one fetch, a missed one leaves the user
-     * looking at stale data after the bot said "done", with no error anywhere.
+     * The server decides. It is the only side that knows which of its tools mutate, and it computes
+     * the flag right next to where they are declared — so there is nothing here to keep in step. The
+     * client used to hold its own copy of that list, which went stale the moment a write tool was
+     * added server-side and stayed stale for as long as a Play release takes: the bot would write, the
+     * server would change, and the device would go on showing the old data with no error anywhere.
      *
-     * An empty [ChatTurnMeta.toolsCalled] means the backend predates the field; fall back to the old
-     * heuristic there so a new client against an old server stays correct, just chattier.
+     * A null flag means the backend predates it, so fall back to the original `roundTrips > 1`. That
+     * over-syncs on read-only turns and never under-syncs — the safe direction to be wrong in, since a
+     * spurious fetch costs one request and a missed one costs the user's trust in what they see.
      */
-    private fun ChatMessageResponseData.changedServerState(): Boolean = if (meta.toolsCalled.isEmpty()) {
-        meta.roundTrips > 1
-    } else {
-        meta.toolsCalled.any { it !in READ_TOOLS }
-    }
+    private fun ChatMessageResponseData.changedServerState(): Boolean = meta.mutated ?: (meta.roundTrips > 1)
 
     /**
      * Snapshot of the persisted conversation, trimmed to the last MAX_HISTORY_TURNS
@@ -710,24 +706,5 @@ class ChatViewModel @Inject constructor(
          * warrant a post-turn task re-fetch. Keep it in step when a write tool is added there —
          * a missing name means the bot's change lands on the server and never reaches the device.
          */
-        /**
-         * The backend chat tools that only read, mirroring `ChatToolDeclarations`. Anything NOT listed
-         * here is assumed to mutate, so a tool added or renamed on the server still triggers the
-         * post-turn task sync instead of silently leaving the device stale — see [changedServerState].
-         *
-         * Read tools are the safer half to enumerate: this list going stale costs one extra fetch,
-         * where a stale list of *writes* would cost correctness.
-         */
-        private val READ_TOOLS = setOf(
-            "getCurrentDate",
-            "getTodaysTasks",
-            "getOverdueTasks",
-            "getTasksForDateRange",
-            "getGroups",
-            "getGroupTasks",
-            "getCompletedTasksThisWeek",
-            "getProductivityInsights",
-            "findTaskByTitle",
-        )
     }
 }

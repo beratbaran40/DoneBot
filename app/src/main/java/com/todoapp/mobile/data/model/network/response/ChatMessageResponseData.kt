@@ -15,12 +15,21 @@ data class ChatTurnMeta(
     @SerialName("refused") val refused: Boolean,
     @SerialName("serverMs") val serverMs: Long,
     /**
-     * Tools the turn executed, in call order. Drives the post-chat task re-sync: only a WRITE tool can
-     * have changed server state, and re-fetching after a pure read turn ("what's due today?") burned a
-     * full task sync per question.
-     *
-     * Defaulted so an older backend that doesn't send the field still deserializes — the ViewModel
-     * falls back to the old `roundTrips > 1` heuristic when the list is empty.
+     * Tools the turn actually executed, in call order. Read-only here — kept for logging and for
+     * reading a turn back in a bug report; [mutated] is what drives behaviour.
      */
     @SerialName("toolsCalled") val toolsCalled: List<String> = emptyList(),
+    /**
+     * Whether the turn wrote anything, decided by the server from its own list of mutating tools.
+     *
+     * This is the whole point: the client used to carry its own copy of which tool names mutate, and
+     * that copy went stale the moment the backend added a write tool — for however many weeks it took
+     * a Play release to catch up, the bot would write, the server would change, and the device would
+     * quietly show old data.
+     *
+     * Null (not false) when the field is absent, because "nothing changed" and "this backend is older
+     * than the field" must not look alike: defaulting to false would make a new client skip a re-sync
+     * it genuinely needs.
+     */
+    @SerialName("mutated") val mutated: Boolean? = null,
 )

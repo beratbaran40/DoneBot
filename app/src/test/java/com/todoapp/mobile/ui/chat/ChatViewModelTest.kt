@@ -203,27 +203,27 @@ class ChatViewModelTest {
         assertFalse(viewModel.readyState().isThinking)
     }
 
-    // ---- Post-turn task sync is gated on WRITE tools, not on round-trip count ----
+    // ---- Post-turn task sync follows the server's own verdict ----
 
     @Test
     fun `a read-only turn does not force a task sync`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
         coEvery { chatRepository.sendMessage(any(), any(), any(), any()) } returns
-            Result.success(successResponse(roundTrips = 2, tools = listOf("getTodaysTasks")))
+            Result.success(successResponse(roundTrips = 2, mutated = false, tools = listOf("getTodaysTasks")))
         val viewModel = buildViewModel()
         advanceUntilIdle()
 
         viewModel.sendPrompt("What's due today?")
         advanceUntilIdle()
 
-        // roundTrips is 2 for every tool turn including pure reads — that heuristic alone cost a full
+        // roundTrips is 2 for every tool turn including pure reads, so the old heuristic cost a full
         // task re-fetch over the network on the single most common question asked.
         coVerify(exactly = 0) { taskSyncRepository.fetchTasks(any()) }
     }
 
     @Test
-    fun `a turn that ran a write tool forces a task sync`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+    fun `a turn the server says it wrote forces a task sync`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
         coEvery { chatRepository.sendMessage(any(), any(), any(), any()) } returns
-            Result.success(successResponse(roundTrips = 2, tools = listOf("findTaskByTitle", "setTaskSchedule")))
+            Result.success(successResponse(roundTrips = 2, mutated = true, tools = listOf("setTaskSchedule")))
         val viewModel = buildViewModel()
         advanceUntilIdle()
 
@@ -234,32 +234,35 @@ class ChatViewModelTest {
     }
 
     @Test
-    fun `an unrecognised tool is assumed to write, so the sync still fires`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+    fun `the server's verdict wins over any tool name the client does not know`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        // The point of moving the decision server-side. A tool the backend added after this client
+        // shipped is unrecognisable here, and the client no longer has to recognise it: the server
+        // already said the turn wrote. The old client-side list would have gone stale for as long
+        // as a Play release takes, and the user would have kept seeing pre-change data.
         coEvery { chatRepository.sendMessage(any(), any(), any(), any()) } returns
-            Result.success(successResponse(roundTrips = 2, tools = listOf("setTaskPriority")))
+            Result.success(successResponse(roundTrips = 2, mutated = true, tools = listOf("setTaskPriority")))
         val viewModel = buildViewModel()
         advanceUntilIdle()
 
         viewModel.sendPrompt("Make it high priority")
         advanceUntilIdle()
 
-        // The day the backend adds or renames a write tool, the client must fail OPEN. A spurious
-        // fetch costs one request; a missed one leaves the user staring at stale data after the bot
-        // said "done", with nothing logged anywhere.
         coVerify(exactly = 1) { taskSyncRepository.fetchTasks(force = true) }
     }
 
     @Test
-    fun `an older backend sending no tool list falls back to the round-trip heuristic`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+    fun `a backend that predates the flag falls back to the round-trip heuristic`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        // Null means "this server does not have the field", which must not read as "nothing
+        // changed" — so we over-sync rather than risk missing one. A new client against a
+        // not-yet-deployed backend stays correct, just chattier.
         coEvery { chatRepository.sendMessage(any(), any(), any(), any()) } returns
-            Result.success(successResponse(roundTrips = 2, tools = emptyList()))
+            Result.success(successResponse(roundTrips = 2, mutated = null))
         val viewModel = buildViewModel()
         advanceUntilIdle()
 
         viewModel.sendPrompt("Add a meeting tomorrow")
         advanceUntilIdle()
 
-        // A new client against a not-yet-deployed backend must stay correct, just chattier.
         coVerify(exactly = 1) { taskSyncRepository.fetchTasks(force = true) }
     }
 
@@ -269,10 +272,17 @@ class ChatViewModelTest {
 
     private fun successResponse(
         roundTrips: Int = 1,
+        mutated: Boolean? = false,
         tools: List<String> = emptyList(),
     ) = ChatMessageResponseData(
         text = "Done!",
-        meta = ChatTurnMeta(roundTrips = roundTrips, refused = false, serverMs = 42, toolsCalled = tools),
+        meta = ChatTurnMeta(
+            roundTrips = roundTrips,
+            refused = false,
+            serverMs = 42,
+            toolsCalled = tools,
+            mutated = mutated,
+        ),
     )
 
     @Test
