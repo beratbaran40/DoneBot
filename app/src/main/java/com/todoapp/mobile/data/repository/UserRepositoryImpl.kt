@@ -71,10 +71,15 @@ constructor(
         val lastSentToken = fcmTokenPreferences.getLastSentToken()
         val deviceId = fcmTokenPreferences.getDeviceId()
         val deviceName = fcmTokenPreferences.getDeviceName()
+        val timeZone = java.time.ZoneId.systemDefault().id
 
         if (pendingToken.isNullOrBlank()) return Result.success(Unit)
 
-        if (pendingToken == lastSentToken) {
+        // The zone is part of what this registration carries, and it changes without the token
+        // changing — someone who flies to another country keeps the same FCM token, so a
+        // token-only check would leave the backend scheduling their due-soon reminders in the zone
+        // they left.
+        if (pendingToken == lastSentToken && timeZone == fcmTokenPreferences.getLastSentTimeZone()) {
             fcmTokenPreferences.clearPendingToken()
             return Result.success(Unit)
         }
@@ -85,12 +90,14 @@ constructor(
                     token = pendingToken,
                     deviceId = deviceId,
                     deviceName = deviceName,
+                    timeZone = timeZone,
                 ),
             )
 
         apiResult
             .onSuccess {
                 fcmTokenPreferences.setLastSentToken(pendingToken)
+                fcmTokenPreferences.setLastSentTimeZone(timeZone)
                 fcmTokenPreferences.clearPendingToken()
             }.onFailure { e ->
                 Log.e("FCM_SYNC", "Token send FAILED. Pending token preserved.", e)
