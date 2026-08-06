@@ -1224,4 +1224,10 @@
     <string name="creation_step_ph_2">Kaynakları topla…</string>
     <string name="creation_step_ph_3">İlk bölümü yaz…</string>
     <string name="creation_step_ph_4">Gözden geçir…</string>
+
+    <!-- Güncelleme mevcut diyaloğu -->
+    <string name="update_available_bubble">Birkaç yeni numara öğrendim! En son sürüme geç de aynı yerde olalım.</string>
+    <string name="update_available_detail">Güncelleme Google Play üzerinden kurulur, kısa sürer.</string>
+    <string name="update_available_action">Güncelle</string>
+    <string name="update_available_later">Şimdi değil</string>
 </resources>

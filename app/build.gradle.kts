@@ -321,6 +321,9 @@ dependencies {
     implementation(libs.google.places)
     implementation(libs.maps.compose)
 
+    // Play in-app updates — the signal behind the "a newer version is out" dialog
+    implementation(libs.play.app.update.ktx)
+
     // Camera (CameraX) — skeuomorphic Polaroid capture for Journal entries
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)

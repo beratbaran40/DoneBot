@@ -124,6 +124,7 @@ import com.todoapp.mobile.ui.settings.rememberDataExportSaver
 import com.todoapp.mobile.ui.splash.TDSplashScreen
 import com.todoapp.mobile.ui.topbar.ShowTopBar
 import com.todoapp.mobile.ui.topbar.TopBarViewModel
+import com.todoapp.mobile.ui.update.AppUpdateDialogHost
 import com.todoapp.mobile.ui.webview.WebViewScreen
 import com.todoapp.mobile.ui.webview.WebViewViewModel
 import com.todoapp.uikit.extensions.collectWithLifecycle
@@ -1069,6 +1070,11 @@ fun DoneBotApp(
                     )
                 }
             }
+
+            // Last in the content, and only reachable past the splash gate above, so it can never
+            // race the splash for the screen. Being a Compose Dialog it draws in its own window, over
+            // the bottom bar and the rail as well as the current screen.
+            AppUpdateDialogHost()
         }
     }
 }

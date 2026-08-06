@@ -220,4 +220,10 @@ abstract class RepositoryModule {
     abstract fun bindAmbiencePlayer(
         impl: com.todoapp.mobile.data.ambience.AmbiencePlayerImpl,
     ): com.todoapp.mobile.domain.ambience.AmbiencePlayer
+
+    @Binds
+    @Singleton
+    abstract fun bindAppUpdateChecker(
+        impl: com.todoapp.mobile.data.update.PlayAppUpdateChecker,
+    ): com.todoapp.mobile.domain.update.AppUpdateChecker
 }

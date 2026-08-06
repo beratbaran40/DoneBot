@@ -52,6 +52,7 @@ playServicesLocation = "21.3.0"
 googlePlaces = "3.5.0"
 mapsCompose = "4.4.1"
 camerax = "1.4.0"
+appUpdate = "2.1.0"
 
 # --- Testing (unit + instrumented) ---
 mockk = "1.14.2"
@@ -152,6 +153,9 @@ play-services-maps = { group = "com.google.android.gms", name = "play-services-m
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 google-places = { group = "com.google.android.libraries.places", name = "places", version.ref = "googlePlaces" }
 maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "mapsCompose" }
+
+# --- Play in-app updates ---
+play-app-update-ktx = { group = "com.google.android.play", name = "app-update-ktx", version.ref = "appUpdate" }
 
 # --- Camera (CameraX) ---
 androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "camerax" }
