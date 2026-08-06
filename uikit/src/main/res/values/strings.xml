@@ -46,7 +46,7 @@
     <string name="group_card_pending_label">Pending</string>
     <string name="group_card_created_label">Created %1$s</string>
     <string name="group_card_view_details">View Details</string>
-    <string name="today">Today</string>
+    <string name="date_picker_select_today">Select today</string>
     <!-- Content descriptions -->
     <string name="cd_close">Close</string>
     <string name="cd_previous_month">Previous month</string>

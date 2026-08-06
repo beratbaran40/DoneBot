@@ -46,7 +46,7 @@
     <string name="group_card_pending_label">Görev Bekliyor</string>
     <string name="group_card_created_label">Oluşturuldu: %1$s</string>
     <string name="group_card_view_details">Detayları Gör</string>
-    <string name="today">Bugün</string>
+    <string name="date_picker_select_today">Bugünü seç</string>
     <!-- Content descriptions -->
     <string name="cd_close">Kapat</string>
     <string name="cd_previous_month">Önceki ay</string>

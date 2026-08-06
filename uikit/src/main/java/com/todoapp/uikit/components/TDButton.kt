@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.uikit.R
@@ -51,6 +52,27 @@ enum class TDButtonType { PRIMARY, SECONDARY, OUTLINE, CANCEL, PENDING }
 
 enum class TDButtonSize { SMALL, MEDIUM }
 
+/**
+ * ORIGINAL keeps the classic pendingGray fill. MONOCHROME uses a black fill in light / gray in dark.
+ * PIXEL is a saturated accent block — an 8-bit button is a solid colour field, not neutral chrome.
+ *
+ * Shared with [TDIconButton] rather than copied: one exhaustive `when` means a fourth kit is a compile
+ * error in one place, not a compile error here and a silently wrong branch there.
+ */
+@Composable
+internal fun tdPrimaryFill(): Color = when (TDTheme.palette) {
+    PaletteKit.ORIGINAL -> TDTheme.colors.pendingGray
+    PaletteKit.MONOCHROME -> if (TDTheme.isDark) TDTheme.colors.gray else TDTheme.colors.black
+    PaletteKit.PIXEL -> TDTheme.colors.primary
+}
+
+/** The label/icon colour that goes on [tdPrimaryFill]. */
+@Composable
+internal fun tdPrimaryContent(): Color = when (TDTheme.palette) {
+    PaletteKit.ORIGINAL -> TDTheme.colors.white
+    PaletteKit.MONOCHROME, PaletteKit.PIXEL -> TDTheme.colors.onPrimary
+}
+
 @Composable
 fun TDButton(
     modifier: Modifier = Modifier,
@@ -60,6 +82,12 @@ fun TDButton(
     size: TDButtonSize = TDButtonSize.MEDIUM,
     icon: Painter? = null,
     fullWidth: Boolean = false,
+    /**
+     * Unbounded by default — exactly today's behaviour. A button whose height is pinned (rather than
+     * left to `heightIn(min=)`) clips a wrapped label instead of growing, so any caller squeezing one
+     * into a weighted slot should pass 1 and let the label ellipsise.
+     */
+    maxLines: Int = Int.MAX_VALUE,
     onClick: () -> Unit,
 ) {
     val textStyle = buttonTextStyle(size)
@@ -75,19 +103,8 @@ fun TDButton(
 
     when (type) {
         TDButtonType.PRIMARY -> {
-            // ORIGINAL keeps the classic pendingGray fill + white label. MONOCHROME uses a black fill
-            // in light / gray in dark. PIXEL is a saturated accent block — an 8-bit button is a solid
-            // colour field, not neutral chrome. Exhaustive so a fourth kit has to make this choice.
-            val primaryFill = when (TDTheme.palette) {
-                PaletteKit.ORIGINAL -> TDTheme.colors.pendingGray
-                PaletteKit.MONOCHROME ->
-                    if (TDTheme.isDark) TDTheme.colors.gray else TDTheme.colors.black
-                PaletteKit.PIXEL -> TDTheme.colors.primary
-            }
-            val primaryContent = when (TDTheme.palette) {
-                PaletteKit.ORIGINAL -> TDTheme.colors.white
-                PaletteKit.MONOCHROME, PaletteKit.PIXEL -> TDTheme.colors.onPrimary
-            }
+            val primaryFill = tdPrimaryFill()
+            val primaryContent = tdPrimaryContent()
             Button(
                 modifier = sizeModifier,
                 onClick = onClick,
@@ -115,6 +132,8 @@ fun TDButton(
                     text = text,
                     style = textStyle,
                     color = primaryContent,
+                    maxLines = maxLines,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
@@ -145,6 +164,8 @@ fun TDButton(
                     text = text,
                     style = textStyle,
                     color = if (isEnable) TDTheme.colors.crossRed else TDTheme.colors.crossRed.copy(alpha = 0.4f),
+                    maxLines = maxLines,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
@@ -182,6 +203,8 @@ fun TDButton(
                     text = text,
                     style = textStyle,
                     color = if (isEnable) TDTheme.colors.pendingGray else TDTheme.colors.pendingGray.copy(alpha = 0.5f),
+                    maxLines = maxLines,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
@@ -214,6 +237,8 @@ fun TDButton(
                     text = text,
                     style = textStyle,
                     color = TDTheme.colors.white,
+                    maxLines = maxLines,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
@@ -246,6 +271,8 @@ fun TDButton(
                     text = text,
                     style = textStyle,
                     color = TDTheme.colors.white,
+                    maxLines = maxLines,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }

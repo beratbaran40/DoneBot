@@ -1,11 +1,17 @@
 package com.todoapp.uikit.components
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.todoapp.uikit.previews.TDPreviewDialog
+import com.todoapp.uikit.previews.TDPreviewNarrow
+import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
 import java.time.LocalDate
 
@@ -125,14 +131,38 @@ private fun TDDatePickerDialogAdjacentRangePreview() {
 /**
  * The dialog's footer, previewed on its own because the dialog itself is never open in a preview.
  *
- * Three buttons is where the 140.dp minimum on TDButton.SMALL starts to bite, so this is the entry
- * that shows whether the labels still fit once they are translated — @TDPreviewDialog is the narrow
- * decoration, which is exactly the width that would break first.
+ * This is the entry that catches overflow, so [ACTION_ROW_WIDTH] renders it at the width the row
+ * actually gets rather than the device width: on a 320dp phone the Dialog insets ~16dp a side and the
+ * Surface adds another 16dp, leaving roughly 224dp. That is the number "Select today" / "Bugünü seç"
+ * has to survive next to two 48dp squares.
  */
+private val ACTION_ROW_WIDTH = 224.dp
+
 @TDPreviewDialog
 @Composable
 private fun TDDatePickerActionRowPreview() {
     TDTheme {
         DatePickerActionRow(onToday = {}, onCancel = {}, onConfirm = {})
+    }
+}
+
+@TDPreviewNarrow
+@Composable
+private fun TDDatePickerActionRowAtDialogWidthPreview() {
+    TDTheme {
+        Box(Modifier.width(ACTION_ROW_WIDTH)) {
+            DatePickerActionRow(onToday = {}, onCancel = {}, onConfirm = {})
+        }
+    }
+}
+
+/** Pixelify Sans is wider than Poppins and the kit draws 2dp borders — the tightest fit of the three. */
+@TDPreviewNarrow
+@Composable
+private fun TDDatePickerActionRowPixelPreview() {
+    TDTheme(palette = PaletteKit.PIXEL) {
+        Box(Modifier.width(ACTION_ROW_WIDTH)) {
+            DatePickerActionRow(onToday = {}, onCancel = {}, onConfirm = {})
+        }
     }
 }

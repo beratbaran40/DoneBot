@@ -302,16 +302,22 @@ fun TDDatePickerDialog(
 }
 
 /**
- * "Today" on one side, the two ways out on the other.
+ * "Select today" on the left, the two ways out as squares on the right.
  *
- * "Today" only moves the draft, so sitting it beside the buttons that leave the dialog would say the
- * wrong thing — that exact grouping is why the shortcut used to read as a confirm. Cancel stays an
- * outline rather than [TDButtonType.CANCEL]: that type is a red fill, and red is reserved for
- * destructive work. Dropping an uncommitted draft is not destructive, so the emphasis belongs on the
- * one filled button instead.
+ * Three labelled buttons never fit. TDButton.SMALL claims a 140.dp minimum each, and even weighted
+ * over `fullWidth` the two short labels ate a third of a narrow dialog in padding — "Tamam" was
+ * wrapping onto a second line on a 385dp phone. Cancel and OK are the two most recognisable glyphs in
+ * the product, so they lose their labels and keep their meaning through contentDescription. The
+ * shortcut goes the other way and gains words: "Today" on its own read as a confirm, which is the bug
+ * this row was rebuilt around in the first place, and the space the squares free up is exactly what
+ * pays for the longer label.
  *
- * Every button is fullWidth over a weight because TDButton.SMALL otherwise claims a 140.dp minimum
- * each, and three of those overflow a 344.dp screen.
+ * Cancel stays an outline rather than [TDButtonType.CANCEL]: that type is a red fill, and red is
+ * reserved for destructive work. Dropping an uncommitted draft is not destructive.
+ *
+ * All three children are 48.dp tall — the squares because that is the touch-target minimum, and the
+ * label because TDButtonSize.SMALL's 40.dp is only a `heightIn(min=)`, so an explicit height wins and
+ * the row reads as one bar rather than a short pill beside two taller blocks.
  */
 @Composable
 internal fun DatePickerActionRow(
@@ -325,36 +331,33 @@ internal fun DatePickerActionRow(
             .fillMaxWidth()
             .background(TDTheme.colors.background)
             .padding(horizontal = 16.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         TDButton(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .height(TDIconButtonSize),
             fullWidth = true,
-            text = stringResource(R.string.today),
+            text = stringResource(R.string.date_picker_select_today),
+            // Pinned height clips a wrapped label instead of growing, so at a large font scale this
+            // has to shorten rather than fold.
+            maxLines = 1,
             type = TDButtonType.OUTLINE,
             size = TDButtonSize.SMALL,
             onClick = onToday,
         )
-        Row(
-            modifier = Modifier.weight(1.6f),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            TDButton(
-                modifier = Modifier.weight(1f),
-                fullWidth = true,
-                text = stringResource(R.string.cancel),
-                type = TDButtonType.OUTLINE,
-                size = TDButtonSize.SMALL,
-                onClick = onCancel,
-            )
-            TDButton(
-                modifier = Modifier.weight(1f),
-                fullWidth = true,
-                text = stringResource(R.string.ok),
-                size = TDButtonSize.SMALL,
-                onClick = onConfirm,
-            )
-        }
+        TDIconButton(
+            icon = tdPainter(R.drawable.ic_close),
+            contentDescription = stringResource(R.string.cancel),
+            type = TDButtonType.OUTLINE,
+            onClick = onCancel,
+        )
+        TDIconButton(
+            icon = tdPainter(R.drawable.ic_check),
+            contentDescription = stringResource(R.string.ok),
+            onClick = onConfirm,
+        )
     }
 }
 
