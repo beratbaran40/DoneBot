@@ -689,8 +689,26 @@
     <string name="notification_channel_tasks_description">Görev hatırlatmaları ve güncellemeleri için kullanılır</string>
     <string name="notification_channel_info_name">Güncellemeler ve etkinlik</string>
     <string name="notification_channel_info_description">Acil olmayan bildirimler: tamamlanan görevler, davet yanıtları ve grup değişiklikleri</string>
+    <!-- Birden fazla bildirim beklerken görünen katlanmış yığın başlığı. -->
+    <string name="notification_group_summary">Yeni grup etkinliği</string>
     <string name="notification_task_reminder_title_now">Şu an yapılacak bir görevin var!</string>
-    <string name="notification_task_reminder_title_in_minutes">%1$d dakika içinde yapılacak bir görevin var</string>
+    <string name="notification_task_reminder_title_in_format">%1$s içinde yapılacak bir görevin var</string>
+    <!-- Hatırlatıcıya kalan süre. common/TimeFormat.kt biçimlendirir; hem bildirim hem overlay kartı
+         aynı metni kullanır, böylece "1 gün önce" bir daha "1440 dakika" olarak görünmez. -->
+    <string name="reminder_lead_now">Şimdi</string>
+    <string name="reminder_lead_in_format">%1$s kaldı</string>
+    <plurals name="reminder_lead_minutes">
+        <item quantity="one">%1$d dakika</item>
+        <item quantity="other">%1$d dakika</item>
+    </plurals>
+    <plurals name="reminder_lead_hours">
+        <item quantity="one">%1$d saat</item>
+        <item quantity="other">%1$d saat</item>
+    </plurals>
+    <plurals name="reminder_lead_days">
+        <item quantity="one">%1$d gün</item>
+        <item quantity="other">%1$d gün</item>
+    </plurals>
     <string name="task_all_day_label">Gün Boyu</string>
     <string name="deadline_all_day">Gün boyu</string>
     <string name="zone_morning">Öğleden önce</string>

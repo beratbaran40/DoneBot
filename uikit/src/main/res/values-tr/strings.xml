@@ -33,8 +33,6 @@
     <string name="notify_me_at">%1$s\'de bildir</string>
     <string name="notify_hint">Saat çaldığında sizi bilgilendireceğim!</string>
     <string name="overlay_notification_reminder">Hatırlatıcı</string>
-    <string name="overlay_notification_now">Şimdi</string>
-    <string name="overlay_notification_minutes_ago">%1$d dk önce</string>
     <string name="overlay_notification_tap_to_open">Detayları açmak için dokunun</string>
     <string name="overlay_notification_dismiss">Kapat</string>
     <string name="general_progress_tasks_done">%1$d görev tamamlandı</string>

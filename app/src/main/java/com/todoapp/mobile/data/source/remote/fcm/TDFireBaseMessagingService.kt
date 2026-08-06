@@ -1,6 +1,7 @@
 package com.todoapp.mobile.data.source.remote.fcm
 
 import android.annotation.SuppressLint
+import android.app.Notification
 import android.app.PendingIntent
 import android.content.Intent
 import android.graphics.Bitmap
@@ -31,7 +32,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
-import kotlin.random.Random
 
 @AndroidEntryPoint
 class TDFireBaseMessagingService : FirebaseMessagingService() {
@@ -202,7 +202,8 @@ class TDFireBaseMessagingService : FirebaseMessagingService() {
             putExtra(EXTRA_PUSH_GROUP_ID, groupId)
             taskId?.let { putExtra(EXTRA_PUSH_TASK_ID, it) }
         }
-        emit(title, body, buildPendingIntent(intent), urgent)
+        val id = stableId("g$groupId:${taskId ?: 0}")
+        emit(title, body, buildPendingIntent(intent, id), urgent, id)
     }
 
     private fun showTargetedNotification(
@@ -216,7 +217,8 @@ class TDFireBaseMessagingService : FirebaseMessagingService() {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(EXTRA_PUSH_TARGET, target)
         }
-        emit(title, body, buildPendingIntent(intent), urgent)
+        val id = stableId("t:$target")
+        emit(title, body, buildPendingIntent(intent, id), urgent, id)
     }
 
     private fun showGenericNotification(title: String?, body: String?) {
@@ -225,12 +227,27 @@ class TDFireBaseMessagingService : FirebaseMessagingService() {
             putExtra(EXTRA_PUSH_TARGET, PUSH_TARGET_NOTIFICATIONS)
         }
         // Generic notices are FYI-only → non-urgent (info channel).
-        emit(title, body, buildPendingIntent(intent), urgent = false)
+        val id = stableId("generic:$title")
+        emit(title, body, buildPendingIntent(intent, id), urgent = false, id = id)
     }
 
-    private fun buildPendingIntent(intent: Intent): PendingIntent = PendingIntent.getActivity(
+    /**
+     * A notification id derived from what the push is ABOUT, not from `Random.nextInt()`.
+     *
+     * With a random id, a re-sent or superseded event (the same task assigned, then reassigned) piled
+     * up as a separate row instead of replacing the previous one, and nothing could ever be updated
+     * or cancelled later. Offset well past the fixed ids this app uses elsewhere.
+     */
+    private fun stableId(key: String): Int = PUSH_ID_BASE + (key.hashCode() and PUSH_ID_MASK)
+
+    /**
+     * [requestCode] is the notification's own id, so re-posting the same event updates the existing
+     * PendingIntent rather than minting another. It was `Random.nextInt()`, which made every push
+     * leave behind a PendingIntent that nothing could ever match, update or cancel.
+     */
+    private fun buildPendingIntent(intent: Intent, requestCode: Int): PendingIntent = PendingIntent.getActivity(
         this,
-        Random.nextInt(),
+        requestCode,
         intent,
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
@@ -240,11 +257,14 @@ class TDFireBaseMessagingService : FirebaseMessagingService() {
     )
 
     @SuppressLint("MissingPermission")
-    private fun emit(title: String?, body: String?, pendingIntent: PendingIntent, urgent: Boolean) {
+    private fun emit(title: String?, body: String?, pendingIntent: PendingIntent, urgent: Boolean, id: Int) {
         val resolvedTitle = title ?: getString(com.todoapp.mobile.R.string.app_name)
         val resolvedBody = body.orEmpty()
         val accentColor = ContextCompat.getColor(this, com.todoapp.mobile.R.color.notification_accent)
         val channelId = if (urgent) NotificationService.CHANNEL_ID else NotificationService.CHANNEL_ID_INFO
+        // Urgent and info notifications group separately: bundling them would let a silent "task
+        // completed" get folded under a heads-up stack the user reads as time-critical.
+        val groupKey = if (urgent) GROUP_KEY_URGENT else GROUP_KEY_INFO
         val notification =
             NotificationCompat
                 .Builder(this, channelId)
@@ -260,13 +280,46 @@ class TDFireBaseMessagingService : FirebaseMessagingService() {
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setDefaults(if (urgent) (NotificationCompat.DEFAULT_VIBRATE or NotificationCompat.DEFAULT_LIGHTS) else 0)
+                .setGroup(groupKey)
                 .build()
         runCatching {
-            NotificationManagerCompat
-                .from(this)
-                .notify(Random.nextInt(), notification)
+            val manager = NotificationManagerCompat.from(this)
+            manager.notify(id, notification)
+            manager.notify(summaryId(groupKey), buildSummary(groupKey, channelId, accentColor, urgent))
         }.onFailure { Timber.tag(TAG).w(it, "Failed to post notification") }
     }
+
+    /**
+     * The one notification the system collapses a group under. Required: without a summary, members
+     * of a `setGroup` bundle are shown individually anyway on most versions, so a busy group could
+     * bury everything else in the shade one row at a time.
+     */
+    private fun buildSummary(
+        groupKey: String,
+        channelId: String,
+        accentColor: Int,
+        urgent: Boolean,
+    ): Notification {
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_PUSH_TARGET, PUSH_TARGET_NOTIFICATIONS)
+        }
+        return NotificationCompat
+            .Builder(this, channelId)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(getString(com.todoapp.mobile.R.string.app_name))
+            .setContentText(getString(com.todoapp.mobile.R.string.notification_group_summary))
+            .setColor(accentColor)
+            .setPriority(if (urgent) NotificationCompat.PRIORITY_HIGH else NotificationCompat.PRIORITY_LOW)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setContentIntent(buildPendingIntent(intent, summaryId(groupKey)))
+            .setAutoCancel(true)
+            .setGroup(groupKey)
+            .setGroupSummary(true)
+            .build()
+    }
+
+    private fun summaryId(groupKey: String): Int = if (groupKey == GROUP_KEY_URGENT) SUMMARY_ID_URGENT else SUMMARY_ID_INFO
 
     companion object {
         private const val TAG = "FCM"
@@ -275,5 +328,15 @@ class TDFireBaseMessagingService : FirebaseMessagingService() {
         const val EXTRA_PUSH_TARGET = "push_target"
         const val PUSH_TARGET_INVITATIONS = "invitations"
         const val PUSH_TARGET_NOTIFICATIONS = "notifications"
+
+        private const val GROUP_KEY_URGENT = "com.todoapp.mobile.push.URGENT"
+        private const val GROUP_KEY_INFO = "com.todoapp.mobile.push.INFO"
+        private const val SUMMARY_ID_URGENT = 90_001
+        private const val SUMMARY_ID_INFO = 90_002
+
+        // Push ids occupy [1_000_000, 1_065_535] — clear of the summaries above, of the pomodoro and
+        // foreground ids (4242-4244) and of the reminder range NotificationService derives from task ids.
+        private const val PUSH_ID_BASE = 1_000_000
+        private const val PUSH_ID_MASK = 0xFFFF
     }
 }

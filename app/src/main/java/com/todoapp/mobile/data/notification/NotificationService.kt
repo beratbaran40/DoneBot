@@ -13,6 +13,7 @@ import com.example.uikit.R
 import com.todoapp.mobile.MainActivity
 import com.todoapp.mobile.MainViewModel
 import com.todoapp.mobile.common.RingtoneHolder
+import com.todoapp.mobile.common.reminderLeadDuration
 import com.todoapp.mobile.di.IoDispatcher
 import com.todoapp.mobile.domain.repository.AlarmSoundPreferences
 import com.todoapp.mobile.ui.overlay.OverlayServiceChannel
@@ -62,12 +63,12 @@ class NotificationService : Service() {
                 .Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_clock)
                 .setContentTitle(
-                    if (remindMinutesBefore == 0) {
+                    if (remindMinutesBefore <= 0) {
                         getString(com.todoapp.mobile.R.string.notification_task_reminder_title_now)
                     } else {
                         getString(
-                            com.todoapp.mobile.R.string.notification_task_reminder_title_in_minutes,
-                            remindMinutesBefore,
+                            com.todoapp.mobile.R.string.notification_task_reminder_title_in_format,
+                            reminderLeadDuration(this, remindMinutesBefore.toLong()),
                         )
                     },
                 ).setContentText(contentText)
@@ -75,7 +76,7 @@ class NotificationService : Service() {
                 .setAutoCancel(true)
                 .build()
         notificationManager.notify(
-            NOTIFICATION_ID,
+            notificationId(taskId),
             notification,
         )
         scope.launch {
@@ -142,6 +143,14 @@ class NotificationService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    /**
+     * One notification per task. The id used to be the constant 1, so two reminders due in the same
+     * minute collapsed into one — precisely what the multi-reminder feature (up to 8 times a day)
+     * produces. Falls back to the old constant when the alarm carries no task id, which is the
+     * daily-plan reminder.
+     */
+    private fun notificationId(taskId: Long?): Int = taskId?.let { (NOTIFICATION_ID_BASE + it).toInt() } ?: NOTIFICATION_ID
+
     companion object {
         const val CHANNEL_ID = "notification_channel"
 
@@ -152,6 +161,10 @@ class NotificationService : Service() {
         const val INTENT_EXTRA_LONG = "extra_time"
         const val INTENT_EXTRA_TASK_ID = "extra_task_id"
         private const val NOTIFICATION_ID = 1
+
+        // Far from the fixed ids in this package (pomodoro 4242/4243, foreground placeholder 4244)
+        // so a task id can never land on one of them.
+        private const val NOTIFICATION_ID_BASE = 100_000L
         private const val TAG = "NotificationService"
     }
 }
