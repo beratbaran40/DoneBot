@@ -4,6 +4,8 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -11,8 +13,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.example.uikit.R
 import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.previews.TDPreviewNarrow
 import com.todoapp.uikit.previews.TDPreviewWide
 import com.todoapp.uikit.theme.TDTheme
 import java.time.DayOfWeek
@@ -64,9 +70,17 @@ fun TDWeekNavigator(
         }
 
         TDText(
+            // The cross-year branch above names the year twice ("Dec 29, 2025 – Jan 4, 2026"), roughly
+            // double the width of the ordinary label, against two 48dp icon buttons. Unbounded it
+            // wrapped the row onto a second line; the weight also takes over the centring SpaceBetween
+            // stops doing once a child claims the free space.
+            modifier = Modifier.weight(1f),
             text = label,
             style = TDTheme.typography.regularTextStyle,
             color = TDTheme.colors.onBackground,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
 
         IconButton(
@@ -83,12 +97,19 @@ fun TDWeekNavigator(
     }
 }
 
+/**
+ * The modifier the real call site passes (`FilteredTasksScreen`). Without it the Row is wrap-content,
+ * `SpaceBetween` never bites, and the previews cannot reproduce the overflow they exist to catch.
+ */
+private val PREVIEW_MODIFIER = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+
 @RequiresApi(Build.VERSION_CODES.O)
 @TDPreviewWide
 @Composable
 private fun TdWeekNavigatorCurrentPreview() {
     TDTheme {
         TDWeekNavigator(
+            modifier = PREVIEW_MODIFIER,
             selectedDate = LocalDate.now(),
             onPreviousWeek = {},
             onNextWeek = {},
@@ -102,7 +123,23 @@ private fun TdWeekNavigatorCurrentPreview() {
 private fun TdWeekNavigatorPastWeekPreview() {
     TDTheme {
         TDWeekNavigator(
+            modifier = PREVIEW_MODIFIER,
             selectedDate = LocalDate.now().minusWeeks(3),
+            onPreviousWeek = {},
+            onNextWeek = {},
+        )
+    }
+}
+
+/** The widest label this component can produce: a week straddling New Year names the year twice. */
+@RequiresApi(Build.VERSION_CODES.O)
+@TDPreviewNarrow
+@Composable
+private fun TdWeekNavigatorAcrossYearsPreview() {
+    TDTheme {
+        TDWeekNavigator(
+            modifier = PREVIEW_MODIFIER,
+            selectedDate = LocalDate.of(2025, 12, 31),
             onPreviousWeek = {},
             onNextWeek = {},
         )

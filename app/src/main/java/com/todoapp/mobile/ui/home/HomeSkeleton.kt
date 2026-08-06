@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.todoapp.uikit.components.TDSkeletonBox
 import com.todoapp.uikit.components.TDSkeletonText
 import com.todoapp.uikit.previews.TDPreview
+import com.todoapp.uikit.previews.TDPreviewNarrow
 import com.todoapp.uikit.theme.TDTheme
 import com.todoapp.uikit.theme.tdCorner
 
@@ -94,9 +95,11 @@ private fun HomeSkeletonCalendarStrip() {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             repeat(HOME_SKELETON_DATE_PILL_COUNT) {
+                // Must match DatePickerCard: 48x80 at shapes.medium. The pills were 44x56 at a 14dp
+                // corner, so the strip visibly jumped the moment the real cards replaced them.
                 TDSkeletonBox(
-                    modifier = Modifier.size(width = 44.dp, height = 56.dp),
-                    shape = tdCorner(14.dp),
+                    modifier = Modifier.size(width = 48.dp, height = 80.dp),
+                    shape = TDTheme.shapes.medium,
                 )
             }
         }
@@ -174,6 +177,7 @@ private fun HomeSkeletonTaskCard(variantIndex: Int) {
     }
 }
 
+@TDPreviewNarrow
 @TDPreview
 @Composable
 private fun HomeSkeletonPreview() {

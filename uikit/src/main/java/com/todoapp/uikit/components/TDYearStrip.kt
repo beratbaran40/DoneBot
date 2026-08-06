@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.todoapp.uikit.previews.TDPreview
+import com.todoapp.uikit.previews.TDPreviewNarrow
 import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
 
@@ -46,6 +47,10 @@ fun TDYearStrip(
         ) {
             monthLabels.forEachIndexed { index, label ->
                 MonthCell(
+                    // Weighted rather than a fixed 20dp: twelve fixed cells claimed 240dp of the
+                    // ~256dp an ActivityCard leaves on a 320dp screen, so the strip had 16dp of slack
+                    // across eleven gaps and clipped the moment anything else took width.
+                    modifier = Modifier.weight(1f),
                     label = label,
                     count = monthCounts[index],
                     isSelected = index == selectedIndex,
@@ -62,6 +67,7 @@ private fun MonthCell(
     count: Int,
     isSelected: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val colors = TDTheme.colors
     // MONOCHROME: neutral selection accent (near-white in dark) instead of blue for the current month.
@@ -70,9 +76,7 @@ private fun MonthCell(
         PaletteKit.ORIGINAL, PaletteKit.PIXEL -> colors.purple
     }
     Column(
-        modifier = Modifier
-            .width(20.dp)
-            .clickable { onClick() },
+        modifier = modifier.clickable { onClick() },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
@@ -97,7 +101,26 @@ private fun MonthCell(
             text = label,
             style = TDTheme.typography.subheading2,
             color = if (isSelected) monthAccent else colors.pendingGray,
+            maxLines = 1,
         )
+    }
+}
+
+/** 256dp is what an ActivityCard leaves the strip on a 320dp screen — twelve cells have to fit it. */
+@TDPreviewNarrow
+@Composable
+private fun TDYearStripInCardWidthPreview() {
+    val labels = listOf("O", "Ş", "M", "N", "M", "H", "T", "A", "E", "E", "K", "A")
+    TDTheme {
+        Box(modifier = Modifier.width(256.dp).background(TDTheme.colors.background).padding(16.dp)) {
+            TDYearStrip(
+                title = "Son 12 ay",
+                monthLabels = labels,
+                monthCounts = listOf(2, 5, 8, 1, 0, 12, 6, 3, 9, 4, 7, 11),
+                selectedIndex = 11,
+                onMonthClick = {},
+            )
+        }
     }
 }
 

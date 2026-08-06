@@ -592,6 +592,7 @@ private fun ActivityErrorPreview() {
     }
 }
 
+@com.todoapp.uikit.previews.TDPreviewNarrow
 @com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun ActivityScreenSuccessRichPreview() {

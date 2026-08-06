@@ -7,14 +7,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -22,10 +25,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,11 +32,11 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
 import com.todoapp.uikit.image.tdPainter
-import com.todoapp.uikit.previews.TDPreview
-import com.todoapp.uikit.previews.TDPreviewWide
 import com.todoapp.uikit.theme.TDTheme
 import com.todoapp.uikit.theme.tdCorner
 import java.time.DayOfWeek
@@ -83,10 +82,10 @@ fun TDMonthlyDatePicker(
             onNextMonth = onNextMonth,
         )
         LazyRow(
-            modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+            modifier = Modifier.fillMaxWidth(),
+            // contentPadding, not a padding modifier: as an outer padding the inset clipped the first
+            // and last cards instead of letting them scroll under it, so the strip could never sit flush.
+            contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             state = listState,
         ) {
@@ -148,9 +147,17 @@ private fun MonthNavigationHeader(
             }
         }
         TDText(
+            // Weighted and capped: unbounded between two 48dp icon buttons, a long month name wrapped
+            // the header onto a second line on narrow screens and at larger font scales. The weight is
+            // also what centres it — SpaceBetween was doing that job before, and stops once a child
+            // takes the free space.
+            modifier = Modifier.weight(1f),
             text = "$monthLabel $yearLabel",
             style = TDTheme.typography.heading4,
             color = TDTheme.colors.onBackground,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
         IconButton(onClick = onNextMonth) {
             Icon(
@@ -163,7 +170,7 @@ private fun MonthNavigationHeader(
 }
 
 @Composable
-private fun DatePickerCard(
+internal fun DatePickerCard(
     modifier: Modifier,
     currentDate: LocalDate,
     isSelected: Boolean,
@@ -192,26 +199,38 @@ private fun DatePickerCard(
                 shape = TDTheme.shapes.medium,
                 color = if (isSelected) TDTheme.colors.pendingGray.copy(alpha = 0.8f) else Color.Transparent,
             )
-            .size(width = 48.dp, height = 80.dp)
+            // Minimums, not a fixed size. A hard 48dp left the labels exactly 32dp of text width, and
+            // "Wed"/"Cmt" at 14sp measure ~31dp — under a dp of headroom, and none at all once the
+            // system font scales up or the PIXEL kit swaps in its wider face; the label then wrapped
+            // inside the card. The 80dp height clipped the day number the same way. A LazyRow item
+            // that sizes to its content costs nothing, and unlike an ellipsis it keeps the three
+            // letters the cell exists to show.
+            .widthIn(min = 48.dp)
+            .heightIn(min = 80.dp)
             .clickable(
                 onClick = { onDateSelect(currentDate) },
             )
             .padding(vertical = 4.dp, horizontal = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(modifier.weight(0.8f))
+        // Modifier, not `modifier`: the incoming one already carries the background, click and padding
+        // above, and replaying that chain into four spacers is a trap waiting for the first caller
+        // that passes something.
+        Spacer(Modifier.weight(0.8f))
         TDText(
             text = shortDayOfWeekLabel(currentDate.dayOfWeek),
             style = TDTheme.typography.regularTextStyle,
             color = textColor,
+            maxLines = 1,
         )
-        Spacer(modifier.weight(0.2f))
+        Spacer(Modifier.weight(0.2f))
         TDText(
             text = currentDate.dayOfMonth.toString(),
             style = TDTheme.typography.heading4,
             color = textColor,
+            maxLines = 1,
         )
-        Spacer(modifier.weight(1f))
+        Spacer(Modifier.weight(1f))
         if (barColor != null) {
             Box(
                 modifier =
@@ -228,7 +247,7 @@ private fun DatePickerCard(
                     ),
             )
         }
-        Spacer(modifier.weight(0.3f))
+        Spacer(Modifier.weight(0.3f))
     }
 }
 
@@ -244,119 +263,4 @@ private fun shortDayOfWeekLabel(day: DayOfWeek): String {
         DayOfWeek.SUNDAY -> R.string.weekday_abbr_sun
     }
     return stringResource(resId)
-}
-
-@TDPreviewWide
-@Composable
-fun MonthlyDatePickerPreview() {
-    TDTheme {
-        var selected by remember {
-            mutableStateOf(LocalDate.of(2025, 12, 3))
-        }
-
-        TDMonthlyDatePicker(
-            modifier = Modifier,
-            displayedMonth = YearMonth.of(2025, 12),
-            selectedDate = selected,
-            onDateSelect = { selected = it },
-            onPreviousMonth = {},
-            onNextMonth = {},
-        )
-    }
-}
-
-@TDPreview
-@Composable
-fun DatePickerCardSelectedPreview() {
-    TDTheme {
-        DatePickerCard(
-            modifier = Modifier,
-            currentDate = LocalDate.of(2025, 12, 17),
-            isSelected = true,
-        )
-    }
-}
-
-@TDPreview
-@Composable
-fun DatePickerCardUnselectedPreview() {
-    TDTheme {
-        DatePickerCard(
-            modifier = Modifier,
-            currentDate = LocalDate.of(2025, 12, 18),
-            isSelected = false,
-        )
-    }
-}
-
-@TDPreview
-@Composable
-fun DatePickerCardOverdueUnselectedPreview() {
-    TDTheme {
-        DatePickerCard(
-            modifier = Modifier,
-            currentDate = LocalDate.of(2025, 12, 9),
-            isSelected = false,
-            hasOverdue = true,
-        )
-    }
-}
-
-@TDPreview
-@Composable
-fun DatePickerCardOverdueSelectedPreview() {
-    TDTheme {
-        DatePickerCard(
-            modifier = Modifier,
-            currentDate = LocalDate.of(2025, 12, 9),
-            isSelected = true,
-            hasOverdue = true,
-        )
-    }
-}
-
-@TDPreview
-@Composable
-fun DatePickerCardHasTaskPreview() {
-    TDTheme {
-        DatePickerCard(
-            modifier = Modifier,
-            currentDate = LocalDate.of(2025, 12, 10),
-            isSelected = false,
-            hasTask = true,
-        )
-    }
-}
-
-@TDPreview
-@Composable
-fun DatePickerCardHasTaskSelectedPreview() {
-    TDTheme {
-        DatePickerCard(
-            modifier = Modifier,
-            currentDate = LocalDate.of(2025, 12, 10),
-            isSelected = true,
-            hasTask = true,
-        )
-    }
-}
-
-@TDPreviewWide
-@Composable
-fun MonthlyDatePickerWithOverduePreview() {
-    TDTheme {
-        val month = YearMonth.of(2025, 12)
-        var selected by remember { mutableStateOf(LocalDate.of(2025, 12, 17)) }
-        TDMonthlyDatePicker(
-            modifier = Modifier,
-            displayedMonth = month,
-            selectedDate = selected,
-            taskDates = setOf(month.atDay(10), month.atDay(20)),
-            overdueDates = setOf(month.atDay(3), month.atDay(9), month.atDay(15)),
-            hasOverdueBeforeDisplayedMonth = true,
-            onDateSelect = { selected = it },
-            onPreviousMonth = {},
-            onNextMonth = {},
-        )
-    }
 }

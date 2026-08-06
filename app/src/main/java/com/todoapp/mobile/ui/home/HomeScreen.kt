@@ -116,6 +116,7 @@ private fun HomeErrorPreview() {
     }
 }
 
+@com.todoapp.uikit.previews.TDPreviewNarrow
 @com.todoapp.uikit.previews.TDPreview
 @com.todoapp.uikit.previews.TDPreviewDevices
 @Composable

@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.todoapp.uikit.components.TDSkeletonBox
 import com.todoapp.uikit.components.TDSkeletonText
 import com.todoapp.uikit.previews.TDPreview
+import com.todoapp.uikit.previews.TDPreviewNarrow
 import com.todoapp.uikit.theme.TDTheme
 
 @Composable
@@ -137,6 +138,7 @@ private fun FilteredTasksSkeletonRow(variantIndex: Int) {
     }
 }
 
+@TDPreviewNarrow
 @TDPreview
 @Composable
 private fun FilteredTasksSkeletonPreview() {
