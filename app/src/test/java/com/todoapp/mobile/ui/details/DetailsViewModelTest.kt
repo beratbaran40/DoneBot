@@ -15,7 +15,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -117,6 +119,32 @@ class DetailsViewModelTest {
         advanceUntilIdle()
 
         assertTrue("end-date change must mark the form dirty", vm.success().isDirty)
+    }
+
+    @Test
+    fun `moving the start past the end drops the end instead of crossing them`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        val vm = viewModel()
+        advanceUntilIdle()
+
+        // Routine runs 6 Aug → 6 Sep. Push the start to December.
+        vm.onAction(DetailsContract.UiAction.OnDialogDateSelect(LocalDate.of(2026, 12, 1)))
+        advanceUntilIdle()
+
+        // firesOn rejects every day before the anchor and every day after `until`, so a crossed
+        // pair leaves nothing: the task saves, syncs, and appears on no day anywhere.
+        assertNull(vm.success().recurrenceUntil)
+    }
+
+    @Test
+    fun `an end still ahead of the new start is kept`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        val vm = viewModel()
+        advanceUntilIdle()
+
+        vm.onAction(DetailsContract.UiAction.OnDialogDateSelect(LocalDate.of(2026, 8, 20)))
+        advanceUntilIdle()
+
+        // The guard is about a crossing, not about touching the date at all.
+        assertEquals(LocalDate.of(2026, 9, 6), vm.success().recurrenceUntil)
     }
 
     @Test

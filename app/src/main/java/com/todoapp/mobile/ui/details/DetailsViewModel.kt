@@ -436,7 +436,7 @@ constructor(
     }
 
     private fun updateDate(date: LocalDate) {
-        updateSuccessState { it.copy(taskDate = date) }
+        updateSuccessState { it.copy(taskDate = date, recurrenceUntil = it.endAfter(date)) }
     }
 
     private fun updateTimeStart(time: LocalTime) {
@@ -449,9 +449,20 @@ constructor(
 
     private fun selectDialogDate(date: LocalDate) {
         updateSuccessState {
-            it.copy(dialogSelectedDate = date, taskDate = date)
+            it.copy(dialogSelectedDate = date, taskDate = date, recurrenceUntil = it.endAfter(date))
         }
     }
+
+    /**
+     * The routine's end, dropped if the new start has moved past it — the same guard
+     * `CreationHubViewModel` applies when creating one.
+     *
+     * `RecurrenceRule.firesOn` rejects every day before the anchor and every day after `until`, so a
+     * pair that has crossed leaves nothing at all: the task saves, syncs, and then appears on no day
+     * in Home, Calendar or Activity, with no alarm either. Moving a start is not a way to say "and
+     * throw the end away", so the end goes rather than becoming unreachable.
+     */
+    private fun UiState.Success.endAfter(start: LocalDate): LocalDate? = recurrenceUntil?.takeUnless { it.isBefore(start) }
 
     private fun deselectDialogDate() {
         updateSuccessState { it.copy(dialogSelectedDate = null) }
