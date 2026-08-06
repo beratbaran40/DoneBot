@@ -38,8 +38,17 @@ class LocalIntentClassifierTest {
     fun setUp() {
         // Return the resource id itself so a response can be traced back to the string it came from
         // without booting Robolectric for a routing test.
+        // Resource id plus the formatting arguments, so a test can assert on the numbers the classifier
+        // computed without booting Robolectric to render the real string.
         every { context.getString(any()) } answers { "res:${firstArg<Int>()}" }
-        every { context.getString(any(), *anyVararg()) } answers { "res:${firstArg<Int>()}" }
+        every { context.getString(any(), *anyVararg()) } answers {
+            // MockK hands the varargs through as a single Object[], so it has to be flattened before
+            // it reads as the numbers the classifier actually computed.
+            val args = invocation.args.drop(1).flatMap { arg ->
+                (arg as? Array<*>)?.toList() ?: listOf(arg)
+            }
+            if (args.isEmpty()) "res:${firstArg<Int>()}" else "res:${firstArg<Int>()}|${args.joinToString("|")}"
+        }
         every { computeHealthPoints() } returns flowOf(HealthPoints(halfHearts = 13, showDepletionDialog = false))
         // A relaxed mock returns a Flow that never emits, and every response builder ends in .first() —
         // so each intent under test needs its source stubbed or it dies with NoSuchElementException.
@@ -105,6 +114,21 @@ class LocalIntentClassifierTest {
             LocalIntentClassifier.Intent.WEEKLY_REMAINING,
             classifier().tryAnswer("bu hafta ne kaldı")?.intent,
         )
+    }
+
+    @Test
+    fun `the answer carries the percentage the question asked about`() = runTest {
+        // 18 of 24 half-hearts is a three-quarters-full bar.
+        every { computeHealthPoints() } returns flowOf(HealthPoints(halfHearts = 18, showDepletionDialog = false))
+        assertEquals("res:${R.string.chat_local_health_format}|75|9|12", classifier().tryAnswer("kalplerim nasıl?")?.response)
+
+        // 11 is 45.8%, and truncating would report 45 — a worse day than the user actually had.
+        every { computeHealthPoints() } returns flowOf(HealthPoints(halfHearts = 11, showDepletionDialog = false))
+        assertEquals("res:${R.string.chat_local_health_format}|46|5½|12", classifier().tryAnswer("kalplerim nasıl?")?.response)
+
+        // Full bar is exactly 100, never 99 from a rounding slip.
+        every { computeHealthPoints() } returns flowOf(HealthPoints(halfHearts = 24, showDepletionDialog = false))
+        assertEquals("res:${R.string.chat_local_health_format}|100|12|12", classifier().tryAnswer("kalplerim nasıl?")?.response)
     }
 
     @Test

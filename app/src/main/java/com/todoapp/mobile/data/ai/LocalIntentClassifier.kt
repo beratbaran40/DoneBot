@@ -7,6 +7,7 @@ import com.todoapp.mobile.domain.engine.PomodoroEngine
 import com.todoapp.mobile.domain.engine.PomodoroMode
 import com.todoapp.mobile.domain.engine.Session
 import com.todoapp.mobile.domain.repository.HEART_COUNT
+import com.todoapp.mobile.domain.repository.MAX_HALF_HEARTS
 import com.todoapp.mobile.domain.repository.TaskRepository
 import com.todoapp.mobile.domain.usecase.ComputeHealthPointsUseCase
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -15,6 +16,7 @@ import java.time.Clock
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.roundToInt
 
 @Singleton
 class LocalIntentClassifier @Inject constructor(
@@ -232,11 +234,19 @@ class LocalIntentClassifier @Inject constructor(
      */
     private suspend fun buildHealthPointsResponse(): String {
         val halfHearts = computeHealthPoints().first().halfHearts
-        return if (halfHearts <= 0) {
-            context.getString(R.string.chat_local_health_empty)
-        } else {
-            context.getString(R.string.chat_local_health_format, heartsLabel(halfHearts), HEART_COUNT)
-        }
+        if (halfHearts <= 0) return context.getString(R.string.chat_local_health_empty)
+        // The question asks about health, so lead with the share of a full bar and keep the hearts as
+        // the detail — the user can then match the number against what the Activity screen draws.
+        // Rounded, not truncated: 11 half-hearts is 45.8%, and reporting 45 reads as a worse day than
+        // it was. NOT the same figure as getProductivityInsights' completionPercent, which is
+        // completed-over-total tasks; this one is the bar's own fill.
+        val percent = ((halfHearts * PERCENT_SCALE) / MAX_HALF_HEARTS.toFloat()).roundToInt()
+        return context.getString(
+            R.string.chat_local_health_format,
+            percent,
+            heartsLabel(halfHearts),
+            HEART_COUNT,
+        )
     }
 
     private fun matchesHealthPoints(text: String): Boolean = HEALTH_TR_ANCHOR.containsMatchIn(text) || HEALTH_EN_ANCHOR.containsMatchIn(text)
@@ -245,6 +255,7 @@ class LocalIntentClassifier @Inject constructor(
 
     companion object {
         private const val MAX_INTENT_LENGTH = 60
+        private const val PERCENT_SCALE = 100
         private const val POMODORO_DEFAULT_MINUTES = 25
         private const val POMODORO_MIN_MINUTES = 1
         private const val POMODORO_MAX_MINUTES = 180

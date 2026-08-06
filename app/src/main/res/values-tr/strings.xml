@@ -979,7 +979,7 @@
     <string name="chat_local_week_count_format">Bu hafta %1$d görev tamamladın.</string>
     <string name="chat_local_week_remaining_format">Bu hafta %1$d bekleyen işin var.</string>
     <string name="chat_local_week_remaining_empty">Bu haftanın hepsi tamam — süpersin.</string>
-    <string name="chat_local_health_format">%2$d kalpten %1$s tanesi sende.</string>
+    <string name="chat_local_health_format">Üretkenlik sağlığın %%%1$d — %3$d kalpten %2$s tanesi sende.</string>
     <string name="chat_local_health_empty">Kalbin kalmadı — bugün bir görev bitirirsen geri kazanmaya başlarsın.</string>
     <string name="chat_local_greeting">Selam! Bugün aklında ne var?</string>
     <string name="chat_local_pomodoro_started_format">%1$d dakikalık pomodoro başladı — odak modu açık. Kolay gelsin!</string>
