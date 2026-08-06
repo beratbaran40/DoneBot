@@ -70,7 +70,7 @@ After `20-11`, `:app` holds a mixture of things that genuinely must be there (Se
 
 6. **Full gate, size measurement, signed release build**, `jarsigner -verify`.
 
-7. **Ship Android 1.3 to Play.** Bump `versionCode` (read the current value from `app/build.gradle.kts`; Play burns codes permanently even for deleted drafts). Tag it.
+7. **Ship Android 1.3 to Play — but the merge is the owner's call.** This is the one point where `feat/ios-port` is a candidate to merge into `main` (decision D-11). **Do not merge it yourself.** Report that M5 is reached, that the gate below is green, and let the owner decide. If they approve, bump `versionCode` (read the current value from `app/build.gradle.kts`; Play burns codes permanently even for deleted drafts) and tag.
 
 8. **Mark milestone M5 complete** in `PROGRESS.md`.
 

@@ -21,7 +21,9 @@ Establish the rules that make a 500-hour in-place restructure of a **live, shipp
 
 DoneBot has real users on Google Play. A migration that leaves the app unshippable for six months is not a migration — it is a rewrite with extra steps, and it removes the ability to hotfix a production bug. The protocol below buys one property and it is worth its cost:
 
-> **At every commit on `main`, the Android app builds, passes its tests, and could be shipped.**
+> **At every commit on the port branch, the Android app builds, passes its tests, and could be shipped.**
+
+(The work happens on `feat/ios-port`, never on `main` — see `../README.md` §6.1. "Shippable" means the branch could be merged and released, not that it already has been.)
 
 That property is what lets you stop at any point, ship a hotfix, and resume. It is also what makes each failure diagnosable: if the gate was green at commit N and red at N+1, the cause is in one commit.
 
@@ -43,7 +45,12 @@ Before any migration task:
    git tag v1.2-preKMP && git push origin v1.2-preKMP
    ```
 5. Cut a hotfix branch: `git branch release/1.2.x && git push -u origin release/1.2.x`
-6. **Freeze Android feature work.** Only critical bug fixes, and those land on `release/1.2.x` and are cherry-picked forward.
+6. **Cut the working branch — every migration task lands here, never on `main`:**
+   ```bash
+   git checkout -b feat/ios-port main
+   git push -u origin feat/ios-port
+   ```
+7. **Freeze Android feature work.** Only critical bug fixes, and those land on `release/1.2.x` and are cherry-picked forward.
 
 `v1.2-preKMP` is the reference point for every "did this change Android behaviour?" question for the next six months.
 

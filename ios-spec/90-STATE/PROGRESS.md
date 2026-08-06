@@ -1,5 +1,16 @@
 # PROGRESS — the ledger
 
+> ## ⚠ Working branch: `feat/ios-port`
+>
+> **All work in this spec is committed here, never to `main`** (decision D-11).
+> Check before your first commit of every session:
+> ```bash
+> git branch --show-current     # must NOT be main
+> ```
+> `main` is the live Android app's branch and the owner keeps working there.
+> Merge `main` **into** this branch to pick up Android fixes — never the reverse.
+> The only merge back to `main` is the owner's decision at milestone M5.
+
 **Single source of truth for task status.** Update in the same commit as the status flip. Never batch updates.
 
 Status vocabulary: `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`

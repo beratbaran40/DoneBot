@@ -6,10 +6,11 @@ You are implementing the port of DoneBot (a live Android app on Google Play, ~90
 
 ---
 
-## 0. The five hard rules
+## 0. The six hard rules
 
 These are not guidelines. Violating any of them is a defect, even if the code "works."
 
+0. **Never commit to `main`.** All iOS work — every task in this spec, including the migration tasks that touch Android code — happens on a branch. `main` is the live Android app's branch and stays that way until the port is complete and deliberately merged. Before your first commit in any session, run `git branch --show-current` and confirm you are not on `main`. See §6.
 1. **Android must stay green and shippable after every task.** This app has real users. The verification command in §3 must pass before you mark any task `DONE`. If it does not pass, you are not done — you are mid-task.
 2. **Never mark a task `DONE` without running its `verify:` commands and seeing them pass.** Do not infer success. Do not mark `DONE` "pending a build." Paste the outcome into the ledger.
 3. **Never invent scope.** Implement exactly what the task file specifies. If you discover work that must happen but is not in any task file, write it into `90-STATE/BLOCKERS.md` and keep going — do not silently expand.
@@ -200,7 +201,37 @@ The gate is §3.5. Every file move is independently verifiable and independently
 
 ---
 
-## 6. Commits
+## 6. Branching and commits
+
+### 6.1 Never `main`
+
+**All iOS work happens on a branch off `main`. Nothing in this spec is committed directly to `main`.**
+
+`main` is the branch the live Android app ships from. The owner continues to work there — bug fixes, releases, occasionally mid-session. Committing iOS work to it mixes a six-month restructure into the branch that has to stay releasable at all times.
+
+The working branch is **`feat/ios-port`** unless `90-STATE/PROGRESS.md` records a different one.
+
+```bash
+# Start of every session — verify, do not assume
+git branch --show-current          # must NOT be main
+
+# If the branch does not exist yet
+git checkout -b feat/ios-port main
+
+# Bring in Android fixes that landed on main
+git checkout feat/ios-port
+git merge main
+```
+
+**Merge `main` into the branch, never the reverse**, until the port is complete and the owner decides to merge it back.
+
+Two signals that you are on the wrong branch, both worth stopping for:
+- `git status` shows dirty files you did not touch
+- a file you edited earlier in the session has reverted
+
+Both usually mean the branch changed under you. Check before committing anything.
+
+### 6.2 Commit format
 
 This repo uses Conventional Commits, lowercase, with the body explaining **why** rather than what.
 

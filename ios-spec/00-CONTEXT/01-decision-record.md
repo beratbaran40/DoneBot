@@ -53,7 +53,9 @@ The domain layer is thin — most business logic lives in repositories and ViewM
 
 ## D-04 · Ship Android v1.2 first, then freeze Android feature work
 
-**Decision.** v1.2 goes to Play. Read the current `versionCode` from `app/build.gradle.kts` rather than trusting any number written here — it moves, and an uploaded code is burned forever even if the draft is deleted. Tag `v1.2-preKMP`. Cut `release/1.2.x` for hotfixes. Migration lands on `main`. No new Android features during migration.
+**Decision.** v1.2 goes to Play. Read the current `versionCode` from `app/build.gradle.kts` rather than trusting any number written here — it moves, and an uploaded code is burned forever even if the draft is deleted. Tag `v1.2-preKMP`. Cut `release/1.2.x` for hotfixes and **`feat/ios-port` for the work**. No new Android features during migration.
+
+**All port work lands on `feat/ios-port`, never on `main`** — see D-11.
 
 **Why.** Development velocity on this repo has been ~10 commits/day. An in-place restructure running against that rate produces continuous merge conflicts and doubles the touch cost of every new screen.
 
@@ -108,6 +110,20 @@ Full design: `30-PLATFORM/01-notifications-and-alarms.md`.
 **Why.** Baseline is 18.17 MiB against a 20 MiB ceiling — 9% headroom. Projected net change is +0.3…+1.2 MiB (Ktor and CMP resources up, dead Maps deps and Hilt down). That lands under 20 MiB but with no slack. Deciding this now is engineering; discovering it at 19.9 MiB mid-migration is a crisis.
 
 **Not a licence to be careless.** Every dependency-touching task still records the measured size. The `sqlite-bundled`-on-Android trap (+3–4 MiB) remains forbidden.
+
+---
+
+## D-11 · All port work happens on a branch, never on `main`
+
+**Decision.** Every task in this spec — including the `20-MIGRATION` tasks that modify Android code — is committed to **`feat/ios-port`**, branched from `main`. `main` is never committed to directly.
+
+**Why.** `main` is the branch the live Android app ships from, and the owner keeps working there: bug fixes, releases, sometimes mid-session. Landing a six-month restructure on it would mean the branch that must stay releasable at all times is simultaneously half-migrated. Keeping the port on its own branch means a production hotfix is always one `git checkout main` away.
+
+**Direction of flow.** Merge `main` **into** `feat/ios-port` to pick up Android fixes. Never the reverse, until the owner decides the port is ready.
+
+**The one deliberate exception.** `20-12` reaches milestone M5, where the fully-migrated app is Android-shippable with zero iOS code written. Releasing Android 1.3 from there is a **merge to `main` that the owner decides on** — not something an agent does. Ask; do not merge.
+
+**Enforcement.** `README.md` §0 rule 0 requires checking `git branch --show-current` before the first commit of any session. Two symptoms mean the branch changed underneath you: dirty files you did not touch, and an edit from earlier in the session having reverted.
 
 ---
 
