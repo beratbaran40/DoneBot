@@ -57,7 +57,9 @@ android {
         applicationId = "com.todoapp.mobile"
         minSdk = 26
         targetSdk = 36
-        versionCode = 9
+        // 9 was consumed by a Play draft that was uploaded and then deleted — an uploaded versionCode
+        // is spent forever, deleting the release does not give it back.
+        versionCode = 10
         versionName = "1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
