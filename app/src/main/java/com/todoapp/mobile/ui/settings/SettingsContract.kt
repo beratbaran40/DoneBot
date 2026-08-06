@@ -84,6 +84,8 @@ object SettingsContract {
 
         data object OnNavigateToAlarmSounds : UiAction
 
+        data object OnNavigateToNotificationSettings : UiAction
+
         data object OnNavigateToLicenses : UiAction
 
         data object OnNavigateToAppColors : UiAction

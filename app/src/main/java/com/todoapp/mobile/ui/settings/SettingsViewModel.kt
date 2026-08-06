@@ -244,6 +244,8 @@ constructor(
             UiAction.OnLoginOrRegisterClick -> _navEffect.trySend(NavigationEffect.Navigate(Screen.Login()))
             UiAction.OnNavigateToAlarmSounds ->
                 _navEffect.trySend(NavigationEffect.Navigate(Screen.AlarmSounds))
+            UiAction.OnNavigateToNotificationSettings ->
+                _navEffect.trySend(NavigationEffect.Navigate(Screen.NotificationSettings))
             UiAction.OnNavigateToLicenses ->
                 _navEffect.trySend(NavigationEffect.Navigate(Screen.Licenses))
             UiAction.OnNavigateToAppColors ->

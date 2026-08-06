@@ -254,6 +254,13 @@ sealed class AppDestination(
         hasInfoDialog = true,
     )
 
+    data object NotificationSettings : AppDestination(
+        title = R.string.settings_section_notifications,
+        route = Screen.NotificationSettings::class.requiredRoute(),
+        icon = null,
+        selectedIcon = null,
+    )
+
     data object Licenses : AppDestination(
         title = R.string.licenses_title,
         route = Screen.Licenses::class.requiredRoute(),
@@ -332,6 +339,7 @@ sealed class AppDestination(
                 Notifications,
                 Invitations,
                 AlarmSounds,
+                NotificationSettings,
                 Licenses,
                 AppColors,
                 BlockedUsers,

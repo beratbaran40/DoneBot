@@ -91,7 +91,6 @@ internal fun SettingsContent(
         SettingsNotificationsSection(
             isUserAuthenticated = uiState.isUserAuthenticated,
             pushNotificationsEnabled = uiState.pushNotificationsEnabled,
-            isPushTogglePending = uiState.isPushTogglePending,
             mutedPushTypes = uiState.mutedPushTypes,
             dailyPlanEnabled = uiState.dailyPlanEnabled,
             onAction = onAction,

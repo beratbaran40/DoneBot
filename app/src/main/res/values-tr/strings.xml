@@ -626,6 +626,17 @@
     <string name="settings_larger_text">Yazı boyutu</string>
     <string name="settings_larger_text_desc">Sistem yazı tipi boyutunu ayarla</string>
     <string name="settings_push_notifications">Anlık bildirimler</string>
+    <!-- Bildirim ekranını açan Ayarlar satırı ve tek bakışta durum özeti. -->
+    <string name="settings_notifications_entry_title">Bildirimler ve hatırlatıcılar</string>
+    <string name="settings_notifications_summary_all_on">Tümü açık</string>
+    <string name="settings_notifications_summary_push_off">Anlık bildirimler kapalı</string>
+    <plurals name="settings_notifications_summary_off">
+        <item quantity="one">%1$d tanesi kapalı</item>
+        <item quantity="other">%1$d tanesi kapalı</item>
+    </plurals>
+    <string name="settings_notifications_group_device">Bu cihazda</string>
+    <string name="settings_notifications_group_push">Grup bildirimleri</string>
+    <string name="settings_push_group_scope_note">Bunlar yalnızca gruplarından gelen bildirimleri kapsar. Kendi görevlerinin hatırlatıcısı görev bazında ayarlanır.</string>
     <string name="settings_push_type_subtitle">Bildirim listende yine görünür</string>
     <string name="settings_push_type_assignments">Bana atanan görevler</string>
     <string name="settings_push_type_completions">Başkalarının tamamladığı görevler</string>

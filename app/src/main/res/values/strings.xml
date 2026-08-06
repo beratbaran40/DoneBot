@@ -625,6 +625,17 @@
     <string name="settings_larger_text">Text size</string>
     <string name="settings_larger_text_desc">Adjust system font scaling</string>
     <string name="settings_push_notifications">Push notifications</string>
+    <!-- Settings row that opens the notification screen, plus its at-a-glance state summary. -->
+    <string name="settings_notifications_entry_title">Notifications &amp; reminders</string>
+    <string name="settings_notifications_summary_all_on">All on</string>
+    <string name="settings_notifications_summary_push_off">Push notifications off</string>
+    <plurals name="settings_notifications_summary_off">
+        <item quantity="one">%1$d turned off</item>
+        <item quantity="other">%1$d turned off</item>
+    </plurals>
+    <string name="settings_notifications_group_device">On this device</string>
+    <string name="settings_notifications_group_push">Group notifications</string>
+    <string name="settings_push_group_scope_note">These only cover notifications from your groups. Reminders for your own tasks are set on each task.</string>
     <string name="settings_push_type_subtitle">Still appears in your notification list</string>
     <string name="settings_push_type_assignments">Tasks assigned to me</string>
     <string name="settings_push_type_completions">Tasks others complete</string>
