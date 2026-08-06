@@ -33,6 +33,8 @@ or delete it from the GitHub web UI: Settings → General → Danger Zone.
 
 **Tried:** `gh repo delete beratbaran40/DoneBot-iOS --yes` → 403, scope missing. Current scopes: `gist, read:org, repo`.
 
+**RESOLVED [2026-08-06]** — the owner deleted the repository manually. Verified: `gh repo view beratbaran40/DoneBot-iOS` returns `Could not resolve to a Repository`. The account now holds `DoneBot`, `DoneBot-Backend` and `DoneBot-Admin` only. ADR-001 stands: one repository, `iosApp/` at the root of this one.
+
 ---
 
 ## [2026-08-06] 10-01 — Apple Developer Program enrolment
