@@ -20,10 +20,17 @@ data class TaskCapabilities(
     val recurs: Boolean,
     val hasSteps: Boolean,
     val hasMultipleReminders: Boolean,
-    val isBounded: Boolean,
 ) {
-    /** A shape the classic three can't express: a combination, or a brand-new capability. */
-    val isCustom: Boolean get() = (recurs && hasSteps) || hasMultipleReminders || isBounded
+    /**
+     * A shape the classic three can't express: a combination, or a brand-new capability.
+     *
+     * A scheduled end (`recurrenceUntil`) used to count here, which made "every day for a month" a
+     * CUSTOM task rather than a routine with a finish line. It is not a different shape — UNTIL sits
+     * beside FREQ in the same rule, and `RecurrenceRule` has modelled it as such all along. Treating
+     * it as one meant a routine could not be given an end without changing what it was, so the
+     * calendar's span gesture had to stay locked to the custom form.
+     */
+    val isCustom: Boolean get() = (recurs && hasSteps) || hasMultipleReminders
 
     /** Completion for this task is tracked per-day in `task_daily_completions`, not on the base row. */
     val completionIsPerDay: Boolean get() = recurs
@@ -37,7 +44,6 @@ fun Task.capabilities(): TaskCapabilities = TaskCapabilities(
     // subtaskTotal covers the list surfaces, where the full subtasks list isn't loaded.
     hasSteps = subtasks.isNotEmpty() || subtaskTotal > 0,
     hasMultipleReminders = reminderTimes.size > 1,
-    isBounded = recurrenceUntil != null,
 )
 
 /**
@@ -51,13 +57,3 @@ fun taskFormType(caps: TaskCapabilities): TaskFormType = when {
     caps.recurs -> TaskFormType.ROUTINE
     else -> TaskFormType.ONE_TIME
 }
-
-/** Kept so call sites that only know the two legacy inputs keep compiling. */
-fun taskFormType(hasSubtasks: Boolean, recurrence: Recurrence): TaskFormType = taskFormType(
-    TaskCapabilities(
-        recurs = recurrence != Recurrence.NONE,
-        hasSteps = hasSubtasks,
-        hasMultipleReminders = false,
-        isBounded = false,
-    ),
-)

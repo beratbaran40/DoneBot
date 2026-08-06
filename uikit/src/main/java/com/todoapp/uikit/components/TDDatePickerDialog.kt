@@ -33,12 +33,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.uikit.R
 import com.todoapp.uikit.image.tdPainter
-import com.todoapp.uikit.previews.TDPreviewDialog
 import com.todoapp.uikit.theme.TDTheme
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
+/**
+ * A collapsed date field that opens a calendar dialog.
+ *
+ * The dialog edits a **draft** and tells the caller nothing until "OK" is pressed; "Cancel", a tap
+ * outside and the back gesture all drop it. It used to write straight through on every tap, which
+ * left "OK" with nothing to confirm and no way to offer a Cancel at all — a mistap was permanent, and
+ * the one shortcut that did dismiss ("Today") therefore read as the confirm the dialog never had.
+ *
+ * The callbacks below are unchanged in shape; only their timing moved from per-tap to on-confirm.
+ */
 @Composable
 fun TDDatePickerDialog(
     modifier: Modifier = Modifier,
@@ -49,18 +58,20 @@ fun TDDatePickerDialog(
     supportingText: String? = null,
     /**
      * Non-null turns on span selection: **hold** a day to start one, then **tap** another to finish
-     * it, and this fires with the two ordered. Also fires when a tap trims an existing span (see
-     * [resolveDayTap]). Null keeps the picker single-day — no hint, no long-press, no band.
+     * it. Fires on confirm with the two ordered, for a span the draft ended up holding — however it
+     * got there, whether by the hold-then-tap gesture or by trimming one that was already showing
+     * (see [resolveDayTap]). Null keeps the picker single-day — no hint, no long-press, no band.
      */
     onRangeSelect: ((start: LocalDate, end: LocalDate) -> Unit)? = null,
     /** End of the currently selected span, if any. [selectedDate] is its start. */
     rangeEnd: LocalDate? = null,
     /**
-     * Fired when a plain tap lands while a span is showing — "I want a single day again".
+     * Fired on confirm when a span the caller still holds is gone from the draft — "I want a single
+     * day again".
      *
-     * Separate from [onDateSelect] because that also fires when the FIRST day of a new span is held,
-     * and because changing only the start date must not silently discard an end the user picked from
-     * the form's own chips. This callback fires on exactly one intent and no other.
+     * Separate from [onDateSelect] because that also fires for a start date that simply moved, and
+     * because changing only the start must not silently discard an end the user picked from the
+     * form's own chips. This callback fires on exactly one intent and no other.
      */
     onRangeClear: (() -> Unit)? = null,
     /** Shown above the grid to teach the hold gesture. Only rendered when ranges are enabled. */
@@ -78,17 +89,24 @@ fun TDDatePickerDialog(
     // draw a band or claim a span in the summary. Callers keep the value around across a
     // repeats/doesn't-repeat toggle, and honouring it here would show a span nobody can edit.
     val effectiveRangeEnd = rangeEnd.takeIf { onRangeSelect != null }
+    // What the open dialog is editing. Plain remember, like the anchor: an uncommitted draft has no
+    // business surviving process death — reopening reseeds it from the caller anyway.
+    var draftDate by remember { mutableStateOf(selectedDate) }
+    var draftEnd by remember { mutableStateOf(effectiveRangeEnd) }
     // The day being held while we wait for the second one. Transient by design: an abandoned anchor
     // should not survive reopening the picker.
     var anchorDate by remember { mutableStateOf<LocalDate?>(null) }
 
-    // Open on the month you are actually looking at. Without this the picker always opened on the
-    // current month, so editing a task dated months away started with a pointless scroll.
+    // Open on the month you are actually looking at, showing what the caller currently holds. Without
+    // this the picker always opened on the current month, so editing a task dated months away started
+    // with a pointless scroll.
     // Keyed on the OPEN transition only. Keying on selectedDate too looks harmless but is not:
-    // holding the first day also sets selectedDate, which would re-run this and wipe the anchor the
+    // holding the first day also moves the draft, which would re-run this and wipe the anchor the
     // hold just created — the span could never be completed.
     LaunchedEffect(isPickerOpen) {
         if (isPickerOpen) {
+            draftDate = selectedDate
+            draftEnd = effectiveRangeEnd
             selectedMonth = YearMonth.from(selectedDate ?: LocalDate.now())
             anchorDate = null
         }
@@ -98,8 +116,8 @@ fun TDDatePickerDialog(
     // Only on completion: combinedClickable already emits the platform long-press tick when the
     // anchor is set, and stacking a second buzz there would read as a double vibration.
     val haptics = LocalHapticFeedback.current
-    LaunchedEffect(effectiveRangeEnd) {
-        if (effectiveRangeEnd != null) haptics.performHapticFeedback(HapticFeedbackType.GestureEnd)
+    LaunchedEffect(draftEnd) {
+        if (draftEnd != null) haptics.performHapticFeedback(HapticFeedbackType.GestureEnd)
     }
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -107,6 +125,8 @@ fun TDDatePickerDialog(
     ) {
         TDPickerField(
             title = stringResource(R.string.pick_a_date),
+            // The collapsed field shows what is COMMITTED, never the draft — it is the answer the
+            // form is holding, and it must not move while a dialog the user may cancel is open.
             value = spanLabel(selectedDate, effectiveRangeEnd) ?: stringResource(R.string.pick_a_date),
             onClick = { isPickerOpen = true },
             emphasizeValue = selectedDate != null,
@@ -123,6 +143,7 @@ fun TDDatePickerDialog(
         )
         if (isPickerOpen) {
             Dialog(
+                // Dismissing without confirming is a cancel: the draft dies with the dialog.
                 onDismissRequest = { isPickerOpen = false },
             ) {
                 Surface(
@@ -150,7 +171,7 @@ fun TDDatePickerDialog(
                         }
                         TDDatePickerSingleInput(
                             selectedMonth = selectedMonth,
-                            selectedDate = selectedDate,
+                            selectedDate = draftDate,
                             onMonthBack = { selectedMonth = selectedMonth.minusMonths(1) },
                             onMonthForward = { selectedMonth = selectedMonth.plusMonths(1) },
                             onDaySelect = { day ->
@@ -158,32 +179,33 @@ fun TDDatePickerDialog(
                                 // mid-gesture, trim one that already exists, or fall back to a plain
                                 // single day. With ranges off it always returns SelectSingle, so the
                                 // other four pickers behave exactly as before.
-                                when (
-                                    val outcome =
-                                        resolveDayTap(day, selectedDate, effectiveRangeEnd, anchorDate)
-                                ) {
+                                when (val outcome = resolveDayTap(day, draftDate, draftEnd, anchorDate)) {
                                     is DayTapOutcome.SelectSingle -> {
                                         anchorDate = null
-                                        if (effectiveRangeEnd != null) onRangeClear?.invoke()
-                                        onDateSelect(outcome.day)
+                                        draftDate = outcome.day
+                                        draftEnd = null
                                     }
                                     is DayTapOutcome.SelectSpan -> {
                                         anchorDate = null
-                                        onRangeSelect?.invoke(outcome.start, outcome.end)
+                                        draftDate = outcome.start
+                                        draftEnd = outcome.end
                                     }
                                 }
                             },
-                            onDayDeselect = onDateDeselect,
-                            rangeEnd = effectiveRangeEnd,
+                            onDayDeselect = {
+                                draftDate = null
+                                draftEnd = null
+                            },
+                            rangeEnd = draftEnd,
                             anchorDate = anchorDate,
                             // Long-press now only STARTS a span; the tap above finishes it. Holding
                             // for both ends meant remembering to keep holding for the second day,
                             // which is a chore for something a tap can say just as clearly.
                             onDayLongPress = onRangeSelect?.let {
                                 { day ->
-                                    if (effectiveRangeEnd != null) onRangeClear?.invoke()
                                     anchorDate = day
-                                    onDateSelect(day)
+                                    draftDate = day
+                                    draftEnd = null
                                 }
                             },
                         )
@@ -191,51 +213,111 @@ fun TDDatePickerDialog(
                             LeadingIconRow(
                                 icon = R.drawable.ic_warning,
                                 iconTint = TDTheme.colors.orange,
-                                text = format(
-                                    selectedDate,
-                                    effectiveRangeEnd,
-                                    anchorDate != null && effectiveRangeEnd == null,
-                                ),
+                                // Reads the draft, not the caller: this sentence is the running
+                                // commentary on what the user is building right now.
+                                text = format(draftDate, draftEnd, anchorDate != null && draftEnd == null),
                                 // The icon and its sentence are one statement, so they share a colour —
                                 // an orange glyph beside plain ink read as two unrelated things.
                                 textColor = TDTheme.colors.orange,
                             )
                         }
-                        Row(
-                            modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .background(TDTheme.colors.background)
-                                .padding(horizontal = 16.dp, vertical = 4.dp),
-                            // Equal halves with a gap between them. SpaceBetween sized each button to
-                            // its own label, so "Bugün" and "Tamam" came out different widths and sat
-                            // shoulder to shoulder in the middle. fullWidth makes each fill its half
-                            // rather than fight the 140.dp minimum on a narrow screen.
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            TDButton(
-                                modifier = Modifier.weight(1f),
-                                fullWidth = true,
-                                text = stringResource(R.string.today),
-                                type = TDButtonType.OUTLINE,
-                                size = TDButtonSize.SMALL,
-                                onClick = {
-                                    onDateSelect(LocalDate.now())
-                                    isPickerOpen = false
-                                },
-                            )
-                            TDButton(
-                                modifier = Modifier.weight(1f),
-                                fullWidth = true,
-                                text = stringResource(R.string.ok),
-                                onClick = { isPickerOpen = false },
-                                size = TDButtonSize.SMALL,
-                            )
-                        }
+                        DatePickerActionRow(
+                            // Exactly what the label says: today, as a single day. A shortcut that
+                            // left an existing span's end behind produced "today – <old end>", and an
+                            // end before the start makes firesOn reject every day — a task that saves
+                            // and then never appears. It moves the draft and nothing else; the grid
+                            // follows so the result is visible instead of happening off-screen.
+                            onToday = {
+                                val today = LocalDate.now()
+                                anchorDate = null
+                                draftDate = today
+                                draftEnd = null
+                                selectedMonth = YearMonth.from(today)
+                            },
+                            onCancel = { isPickerOpen = false },
+                            onConfirm = {
+                                when (
+                                    val commit =
+                                        resolveCommit(
+                                            draftDate = draftDate,
+                                            draftEnd = draftEnd,
+                                            committedDate = selectedDate,
+                                            committedEnd = effectiveRangeEnd,
+                                            rangesEnabled = onRangeSelect != null,
+                                        )
+                                ) {
+                                    DatePickerCommit.Nothing -> Unit
+                                    DatePickerCommit.Deselect -> onDateDeselect()
+                                    is DatePickerCommit.Single -> {
+                                        if (commit.clearRange) onRangeClear?.invoke()
+                                        onDateSelect(commit.day)
+                                    }
+                                    is DatePickerCommit.Span -> onRangeSelect?.invoke(commit.start, commit.end)
+                                }
+                                isPickerOpen = false
+                            },
+                        )
                         Spacer(Modifier.height(12.dp))
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * "Today" on one side, the two ways out on the other.
+ *
+ * "Today" only moves the draft, so sitting it beside the buttons that leave the dialog would say the
+ * wrong thing — that exact grouping is why the shortcut used to read as a confirm. Cancel stays an
+ * outline rather than [TDButtonType.CANCEL]: that type is a red fill, and red is reserved for
+ * destructive work. Dropping an uncommitted draft is not destructive, so the emphasis belongs on the
+ * one filled button instead.
+ *
+ * Every button is fullWidth over a weight because TDButton.SMALL otherwise claims a 140.dp minimum
+ * each, and three of those overflow a 344.dp screen.
+ */
+@Composable
+internal fun DatePickerActionRow(
+    onToday: () -> Unit,
+    onCancel: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    Row(
+        modifier =
+        Modifier
+            .fillMaxWidth()
+            .background(TDTheme.colors.background)
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        TDButton(
+            modifier = Modifier.weight(1f),
+            fullWidth = true,
+            text = stringResource(R.string.today),
+            type = TDButtonType.OUTLINE,
+            size = TDButtonSize.SMALL,
+            onClick = onToday,
+        )
+        Row(
+            modifier = Modifier.weight(1.6f),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            TDButton(
+                modifier = Modifier.weight(1f),
+                fullWidth = true,
+                text = stringResource(R.string.cancel),
+                type = TDButtonType.OUTLINE,
+                size = TDButtonSize.SMALL,
+                onClick = onCancel,
+            )
+            TDButton(
+                modifier = Modifier.weight(1f),
+                fullWidth = true,
+                text = stringResource(R.string.ok),
+                size = TDButtonSize.SMALL,
+                onClick = onConfirm,
+            )
         }
     }
 }
@@ -302,107 +384,3 @@ private fun spanLabel(start: LocalDate?, end: LocalDate?): String? {
 private const val FULL_DATE_PATTERN = "dd MMMM yyyy"
 private const val DAY_ONLY_PATTERN = "dd"
 private const val DAY_MONTH_PATTERN = "dd MMMM"
-
-@TDPreviewDialog
-@Composable
-fun TDDatePickerDialogPreview() {
-    TDTheme {
-        var selectedDate by remember { mutableStateOf(LocalDate.now()) }
-
-        TDDatePickerDialog(
-            selectedDate = selectedDate,
-            onDateSelect = { selectedDate = it },
-            onDateDeselect = { selectedDate = null },
-        )
-    }
-}
-
-@TDPreviewDialog
-@Composable
-private fun TDDatePickerDialogEmptyPreview() {
-    TDTheme {
-        TDDatePickerDialog(
-            selectedDate = null,
-            onDateSelect = {},
-            onDateDeselect = {},
-        )
-    }
-}
-
-@TDPreviewDialog
-@Composable
-private fun TDDatePickerDialogErrorPreview() {
-    TDTheme {
-        TDDatePickerDialog(
-            selectedDate = null,
-            onDateSelect = {},
-            onDateDeselect = {},
-            isError = true,
-            supportingText = "Date is required",
-        )
-    }
-}
-
-@TDPreviewDialog
-@Composable
-private fun TDDatePickerDialogRangePreview() {
-    TDTheme {
-        val start = LocalDate.now()
-        TDDatePickerDialog(
-            selectedDate = start,
-            rangeEnd = start.plusDays(12),
-            onDateSelect = {},
-            onDateDeselect = {},
-            onRangeSelect = { _, _ -> },
-            rangeHint = "Hold a day to start, then tap another to set how long this task runs",
-            summaryText = { from, to, awaitingEnd ->
-                when {
-                    awaitingEnd -> "Now tap a second day to set the end."
-                    to != null -> "This task runs between $from and $to."
-                    else -> "This is a one-day task: $from."
-                }
-            },
-        )
-    }
-}
-
-/**
- * A span that crosses a month boundary, which is where the collapsed field's label has to fall back
- * to naming the month twice. @TDPreviewDialog renders light AND dark in one pass, so this is also
- * the preview that would catch the band disappearing on a dark background again.
- */
-@TDPreviewDialog
-@Composable
-private fun TDDatePickerDialogRangeAcrossMonthsPreview() {
-    TDTheme {
-        val start = LocalDate.of(2026, 8, 28)
-        TDDatePickerDialog(
-            selectedDate = start,
-            rangeEnd = LocalDate.of(2026, 9, 3),
-            onDateSelect = {},
-            onDateDeselect = {},
-            onRangeSelect = { _, _ -> },
-            onRangeClear = {},
-            rangeHint = "Hold a day to start, then tap another to set how long this task runs",
-            summaryText = { from, to, _ -> "This task runs between $from and $to." },
-        )
-    }
-}
-
-/** Two adjacent days — the tightest span, where the two half-bands have to meet with no gap. */
-@TDPreviewDialog
-@Composable
-private fun TDDatePickerDialogAdjacentRangePreview() {
-    TDTheme {
-        val start = LocalDate.of(2026, 8, 12)
-        TDDatePickerDialog(
-            selectedDate = start,
-            rangeEnd = start.plusDays(1),
-            onDateSelect = {},
-            onDateDeselect = {},
-            onRangeSelect = { _, _ -> },
-            onRangeClear = {},
-            summaryText = { from, to, _ -> "This task runs between $from and $to." },
-        )
-    }
-}

@@ -1,6 +1,8 @@
 package com.todoapp.mobile.ui.common
 
+import com.todoapp.uikit.components.DatePickerCommit
 import com.todoapp.uikit.components.DayTapOutcome
+import com.todoapp.uikit.components.resolveCommit
 import com.todoapp.uikit.components.resolveDayTap
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -109,6 +111,75 @@ class DayTapOutcomeTest {
         assertEquals(
             DayTapOutcome.SelectSingle(start),
             resolveDayTap(start, selectedDate = end, rangeEnd = start, anchorDate = null),
+        )
+    }
+
+    // --- resolveCommit: what pressing OK tells the caller -------------------------------------
+
+    @Test
+    fun `confirming an untouched draft announces nothing`() {
+        // Opening the picker and pressing OK is not an edit. A form that diffs against its loaded
+        // task would otherwise be free to call itself dirty just because the dialog was looked at.
+        assertEquals(
+            DatePickerCommit.Nothing,
+            resolveCommit(start, null, start, null, rangesEnabled = false),
+        )
+        assertEquals(
+            DatePickerCommit.Nothing,
+            resolveCommit(start, end, start, end, rangesEnabled = true),
+        )
+    }
+
+    @Test
+    fun `a moved day commits as a single day`() {
+        assertEquals(
+            DatePickerCommit.Single(end, clearRange = false),
+            resolveCommit(end, null, start, null, rangesEnabled = false),
+        )
+    }
+
+    @Test
+    fun `a completed span commits as a span`() {
+        assertEquals(
+            DatePickerCommit.Span(start, end),
+            resolveCommit(start, end, start, null, rangesEnabled = true),
+        )
+    }
+
+    @Test
+    fun `dropping a span asks for the old end to be cleared`() {
+        // This is the "Today" bug in its general form: committing only the new start would leave the
+        // caller holding the old end, and an end before the start makes firesOn reject every day.
+        assertEquals(
+            DatePickerCommit.Single(LocalDate.of(2026, 8, 25), clearRange = true),
+            resolveCommit(LocalDate.of(2026, 8, 25), null, start, end, rangesEnabled = true),
+        )
+    }
+
+    @Test
+    fun `keeping the start while dropping the span still clears the end`() {
+        // The day did not move, so only the range changed — Nothing would strand the end.
+        assertEquals(
+            DatePickerCommit.Single(start, clearRange = true),
+            resolveCommit(start, null, start, end, rangesEnabled = true),
+        )
+    }
+
+    @Test
+    fun `an emptied draft commits as a deselect`() {
+        assertEquals(
+            DatePickerCommit.Deselect,
+            resolveCommit(null, null, start, null, rangesEnabled = false),
+        )
+    }
+
+    @Test
+    fun `a draft end is ignored where ranges are switched off`() {
+        // The four single-day pickers must never be handed a span, even if stale state carried one
+        // in — they have no onRangeSelect to receive it.
+        assertEquals(
+            DatePickerCommit.Single(start, clearRange = false),
+            resolveCommit(start, end, null, end, rangesEnabled = false),
         )
     }
 }

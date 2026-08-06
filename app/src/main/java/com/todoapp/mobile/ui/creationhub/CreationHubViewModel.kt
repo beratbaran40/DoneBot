@@ -105,7 +105,17 @@ constructor(
 
             is UiAction.OnBack -> goBack()
             is UiAction.OnTitleChange -> _state.update { it.copy(title = action.title, titleError = false) }
-            is UiAction.OnDateSelect -> _state.update { it.copy(date = action.date) }
+            is UiAction.OnDateSelect -> _state.update { state ->
+                state.copy(
+                    date = action.date,
+                    // An end before the start can never fire: firesOn rejects every day after the end
+                    // and every day before the anchor, and past each other those two leave nothing —
+                    // the task saves, then shows up on no day at all. The calendar's own gesture
+                    // cannot produce it, but mixing sources can (a start dragged past an end that came
+                    // from the chips), so the guard belongs here rather than in the picker.
+                    recurrenceUntil = state.recurrenceUntil?.takeUnless { it.isBefore(action.date) },
+                )
+            }
             is UiAction.OnReminderSelect -> _state.update { it.copy(reminderOffsetMinutes = action.minutes) }
             is UiAction.OnFrequencySelect -> selectFrequency(action.recurrence)
             is UiAction.OnRecurrenceUntilSelect -> _state.update { it.copy(recurrenceUntil = action.until) }
@@ -188,16 +198,37 @@ constructor(
         }
     }
 
+    /**
+     * Picking a type starts that shape over — the date reset has always said so, and the rest of the
+     * recurrence rule now follows it.
+     *
+     * Leaving the rule behind meant the custom form could furnish a routine with fields the routine
+     * form never shows: an end date, an interval, a weekday set, absolute reminder times. The end was
+     * the dangerous one, because [buildTask] writes it for anything that repeats — a routine could
+     * save a bound it had no way to display, and with the date reset to today an end chosen earlier
+     * could already be in the past. Mirrors what selectFrequency does when the repeat is switched off.
+     */
     private fun selectType(type: TaskType) {
-        _state.update {
-            it.copy(
+        _state.update { state ->
+            state.copy(
                 step = Step.TASK_CORE,
                 taskType = type,
                 date = LocalDate.now(),
-                // A custom task starts with nothing switched on: the frequency chips include a
-                // "don't repeat" option, so DAILY (the routine default) would silently make every
-                // custom task recur before the user chose anything.
-                recurrence = if (type == TaskType.CUSTOM) Recurrence.NONE else it.recurrence,
+                recurrence = when (type) {
+                    // A custom task starts with nothing switched on: the frequency chips include a
+                    // "don't repeat" option, so DAILY (the routine default) would silently make every
+                    // custom task recur before the user chose anything.
+                    TaskType.CUSTOM -> Recurrence.NONE
+                    // A routine repeats by definition and its chips offer no NONE, so arriving from
+                    // the custom form's NONE left every chip dark and saved a "routine" that was
+                    // really a one-off.
+                    TaskType.ROUTINE -> state.recurrence.takeIf { it != Recurrence.NONE } ?: Recurrence.DAILY
+                    else -> state.recurrence
+                },
+                recurrenceUntil = null,
+                recurrenceInterval = 1,
+                recurrenceByDay = emptySet(),
+                reminderTimes = emptyList(),
                 placeholderIndex = Random.nextInt(CreationHubPlaceholders.count),
             )
         }
