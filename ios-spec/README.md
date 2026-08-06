@@ -64,13 +64,15 @@ Among available tasks, pick in this order:
 1. Lowest phase number (`10-` before `20-` before `30-`…).
 2. Within a phase, lowest id.
 
+> **The phase number is a category, not an execution order.** `depends_on` is the real order, and it legitimately points "forward" in several places: `10-03` (the Xcode project) needs `20-13` (the iOS framework); `30-10` and `60-03` (Sign in with Apple) need `70-01` (the backend endpoint); every `40-*` feature needs its `50-*` design-system prerequisite. A task whose `depends_on` are not all `DONE` is simply not available yet, regardless of its number.
+
 If a task's `parallel_safe: true` and you are running alongside other agents, you may take it even if another task is `IN_PROGRESS`, provided the `owner_files` globs do not intersect.
 
 **If no task is available**, do not idle and do not invent work. Write a dated note in `90-STATE/BLOCKERS.md` explaining precisely which dependency is holding the queue, and stop.
 
 ### 2.2 Task file anatomy
 
-Every task file has YAML front-matter followed by nine fixed sections:
+Every task file has YAML front-matter followed by nine fixed sections. The four files in `00-CONTEXT/` are **reference documents, not tasks** — they deliberately have no front-matter and nothing depends on them being marked `DONE`.
 
 ```yaml
 ---
