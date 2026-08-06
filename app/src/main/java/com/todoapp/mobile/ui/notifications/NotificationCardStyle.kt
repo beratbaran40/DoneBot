@@ -62,6 +62,12 @@ internal fun notificationCardStyle(type: NotificationType): NotificationCardStyl
             softFill = colors.lightOrange,
             softGlyph = colors.orange,
         )
+        NotificationType.GROUP_OWNERSHIP_TRANSFERRED -> NotificationCardStyle(
+            iconRes = com.example.uikit.R.drawable.ic_members,
+            accent = colors.orange,
+            softFill = colors.lightOrange,
+            softGlyph = colors.orange,
+        )
         NotificationType.UNKNOWN -> NotificationCardStyle(
             iconRes = com.example.uikit.R.drawable.ic_notification,
             accent = colors.pendingGray,

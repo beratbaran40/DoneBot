@@ -240,7 +240,9 @@ class NotificationsViewModel @Inject constructor(
                 }
             }
             NotificationType.INVITATION_ACCEPTED,
-            NotificationType.INVITATION_DECLINED -> {
+            NotificationType.INVITATION_DECLINED,
+            NotificationType.GROUP_OWNERSHIP_TRANSFERRED,
+            -> {
                 if (groupId != null) Screen.GroupDetail(groupId = groupId, groupName = groupName) else null
             }
             NotificationType.INVITATION_RECEIVED -> Screen.Invitations
