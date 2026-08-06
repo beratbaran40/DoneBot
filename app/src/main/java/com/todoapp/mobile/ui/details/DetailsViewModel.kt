@@ -113,7 +113,6 @@ constructor(
             reminderTimes = times,
             capabilities = capabilities,
             taskType = taskFormType(capabilities),
-            isDirty = true,
         )
     }
 
@@ -197,10 +196,10 @@ constructor(
             is UiAction.OnReminderTimeAdd -> changeReminderTimes { (it + uiAction.time).distinct().sorted() }
             is UiAction.OnReminderTimeRemove -> changeReminderTimes { it - uiAction.time }
             is UiAction.OnRecurrenceUntilChange -> updateSuccessState {
-                it.copy(recurrenceUntil = uiAction.until, isDirty = true)
+                it.copy(recurrenceUntil = uiAction.until)
             }
             is UiAction.OnIntervalChange -> updateSuccessState {
-                it.copy(recurrenceInterval = uiAction.interval, isDirty = true)
+                it.copy(recurrenceInterval = uiAction.interval)
             }
             is UiAction.OnWeekdayToggle -> updateSuccessState { state ->
                 val next = if (uiAction.day in state.recurrenceByDay) {
@@ -208,7 +207,7 @@ constructor(
                 } else {
                     state.recurrenceByDay + uiAction.day
                 }
-                state.copy(recurrenceByDay = next, isDirty = true)
+                state.copy(recurrenceByDay = next)
             }
             is UiAction.OnSubtaskTitleChange -> changeSubtaskTitle(uiAction.index, uiAction.title)
             is UiAction.OnSubtaskToggle -> toggleSubtaskDraft(uiAction.index)
@@ -386,6 +385,12 @@ constructor(
         currentTaskId?.let { loadTask(it) }
     }
 
+    /**
+     * The single write path for [UiState.Success]. `isDirty` and `isReminderInPast` are DERIVED here
+     * and overwrite whatever [transform] set, so a handler must never try to assign them — four of
+     * them used to pass `isDirty = true` and were silently discarded, which is what hid the fact that
+     * [computeIsDirty] wasn't looking at their fields.
+     */
     private inline fun updateSuccessState(crossinline transform: (UiState.Success) -> UiState.Success) {
         _uiState.update { currentState ->
             when (currentState) {
@@ -635,33 +640,26 @@ constructor(
         return originalKey != currentKey
     }
 
+    /**
+     * "Would saving change anything?" — asked by building the task Save would actually write and
+     * diffing it against the one that was loaded.
+     *
+     * It calls [buildUpdatedTask] on purpose rather than assembling a second copy() of its own. The
+     * two lists had already drifted: the repeat interval, weekdays, end date and reminder times were
+     * saved but not compared, so editing any of them left Save greyed out and the change unreachable —
+     * a field the user could see, change on screen, and never keep. Deriving one from the other makes
+     * that class of bug impossible instead of merely fixed.
+     *
+     * Photos and steps stay separate because they live outside the Task copy: uploads and deletes are
+     * still pending when this runs, and step drafts carry their own identity.
+     */
     private fun computeIsDirty(state: UiState.Success): Boolean {
         val original = originalTask ?: return false
         if (state.pendingPhotoUploads.isNotEmpty() || state.pendingPhotoDeleteIds.isNotEmpty()) {
             return true
         }
         if (subtaskDraftsChanged(state, original)) return true
-        val candidateTask =
-            original.copy(
-                title = state.taskTitle,
-                description = state.taskDescription.ifBlank { null },
-                date = state.taskDate,
-                timeStart = state.taskTimeStart ?: original.timeStart,
-                timeEnd = state.taskTimeEnd ?: original.timeEnd,
-                photoUrls = state.photoUrls,
-                locationName = state.locationName,
-                locationAddress = state.locationAddress,
-                locationLat = state.locationLat,
-                locationLng = state.locationLng,
-                category = state.selectedCategory,
-                customCategoryName = state.customCategoryName.takeIf {
-                    state.selectedCategory == TaskCategory.OTHER && it.isNotBlank()
-                },
-                recurrence = state.selectedRecurrence,
-                reminderOffsetMinutes = state.reminderOffsetMinutes,
-                isAllDay = state.isAllDay,
-            )
-        return candidateTask != original
+        return buildUpdatedTask(state, original) != original
     }
 
     private companion object {
