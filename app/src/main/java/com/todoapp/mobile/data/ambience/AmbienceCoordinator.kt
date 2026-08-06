@@ -1,5 +1,6 @@
 package com.todoapp.mobile.data.ambience
 
+import com.todoapp.mobile.data.notification.PomodoroServiceController
 import com.todoapp.mobile.di.MainDispatcher
 import com.todoapp.mobile.domain.ambience.AmbiencePlayer
 import com.todoapp.mobile.domain.ambience.PomodoroAmbience
@@ -35,6 +36,7 @@ constructor(
     private val engine: PomodoroEngine,
     private val player: AmbiencePlayer,
     private val preferences: AmbiencePreferences,
+    private val serviceController: PomodoroServiceController,
     // Main, not Default: MediaPlayer is not thread-safe and delivers its callbacks on the main
     // looper. Driving it from a background thread would race its own prepare callback.
     @MainDispatcher private val mainDispatcher: CoroutineDispatcher,
@@ -52,10 +54,18 @@ constructor(
                 preferences.observeSelection(),
                 preferences.observePlayInBackground(),
                 appForeground,
-            ) { isRunning, selection, playInBackground, foreground ->
+                serviceController.isForegroundActive,
+            ) { isRunning, selection, playInBackground, foreground, serviceUp ->
                 Decision(
                     ambience = selection,
-                    shouldPlay = isRunning && selection != PomodoroAmbience.None && (playInBackground || foreground),
+                    // Off screen, the only thing keeping this process alive is the pomodoro
+                    // foreground service — and it never starts if the user denied notifications,
+                    // which nothing here used to notice. Ambience then played on a process Android
+                    // was free to kill mid-loop, and, worse, played background audio with no
+                    // foreground service declaring mediaPlayback behind it.
+                    shouldPlay = isRunning &&
+                        selection != PomodoroAmbience.None &&
+                        (foreground || (playInBackground && serviceUp)),
                 )
             }.distinctUntilChanged()
                 .onEach(::apply)

@@ -7,6 +7,9 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,6 +20,19 @@ class PomodoroServiceController
 constructor(
     @ApplicationContext private val context: Context,
 ) {
+    private val _isForegroundActive = MutableStateFlow(false)
+
+    /**
+     * Whether a foreground service is holding this process up **right now**.
+     *
+     * Reported by the service itself rather than inferred from [start]: starting one is a request,
+     * not a guarantee. [start] declines outright without POST_NOTIFICATIONS, and even when it goes
+     * through, `startForeground` can still fail inside the service. Anything that depends on the
+     * process surviving the app being backgrounded — ambience, above all — has to read what actually
+     * happened, not what was asked for.
+     */
+    val isForegroundActive: StateFlow<Boolean> = _isForegroundActive.asStateFlow()
+
     fun start() {
         if (!hasNotificationPermission()) {
             Timber.tag(TAG).d("POST_NOTIFICATIONS not granted; skipping live notification.")
@@ -38,6 +54,16 @@ constructor(
         val intent = Intent(context, PomodoroForegroundService::class.java)
         runCatching { context.stopService(intent) }
             .onFailure { Timber.tag(TAG).w(it, "stopService failed") }
+    }
+
+    /** Called by [PomodoroForegroundService] once `startForeground` has actually succeeded. */
+    internal fun onForegroundStarted() {
+        _isForegroundActive.value = true
+    }
+
+    /** Called by [PomodoroForegroundService] on every teardown path. */
+    internal fun onForegroundStopped() {
+        _isForegroundActive.value = false
     }
 
     private fun hasNotificationPermission(): Boolean {

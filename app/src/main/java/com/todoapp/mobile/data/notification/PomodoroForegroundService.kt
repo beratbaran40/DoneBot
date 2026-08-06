@@ -29,6 +29,9 @@ class PomodoroForegroundService : Service() {
     @Inject
     lateinit var ambiencePlayer: AmbiencePlayer
 
+    @Inject
+    lateinit var serviceController: PomodoroServiceController
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var observerJob: Job? = null
     private var ambienceJob: Job? = null
@@ -74,6 +77,10 @@ class PomodoroForegroundService : Service() {
             }
             startedAsForeground = true
             currentTypeMask = desiredMask
+            // Only inside the success path: a failed startForeground leaves the process just as
+            // killable as no service at all, and ambience reads this to decide whether it may keep
+            // playing with the app in the background.
+            serviceController.onForegroundStarted()
         }.onFailure { Timber.tag(TAG).w(it, "startForeground failed") }
     }
 
@@ -136,6 +143,7 @@ class PomodoroForegroundService : Service() {
         ambienceJob = null
         startedAsForeground = false
         currentTypeMask = 0
+        serviceController.onForegroundStopped()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             stopForeground(STOP_FOREGROUND_REMOVE)
         } else {
@@ -149,6 +157,9 @@ class PomodoroForegroundService : Service() {
         observerJob?.cancel()
         ambienceJob?.cancel()
         scope.cancel()
+        // Also here, not only in stopSelfAndNotification: the controller's stop() goes through
+        // stopService(), which skips that path entirely and lands straight on onDestroy.
+        serviceController.onForegroundStopped()
         super.onDestroy()
     }
 

@@ -1,6 +1,8 @@
 package com.todoapp.mobile.ambience
 
+import android.content.Context
 import com.todoapp.mobile.data.ambience.AmbienceCoordinator
+import com.todoapp.mobile.data.notification.PomodoroServiceController
 import com.todoapp.mobile.domain.ambience.AmbiencePlaybackState
 import com.todoapp.mobile.domain.ambience.AmbiencePlayer
 import com.todoapp.mobile.domain.ambience.PomodoroAmbience
@@ -17,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
@@ -58,10 +61,24 @@ class AmbienceCoordinatorTest {
             every { observePlayInBackground() } returns playInBackground
         }
 
-    private fun coordinator() = AmbienceCoordinator(engine, player, preferences, mainDispatcherRule.dispatcher)
+    // The real controller rather than a mock: its whole job here is a two-state machine, and driving
+    // it through the same callbacks the service uses is what makes these assertions mean anything.
+    private val serviceController = PomodoroServiceController(mockk<Context>(relaxed = true))
+
+    private fun coordinator() = AmbienceCoordinator(engine, player, preferences, serviceController, mainDispatcherRule.dispatcher)
 
     private fun running(isRunning: Boolean) {
         engineState.value = engineState.value.copy(isRunning = isRunning)
+    }
+
+    /**
+     * What `PomodoroEngineImpl` produces for every session on a device where notifications are
+     * allowed. The tests written before background playback depended on the service all assume it,
+     * so it is the fixture default rather than a line repeated in each of them.
+     */
+    @Before
+    fun serviceIsUp() {
+        serviceController.onForegroundStarted()
     }
 
     @Test
@@ -134,6 +151,62 @@ class AmbienceCoordinatorTest {
         advanceUntilIdle()
 
         verify(exactly = 0) { player.pause() }
+        assertEquals(true, playbackState.value.isPlaying)
+    }
+
+    @Test
+    fun `with no foreground service, leaving the app pauses the bed even with background playback on`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        // Notifications denied on API 33+: PomodoroServiceController.start() declines, so nothing
+        // is holding this process up. Background audio without a foreground service behind it is
+        // both killable mid-loop and outside what we declare to Play.
+        serviceController.onForegroundStopped()
+
+        val coordinator = coordinator()
+        coordinator.start()
+        selection.value = PomodoroAmbience.Rain
+        playInBackground.value = true
+        running(true)
+        advanceUntilIdle()
+
+        coordinator.onAppBackgrounded()
+        advanceUntilIdle()
+
+        verify { player.pause() }
+        assertEquals(false, playbackState.value.isPlaying)
+    }
+
+    @Test
+    fun `losing the foreground service mid-session pauses a bed that was playing in the background`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        val coordinator = coordinator()
+        coordinator.start()
+        selection.value = PomodoroAmbience.Fireplace
+        playInBackground.value = true
+        running(true)
+        coordinator.onAppBackgrounded()
+        advanceUntilIdle()
+        verify(exactly = 0) { player.pause() }
+
+        // The service going down is not hypothetical: the user can swipe the notification's
+        // channel off, or the system can tear the service down and leave the process behind.
+        serviceController.onForegroundStopped()
+        advanceUntilIdle()
+
+        verify { player.pause() }
+    }
+
+    @Test
+    fun `on screen, the bed plays whether or not a foreground service is up`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        // The service only matters for surviving backgrounding. With the app on screen the process
+        // is alive by definition, so requiring one here would break ambience for every user who
+        // declined notifications — the opposite of the fix.
+        serviceController.onForegroundStopped()
+
+        coordinator().start()
+        selection.value = PomodoroAmbience.Rain
+        running(true)
+        advanceUntilIdle()
+
+        verify { player.play(PomodoroAmbience.Rain) }
         assertEquals(true, playbackState.value.isPlaying)
     }
 
