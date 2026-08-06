@@ -88,7 +88,7 @@ Almost platform-free. **Only two Android leaks in the entire layer:**
 
 ### 5.1 Room
 
-`data/source/local/AppDatabase.kt` — **version 30**, 15 entities, 28 auto-migrations + 3 `AutoMigrationSpec`s, 2 manual migrations in `Migrations.kt`. Schemas exported to `app/schemas/`.
+`data/source/local/AppDatabase.kt` — **version 30**, 15 entities, auto-migrations 1→30 with **4 `AutoMigrationSpec`s** (`Migration1To2Spec`, `Migration3To4Spec`, `Migration4To5Spec` with two `@DeleteColumn` on `groups`, `Migration27To28Spec` with `@DeleteColumn` on `journal_entries.mood`), plus **2 manual migrations** in `Migrations.kt` (`MIGRATION_12_13`, `MIGRATION_25_26`). **30 schema JSONs** (`1.json`…`30.json`) exported to `app/schemas/`. Room 2.8.4, `androidx.sqlite` 2.4.0.
 
 15 entities (in `data/model/entity/`, not `source/local/`): `TaskEntity`, `SubtaskEntity`, `TaskReminderEntity`, `SubtaskDailyCompletionEntity`, `TaskDailyCompletionEntity`, `PomodoroEntity`, `GroupEntity`, `GroupTaskEntity`, `GroupSubtaskEntity`, `GroupTaskDailyCompletionEntity`, `GroupMemberEntity`, `GroupActivityEntity`, `PendingPhotoEntity`, `ChatMessageEntity`, `JournalEntryEntity`.
 

@@ -29,7 +29,7 @@ Have an active Apple Developer Program membership, a reserved app name, a regist
 
 | Path | What to look for |
 |---|---|
-| `app/build.gradle.kts` lines ~57-61 | `applicationId = "com.todoapp.mobile"`, versionCode 9, versionName "1.2" — the iOS bundle id should mirror the applicationId |
+| `app/build.gradle.kts` `defaultConfig` | `applicationId = "com.todoapp.mobile"` — the iOS bundle id mirrors it. Read `versionCode`/`versionName` from the file; they move. |
 | `app/build.gradle.kts` (BuildConfig block) | `PRIVACY_POLICY_URL`, `TERMS_OF_SERVICE_URL`, `SUPPORT_EMAIL` — App Store Connect requires all three |
 | `donebot prod/FAZ0_STORE_COPY.md` | Existing Play store copy — the basis for the App Store listing, not a copy-paste source |
 | `ios-spec/00-CONTEXT/04-constraints.md` §1.6 | The full App Store requirement list |

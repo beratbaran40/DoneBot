@@ -37,7 +37,7 @@ Before any migration task:
    ./gradlew :app:bundleRelease
    jarsigner -verify -verbose -certs app/build/outputs/bundle/release/app-release.aab | head
    ```
-3. Upload to Play. versionCode 9 / versionName "1.2" are already set.
+3. Upload to Play. Read the current `versionCode`/`versionName` from `app/build.gradle.kts` — do not assume. Play burns a `versionCode` permanently once uploaded, **even if the draft is later deleted**, so the number in the file may already be ahead of what you expect.
 4. Tag the pre-migration state:
    ```bash
    git tag v1.2-preKMP && git push origin v1.2-preKMP

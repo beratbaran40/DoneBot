@@ -53,7 +53,7 @@ The domain layer is thin — most business logic lives in repositories and ViewM
 
 ## D-04 · Ship Android v1.2 first, then freeze Android feature work
 
-**Decision.** v1.2 (versionCode 9) goes to Play. Tag `v1.2-preKMP`. Cut `release/1.2.x` for hotfixes. Migration lands on `main`. No new Android features during migration.
+**Decision.** v1.2 goes to Play. Read the current `versionCode` from `app/build.gradle.kts` rather than trusting any number written here — it moves, and an uploaded code is burned forever even if the draft is deleted. Tag `v1.2-preKMP`. Cut `release/1.2.x` for hotfixes. Migration lands on `main`. No new Android features during migration.
 
 **Why.** Development velocity on this repo has been ~10 commits/day. An in-place restructure running against that rate produces continuous merge conflicts and doubles the touch cost of every new screen.
 

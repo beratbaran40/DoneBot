@@ -102,7 +102,7 @@ Gradle requires **JDK/JBR 21**. JDK 24 fails with `Type T not present`. The corr
 
 ### 2.4 Data safety
 
-- Room is at **version 30** with 28 auto-migrations + 2 manual, 3 `AutoMigrationSpec`s, and 24 committed schema JSONs in `app/schemas/`.
+- Room is at **version 30**: auto-migrations 1→30 with **4 `AutoMigrationSpec`s**, **2 manual migrations**, and **30 committed schema JSONs** (`1.json`…`30.json`) in `app/schemas/`.
 - **The schema JSON is the contract.** After the Room KMP port, regenerated `30.json` must `diff` byte-identical against the committed file. A difference means the schema changed and every existing install is at risk.
 - `MigrationTest.kt` stays an instrumented test (needs a real device).
 

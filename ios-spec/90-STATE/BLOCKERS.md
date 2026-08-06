@@ -77,6 +77,6 @@ or delete it from the GitHub web UI: Settings → General → Danger Zone.
 
 **Impact:** blocks shipping the signed v1.2 AAB (migration step 0). Does not block any code task — when the file is absent the release build simply produces an unsigned AAB.
 
-**Workaround:** all migration work proceeds; only the Play upload is gated. `local.properties` is present, there are no unpushed commits, and versionCode 9 / versionName "1.2" are already set — this is the only remaining item.
+**Workaround:** all migration work proceeds; only the Play upload is gated. `local.properties` is present and the version fields in `app/build.gradle.kts` are current — this is the only remaining item.
 
 **Tried:** verified `keystore.properties` does not exist; `~/donebot-upload.jks` does.
