@@ -168,8 +168,45 @@ class DayTapOutcomeTest {
     @Test
     fun `an emptied draft commits as a deselect`() {
         assertEquals(
-            DatePickerCommit.Deselect,
+            DatePickerCommit.Deselect(clearRange = false),
             resolveCommit(null, null, start, null, rangesEnabled = false),
+        )
+    }
+
+    @Test
+    fun `clearing the start also clears an end the caller still holds`() {
+        // Same reason Single carries the flag: an end with no start is a span whose bounds have
+        // crossed, and firesOn rejects every day of it — the task saves and then appears nowhere.
+        assertEquals(
+            DatePickerCommit.Deselect(clearRange = true),
+            resolveCommit(null, null, start, end, rangesEnabled = true),
+        )
+    }
+
+    @Test
+    fun `confirming mid-hold commits nothing at all`() {
+        // The summary under the grid is at that moment telling the user to tap a second day. Reading
+        // the half-made draft as a deliberate single day cleared the span they still had — destroying
+        // an end date while the dialog said the selection was unfinished.
+        assertEquals(
+            DatePickerCommit.Nothing,
+            resolveCommit(
+                draftDate = LocalDate.of(2026, 8, 25),
+                draftEnd = null,
+                committedDate = start,
+                committedEnd = end,
+                rangesEnabled = true,
+                anchorPending = true,
+            ),
+        )
+    }
+
+    @Test
+    fun `a finished hold commits normally`() {
+        // The guard is about the anchor still being armed, not about spans in general.
+        assertEquals(
+            DatePickerCommit.Span(start, end),
+            resolveCommit(start, end, null, null, rangesEnabled = true, anchorPending = false),
         )
     }
 

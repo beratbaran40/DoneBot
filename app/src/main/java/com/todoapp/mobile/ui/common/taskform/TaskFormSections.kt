@@ -119,7 +119,10 @@ fun TaskFormDateField(
     date: LocalDate?,
     onSelect: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
-    onDeselect: () -> Unit = {},
+    // Null, not an empty lambda: the picker uses its absence to decide whether clearing the date is
+    // offered at all. An empty lambda looked like a handler, so the grid cleared and OK put the date
+    // back — every Creation Hub form was in exactly that state.
+    onDeselect: (() -> Unit)? = null,
     /** Non-null enables hold-two-days span selection. See TDDatePickerDialog. */
     onRangeSelect: ((start: LocalDate, end: LocalDate) -> Unit)? = null,
     rangeEnd: LocalDate? = null,

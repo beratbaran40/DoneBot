@@ -18,6 +18,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -53,7 +54,13 @@ fun TDDatePickerDialog(
     modifier: Modifier = Modifier,
     selectedDate: LocalDate? = LocalDate.now(),
     onDateSelect: (LocalDate) -> Unit,
-    onDateDeselect: () -> Unit,
+    /**
+     * Null means the caller cannot hold "no date" — a Creation Hub task always has one — and the
+     * picker then refuses to clear the selection at all. It used to clear the draft regardless, so
+     * tapping the selected day emptied the grid and the summary line, and OK put the old date
+     * straight back: a form visibly lying about its own state.
+     */
+    onDateDeselect: (() -> Unit)? = null,
     isError: Boolean = false,
     supportingText: String? = null,
     /**
@@ -115,9 +122,14 @@ fun TDDatePickerDialog(
     // Fires off the state transition, not the tap handler, per the house rule on feedback effects.
     // Only on completion: combinedClickable already emits the platform long-press tick when the
     // anchor is set, and stacking a second buzz there would read as a double vibration.
+    //
+    // Keyed on a counter the GESTURE increments, not on draftEnd. draftEnd is also written by the
+    // seeding below, so a form that already held a span buzzed merely from opening the picker — a
+    // "span completed" tick for a gesture the user never made, repeating on every cancel-and-reopen.
+    var spanCompletions by remember { mutableIntStateOf(0) }
     val haptics = LocalHapticFeedback.current
-    LaunchedEffect(draftEnd) {
-        if (draftEnd != null) haptics.performHapticFeedback(HapticFeedbackType.GestureEnd)
+    LaunchedEffect(spanCompletions) {
+        if (spanCompletions > 0) haptics.performHapticFeedback(HapticFeedbackType.GestureEnd)
     }
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -128,7 +140,18 @@ fun TDDatePickerDialog(
             // The collapsed field shows what is COMMITTED, never the draft — it is the answer the
             // form is holding, and it must not move while a dialog the user may cancel is open.
             value = spanLabel(selectedDate, effectiveRangeEnd) ?: stringResource(R.string.pick_a_date),
-            onClick = { isPickerOpen = true },
+            // Seed the draft HERE, not in an effect. LaunchedEffect bodies are dispatched after the
+            // composition they belong to has already been applied, so seeding there let the whole grid
+            // and summary render one frame against the previous draft — the abandoned selection from a
+            // cancelled visit flashing up before snapping back. The effect below stays as the restore
+            // path for a dialog reopened by the system, where this click never happened.
+            onClick = {
+                draftDate = selectedDate
+                draftEnd = effectiveRangeEnd
+                selectedMonth = YearMonth.from(selectedDate ?: LocalDate.now())
+                anchorDate = null
+                isPickerOpen = true
+            },
             emphasizeValue = selectedDate != null,
             trailingIcon = {
                 Icon(
@@ -189,12 +212,21 @@ fun TDDatePickerDialog(
                                         anchorDate = null
                                         draftDate = outcome.start
                                         draftEnd = outcome.end
+                                        spanCompletions++
                                     }
                                 }
                             },
                             onDayDeselect = {
-                                draftDate = null
-                                draftEnd = null
+                                // Only where the caller can actually act on it (see onDateDeselect).
+                                if (onDateDeselect != null) {
+                                    draftDate = null
+                                    draftEnd = null
+                                    // Backing out of a half-made hold must retire the anchor with it,
+                                    // or the next tap silently rebuilds the span just cancelled — and
+                                    // resolveDayTap's "tap the held day = never mind" branch becomes
+                                    // unreachable from the real dialog.
+                                    anchorDate = null
+                                }
                             },
                             rangeEnd = draftEnd,
                             anchorDate = anchorDate,
@@ -244,10 +276,14 @@ fun TDDatePickerDialog(
                                             committedDate = selectedDate,
                                             committedEnd = effectiveRangeEnd,
                                             rangesEnabled = onRangeSelect != null,
+                                            anchorPending = anchorDate != null && draftEnd == null,
                                         )
                                 ) {
                                     DatePickerCommit.Nothing -> Unit
-                                    DatePickerCommit.Deselect -> onDateDeselect()
+                                    is DatePickerCommit.Deselect -> {
+                                        if (commit.clearRange) onRangeClear?.invoke()
+                                        onDateDeselect?.invoke()
+                                    }
                                     is DatePickerCommit.Single -> {
                                         if (commit.clearRange) onRangeClear?.invoke()
                                         onDateSelect(commit.day)

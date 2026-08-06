@@ -44,7 +44,12 @@ sealed interface DatePickerCommit {
     /** The draft says the same thing the caller already holds — announce nothing. */
     data object Nothing : DatePickerCommit
 
-    data object Deselect : DatePickerCommit
+    /**
+     * [clearRange] for the same reason [Single] carries it: dropping the start while the caller still
+     * holds an end leaves an end with no start, and `firesOn` rejects every day of a span whose ends
+     * have crossed — a task that saves and then appears nowhere.
+     */
+    data class Deselect(val clearRange: Boolean) : DatePickerCommit
 
     /**
      * [clearRange] is set when the caller still holds a span the draft has dropped: the single-day
@@ -73,7 +78,13 @@ fun resolveCommit(
     committedDate: LocalDate?,
     committedEnd: LocalDate?,
     rangesEnabled: Boolean,
+    anchorPending: Boolean = false,
 ): DatePickerCommit {
+    // A hold whose second tap never came is an unfinished gesture, and the summary under the grid is
+    // at that very moment telling the user to tap a second day. Committing it anyway read the half-made
+    // draft as a deliberate single day and cleared the span the user still had — destroying an end date
+    // while the dialog said the selection wasn't done. Nothing is the only honest answer here.
+    if (anchorPending) return DatePickerCommit.Nothing
     // An end only means something where spans exist at all — on both sides. The four single-day
     // pickers must never be handed one to commit, nor be told to clear one they cannot hold, even if
     // restored state carried a stale value in.
@@ -81,7 +92,7 @@ fun resolveCommit(
     val committed = committedEnd.takeIf { rangesEnabled }
     return when {
         draftDate == committedDate && end == committed -> DatePickerCommit.Nothing
-        draftDate == null -> DatePickerCommit.Deselect
+        draftDate == null -> DatePickerCommit.Deselect(clearRange = committed != null)
         end != null -> DatePickerCommit.Span(draftDate, end)
         else -> DatePickerCommit.Single(draftDate, clearRange = committed != null)
     }
