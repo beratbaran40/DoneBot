@@ -4,24 +4,28 @@ A lookup table, not a read-through. Consult it when a task says "read the source
 
 All paths are relative to the repo root. `:app` sources live under `app/src/main/java/com/todoapp/mobile/`, abbreviated below as `app/…/`.
 
+> **These numbers drift.** They were measured on 2026-08-06 and re-verified on 2026-08-07; `main` moves. Treat them as *scale*, not as assertions — no acceptance criterion should ever depend on one. If a task's decision turns on an exact count, re-measure it yourself.
+
 ---
 
 ## 1. Scale
 
+Measured 2026-08-07.
+
 | Module / layer | Files | LOC |
 |---|---|---|
-| `:app` src/main | 535 | 67,982 |
-| — `ui/` | 290 | 48,405 |
+| `:app` src/main | 535 | 68,014 |
+| — `ui/` | 290 | 48,413 |
 | — `data/` | 143 | 12,397 |
 | — `domain/` | 67 | 2,482 |
 | — `navigation/` | 8 | 2,077 |
 | — `common/` | 12 | 1,061 |
 | — `di/` | 8 | 710 |
 | — root | 7 | 850 |
-| `:app` src/test | 36 | 4,918 |
+| `:app` src/test | 37 | ~4,950 |
 | `:app` src/androidTest | 2 | 453 |
-| `:uikit` src/main | 93 | 16,455 |
-| **Total (all modules)** | **672** | **90,005** |
+| `:uikit` src/main | 93 | 16,922 |
+| **Total (all modules)** | **~673** | **~90,500** |
 
 ---
 
@@ -53,13 +57,24 @@ Deep links are **not** declared in the nav graph — they are manifest intent fi
 
 ## 4. Domain (`app/…/domain/`)
 
-Almost platform-free. **Only two Android leaks in the entire layer:**
+Almost platform-free. **Only two genuinely-Android leaks in the entire layer** — these are what `20-02` closes:
 - `domain/repository/AlarmSoundPreferences.kt:3` — `android.net.Uri`
 - `domain/security/Authenticator.kt:3` — `androidx.fragment.app.FragmentActivity`
 
+**But `commonMain` purity is a wider bar than "no Android", and three other categories block it.** They are *not* `20-02`'s job; each has its own task, and `20-03` §8 surveys them:
+
+| Category | Where | Closed by |
+|---|---|---|
+| `java.time.*` | ~16 domain files — `Task`, `Recurrence`, `GroupTask`, `RecurrenceProgress`, `AlarmItem`, `AlarmScheduler`, `ComputeHealthPointsUseCase`, … | `20-04` |
+| `javax.inject.Inject` | 7 use-case files | `20-05` |
+| `java.util.Locale` | `domain/model/LanguagePreference.kt:3` | `20-13` (→ `AppLocale`) |
+| `androidx.compose.runtime.Immutable` | 12 model files | **nothing — it is multiplatform and stays** |
+
+The purity grep is `^import (java|javax|android)\.`, which does **not** match `androidx.`, so `Immutable` passes it. `java.util.Locale` does not, and it is the one easily missed: it is neither Android nor `java.time`, so it survives both `20-02` and `20-04`.
+
 | Area | Contents |
 |---|---|
-| `domain/model/` | 17 models: `Task`, `Subtask`, `TaskCategory`, `Recurrence` + `RecurrenceRule`, `RecurrenceProgress`, `AlarmItem`, `DayMode`, `Group`, `GroupMember`, `GroupTask`, `GroupActivity`, `Invitation`, `Notification`, `ChatMessage`, `JournalEntry`, `Pomodoro`, `ThemePreference` |
+| `domain/model/` | 18 models: `Task`, `Subtask`, `TaskCategory`, `Recurrence` + `RecurrenceRule`, `RecurrenceProgress`, `AlarmItem`, `DayMode`, `Group`, `GroupMember`, `GroupTask`, `GroupActivity`, `Invitation`, `Notification`, `ChatMessage`, `JournalEntry`, `Pomodoro`, `ThemePreference`, `LanguagePreference` |
 | `domain/repository/` | 25 interfaces — 11 data repos + 14 preference repos. `AuthRepository` is declared inside `UserRepository.kt`. |
 | `domain/usecase/` | 8 use cases total, incl. `ComputeHealthPointsUseCase` (+ pure `HealthPointsCalculator`), `SetTaskCompletionUseCase`, `ObserveOverdueSummaryUseCase`, `location/`, `security/` |
 | `domain/alarm/` | `AlarmScheduler` (interface, `MAX_REMINDER_SLOTS = 8`), `RescheduleAllAlarmsUseCase`, `BuildDailyPlanAlarmItem` |
@@ -198,7 +213,7 @@ Volume: 45 `@HiltViewModel`, 56 `hiltViewModel()` call sites, 43 `@Binds`, 34 `@
 | Kind | `:app` | `:uikit` |
 |---|---|---|
 | Strings | 1,135 + 9 plurals × EN/TR | 73 × EN/TR |
-| Vector drawables | 88 `ic_*` + `logo_text.xml` | 143 `ic_*` |
+| Vector drawables | 89 total incl. `logo_text.xml` (36 are generated `ic_pixel_*`) | 143 total (59 generated `ic_pixel_*`) |
 | Raster (nodpi WebP) | 9 (1,164 KB) | 15 (1,940 KB) |
 | Fonts | — | 6 TTF (Poppins ×4, Pixelify Sans ×2), 688 KB |
 | Lottie | — | `raw/confetti` (129 KB, extension-less JSON) |
@@ -214,7 +229,7 @@ Call-site volume: 1,346 `R.string.*` (1,024 unique) · 647 `R.drawable.*` (244 u
 
 ## 10. Tests
 
-36 unit test files (4,918 LOC) in `app/src/test/`, 2 instrumented (`AccountSwitchIsolationTest`, `MigrationTest`).
+37 unit test files (~4,950 LOC) in `app/src/test/`, 2 instrumented (`AccountSwitchIsolationTest`, `MigrationTest`). `20-03b` classifies all 37 into move / stay-for-now / stay-forever.
 
 Stack: JUnit4 + MockK + Turbine + `kotlinx-coroutines-test` + Robolectric + `androidx.work.testing`. Assertions via `org.junit.Assert`. Shared `MainDispatcherRule` in `app/src/test/…/util/`.
 

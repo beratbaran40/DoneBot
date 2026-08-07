@@ -47,6 +47,8 @@ or delete it from the GitHub web UI: Settings → General → Danger Zone.
 
 **Tried:** nothing yet — this is a day-one action item, recorded here so no agent re-attempts it.
 
+**AMENDED [2026-08-07]** — the impact line above overstated the blast radius, and the dependency graph agreed with it. Measured: `10-01` alone made **54 of 105 tasks unreachable**, because `10-03` claimed to need a paid team (it does not — this entry's own workaround line says so) and `30-10` bundled Google with Apple, dragging login and 41 downstream tasks behind `70-01`. Corrected in ADR-004/005/006. **Revised impact: `30-03`, `30-11`, `60-03`, `80-01` and, transitively, the rest of `80-RELEASE` — 10 of 107 tasks.** With `10-01` blocked, 97 tasks / 1,456 h remain reachable. Enrolment is still a day-one action item; it is simply no longer a wall.
+
 ---
 
 ## [2026-08-06] 10-00 — macOS upgrade required before Xcode
@@ -58,6 +60,14 @@ or delete it from the GitHub web UI: Settings → General → Danger Zone.
 **Workaround:** do the upgrade in week 1, **before any code changes**, so a rollback costs nothing. Take a bootable backup first. Re-run the full Android CI gate after the upgrade and before touching code, so any OS-induced breakage is isolated from migration changes.
 
 **Tried:** verified current state — `sw_vers` reports 14.5 (build 23F79); `xcodebuild` reports only Command Line Tools present; no iPhoneOS SDK; `xcrun simctl` unavailable.
+
+**RE-SCOPED [2026-08-07] → this blocker now belongs to `10-05`, not `10-00`.** The two were one task, which put a human-only OS upgrade on the critical path of the entire migration: `10-00` blocked `20-01`, and its own step told an agent to mark itself `BLOCKED` and "move on to `20-01`" — which the pick rule forbids. `10-00` is now the 2-hour JDK pin only; `10-05` owns macOS + Xcode and blocks exactly `10-03` and `20-13` (ADR-004).
+
+Two corrections to the text above:
+- **"do the upgrade in week 1" is no longer required.** 32 tasks / **712 hours** run with no Xcode installed at all. The real deadline is *before `20-11` starts*, so a failed upgrade does not stall the moment iOS switches on.
+- **`20-13` genuinely needs full Xcode**, not just Command Line Tools — Kotlin/Native links against the real iOS SDK via `xcrun`. That dependency was missing from the graph entirely and is now explicit.
+
+Still open: the machine is still on 14.5. This stays `BLOCKED` until a human does it.
 
 ---
 

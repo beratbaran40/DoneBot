@@ -42,7 +42,7 @@ Register mirrors login and shares its success path — `RegisterViewModel` runs 
 1. Verify it compiles in `commonMain`.
 2. Verify registration end to end against the live backend.
 3. Verify the strength meter updates per keystroke without lag on iOS.
-4. Verify Google and Apple registration.
+4. Verify Google registration. Apple registration is `60-03` — verify it here **only if that task is `DONE`**; it is gated on the paid account and the backend endpoint and must not block this one.
 5. Verify the same seven-step success sequence as login.
 6. Verify validation errors — email format, weak password, duplicate email — all localized.
 7. Verify `redirectAfterRegister`.

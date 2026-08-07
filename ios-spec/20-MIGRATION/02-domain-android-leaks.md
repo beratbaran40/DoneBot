@@ -16,7 +16,9 @@ owner_files:
   - app/src/main/java/com/todoapp/mobile/ui/alarmsounds/**
 verify:
   - ./gradlew ktlintCheck detektAll testDebugUnitTest assembleDebug
-  - "! grep -rnE '^import (android|androidx)\\.' app/src/main/java/com/todoapp/mobile/domain/"
+  # androidx.compose.runtime.Immutable is multiplatform and stays — it is NOT a leak.
+  # Without the grep -v this command fails on 12 legitimate model files.
+  - "! grep -rnE '^import (android|androidx)\\.' app/src/main/java/com/todoapp/mobile/domain/ | grep -v 'androidx\\.compose\\.runtime\\.Immutable'"
 ---
 
 ## 1. Goal

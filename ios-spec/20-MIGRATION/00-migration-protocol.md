@@ -19,7 +19,7 @@ Establish the rules that make a 500-hour in-place restructure of a **live, shipp
 
 ## 2. Why this way
 
-DoneBot has real users on Google Play. A migration that leaves the app unshippable for six months is not a migration — it is a rewrite with extra steps, and it removes the ability to hotfix a production bug. The protocol below buys one property and it is worth its cost:
+DoneBot has real users on Google Play. This phase alone is ~574 estimated hours and the whole spec is ~1,590 — call it nine months to a year and a half of calendar time depending on the week. A migration that leaves the app unshippable for that long is not a migration — it is a rewrite with extra steps, and it removes the ability to hotfix a production bug. The protocol below buys one property and it is worth its cost:
 
 > **At every commit on the port branch, the Android app builds, passes its tests, and could be shipped.**
 
@@ -52,7 +52,9 @@ Before any migration task:
    ```
 7. **Freeze Android feature work.** Only critical bug fixes, and those land on `release/1.2.x` and are cherry-picked forward.
 
-`v1.2-preKMP` is the reference point for every "did this change Android behaviour?" question for the next six months.
+`v1.2-preKMP` is the reference point for every "did this change Android behaviour?" question for the rest of the port.
+
+**None of step 0 has been done yet** (verified 2026-08-07): no `v1.2-preKMP` tag, no `release/1.2.x`, no `feat/ios-port`, and `keystore.properties` is still absent. `versionCode` is at **10**, `versionName` **1.2** — that part is current.
 
 ---
 
@@ -73,6 +75,17 @@ The gate:
 ```bash
 ! grep -rqE '^import (java|javax|android)\.' shared/*/src/commonMain
 ```
+
+**This gate closes in four stages, not one.** It is the phase's end state, not any single task's acceptance criterion — which is why no task's front-matter `verify:` asserts it in full:
+
+| Blocker | Closed by |
+|---|---|
+| `android.*` | `20-02` (before the move) + `20-03` (nothing new introduced) |
+| `java.time.*` | `20-04` |
+| `javax.inject.*` | `20-05` |
+| `java.util.Locale` | `20-13` |
+
+Run it as a *survey* after each of those and record what remains. Expecting it to be green at `20-03` is the mistake ADR-009 corrected.
 
 **Rule: a file that will not compile in `commonMain` is not a failure.** Put it in `androidMain`, record the specific blocking import in the task notes, and move on. A later task removes that dependency.
 
@@ -134,6 +147,8 @@ These tests encode behaviour that must not change. Treat any semantic difference
 
 **When a test must change** (for example `TokenRefreshAuthenticatorTest` after Ktor replaces the OkHttp `Authenticator`), the rewritten test must assert the **same behaviours**, not the same implementation. Record the rewrite in `DECISIONS.md`.
 
+**Moving a shield is itself a rewrite.** `org.junit.Assert` and Robolectric do not exist in `commonTest`, so the shields that follow the domain into `:shared:domain` have to be ported onto `kotlin.test`. That is `20-03b`, it has its own task and its own estimate, and its real acceptance is **unchanged total test-case count** — a port that quietly drops cases still shows green.
+
 ---
 
 ## 9. One-way doors
@@ -152,9 +167,10 @@ Tasks marked `reversible: false` — `20-04`, `20-05`, `20-07`, `20-09`, `20-11`
 
 | # | Task | Why here |
 |---|---|---|
-| 1 | Dead deps + `detektAll` | Banks AAB headroom before anything grows it; fixes a silent quality-gate loss *before* the first KMP module exists |
+| 1 | Dead deps + `detektAll` | Fixes a silent quality-gate loss *before* the first KMP module exists. Any AAB saving is a bonus — measure, do not assume. |
 | 2 | Domain Android leaks | Two files. Must precede the domain module move. |
 | 3 | `:shared:core` + `:shared:domain` | Smallest, purest layer first — proves the module pattern cheaply |
+| 3b | Regression shields → `commonTest` | The shields must run in their new home *before* the sweep they guard. Otherwise `20-04`'s own verify command matches nothing and passes vacuously. |
 | 4 | `kotlinx-datetime` | Touches 93 files across every layer; do it while the UI is still in one place |
 | 5 | Hilt → Koin | Must precede Ktor/Room because those tasks rewire DI |
 | 6 | Retrofit → Ktor | Independent of Room; contained to 5 files |
@@ -164,7 +180,7 @@ Tasks marked `reversible: false` — `20-04`, `20-05`, `20-07`, `20-09`, `20-11`
 | 10 | `:uikit` → CMP | The cleanest large module — proves the CMP pattern before the 48k-LOC UI layer |
 | 11 | `:shared:ui` + `:composeApp` | The bulk. Everything it needs now exists. |
 | 12 | `:app` shell | Cleanup; unlocks an Android 1.3 release |
-| 13 | iOS targets | Only now, when everything compiles as KMP-shaped Android |
+| 13 | iOS targets | Only now, when everything compiles as KMP-shaped Android. **First task that needs Xcode** (`10-05`) — steps 1–12 do not. |
 
 ---
 

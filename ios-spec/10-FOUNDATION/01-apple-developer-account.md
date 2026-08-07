@@ -4,7 +4,9 @@ title: Apple Developer Program enrolment & App Store Connect setup
 layer: foundation
 status: TODO
 depends_on: []
-blocks: [10-03, 30-03, 30-10, 30-11, 60-03, 80-01, 80-02, 80-03, 80-04, 80-05]
+# No longer blocks 10-03 (simulator needs no paid team, ADR-005) or 30-10
+# (Google half split from Apple, ADR-006). 80-02/03/04/05 are gated transitively via 80-01.
+blocks: [30-03, 30-11, 60-03, 80-01]
 parallel_safe: true
 estimate: 2h of work, up to several weeks of waiting
 reversible: true

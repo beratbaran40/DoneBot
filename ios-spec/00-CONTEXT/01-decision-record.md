@@ -8,6 +8,8 @@ These decisions were made deliberately, with the alternatives costed. **Do not r
 
 **Decision.** Convert the existing Android repository to KMP/CMP, then add an iOS target. Share domain, data, design system, and UI. Write only genuinely platform-bound surfaces natively.
 
+**Cost, for comparison with the rejected alternatives below:** the task files total **~1,590 estimated hours** — ≈ 9 months at 40 h/week, ≈ 14 months at 25 h/week. This path is not dramatically cheaper in raw hours than a rewrite; what it buys is a *shippable Android app at every commit*, a single implementation of the sync state machine, recurrence engine and health-points maths, and one UI to maintain afterwards rather than two forever.
+
 **Why.** The layer breakdown forced this:
 
 | Layer | LOC | % |
@@ -22,8 +24,10 @@ These decisions were made deliberately, with the alternatives costed. **Do not r
 The domain layer is thin — most business logic lives in repositories and ViewModels. So "share the domain, rewrite the UI" would have shared ~15k of 90k LOC while still paying the full KMP conversion cost. With **full feature parity** as a hard requirement, sharing the UI is what makes the schedule possible at all.
 
 **Alternatives rejected.**
-- *KMP core + SwiftUI UI* — ~10–14 months; low sharing ratio because domain is thin; UI maintained twice forever.
+- *KMP core + SwiftUI UI* — ~10–14 months; low sharing ratio because domain is thin; **UI maintained twice forever**, which is the recurring cost that dominates after ship.
 - *Pure SwiftUI rewrite* — ~12–18 months; 90k LOC reimplemented; sync state machine, recurrence engine and health-points math duplicated, which is where silent divergence would appear.
+
+The three estimates overlap more than they look. The deciding factor is not the first ship date, it is that both alternatives leave two implementations of the same logic in production.
 
 **The accepted trade-off.** On iOS, Compose renders through Skia/Metal inside a `ComposeUIViewController` — it does not map to UIKit controls. Text input, scroll physics and selection are Compose's iOS implementations, not the system's. This is acceptable here specifically because DoneBot's design is already deliberately non-standard (three palette kits, pixel-art icon set, mascot, skeuomorphic polaroid camera), so there is little "stock native look" to lose. It would be the wrong call for an app that wants to look like Settings.app.
 
@@ -113,11 +117,19 @@ Full design: `30-PLATFORM/01-notifications-and-alarms.md`.
 
 ---
 
+## D-10 · Spec language is English
+
+**Decision.** Task files are written in English.
+
+**Why.** The codebase, `CLAUDE.md`, all symbols, commands and paths are English. Keeping the spec in the same language eliminates term drift between instruction and code.
+
+---
+
 ## D-11 · All port work happens on a branch, never on `main`
 
 **Decision.** Every task in this spec — including the `20-MIGRATION` tasks that modify Android code — is committed to **`feat/ios-port`**, branched from `main`. `main` is never committed to directly.
 
-**Why.** `main` is the branch the live Android app ships from, and the owner keeps working there: bug fixes, releases, sometimes mid-session. Landing a six-month restructure on it would mean the branch that must stay releasable at all times is simultaneously half-migrated. Keeping the port on its own branch means a production hotfix is always one `git checkout main` away.
+**Why.** `main` is the branch the live Android app ships from, and the owner keeps working there: bug fixes, releases, sometimes mid-session. Landing a ~1,590-hour restructure on it would mean the branch that must stay releasable at all times is simultaneously half-migrated, for the better part of a year. Keeping the port on its own branch means a production hotfix is always one `git checkout main` away.
 
 **Direction of flow.** Merge `main` **into** `feat/ios-port` to pick up Android fixes. Never the reverse, until the owner decides the port is ready.
 
@@ -125,10 +137,28 @@ Full design: `30-PLATFORM/01-notifications-and-alarms.md`.
 
 **Enforcement.** `README.md` §0 rule 0 requires checking `git branch --show-current` before the first commit of any session. Two symptoms mean the branch changed underneath you: dirty files you did not touch, and an edit from earlier in the session having reverted.
 
+**Merge hygiene.** `ios-spec/` itself is tracked on `main`, so `90-STATE/` conflicts on every merge from it. Keep the branch's `PROGRESS.md`; take both sides of the append-only `BLOCKERS.md` / `DECISIONS.md` and re-sort by date.
+
 ---
 
-## D-10 · Spec language is English
+## D-12 · Human-gated prerequisites are never on the critical path
 
-**Decision.** Task files are written in English.
+**Decision.** No task that a human must unblock — the Apple Developer enrolment (`10-01`), the macOS upgrade and Xcode install (`10-05`) — may gate work that does not genuinely need it. Where the graph said otherwise, the graph was wrong and was corrected.
 
-**Why.** The codebase, `CLAUDE.md`, all symbols, commands and paths are English. Keeping the spec in the same language eliminates term drift between instruction and code.
+**Why.** This spec is written to be executed without a human in the loop, and its two slowest prerequisites are the two a human owns. Measured on the original graph, `10-01` alone made **54 of 105 tasks unreachable**, and a single bundled task (`30-10`, Google + Apple sign-in together) put **41 tasks including the Home screen** behind a backend Apple endpoint. None of that was intended; it was the compounding of three individually reasonable-looking dependency edges.
+
+**What changed.** `10-00` split into a 2-hour JDK pin and a separate `10-05` for macOS/Xcode (ADR-004). `10-03` dropped its `10-01` dependency, since simulator development needs no paid membership (ADR-005). `30-10` split, with the Apple half folded into the `60-03` that already specified it (ADR-006).
+
+**Result.** With both human-gated tasks blocked, 32 tasks / **712 hours** still run. With only `10-01` blocked, 97 of 107.
+
+**Enforcement.** When adding a dependency, ask whether the task can be *verified* without it, not whether it feels related. If a task needs a human prerequisite for one step out of ten, gate the step and record it — do not gate the task.
+
+---
+
+## D-13 · Estimates are honest, and the plan says so
+
+**Decision.** The task-file estimates total **~1,590 hours**, and every summary in this spec states that figure and its calendar translation (≈ 9 months at 40 h/week, ≈ 14 months at 25 h/week) rather than a rounder, friendlier number.
+
+**Why.** Earlier drafts described this as a "six-month restructure" in three places while the estimates said otherwise. That understates the commitment being made, and — worse — it makes D-01's rejected alternatives ("~10–14 months", "~12–18 months") look further away than they are, which is exactly the comparison a reader uses to sanity-check the architecture decision. D-01 still holds, but it holds on the *duplication* argument, not on a schedule advantage.
+
+**Consequence.** If an estimate is revised during execution, update `PROGRESS.md`'s summary total in the same commit. A stale total is worse than none.

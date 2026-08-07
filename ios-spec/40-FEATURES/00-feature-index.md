@@ -54,7 +54,7 @@ Only these features need a `30-PLATFORM` contract. Everything else is pure Compo
 
 | Feature | Needs |
 |---|---|
-| `auth-02` login, `auth-03` register | `30-10` social sign-in |
+| `auth-02` login, `auth-03` register | `30-10` social sign-in (contract + Google). **The Apple button is `60-03`** — verify it when that lands, do not block these tasks on it. |
 | `auth-05` resetpassword | `30-13` deep links |
 | `core-01` home | `30-01` reminders |
 | `core-03` chat | — (backend proxy; `LocalIntentClassifier` is shared) |

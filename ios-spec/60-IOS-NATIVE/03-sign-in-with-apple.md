@@ -3,10 +3,10 @@ id: 60-03
 title: Sign in with Apple — client
 layer: ios-native
 status: TODO
-depends_on: [30-10, 70-01]
+depends_on: [10-01, 30-10, 70-01]
 blocks: [80-05]
 parallel_safe: false
-estimate: 10h
+estimate: 16h
 reversible: false
 owner_files:
   - shared/ui/src/commonMain/**/login/**
@@ -19,13 +19,15 @@ verify:
 
 ## 1. Goal
 
-Add the Sign in with Apple button to login and register, wired to `70-01`'s endpoint, meeting Apple's Human Interface requirements.
+Implement Sign in with Apple end to end on the client: the `ASAuthorizationAppleIDProvider` flow, the `auth/apple` request, and the button on login and register — wired to `70-01`'s endpoint and meeting Apple's Human Interface requirements.
 
 **This is a submission blocker.** The app cannot ship without it.
 
 ## 2. Why this way
 
-`30-10` builds the platform contract; `70-01` builds the backend. This task is the UI and the account-linking edge cases — small, but the part App Review actually looks at.
+**This task owns the whole Apple client path, not just the button.** `30-10` declares `appleCredential()` in the `SocialSignIn` contract and stubs it; everything that actually talks to Apple lives here. That split is deliberate: Apple sign-in needs `10-01` (paid enrolment, weeks of verification) and `70-01` (a backend endpoint in a different repository), and folding those dependencies into `30-10` would have transitively blocked login — and therefore 41 downstream tasks including Home — on a backend endpoint. Google Sign-In and the contract ship without waiting; Apple lands here when its two prerequisites are ready.
+
+**`70-01` builds the backend.** This task is the client flow, the UI, and the account-linking edge cases — small, but the part App Review actually looks at.
 
 **Guideline 4.8 makes this mandatory**, and it was initially assessed as optional. The exemption covers apps using **exclusively** their own account system; DoneBot offers Google Sign-In alongside email/password, so it does not apply.
 
@@ -46,18 +48,24 @@ Add the Sign in with Apple button to login and register, wired to `70-01`'s endp
 | `ui/login/LoginViewModel.kt` (~173-215) | `handleSuccessfulLogin` — reuse verbatim |
 | `ui/auth/AuthScaffold.kt`, `AuthConsentFooter.kt` | Shared auth chrome and the ToS/privacy consent |
 | `DomainException.OAuthAccountExists` | The social-only account path |
-| `ios-spec/30-PLATFORM/10-google-and-apple-signin.md` | The contract |
+| `ios-spec/30-PLATFORM/10-social-signin-google.md` | The `SocialSignIn` contract — `appleCredential()` is declared there and stubbed; you implement it here |
 | `ios-spec/70-BACKEND/01-auth-apple.md` | The endpoint |
 | `app/src/main/res/values{,-tr}/strings.xml` | New strings go in **both** |
 
 ## 4. Target
 
+- `shared/data/iosMain/…/auth/IosSocialSignIn.kt` — replace `30-10`'s stub: real `appleCredential()`, `supportsApple = true`
+- `shared/data/…/model/network/request/AppleLoginRequest.kt` *(new)* — `{ identityToken, authorizationCode, email?, fullName? }`
+- `shared/data/…/api/ToDoApi.kt` — `POST auth/apple`, mirroring `auth/google`'s response shape
 - `shared/ui/…/login/LoginPanels.kt`, `register/RegisterPanels.kt` — the button, iOS-only
-- `shared/data/iosMain/…/auth/AppleSignIn.kt` — from `30-10`
 - New strings in EN **and** TR
 - `iosApp/iosApp.entitlements` — the capability
 
 ## 5. Steps
+
+0. **Implement the credential flow.** `ASAuthorizationAppleIDProvider` with `.fullName` and `.email` scopes; return identity token, authorization code, the stable `userIdentifier`, and — **only present on first authorization** — email and full name. Replace `30-10`'s stub and flip `supportsApple` to `true`.
+
+0b. **Add `POST auth/apple`** to the API interface, mirroring `auth/google`'s response shape so the ViewModel path is identical.
 
 1. **Add the button, gated on `SocialSignIn.supportsApple`.** It must not appear on Android.
 
@@ -108,6 +116,9 @@ is UiAction.OnAppleSignInClick -> viewModelScope.launch {
 
 ## 7. Acceptance
 
+- [ ] `appleCredential()` is implemented on iOS and `supportsApple` is `true`; `30-10`'s stub is gone
+- [ ] `POST auth/apple` exists on the API interface with the same response shape as `auth/google`
+- [ ] First authorization forwards email and full name; the client never drops them
 - [ ] The Apple button appears on login and register **on iOS only**
 - [ ] It uses the system-provided button (or a compliant reproduction)
 - [ ] It is at least as prominent as the Google button
@@ -124,6 +135,9 @@ is UiAction.OnAppleSignInClick -> viewModelScope.launch {
 
 ## 8. Pitfalls
 
+- **Apple returns the email exactly once.** If the client does not forward it on first authorization, it is unrecoverable — the user has to revoke the app in iOS Settings to get another chance. This is the highest-consequence line of code in the task.
+- **Private relay addresses are real.** Rejecting `@privaterelay.appleid.com` is a rejection-worthy bug and breaks a legitimate user.
+- **Sign in with Apple must be enabled on the App ID** before the entitlement works; enabling it later means regenerating provisioning profiles. That is why `10-01` is a dependency.
 - **Prominence is checked by reviewers.** Below Google, or visually smaller, is a documented rejection.
 - **Use the system button.** Apple's own component cannot be rejected for styling; a custom one can.
 - **Do not build a parallel success path.** `handleSuccessfulLogin` does seven things and skipping the chat clear is a privacy bug — one user seeing another's history on a shared device.

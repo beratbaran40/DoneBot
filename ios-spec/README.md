@@ -2,7 +2,9 @@
 
 **Read this file completely before doing anything else. Every session starts here.**
 
-You are implementing the port of DoneBot (a live Android app on Google Play, ~90k LOC Kotlin) to iOS, via Kotlin Multiplatform + Compose Multiplatform, inside this same repository. The work is decomposed into ~105 task files. This document tells you how to pick a task, execute it, prove it worked, and record it — so that work continues without stalling and without a human in the loop.
+You are implementing the port of DoneBot (a live Android app on Google Play, ~90k LOC Kotlin) to iOS, via Kotlin Multiplatform + Compose Multiplatform, inside this same repository. The work is decomposed into **107 task files totalling ~1,590 estimated hours** — roughly 39 weeks at 40 h/week, 64 weeks at 25 h/week. This document tells you how to pick a task, execute it, prove it worked, and record it — so that work continues without stalling and without a human in the loop.
+
+**Two things do not have to exist yet.** The Apple Developer account (`10-01`) and Xcode (`10-05`) are both human-gated and both slow. Neither is needed before `20-13`: **32 tasks / 712 hours of this plan run on the current machine with no Xcode and no Apple account.** Start `10-01` on day one anyway — enrolment takes weeks — but do not wait on either to begin.
 
 ---
 
@@ -63,9 +65,9 @@ A task is **available** when all of the following hold:
 
 Among available tasks, pick in this order:
 1. Lowest phase number (`10-` before `20-` before `30-`…).
-2. Within a phase, lowest id.
+2. Within a phase, lowest id, sorted as a **string** — that is why `20-03b` runs immediately after `20-03` and before `20-04`.
 
-> **The phase number is a category, not an execution order.** `depends_on` is the real order, and it legitimately points "forward" in several places: `10-03` (the Xcode project) needs `20-13` (the iOS framework); `30-10` and `60-03` (Sign in with Apple) need `70-01` (the backend endpoint); every `40-*` feature needs its `50-*` design-system prerequisite. A task whose `depends_on` are not all `DONE` is simply not available yet, regardless of its number.
+> **The phase number is a category, not an execution order.** `depends_on` is the real order, and it legitimately points "forward" in several places: `10-03` (the Xcode project) needs `20-13` (the iOS framework); `60-03` (Sign in with Apple) needs `70-01` (the backend endpoint); every `40-*` feature needs its `50-*` design-system prerequisite. A task whose `depends_on` are not all `DONE` is simply not available yet, regardless of its number.
 
 If a task's `parallel_safe: true` and you are running alongside other agents, you may take it even if another task is `IN_PROGRESS`, provided the `owner_files` globs do not intersect.
 
@@ -73,7 +75,7 @@ If a task's `parallel_safe: true` and you are running alongside other agents, yo
 
 ### 2.2 Task file anatomy
 
-Every task file has YAML front-matter followed by nine fixed sections. The four files in `00-CONTEXT/` are **reference documents, not tasks** — they deliberately have no front-matter and nothing depends on them being marked `DONE`.
+Every task file has YAML front-matter followed by the nine sections below. **Section 6 (Code skeleton) is omitted where a task writes no code** — the read-only index files and the feature-verification tasks are the usual cases. Every other section is present in every task. The four files in `00-CONTEXT/` are **reference documents, not tasks** — they deliberately have no front-matter and nothing depends on them being marked `DONE`.
 
 ```yaml
 ---
@@ -104,6 +106,8 @@ verify:                   # commands that must pass; also in section 9
 | 7. Acceptance | Checkboxes. Mechanically checkable. All must be ticked. |
 | 8. Pitfalls | Project-specific traps. These are the expensive ones. |
 | 9. Verification | Exact commands. Run all of them. |
+
+**The front-matter `verify:` list is a contract with rule 2: every command in it must be runnable, from the repo root, at the moment the task ends.** If a check is aspirational — a gate a *later* task closes — it belongs in section 9 as a survey with its expected failure stated, never in the front matter. Three of these were wrong in the first draft and deadlocked the queue (ADR-009). If you write a new one, run it before you commit it.
 
 **`reversible: false` means:** before starting, confirm the working tree is clean and the previous task is committed. These tasks are one-way doors (schema changes, DI framework swap, ~400-file sweeps). A dirty tree turns a revert into an archaeology exercise.
 
@@ -149,6 +153,8 @@ ls -l app/build/outputs/bundle/release/*.aab
 The ceiling lives in `.github/workflows/ci.yml` as `AAB_MAX_BYTES`. Record the measured size in `PROGRESS.md` for any task that touches dependencies. Baseline before migration: **18.17 MiB of a 20 MiB ceiling.**
 
 ### 3.4 The iOS gate — only from `20-MIGRATION/13` onward
+
+Both commands need **Xcode installed** (`10-05`), not just Command Line Tools: Kotlin/Native links against the real iOS SDK and shells out to `xcrun`. Nothing before `20-13` needs them.
 
 ```bash
 ./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64
@@ -207,7 +213,9 @@ The gate is §3.5. Every file move is independently verifiable and independently
 
 **All iOS work happens on a branch off `main`. Nothing in this spec is committed directly to `main`.**
 
-`main` is the branch the live Android app ships from. The owner continues to work there — bug fixes, releases, occasionally mid-session. Committing iOS work to it mixes a six-month restructure into the branch that has to stay releasable at all times.
+`main` is the branch the live Android app ships from. The owner continues to work there — bug fixes, releases, occasionally mid-session. Committing iOS work to it mixes a nine-to-fourteen-month restructure into the branch that has to stay releasable at all times.
+
+**`90-STATE/` will conflict on every `git merge main`, by design** — the spec is tracked on `main`, the ledger is written here. Keep the branch's `PROGRESS.md` (`git checkout --ours`); for the append-only `BLOCKERS.md` and `DECISIONS.md`, take both sides and re-sort.
 
 The working branch is **`feat/ios-port`** unless `90-STATE/PROGRESS.md` records a different one.
 
@@ -258,8 +266,8 @@ Never commit: `keystore.properties`, `local.properties`, anything matching the e
 ios-spec/
 ├── README.md              ← you are here
 ├── 00-CONTEXT/            Decisions, glossary, Android source map, Apple constraints
-├── 10-FOUNDATION/         Environment, Gradle/KMP setup, module topology, iOS shell, CI
-├── 20-MIGRATION/          Steps 0–12: the in-place KMP conversion. Sequential.
+├── 10-FOUNDATION/         JDK pin, Apple enrolment, Gradle/KMP setup, iOS shell, CI, macOS+Xcode
+├── 20-MIGRATION/          Steps 0–13: the in-place KMP conversion. Sequential.
 ├── 30-PLATFORM/           The 31 expect/actual platform contracts + iOS implementations
 ├── 40-FEATURES/           One file per Android `ui/` package. 1:1 mapping.
 ├── 50-DESIGN-SYSTEM/      Tokens, 3 palette kits, 80 TD* components, icon pipeline, iPad

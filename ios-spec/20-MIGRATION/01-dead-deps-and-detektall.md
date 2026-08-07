@@ -77,11 +77,11 @@ This matters for planning: **do not count on banking headroom here.** The size l
 
 8. **Add the `detektAll` aggregate task** to the root build file (skeleton below).
 
-9. **Verify `detektAll` actually covers both modules today** — compare its task graph against `detektMain`:
+9. **Verify `detektAll` covers both modules and nothing more.** Compare its task graph against `detektMain`:
    ```bash
-   ./gradlew detektAll --dry-run
+   ./gradlew detektAll --dry-run | grep -E ':(app|uikit):detekt'
    ```
-   Both `:app` and `:uikit` detekt tasks must appear.
+   Expected today: exactly `:app:detektMain` and `:uikit:detektMain`. **If more than one task per module appears, the filter is wrong** — see the skeleton's comment. Eleven tasks per module is the unfiltered result and it will both blow the CI time budget and go red on un-baselined test-source findings.
 
 10. **Update CI** — replace `detektMain` with `detektAll` in `.github/workflows/ci.yml`. Note the `gh` token lacks the `workflow` scope, so edit the file locally and push over SSH; do not use the API.
 
@@ -91,23 +91,44 @@ This matters for planning: **do not count on banking headroom here.** The size l
 
 ```kotlin
 // build.gradle.kts (root)
-// Aggregate detekt across every module and every KMP source set.
+// Aggregate detekt across every module, whatever shape that module is.
 //
 // `detektMain` is an AGP *variant* task: it exists only for Android modules. As modules
 // become KMP they produce detektMetadataMain / detektAndroidDebug / detektIosArm64Main
-// instead, and `detektMain` keeps exiting 0 while checking nothing in them. This task
-// binds to the Detekt *type*, so new source sets are covered automatically.
+// instead, and `detektMain` keeps exiting 0 while checking nothing in them.
+//
+// The filter is NOT optional. `tasks.withType<Detekt>()` on :app today returns ELEVEN
+// tasks once the typeless `detekt` is excluded — detektMain plus five per-variant
+// duplicates of it (Debug/Release/ReleaseLocal/BenchmarkRelease/NonMinifiedRelease)
+// plus five test-source tasks. Depending on all of them would:
+//   1. run type-resolution analysis of production code six times over,
+//   2. analyse test sources for the first time ever — findings that are not in
+//      config/baseline.xml, so the build goes red on unchanged code,
+//   3. reproduce the exact variant fan-out recorded in app/build.gradle.kts as
+//      "how it broke CI", on a runner that already OOMs under detekt + tests.
+//
+// So: production source sets only, one task per module shape.
+//   AGP module  -> detektMain          (already "across all variants")
+//   KMP module  -> detektMetadataMain, detektAndroidDebug, detektIos*Main
+val productionDetekt = { name: String ->
+    (name == "detektMain" || name.startsWith("detektMetadata") || name == "detektAndroidDebug" ||
+        (name.startsWith("detektIos") && name.endsWith("Main"))) &&
+        !name.contains("Test")
+}
+
 tasks.register("detektAll") {
     group = "verification"
-    description = "Runs every Detekt task with type resolution across all projects."
+    description = "Runs detekt with type resolution over every module's production source sets."
     dependsOn(
         subprojects.flatMap { project ->
             project.tasks.withType(io.gitlab.arturbosch.detekt.Detekt::class.java)
-                .matching { it.name != "detekt" }   // the typeless variant adds nothing
+                .matching { productionDetekt(it.name) }
         },
     )
 }
 ```
+
+> **Sanity check before committing:** `./gradlew detektAll --dry-run` must list **one** task per Android module today (`:app:detektMain`, `:uikit:detektMain`) — not eleven. If the list is long, the filter is not doing its job.
 
 ```diff
 --- a/.github/workflows/ci.yml
@@ -129,7 +150,9 @@ tasks.register("detektAll") {
 ## 7. Acceptance
 
 - [ ] `./gradlew detektAll --dry-run` lists detekt tasks for **both** `:app` and `:uikit`
+- [ ] It lists **exactly one** task per module (`detektMain`), not the eleven-task variant fan-out
 - [ ] `detektAll` reports the same finding count as `detektMain` did before this change (baseline is zero findings)
+- [ ] `detektAll` wall-clock is within ~10% of `detektMain`'s — a large jump means the filter let variant duplicates through
 - [ ] `.github/workflows/ci.yml` invokes `detektAll`
 - [ ] `./gradlew ktlintCheck detektAll testDebugUnitTest assembleDebug` passes
 - [ ] `maps-compose` removed from both `app/build.gradle.kts` and the catalog; no orphan `[versions]` entry left
@@ -144,15 +167,19 @@ tasks.register("detektAll") {
 - **Do not remove `google-places`.** It is live. `PlaceSearchRepositoryImpl` and `PlacesModule` depend on it.
 - **Do not remove the manifest permission removals.** They are what keeps the Play Data Safety declaration free of location claims. `CLAUDE.md` calls these out explicitly as not-cleanup.
 - **Do not delete `LicensesScreen.kt`'s Maps license text** on the grounds that the dependency is gone — Places still ships Google code and the attribution is still required.
-- **`detektAll` must not become `detekt`.** The typeless `detekt` task runs without type resolution and misses the rules this project relies on. The `matching { it.name != "detekt" }` filter is deliberate.
+- **`detektAll` must not become `detekt`.** The typeless `detekt` task runs without type resolution and misses the rules this project relies on. The name filter excludes it deliberately.
+- **Do not aggregate every `Detekt`-typed task.** `withType<Detekt>()` on `:app` returns eleven tasks after excluding `detekt`: `detektMain` *plus* five per-variant duplicates of it *plus* five test-source tasks. `detektMain` is already documented as running "across all variants", so the duplicates are pure cost, and the test tasks surface findings that were never baselined. `app/build.gradle.kts` carries a comment recording that this exact variant fan-out is "how it broke CI"; the runner also OOMs under detekt + tests, which is why CI passes `--max-workers=2`. Filter to production source sets.
+- **Wall-clock is the tell.** If `detektAll` takes noticeably longer than `detektMain` did, the filter is leaking. Check `--dry-run` before you check the code.
 - **Per-module configs must keep applying.** `app/detekt.yml` and `uikit/detekt.yml` differ. Depending on the tasks (rather than reimplementing them) preserves that automatically — do not "simplify" it into a single hand-rolled invocation.
 - **Detekt baselines.** `config/baseline.xml` exists per module. If `detektAll` suddenly reports findings, check that baselines are still being picked up before "fixing" the code.
 
 ## 9. Verification
 
 ```bash
-# 1. Aggregate covers every module
+# 1. Aggregate covers every module — and ONLY the production task per module.
+#    Expected today: exactly two lines, :app:detektMain and :uikit:detektMain.
 ./gradlew detektAll --dry-run | grep -E ':(app|uikit):detekt'
+./gradlew detektAll --dry-run | grep -cE ':(app|uikit):detekt'   # must be 2, not 22
 
 # 2. Full gate with the new task name
 ./gradlew ktlintCheck detektAll testDebugUnitTest assembleDebug

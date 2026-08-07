@@ -10,6 +10,13 @@
 > `main` is the live Android app's branch and the owner keeps working there.
 > Merge `main` **into** this branch to pick up Android fixes — never the reverse.
 > The only merge back to `main` is the owner's decision at milestone M5.
+>
+> **This file will conflict on every merge from `main`, by design.** The spec is
+> tracked on `main`; the ledger is written on `feat/ios-port`. When `git merge main`
+> conflicts here, **always keep the branch's version** (`git checkout --ours
+> 90-STATE/PROGRESS.md`) — `main` never has newer status than the branch doing the work.
+> The same applies to `BLOCKERS.md` and `DECISIONS.md`, which are append-only:
+> take both sides and re-sort by date.
 
 **Single source of truth for task status.** Update in the same commit as the status flip. Never batch updates.
 
@@ -21,17 +28,34 @@ Pick rule: lowest phase, then lowest id, among tasks whose `depends_on` are all 
 
 ## Summary
 
-| Phase | Total | DONE | IN_PROGRESS | BLOCKED | TODO |
-|---|---|---|---|---|---|
-| 10 · Foundation | 5 | 0 | 0 | 0 | 5 |
-| 20 · Migration | 13 | 0 | 0 | 0 | 13 |
-| 30 · Platform | 16 | 0 | 0 | 0 | 16 |
-| 40 · Features | 53 | 0 | 0 | 0 | 53 |
-| 50 · Design system | 7 | 0 | 0 | 0 | 7 |
-| 60 · iOS native | 3 | 0 | 0 | 0 | 3 |
-| 70 · Backend | 2 | 0 | 0 | 0 | 2 |
-| 80 · Release | 5 | 0 | 0 | 0 | 5 |
-| **Total** | **104** | **0** | **0** | **0** | **104** |
+| Phase | Total | DONE | IN_PROGRESS | BLOCKED | TODO | Estimate |
+|---|---|---|---|---|---|---|
+| 10 · Foundation | 6 | 0 | 0 | 0 | 6 | 56 h |
+| 20 · Migration | 15 | 0 | 0 | 0 | 15 | 574 h |
+| 30 · Platform | 16 | 0 | 0 | 0 | 16 | 278 h |
+| 40 · Features | 53 | 0 | 0 | 0 | 53 | 400 h |
+| 50 · Design system | 7 | 0 | 0 | 0 | 7 | 104 h |
+| 60 · iOS native | 3 | 0 | 0 | 0 | 3 | 66 h |
+| 70 · Backend | 2 | 0 | 0 | 0 | 2 | 52 h |
+| 80 · Release | 5 | 0 | 0 | 0 | 5 | 60 h |
+| **Total** | **107** | **0** | **0** | **0** | **107** | **1,590 h** |
+
+**What 1,590 hours means.** ≈ 39 weeks at 40 h/week, ≈ 64 weeks at 25 h/week. The
+critical path is only ~470 h, but with one developer the total is the real number.
+Estimates are for scheduling, not budgets for an agent — see `../README.md` §2.2.
+
+**Runway when the two human-gated tasks are `BLOCKED`** — recomputed after the
+dependency corrections in ADR-004/005/006, and the reason those corrections were made:
+
+| Blocked | Reachable | Hours |
+|---|---|---|
+| nothing | 107 / 107 | 1,590 h |
+| `10-01` (Apple account) | 97 / 107 | 1,456 h |
+| `10-01` + `70-01` (backend Apple endpoint) | 96 / 107 | 1,432 h |
+| `10-01` + `10-05` (**no Xcode installed at all**) | 32 / 107 | 712 h |
+
+The last row is the useful one for sequencing: **712 hours of this plan need no Xcode
+and no Apple account.** Neither has to exist before `20-13`.
 
 **AAB size ledger** — record after every dependency-touching task.
 
@@ -45,21 +69,23 @@ Pick rule: lowest phase, then lowest id, among tasks whose `depends_on` are all 
 
 | id | title | status | depends_on | updated | notes |
 |---|---|---|---|---|---|
-| 10-00 | Environment & toolchain (JDK, macOS, Xcode) | TODO | — | | **Do this first.** Fixes the `Type T not present` trap. |
+| 10-00 | Environment & toolchain — JDK pin | TODO | — | | **Do this first.** Fixes the `Type T not present` trap. 2 h. |
 | 10-01 | Apple Developer Program enrolment | TODO | — | | Needs a human. Start week 1; verification takes weeks. |
 | 10-02 | Gradle / KMP plugin setup | TODO | 10-00 | | |
-| 10-03 | iOS app shell (`iosApp/` Xcode project) | TODO | 10-00, 10-01, 20-13 | | |
+| 10-03 | iOS app shell (`iosApp/` Xcode project) | TODO | 10-05, 20-13 | | No longer needs 10-01 — simulator work needs no paid account (ADR-005). |
 | 10-04 | CI: `detektAll`, nightly iOS job | TODO | 10-00 | | |
+| 10-05 | macOS upgrade & Xcode 26 | TODO | — | | Needs a human. **Not on the migration's critical path** — first needed at 20-13 (ADR-004). |
 
 ## 20 · Migration — sequential, Android green after every step
 
 | id | title | status | depends_on | rev? | updated | notes |
 |---|---|---|---|---|---|---|
 | 20-00 | Migration protocol (read-only reference) | TODO | — | — | | The always-green rules. Read before 20-01. |
-| 20-01 | Remove dead Maps deps + introduce `detektAll` | TODO | 10-00 | ✔ | | Banks −0.2…−0.6 MiB. Fixes silent detekt coverage loss. |
+| 20-01 | Remove dead Maps deps + introduce `detektAll` | TODO | 10-00 | ✔ | | Size win may be ~0 — measure. `detektAll` must filter to production source sets. |
 | 20-02 | Close the 2 Android leaks in `domain/` | TODO | 20-01 | ✔ | | `AlarmSoundPreferences`, `Authenticator` |
-| 20-03 | `:shared:core` + `:shared:domain` (androidTarget only) | TODO | 20-02 | ✔ | | |
-| 20-04 | `java.time` → `kotlinx-datetime` 0.7.x | TODO | 20-03 | ✘ | | 93 files. Localized formatting needs a contract. |
+| 20-03 | `:shared:core` + `:shared:domain` (androidTarget only) | TODO | 20-02 | ✔ | | Tests do **not** move here — that is 20-03b. |
+| 20-03b | Move the regression shields to `commonTest` | TODO | 20-03 | ✔ | | Assertion rewrite onto `kotlin.test`, not a `git mv`. Gates 20-04. |
+| 20-04 | `java.time` → `kotlinx-datetime` 0.7.x | TODO | 20-03b | ✘ | | 93 files. Localized formatting needs a contract. |
 | 20-05 | Hilt → Koin 4 (+ `KoinModulesTest`) | TODO | 20-03 | ✘ | | Test lands in the same PR — non-negotiable. |
 | 20-06 | Retrofit + OkHttp `Authenticator` → Ktor 3 | TODO | 20-05 | ✔ | | ⚠ measure AAB immediately after. |
 | 20-07 | Room → Room KMP | TODO | 20-05 | ✘ | | ⚠ **Highest data risk.** Schema JSON must diff clean. |
@@ -68,7 +94,7 @@ Pick rule: lowest phase, then lowest id, among tasks whose `depends_on` are all 
 | 20-10 | `:uikit` → KMP + CMP | TODO | 20-09 | ✔ | | Also fixes `com.example.uikit` namespace. |
 | 20-11 | `:shared:ui` + `:composeApp` | TODO | 20-04, 20-06, 20-07, 20-08, 20-10 | ✘ | | The big one. Burn down by leverage. |
 | 20-12 | Reduce `:app` to a shell (~1,800 LOC) | TODO | 20-11 | ✔ | | **Android 1.3 shippable here, zero iOS code.** |
-| 20-13 | Declare iOS targets, fix common compile errors | TODO | 20-12 | ✔ | | First `linkDebugFrameworkIosSimulatorArm64`. |
+| 20-13 | Declare iOS targets, fix common compile errors | TODO | 20-12, 10-05 | ✔ | | First `linkDebugFrameworkIosSimulatorArm64`. **First task that needs Xcode** (ADR-004). |
 
 ## 30 · Platform contracts
 
@@ -84,7 +110,7 @@ Pick rule: lowest phase, then lowest id, among tasks whose `depends_on` are all 
 | 30-07 | Camera (polaroid capture) | TODO | 20-13 | | Only `LiveCameraPreview.kt` is platform-bound. |
 | 30-08 | Photos & files | TODO | 20-13 | | |
 | 30-09 | Location / places | TODO | 20-13 | | MapKit on iOS — no API key needed. |
-| 30-10 | Google Sign-In + Sign in with Apple | TODO | 10-01, 20-13, 70-01 | | |
+| 30-10 | Social sign-in contract & Google Sign-In | TODO | 20-13, 10-03 | | Apple half split out to 60-03 — it dragged 41 tasks behind 70-01 (ADR-006). |
 | 30-11 | Firebase on iOS (SPM) | TODO | 10-01, 10-03 | | Analytics, Crashlytics, Perf, App Check, Messaging. |
 | 30-12 | Permissions | TODO | 20-13 | | |
 | 30-13 | Deep links & universal links | TODO | 20-13 | | |
@@ -193,7 +219,7 @@ All depend on `20-11` plus their own design-system prerequisites. `00-feature-in
 | 50-02 | Components tier A — Canvas-heavy (8) | TODO | 50-00 | | Charts, heatmap, health bar, wheel picker, confetti |
 | 50-03 | Components tier B — animation-driven (14) | TODO | 50-00 | | |
 | 50-04 | Components tier C — mechanical (≈45) | TODO | 50-00 | | Includes the 846-LOC text-field pair |
-| 50-05 | Icons & pixel-art generation pipeline | TODO | 20-09 | | 231 vectors + `genpixelicons.py` |
+| 50-05 | Icons & pixel-art generation pipeline | TODO | 20-09 | | 232 vectors (89 `:app` + 143 `:uikit`) + `genpixelicons.py` |
 | 50-06 | Adaptive layout / iPad | TODO | 20-11 | | Window size class is already threaded through |
 
 ## 60 · iOS-native additions
@@ -202,7 +228,7 @@ All depend on `20-11` plus their own design-system prerequisites. `00-feature-in
 |---|---|---|---|---|---|
 | 60-01 | WidgetKit widgets | TODO | 10-03, 30-04 | | Shares App Group + Live Activity infra |
 | 60-02 | App Intents / Siri | TODO | 10-03 | | |
-| 60-03 | Sign in with Apple (client) | TODO | 30-10, 70-01 | | **Submission blocker** |
+| 60-03 | Sign in with Apple (client, end to end) | TODO | 10-01, 30-10, 70-01 | | **Submission blocker.** Now owns the whole Apple client path, not just the button. |
 
 ## 70 · Backend (executed in `~/AndroidStudioProjects/ToDoBackend`)
 
@@ -229,13 +255,13 @@ Binary, mechanically checkable. See `../README.md` §3 for the commands.
 
 | Gate | Requires | Status |
 |---|---|---|
-| **M0** Toolchain | 10-00, 10-01 | ☐ |
-| **M1** KMP skeleton | 20-01, 20-03 | ☐ |
+| **M0** Toolchain | 10-00 (JDK). 10-01 and 10-05 run on their own clocks and gate M6, not M0. | ☐ |
+| **M1** KMP skeleton | 20-01, 20-03, 20-03b | ☐ |
 | **M2** Platform-free core | 20-04 + purity grep | ☐ |
 | **M3** Data on KMP | 20-06, 20-07, 20-08 + schema diff | ☐ |
 | **M4** Design system on CMP | 20-10 | ☐ |
 | **M5** Whole app on CMP — *Android 1.3 shippable* | 20-12 | ☐ |
-| **M6** iOS compiles & launches | 20-13, 10-03 | ☐ |
+| **M6** iOS compiles & launches | 10-05, 20-13, 10-03 | ☐ |
 | **M7** iOS feature-complete | all 40-*, 50-06 | ☐ |
 | **M8** Reminder parity proven | 30-01 + `ReminderPlannerTest` | ☐ |
 | **M9** Submitted | 80-05 | ☐ |

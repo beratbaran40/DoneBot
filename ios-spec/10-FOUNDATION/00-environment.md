@@ -1,16 +1,15 @@
 ---
 id: 10-00
-title: Environment & toolchain
+title: Environment & toolchain — JDK pin
 layer: foundation
 status: TODO
 depends_on: []
-blocks: [10-02, 10-03, 10-04, 20-01]
+blocks: [10-02, 10-04, 20-01]
 parallel_safe: false
-estimate: 6h (plus a multi-hour OS upgrade that is mostly waiting)
+estimate: 2h
 reversible: true
 owner_files:
   - gradle.properties
-  - .github/workflows/ci.yml
 verify:
   - JAVA_HOME= ./gradlew --version
   - ./gradlew ktlintCheck detektMain testDebugUnitTest assembleDebug
@@ -18,7 +17,9 @@ verify:
 
 ## 1. Goal
 
-Make every Gradle invocation in this repository work from a plain shell, and get the machine onto a toolchain that can build for iOS at all. When this task is done, an agent can run the verification gate without knowing anything about JDK paths, and `xcodebuild -version` reports Xcode 26.
+Make every Gradle invocation in this repository work from a plain shell. When this task is done, an agent can run the verification gate without knowing anything about JDK paths.
+
+**Scope note:** the macOS upgrade and the Xcode install are **not** in this task. They are `10-05`, and nothing in `20-MIGRATION` up to and including `20-12` needs them. Splitting them is deliberate — see §2.
 
 ## 2. Why this way
 
@@ -26,14 +27,14 @@ Make every Gradle invocation in this repository work from a plain shell, and get
 
 We pin it in `gradle.properties` rather than relying on an exported `JAVA_HOME` because the pin must survive a fresh shell, a CI runner, a cron job and an agent that does not read its own environment. It is one line, it is committed, and it is impossible to forget.
 
-**The macOS upgrade goes first, before any code change**, so that if the upgrade breaks something, the cause is unambiguous and the rollback costs nothing. Doing it mid-migration would entangle OS breakage with migration breakage.
+**The macOS/Xcode toolchain is a separate task on purpose.** This task blocks `20-01`, which means it blocks the entire migration. If it also carried "upgrade macOS and install Xcode 26" — a multi-hour, human-only, reboot-bearing job — then 504 of the migration's 544 hours would be gated behind an iOS toolchain that none of them use. `10-05` owns that work and blocks only `10-03` and `20-13`, which are the first two tasks that genuinely need an iOS SDK.
 
 ## 3. Source — read before writing
 
 | Path | What to look for |
 |---|---|
 | `gradle.properties` | Current JVM args (4 GB Gradle heap, 2 GB Kotlin daemon), parallel/cache/configuration-cache flags. You are adding one property, not restructuring. |
-| `.github/workflows/ci.yml` | The JDK setup step. CI already pins Temurin 21 and must stay that way — do not change CI's JDK here. |
+| `.github/workflows/ci.yml` | The JDK setup step. CI already pins Temurin 21 and must stay that way — **read only, do not edit it in this task.** |
 | `/CLAUDE.md` § "Build, Test & CI" | The existing statement of the JDK requirement. |
 
 ## 4. Target
@@ -83,16 +84,7 @@ We pin it in `gradle.properties` rather than relying on an exported `JAVA_HOME` 
    ```
    Expect ≈ 18.17 MiB. If it differs materially, note it — the whole size ledger is keyed to this number.
 
-6. **macOS upgrade — human action.** Requires macOS 15.6 minimum for Xcode 26; Xcode 26.4 requires macOS Tahoe 26.2. Take a bootable backup first. If you are an agent: write this to `BLOCKERS.md`, mark the task `BLOCKED`, and move on to `20-01`, which needs none of it.
-
-7. **After the upgrade, re-run step 4 before any other change.** Isolating OS-induced breakage from migration breakage is the entire point of doing this first.
-
-8. **Install Xcode 26** from the App Store or the developer portal, then:
-   ```bash
-   sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-   xcodebuild -version
-   xcrun simctl list devices available | head
-   ```
+6. **Do not touch macOS or Xcode here.** That is `10-05`. This task is `DONE` when the four acceptance boxes below are ticked; it does not wait on an OS upgrade.
 
 ## 6. Code skeleton
 
@@ -114,9 +106,7 @@ The complete diff for this task:
 - [ ] `./gradlew ktlintCheck detektMain testDebugUnitTest assembleDebug` passes from a plain shell
 - [ ] Pre-migration AAB size recorded in `90-STATE/PROGRESS.md`
 - [ ] `gradle.properties` change is committed, with the explanatory comment intact
-- [ ] `sw_vers -productVersion` ≥ 15.6 *(or `BLOCKED` with a `BLOCKERS.md` entry)*
-- [ ] `xcodebuild -version` reports Xcode 26.x *(or `BLOCKED`)*
-- [ ] `xcrun simctl list devices available` lists at least one iPhone simulator *(or `BLOCKED`)*
+- [ ] No macOS/Xcode work was done here — those boxes live in `10-05`
 
 ## 8. Pitfalls
 
@@ -125,7 +115,7 @@ The complete diff for this task:
 - **Do not "fix" the JDK by uninstalling 24.** Other tooling on this machine may need it. Pin, do not remove.
 - **Do not pipe the Gradle output through `grep` or `tail`** to check the result. The pipe masks the exit code and a failed build reads as success. Redirect to a file and check the exit status.
 - **The Android Studio app name may change** across updates (`Android Studio.app`, `Android Studio Panda.app`, …). If a future update breaks the pin, re-run the `ls -d` discovery in step 2. Consider this the known maintenance cost of the pin.
-- **Xcode 26 is ~10–15 GB** plus simulator runtimes. Check free disk before starting.
+- **Do not pull the macOS/Xcode work back into this task.** It was split out for a reason: this task blocks `20-01` and therefore the whole migration. Re-coupling them puts a multi-hour human-only OS upgrade on the critical path of 504 hours of work that never touches an iOS SDK.
 
 ## 9. Verification
 
@@ -138,9 +128,4 @@ JAVA_HOME= ./gradlew --version
 
 # 3. Size baseline
 ./gradlew :app:bundleRelease && ls -l app/build/outputs/bundle/release/*.aab
-
-# 4. iOS toolchain (only after the OS upgrade + Xcode install)
-sw_vers -productVersion
-xcodebuild -version
-xcrun simctl list devices available | head
 ```

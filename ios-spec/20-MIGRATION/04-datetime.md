@@ -3,7 +3,7 @@ id: 20-04
 title: `java.time` → `kotlinx-datetime`
 layer: domain
 status: TODO
-depends_on: [20-03]
+depends_on: [20-03b]
 blocks: [20-11]
 parallel_safe: false
 estimate: 70h
@@ -47,6 +47,8 @@ Measured distribution:
 **Do it per-layer with a green build between each:** domain → core → data → uikit → ui. A 93-file sweep in one commit is unbisectable.
 
 **The regression shields are the point.** Seven test files encode date arithmetic that must not change. Treat any semantic difference as a bug in the migration, never as a test that needs updating.
+
+**That is also why this task depends on `20-03b` rather than `20-03`.** The shields have to be running in `:shared:domain`'s `commonTest` before the sweep starts — otherwise this task's own `verify:` line (`:shared:domain:testDebugUnitTest --tests '*Recurrence*'`) matches nothing and passes without testing anything, on the largest semantic-risk sweep in the migration.
 
 ## 3. Source — read before writing
 

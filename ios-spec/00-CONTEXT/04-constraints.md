@@ -11,7 +11,8 @@ Hard limits. None of these are negotiable by an implementing agent. Where a limi
 | Constraint | Value | Consequence |
 |---|---|---|
 | Minimum SDK for App Store | **iOS 26 SDK**, mandatory since 28 Apr 2026 | Xcode 26+ required for any new submission *or update* |
-| Xcode 26 minimum macOS | **macOS Sequoia 15.6**; Xcode 26.4 needs **macOS Tahoe 26.2** | Dev machine is on macOS 14.5 → upgrade is a prerequisite |
+| Xcode 26 minimum macOS | **macOS Sequoia 15.6**; Xcode 26.4 needs **macOS Tahoe 26.2** | Dev machine is on macOS 14.5 → upgrade is a prerequisite **for `20-13` onward only**, not for the migration (task `10-05`, D-12) |
+| Kotlin/Native iOS targets | Need the **full Xcode**, not Command Line Tools | `linkDebugFrameworkIosSimulatorArm64` shells out to `xcrun` against the real iOS SDK |
 | Intel Macs | Xcode 26 is universal; **Xcode 27 drops Intel** | Machine is Apple Silicon — fine |
 | Deployment target | Independent of build SDK | Can still support older iOS; set in `10-FOUNDATION/03` |
 
@@ -71,7 +72,7 @@ Design that lives with this: `30-PLATFORM/01-notifications-and-alarms.md`.
 ./gradlew ktlintCheck detektAll testDebugUnitTest assembleDebug
 ```
 
-- **`detektAll`, not `detektMain`.** `detektMain` is an AGP-variant task. Once a module becomes KMP it produces `detektMetadataMain`/`detektAndroidDebug`, and `detektMain` keeps succeeding while checking nothing. Introduced in `20-MIGRATION/01`; use `detektMain` before that.
+- **`detektAll`, not `detektMain`.** `detektMain` is an AGP-variant task. Once a module becomes KMP it produces `detektMetadataMain`/`detektAndroidDebug`, and `detektMain` keeps succeeding while checking nothing. Introduced in `20-MIGRATION/01`; use `detektMain` before that. **It aggregates production source sets only** — the unfiltered `withType<Detekt>()` returns eleven tasks per Android module and reproduces the variant fan-out that already broke CI once (ADR-008).
 - **`testDebugUnitTest`, not `test`** — the release unit-test variant OOMs the Kotlin daemon.
 - **Never pipe Gradle output through `grep`/`tail`.** The pipe masks the exit code; a failed build reads as success.
 
@@ -98,7 +99,7 @@ Ceiling is raised to 24 MiB once, deliberately, in `20-MIGRATION/09` (see D-09).
 ### 2.3 JDK
 
 Gradle requires **JDK/JBR 21**. JDK 24 fails with `Type T not present`. The correct runtime is at
-`/Applications/Android Studio Panda.app/Contents/jbr/Contents/Home` (openjdk 21.0.9) and is **not** wired into `gradle.properties` — `10-FOUNDATION/00` fixes this permanently.
+`/Applications/Android Studio Panda.app/Contents/jbr/Contents/Home` (openjdk 21.0.9) and is **not** wired into `gradle.properties` — `10-FOUNDATION/00` fixes this permanently. That task is the JDK pin *only*; the macOS/Xcode toolchain is `10-FOUNDATION/05` and is not a prerequisite for any migration task before `20-13`.
 
 ### 2.4 Data safety
 
@@ -108,7 +109,7 @@ Gradle requires **JDK/JBR 21**. JDK 24 fails with `Type T not present`. The corr
 
 ### 2.5 Localization
 
-- EN and TR at **exact parity**, enforced by convention and the `check-l10n` skill. 1,208 app string keys + 9 plurals, 73 uikit keys, per language.
+- EN and TR at **exact parity**, enforced by convention and the `check-l10n` skill. **1,135** app string keys + 9 plurals, **73** uikit keys, per language — 1,208 in total across the two modules. (An earlier revision of this line read "1,208 app keys + 73 uikit", double-counting uikit; `03-source-map.md` §9 and `20-MIGRATION/09` have the correct split.)
 - Only `en` and `tr` ship (`androidResources.localeFilters`).
 - No user-visible string may be hardcoded in Kotlin or Compose.
 

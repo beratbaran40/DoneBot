@@ -4,7 +4,7 @@ title: Create `:shared:core` + `:shared:domain` (androidTarget only)
 layer: domain
 status: TODO
 depends_on: [10-02, 20-02]
-blocks: [20-04, 20-05, 20-09]
+blocks: [20-03b, 20-05, 20-09]
 parallel_safe: false
 estimate: 20h
 reversible: true
@@ -16,7 +16,10 @@ owner_files:
   - app/src/main/java/com/todoapp/mobile/common/**
 verify:
   - ./gradlew ktlintCheck detektAll testDebugUnitTest assembleDebug
-  - "! grep -rqE '^import (java|javax|android)\\.' shared/domain/src/commonMain shared/core/src/commonMain"
+  # Only the `android.` half of the purity gate is achievable here. `java.time` (20-04),
+  # `javax.inject` (20-05) and `java.util.Locale` (20-13) are still expected in commonMain
+  # after this task — see step 8. Asserting the full gate here would fail by design.
+  - "! grep -rqE '^import android\\.' shared/domain/src/commonMain shared/core/src/commonMain"
 ---
 
 ## 1. Goal
@@ -79,20 +82,30 @@ app/build.gradle.kts                      + implementation(projects.shared.domai
 
 5. **Repeat for `:shared:domain`.** It depends on `:shared:core`. Move all 67 files preserving packages.
 
-6. **Move the tests.** Domain and common tests go to the new modules' `commonTest`. They currently use JUnit4 + MockK; in `commonTest` they need the multiplatform test API. **If a test cannot move cleanly, leave it in `app/src/test` for now** and note it — a test in the wrong module is a smaller problem than a broken test.
+6. **Do not move the tests here.** Test migration is `20-03b`, its own task, and it is a bigger job than it looks: `org.junit.Assert` and Robolectric do not exist in `commonTest`, so every assertion has to be rewritten. Leave all 37 test files in `app/src/test` for now — they still compile and still run against the moved production code, because the packages did not change. Instead, **record which test files cover `domain/` and `common/`**; that list is `20-03b`'s work list.
 
 7. **Copy detekt configs** into the new modules and confirm `detektAll` picks them up:
    ```bash
    ./gradlew detektAll --dry-run | grep -E ':shared:(core|domain):detekt'
    ```
 
-8. **Verify commonMain purity** — the ratchet gate:
+8. **Verify commonMain purity — the achievable half.** This task's gate is the `android.` half only:
    ```bash
-   ! grep -rqE '^import (java|javax|android)\.' shared/domain/src/commonMain shared/core/src/commonMain
+   ! grep -rqE '^import android\.' shared/domain/src/commonMain shared/core/src/commonMain
    ```
-   **This will fail**, because `java.time` is still everywhere. That is expected and correct: `20-04` fixes it. Record which files still import `java.*` — that list *is* `20-04`'s work list.
+   That must pass; `20-02` cleared the two Android leaks, so anything appearing here is something you introduced.
 
-   > If a file has *other* JVM dependencies beyond `java.time`, move it to `androidMain` and record why. Do not force it.
+   The **full** ratchet gate is the one in `20-00` §4.2:
+   ```bash
+   ! grep -rqE '^import (java|javax|android)\.' shared/*/src/commonMain
+   ```
+   **It will fail after this task, by design.** Three separate later tasks close it: `java.time` → `20-04`, `javax.inject` → `20-05`, `java.util.Locale` → `20-13`. Run it anyway, as a *survey*, and record the output — that list is the work list for those three tasks:
+   ```bash
+   grep -rhoE '^import (java|javax)\.[a-z.]+' shared/domain/src/commonMain shared/core/src/commonMain \
+     | sort | uniq -c | sort -rn
+   ```
+
+   > If a file has JVM dependencies *beyond* those three known categories, move it to `androidMain` and record why. Do not force it.
 
 9. **Run the full gate.** Then run `:app:bundleRelease` and confirm the size is within ±50 KiB of baseline.
 
@@ -168,8 +181,10 @@ implementation(projects.shared.domain)   // transitively brings :shared:core via
 - [ ] **Zero import changes in `:app`** — `git diff` shows only deletions there, no edits
 - [ ] `git log --follow` works on a moved file (proves `git mv` was used)
 - [ ] `detektAll --dry-run` lists `:shared:core` and `:shared:domain` detekt tasks
-- [ ] All domain/common tests still run and pass, wherever they now live
-- [ ] The list of files still importing `java.*` is recorded in the task notes as `20-04`'s work list
+- [ ] `! grep -rqE '^import android\.' shared/*/src/commonMain` passes
+- [ ] All 37 tests still run and pass, unmoved, from `app/src/test`
+- [ ] The list of test files covering `domain/` and `common/` is recorded as `20-03b`'s work list
+- [ ] The `java.*` / `javax.*` import survey is recorded, split by category (`java.time` → `20-04`, `javax.inject` → `20-05`, `java.util` → `20-13`)
 - [ ] No module declares an iOS target
 
 ## 8. Pitfalls
@@ -178,7 +193,8 @@ implementation(projects.shared.domain)   // transitively brings :shared:core via
 - **Do not use `implementation` for `:shared:core` inside `:shared:domain`.** Use `api` — domain types appear in signatures `:app` consumes, so the dependency must be transitive.
 - **`git mv`, not delete-and-create.** Otherwise history is lost and every moved file reviews as new.
 - **Move first, edit later, in separate commits.** A moved-and-edited file shows as delete+add and the real change becomes invisible.
-- **The purity gate will fail on `java.time` — that is the plan.** Do not "fix" it by moving 60 domain files into `androidMain`; that defeats the ratchet. Leave them in `commonMain`, let the gate stay red for this one metric, and let `20-04` close it. Record the failure explicitly so the next session knows it is expected.
+- **The full purity gate fails after this task — that is the plan.** Do not "fix" it by moving 60 domain files into `androidMain`; that defeats the ratchet. Leave them in `commonMain` and let `20-04` / `20-05` / `20-13` close it. **This task's own `verify:` asserts only the `android.` half**, which is the part that must be true now — if you find yourself editing that command to make it pass, stop and re-read step 8.
+- **Do not move the tests here.** It looks like a natural part of "move the layer", and it is not: `org.junit.Assert` and Robolectric have no `commonTest` equivalent, so it is an assertion-rewrite across 37 files, not a `git mv`. It has its own task (`20-03b`) with its own estimate. Bundling it here silently doubles this task and puts the regression shields — the safety net for the entire migration — at risk inside a task that was scoped as Gradle wiring.
 - **`minSdk` differs between modules.** `:app` is 26, `:uikit` is 24. Pick 26 for shared modules unless a concrete reason says otherwise, and be consistent across all of them.
 - **Detekt/ktlint do not auto-apply to new modules.** A module with no detekt config silently contributes nothing to `detektAll`. Step 7's check is not ceremonial.
 - **Stale KSP/Hilt codegen.** Hilt still processes `:app`, and `@Inject` constructors now live in another module. If you get `NoSuchFile` or missing generated classes: `./gradlew --stop && ./gradlew :app:clean`. Known failure mode in this repo.
@@ -198,8 +214,13 @@ git diff --stat v1.2-preKMP -- app/src/main/java/com/todoapp/mobile/ui/   # expe
 # 4. Detekt covers the new modules
 ./gradlew detektAll --dry-run | grep -E ':shared:(core|domain):detekt'
 
-# 5. The ratchet — expected to fail on java.time only, and that list is 20-04's input
-grep -rhoE '^import java\.[a-z.]+' shared/domain/src/commonMain shared/core/src/commonMain | sort | uniq -c | sort -rn
+# 5a. THE GATE for this task — the android. half must be clean
+grep -rnE '^import android\.' shared/domain/src/commonMain shared/core/src/commonMain \
+  && echo "ANDROID LEAK" || echo "clean"
+
+# 5b. The full ratchet — expected to fail here; this survey IS the input for 20-04/20-05/20-13
+grep -rhoE '^import (java|javax)\.[a-z.]+' shared/domain/src/commonMain shared/core/src/commonMain \
+  | sort | uniq -c | sort -rn
 
 # 6. History survived the move
 git log --follow --oneline shared/domain/src/commonMain/kotlin/com/todoapp/mobile/domain/model/Recurrence.kt | head -5

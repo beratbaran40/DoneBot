@@ -45,7 +45,7 @@ Email/password, Google and Apple sign-in, with `handleSuccessfulLogin` running i
 1. Verify it compiles in `commonMain`.
 2. Verify email/password login end to end against the live backend.
 3. Verify Google sign-in on both platforms.
-4. Verify Apple sign-in on iOS (`60-03`).
+4. Verify Apple sign-in on iOS **only if `60-03` is `DONE`.** It depends on the paid Apple account and the backend endpoint, so it usually is not yet. Do not block this task on it — verify email/password and Google, tick the rest, and re-check the Apple row when `60-03` lands.
 5. **Verify all seven steps of `handleSuccessfulLogin`** fire on iOS — particularly the chat clear on user change.
 6. Verify `redirectAfterLogin` survives the ViewModel recreation.
 7. Verify `OAuthAccountExists` shows the right message with the right provider name.

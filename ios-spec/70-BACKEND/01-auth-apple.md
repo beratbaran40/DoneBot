@@ -54,7 +54,7 @@ In this repository, for the contract:
 |---|---|
 | `data/source/remote/api/ToDoApi.kt` | `POST auth/google` — the shape to mirror |
 | `data/model/network/request/GoogleLoginRequest.kt` | `{ token }` |
-| `ios-spec/30-PLATFORM/10-google-and-apple-signin.md` | The client side |
+| `ios-spec/60-IOS-NATIVE/03-sign-in-with-apple.md` | The client side (`30-PLATFORM/10` defines the contract; `60-03` implements Apple) |
 
 ## 4. Target
 

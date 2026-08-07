@@ -41,7 +41,8 @@ One table of every platform capability the app needs, its Kotlin shape, both imp
 | 10 | **PhotoStorage** | `filesDir` | `NSFileManager` Documents | — | `30-08` |
 | 11 | **ImageCodec** | `BitmapFactory` / `compress` | `UIImage` | — | `30-08` |
 | 12 | **PlaceSearch** | Places SDK | `MKLocalSearch` | different result set, **no API key** | `30-09` |
-| 13 | **SocialSignIn** | Credential Manager | `GIDSignIn` + `ASAuthorization` | Apple needs a backend endpoint | `30-10` |
+| 13 | **SocialSignIn** — contract + Google | Credential Manager | `GIDSignIn` | — | `30-10` |
+| 13b | **SocialSignIn** — Apple half | n/a (`supportsApple = false`) | `ASAuthorization` | needs `10-01` **and** the `70-01` endpoint | `60-03` |
 | 14 | **Analytics / CrashReporter / PerfTracer / AppAttest** | Firebase Android | Firebase iOS via Swift bridge | — | `30-11` |
 | 15 | **PermissionController** | runtime permissions | `UN*` / `AVCaptureDevice` | `SYSTEM_ALERT_WINDOW` unsupported | `30-12` |
 | 16 | **DeepLinks** | manifest intent filters | universal links + URL scheme | — | `30-13` |

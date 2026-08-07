@@ -4,7 +4,9 @@ title: `:shared:ui` + `:composeApp`
 layer: ui
 status: TODO
 depends_on: [20-04, 20-06, 20-07, 20-08, 20-10]
-blocks: [20-12, 40-*, 50-06]
+# Also blocks every 40-* feature task — see 40-FEATURES/00-feature-index.md.
+# Globs are not valid ids; only real ids belong in this list.
+blocks: [20-12, 50-06, 40-index]
 parallel_safe: false
 estimate: 130h
 reversible: false

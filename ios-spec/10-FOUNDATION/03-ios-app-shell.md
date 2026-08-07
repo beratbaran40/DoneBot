@@ -3,8 +3,8 @@ id: 10-03
 title: iOS app shell (`iosApp/` Xcode project)
 layer: foundation
 status: TODO
-depends_on: [10-00, 10-01, 20-13]
-blocks: [30-04, 30-11, 60-01, 60-02, 80-02]
+depends_on: [10-05, 20-13]
+blocks: [30-04, 30-10, 30-11, 60-01, 60-02, 80-02]
 parallel_safe: false
 estimate: 30h
 reversible: true
@@ -19,6 +19,8 @@ verify:
 ## 1. Goal
 
 Create the Xcode project that hosts `DoneBotKit`, and get DoneBot running on the simulator. This is milestone **M6**.
+
+**This task does not depend on `10-01`.** Simulator development needs no paid Apple Developer membership — a free personal team signs a local build. What `10-01` gates is *provisioning the capabilities* (App Groups, push, Sign in with Apple, associated domains), which is step 8b below and is verified in `30-03` / `30-11` / `60-03` anyway. If `10-01` is still `BLOCKED` when you reach this task, do everything except 8b and note it; do not block the whole task on an account.
 
 ## 2. Why this way
 
@@ -87,7 +89,9 @@ composeApp/src/iosMain/…/MainViewController.kt
 
 7. **Write `PrivacyInfo.xcprivacy`** with required-reason declarations for `UserDefaults` (`CA92.1`), file timestamps (`C617.1`), and disk space (`E174.1`). Verify each reason code against Apple's current list rather than copying blindly.
 
-8. **Write the entitlements** — App Groups, push, Sign in with Apple, associated domains.
+8. **Write the entitlements file** — App Groups, push, Sign in with Apple, associated domains. Writing the file needs no account.
+
+8b. **Provision those capabilities on the App ID — needs `10-01`.** Enable each capability in the developer portal and regenerate profiles. If `10-01` is `BLOCKED`, keep the base app target signing with a free personal team and **comment the capability-bearing entitlements out** so the simulator build still signs; record it in `DECISIONS.md` and re-enable them when the account lands. A build that will not sign is not a reason to stop — an unsigned-capability simulator build proves everything this task claims to prove.
 
 9. **Build and run on the simulator.**
 
@@ -149,7 +153,7 @@ struct ComposeView: UIViewControllerRepresentable {
 
 - [ ] `xcodebuild … -scheme iosApp … build` succeeds
 - [ ] The app launches on the simulator and renders the first Compose screen
-- [ ] All three targets exist with correct bundle ids and the App Group entitlement
+- [ ] All three targets exist with correct bundle ids and the App Group entitlement *(capabilities provisioned, or `10-01`-gated and recorded in `DECISIONS.md`)*
 - [ ] `Info.plist` carries every usage string, background mode, URL type and `CFBundleLocalizations`
 - [ ] `PrivacyInfo.xcprivacy` present with verified reason codes
 - [ ] The Gradle build phase runs before "Compile Sources"

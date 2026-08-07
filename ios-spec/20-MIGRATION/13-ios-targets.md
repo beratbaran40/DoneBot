@@ -3,8 +3,8 @@ id: 20-13
 title: Declare iOS targets
 layer: foundation
 status: TODO
-depends_on: [20-12]
-blocks: [10-03, 30-*]
+depends_on: [20-12, 10-05]
+blocks: [10-03, 30-01, 30-02, 30-04, 30-05, 30-06, 30-07, 30-08, 30-09, 30-10, 30-12, 30-13, 30-14, 30-15]
 parallel_safe: false
 estimate: 40h
 reversible: true
@@ -25,6 +25,8 @@ Add `iosArm64` and `iosSimulatorArm64` to every shared module, produce the `Done
 ## 2. Why this way
 
 **This is the moment the ratchet pays off.** Everything already compiles as KMP-shaped Android with a pure `commonMain`. Turning on iOS is one block per module. The errors that surface now are exactly the ones that *could only* surface now — code that is JVM-specific in ways the Android target accepted silently.
+
+**This is also the first task in the whole spec that needs Xcode.** Kotlin/Native compiles and links against the real iOS SDK and shells out to `xcrun`; Command Line Tools alone are not enough. That is why `10-05` is a dependency — everything from `20-01` to `20-12` runs on the current machine untouched, and the OS upgrade only has to be finished by the time you arrive here.
 
 Expect these categories:
 - `@Serializable` edge cases where a JVM-only type slipped into a DTO

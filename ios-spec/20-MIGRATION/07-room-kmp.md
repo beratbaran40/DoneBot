@@ -17,7 +17,9 @@ owner_files:
   - app/build.gradle.kts
 verify:
   - ./gradlew ktlintCheck detektAll testDebugUnitTest assembleDebug
-  - "diff -q app/schemas/*/30.json <the regenerated 30.json>"
+  # THE GATE. Snapshot `cp -r app/schemas /tmp/schemas-before` BEFORE starting (step 1);
+  # this must then print SCHEMA IDENTICAL. See §9 for the full sequence.
+  - "diff -ru /tmp/schemas-before app/schemas && echo 'SCHEMA IDENTICAL'"
   - ./gradlew :app:bundleRelease
 ---
 
@@ -167,6 +169,7 @@ single {
 - **`MigrationTest` is instrumented.** It cannot run in `testDebugUnitTest`. If you have no device, mark the task `BLOCKED` for that check rather than deleting the test.
 - **Journal data is irreplaceable.** `journal_entries` is local-only with no backend copy and is deliberately not wiped on logout. A failed migration destroys it permanently. Treat this table as the one with no undo.
 - **Room's KSP is order-sensitive after a plugin change.** If generation misbehaves: `./gradlew --stop && ./gradlew :app:clean`.
+- **The schema-diff `verify:` command has a prerequisite you must run first.** It compares against `/tmp/schemas-before`, which only exists if you did step 1's `cp -r app/schemas /tmp/schemas-before` **before** modifying anything. If you skip it, the diff command fails on a missing directory and there is no way to reconstruct the baseline except from git — recover with `git show HEAD:app/schemas/…`. Do not proceed without a baseline; this is the one gate in the project that stands between the port and other people's data.
 
 ## 9. Verification
 
