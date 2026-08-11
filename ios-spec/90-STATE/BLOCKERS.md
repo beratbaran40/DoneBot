@@ -47,6 +47,10 @@ or delete it from the GitHub web UI: Settings → General → Danger Zone.
 
 **Tried:** nothing yet — this is a day-one action item, recorded here so no agent re-attempts it.
 
+**OWNER TOOK IT [2026-08-11] → no longer blocked, now `IN_PROGRESS`.** The owner is starting enrolment now rather than deferring it (ADR-012). Status in `PROGRESS.md` moves `TODO` → `IN_PROGRESS`; this entry stays for the history and because the *waiting* is real even when the work has started. Re-open as `BLOCKED` only if identity verification stalls past two weeks — at which point the pitfall in `10-01` §8 applies: contact Apple Developer Support rather than continuing to wait.
+
+Sequencing note recorded here because it is the one step whose order matters: **check "DoneBot" availability on the App Store before anything else.** Discovering the name is taken at submission is a branding crisis; discovering it in week one is a naming conversation. Everything after that is the `10-01` §5 list, of which the two `.p8` downloads are the irreversible parts — each downloads exactly once.
+
 **AMENDED [2026-08-07]** — the impact line above overstated the blast radius, and the dependency graph agreed with it. Measured: `10-01` alone made **54 of 105 tasks unreachable**, because `10-03` claimed to need a paid team (it does not — this entry's own workaround line says so) and `30-10` bundled Google with Apple, dragging login and 41 downstream tasks behind `70-01`. Corrected in ADR-004/005/006. **Revised impact: `30-03`, `30-11`, `60-03`, `80-01` and, transitively, the rest of `80-RELEASE` — 10 of 107 tasks.** With `10-01` blocked, 97 tasks / 1,456 h remain reachable. Enrolment is still a day-one action item; it is simply no longer a wall.
 
 ---
@@ -68,6 +72,28 @@ Two corrections to the text above:
 - **`20-13` genuinely needs full Xcode**, not just Command Line Tools — Kotlin/Native links against the real iOS SDK via `xcrun`. That dependency was missing from the graph entirely and is now explicit.
 
 Still open: the machine is still on 14.5. This stays `BLOCKED` until a human does it.
+
+---
+
+**OWNER TOOK IT [2026-08-11] → no longer blocked, now `IN_PROGRESS`.** The owner is doing the macOS upgrade and Xcode install now, in parallel with `10-01`, ahead of any code work (ADR-012).
+
+**State re-measured today, unchanged from 2026-08-06:**
+```
+sw_vers -productVersion   → 14.5 (build 23F79), arm64
+xcode-select -p           → /Library/Developer/CommandLineTools
+xcodebuild -version       → "requires Xcode, but active developer directory is a
+                             command line tools instance"
+xcrun simctl              → "unable to find utility simctl"
+```
+
+**One correction to `10-05` was needed before the owner could execute it (ADR-010).** Steps 2, 6 and §9.4 called `./gradlew ktlintCheck detektAll testDebugUnitTest assembleDebug` — the before/after gate that is the entire safety argument of this task. That command cannot run today: `detektAll` is created in `20-01` (→ `Task 'detektAll' not found`) and the JDK is not pinned until `10-00` (→ `Type T not present`). Both failures look like OS breakage, which is precisely the misattribution the before/after gate exists to prevent. The task now specifies:
+
+```bash
+JAVA_HOME="/Applications/Android Studio Panda.app/Contents/jbr/Contents/Home" \
+  ./gradlew ktlintCheck detektMain testDebugUnitTest assembleDebug
+```
+
+**This is the ideal moment for the upgrade**, better than the "before `20-11` starts" deadline the task settles for: the tree is clean and not one migration commit exists, so anything red after the upgrade is unambiguously the OS.
 
 ---
 

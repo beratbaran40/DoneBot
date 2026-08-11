@@ -30,7 +30,7 @@ Pick rule: lowest phase, then lowest id, among tasks whose `depends_on` are all 
 
 | Phase | Total | DONE | IN_PROGRESS | BLOCKED | TODO | Estimate |
 |---|---|---|---|---|---|---|
-| 10 · Foundation | 6 | 0 | 0 | 0 | 6 | 56 h |
+| 10 · Foundation | 6 | 0 | 2 | 0 | 4 | 56 h |
 | 20 · Migration | 15 | 0 | 0 | 0 | 15 | 574 h |
 | 30 · Platform | 16 | 0 | 0 | 0 | 16 | 278 h |
 | 40 · Features | 53 | 0 | 0 | 0 | 53 | 400 h |
@@ -38,14 +38,42 @@ Pick rule: lowest phase, then lowest id, among tasks whose `depends_on` are all 
 | 60 · iOS native | 3 | 0 | 0 | 0 | 3 | 66 h |
 | 70 · Backend | 2 | 0 | 0 | 0 | 2 | 52 h |
 | 80 · Release | 5 | 0 | 0 | 0 | 5 | 60 h |
-| **Total** | **107** | **0** | **0** | **0** | **107** | **1,590 h** |
+| **Total** | **107** | **0** | **2** | **0** | **105** | **1,590 h** |
+
+> ### ⚠ Current sequencing — read before picking a task (ADR-012)
+>
+> **No code task starts until `10-01` and `10-05` resolve.** The owner is executing both
+> now, in parallel, by choice — not because the graph requires it. `README.md` §0 is right
+> that neither is needed to begin; this is a scheduling preference, and the payoff is that
+> **all 107 tasks are reachable** when code work starts, with no human-gated prerequisite
+> left anywhere in the graph.
+>
+> **`feat/ios-port` is not cut yet and `v1.2-preKMP` is not tagged yet.** Both happen on the
+> day migration actually begins, against that day's `main` — Android is not frozen, so a
+> branch cut today is stale before its first commit and the tag would not mark the real
+> pre-migration boundary. Until the branch exists, spec-maintenance commits land on `main`
+> (ADR-013).
+>
+> **Machine state, measured 2026-08-11:** macOS **14.5** (Xcode 26 needs ≥ 15.6) · no Xcode,
+> `xcode-select -p` → `/Library/Developer/CommandLineTools` · no `simctl` · shell `java` is
+> **OpenJDK 24** (the `Type T not present` trap) · JBR 21 present at
+> `/Applications/Android Studio Panda.app/Contents/jbr/Contents/Home` · on `main`, in sync
+> with `origin/main`, tree clean, **no tags at all** · no `keystore.properties` · no
+> `org.gradle.java.home` in `gradle.properties`.
 
 **What 1,590 hours means.** ≈ 39 weeks at 40 h/week, ≈ 64 weeks at 25 h/week. The
 critical path is only ~470 h, but with one developer the total is the real number.
 Estimates are for scheduling, not budgets for an agent — see `../README.md` §2.2.
 
 **Runway when the two human-gated tasks are `BLOCKED`** — recomputed after the
-dependency corrections in ADR-004/005/006, and the reason those corrections were made:
+dependency corrections in ADR-004/005/006, and the reason those corrections were made.
+
+**Independently re-verified 2026-08-11** by parsing the `depends_on` front-matter of all
+107 task files and computing reachability from scratch: every row below reproduced exactly,
+with no dangling dependencies and no cycles. Under ADR-012 these numbers are now
+**historical** — the owner is clearing both prerequisites up front, so nothing will be
+blocked when code work starts. Keep the table anyway: it is the evidence for D-12, and the
+argument against ever re-coupling a human-gated task to the critical path.
 
 | Blocked | Reachable | Hours |
 |---|---|---|
@@ -69,12 +97,12 @@ and no Apple account.** Neither has to exist before `20-13`.
 
 | id | title | status | depends_on | updated | notes |
 |---|---|---|---|---|---|
-| 10-00 | Environment & toolchain — JDK pin | TODO | — | | **Do this first.** Fixes the `Type T not present` trap. 2 h. |
-| 10-01 | Apple Developer Program enrolment | TODO | — | | Needs a human. Start week 1; verification takes weeks. |
+| 10-00 | Environment & toolchain — JDK pin | TODO | — | | **First code task.** Fixes the `Type T not present` trap. 2 h. |
+| 10-01 | Apple Developer Program enrolment | IN_PROGRESS | — | 2026-08-11 | **Owner-executed, started now** (ADR-012). Check the "DoneBot" name first. Verification takes weeks. |
 | 10-02 | Gradle / KMP plugin setup | TODO | 10-00 | | |
 | 10-03 | iOS app shell (`iosApp/` Xcode project) | TODO | 10-05, 20-13 | | No longer needs 10-01 — simulator work needs no paid account (ADR-005). |
-| 10-04 | CI: `detektAll`, nightly iOS job | TODO | 10-00 | | |
-| 10-05 | macOS upgrade & Xcode 26 | TODO | — | | Needs a human. **Not on the migration's critical path** — first needed at 20-13 (ADR-004). |
+| 10-04 | CI: `detektAll`, nightly iOS job | TODO | 10-00, **20-01** | 2026-08-11 | `20-01` edge added — it creates `detektAll`. Nightly's green run deferred to 20-13 (ADR-011). |
+| 10-05 | macOS upgrade & Xcode 26 | IN_PROGRESS | — | 2026-08-11 | **Owner-executed, started now**, in parallel with 10-01 (ADR-012). Gate command downgraded to `detektMain` + explicit `JAVA_HOME` (ADR-010). |
 
 ## 20 · Migration — sequential, Android green after every step
 
