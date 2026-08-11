@@ -4,7 +4,9 @@
 
 You are implementing the port of DoneBot (a live Android app on Google Play, ~90k LOC Kotlin) to iOS, via Kotlin Multiplatform + Compose Multiplatform, inside this same repository. The work is decomposed into **107 task files totalling ~1,590 estimated hours** — roughly 39 weeks at 40 h/week, 64 weeks at 25 h/week. This document tells you how to pick a task, execute it, prove it worked, and record it — so that work continues without stalling and without a human in the loop.
 
-**Two things do not have to exist yet.** The Apple Developer account (`10-01`) and Xcode (`10-05`) are both human-gated and both slow. Neither is needed before `20-13`: **32 tasks / 712 hours of this plan run on the current machine with no Xcode and no Apple account.** Start `10-01` on day one anyway — enrolment takes weeks — but do not wait on either to begin.
+**Two things do not have to exist yet.** The Apple Developer account (`10-01`) and Xcode (`10-05`) are both human-gated and both slow. Neither is needed before `20-13`: **32 tasks / 712 hours of this plan run on the current machine with no Xcode and no Apple account.** (Verified 2026-08-11 by recomputing reachability from every task's `depends_on`; the figures reproduce exactly.)
+
+> **Current sequencing overrides the "do not wait" advice — see ADR-012.** The owner is clearing both prerequisites up front, by choice, before any code task starts. Check `90-STATE/PROGRESS.md` before picking anything; the branch does not exist yet and `10-00` has not started. The 712-hour figure above is now the *argument* for keeping human-gated tasks off the critical path (D-12), not a description of the current runway.
 
 ---
 
@@ -75,7 +77,7 @@ If a task's `parallel_safe: true` and you are running alongside other agents, yo
 
 ### 2.2 Task file anatomy
 
-Every task file has YAML front-matter followed by the nine sections below. **Section 6 (Code skeleton) is omitted where a task writes no code** — the read-only index files and the feature-verification tasks are the usual cases. Every other section is present in every task. The four files in `00-CONTEXT/` are **reference documents, not tasks** — they deliberately have no front-matter and nothing depends on them being marked `DONE`.
+Every task file has YAML front-matter followed by the nine sections below. **Section 6 (Code skeleton) is omitted where a task writes no code** — the read-only index files and the feature-verification tasks are the usual cases. Every other section is present in every task. The five files in `00-CONTEXT/` are **reference documents, not tasks** — they deliberately have no front-matter and nothing depends on them being marked `DONE`.
 
 ```yaml
 ---
@@ -256,6 +258,19 @@ spec: <task-id>
 - One task id per commit. The `spec:` trailer is how a task is traced back to its file.
 - Status-flip commits (`TODO`→`IN_PROGRESS`, →`DONE`) are `chore(spec):` and stand alone.
 
+### 6.3 Tags are namespaced per platform
+
+One repository produces two store timelines. A flat tag list stops being readable within a few releases, and `git describe` starts answering the wrong question.
+
+```
+v1.2-preKMP        # one-off: the pre-migration boundary, the reference for
+                   # every "did this change Android behaviour?" question
+android/v1.3       # Play releases from here on
+ios/v1.0           # App Store releases
+```
+
+`v1.2-preKMP` is tagged on the day migration actually begins, against that day's `main` — not in advance. Android is not frozen, so tagging early marks a commit that is no longer the pre-migration state. Full release-model comparison: `00-CONTEXT/05-release-model.md`.
+
 Never commit: `keystore.properties`, `local.properties`, anything matching the existing `.gitignore`. Never run `git add .` — stage explicit paths.
 
 ---
@@ -265,7 +280,7 @@ Never commit: `keystore.properties`, `local.properties`, anything matching the e
 ```
 ios-spec/
 ├── README.md              ← you are here
-├── 00-CONTEXT/            Decisions, glossary, Android source map, Apple constraints
+├── 00-CONTEXT/            Decisions, glossary, Android source map, Apple constraints, release model
 ├── 10-FOUNDATION/         JDK pin, Apple enrolment, Gradle/KMP setup, iOS shell, CI, macOS+Xcode
 ├── 20-MIGRATION/          Steps 0–13: the in-place KMP conversion. Sequential.
 ├── 30-PLATFORM/           The 31 expect/actual platform contracts + iOS implementations
