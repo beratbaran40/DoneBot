@@ -32,7 +32,7 @@ Get the machine onto a toolchain that can compile Kotlin/Native for iOS and buil
 
 **When to actually do it.** Any time before `20-12` completes. Two constraints shape the choice:
 
-1. **Do it on a clean tree with a green gate on both sides.** Run `./gradlew ktlintCheck detektAll testDebugUnitTest assembleDebug` immediately before the upgrade and immediately after, before any further code change. That is what keeps OS-induced breakage from being mistaken for migration breakage — the original reason `10-00` wanted it first.
+1. **Do it on a clean tree with a green gate on both sides.** Run the gate command from step 2 immediately before the upgrade and immediately after, before any further code change. That is what keeps OS-induced breakage from being mistaken for migration breakage — the original reason `10-00` wanted it first. (The command is `detektMain` with an explicit `JAVA_HOME`, not the canonical gate, for as long as this task runs ahead of `10-00`/`20-01` — see step 2 and ADR-010.)
 2. **Do not leave it to the day `20-12` lands.** A failed upgrade, a full disk, or an Xcode version that needs a *further* OS bump turns into days of dead time at the exact moment the migration is ready to switch on iOS. Treat "before `20-11` starts" as the comfortable deadline.
 
 **Enrolment is a different clock.** `10-01` (Apple Developer Program, 99 USD/yr) takes weeks of identity verification and is unrelated to this task — start it on day one regardless of when Xcode gets installed. Simulator development needs no paid membership.
@@ -59,8 +59,11 @@ No files in this repository change. This task modifies the machine.
 
 2. **Green gate before touching anything.**
    ```bash
-   ./gradlew ktlintCheck detektAll testDebugUnitTest assembleDebug
+   JAVA_HOME="/Applications/Android Studio Panda.app/Contents/jbr/Contents/Home" \
+     ./gradlew ktlintCheck detektMain testDebugUnitTest assembleDebug
    ```
+   **`detektMain` and the explicit `JAVA_HOME`, not the canonical gate** — this task can legitimately run before `10-00` and `20-01`, and neither the JDK pin nor `detektAll` exists until they do. If both are already `DONE`, drop the prefix and use `detektAll` (ADR-010).
+
    If it is already red, fix that first. Upgrading on top of a red tree destroys the ability to attribute the next failure.
 
 3. **Take a bootable backup.** Time Machine plus a bootable clone. This is the one step in the whole spec whose absence cannot be recovered from.
@@ -69,9 +72,10 @@ No files in this repository change. This task modifies the machine.
 
 5. **Upgrade macOS.** Current machine is **14.5 (Sonoma)**. Xcode 26 needs **15.6 (Sequoia)** minimum; Xcode 26.4 needs **macOS Tahoe 26.2**. Pick the target version from which Xcode you intend to install and record it in `DECISIONS.md`.
 
-6. **Re-run the gate before any other change.**
+6. **Re-run the gate before any other change** — the exact same command as step 2, so the two runs are comparable.
    ```bash
-   ./gradlew ktlintCheck detektAll testDebugUnitTest assembleDebug
+   JAVA_HOME="/Applications/Android Studio Panda.app/Contents/jbr/Contents/Home" \
+     ./gradlew ktlintCheck detektMain testDebugUnitTest assembleDebug
    ```
    Anything red here is the OS, not the migration. That attribution is the entire point of running it now.
 
@@ -112,6 +116,7 @@ None — no repository files change.
 
 ## 8. Pitfalls
 
+- **This task's gate command is deliberately not the canonical one.** `depends_on` is empty, so this task can run before `10-00` and `20-01` — and it usually will, because it is human-paced. Until `10-00` lands, a plain `./gradlew` picks up JDK 24 and dies with `Type T not present`; until `20-01` lands, `detektAll` does not exist and Gradle fails with `Task 'detektAll' not found`. Both look like OS breakage and neither is. Use the command as written in steps 2/6/9, and only upgrade it to the canonical gate once both tasks are `DONE` (ADR-010).
 - **Command Line Tools are not Xcode.** `xcode-select -p` pointing at `/Library/Developer/CommandLineTools` gives you `git` and `clang` but no iOS SDK. `20-13` fails with a linker error that does not say "install Xcode".
 - **Do not upgrade mid-task.** Finish and commit whatever migration task is in flight first. A half-applied `reversible: false` task plus an OS that now behaves differently is the worst debugging position in this project.
 - **Xcode 26.4 needs a newer OS than Xcode 26.0.** Decide which Xcode you want *before* choosing the macOS version, not after.
@@ -135,5 +140,9 @@ xcrun simctl list devices available | head
 xcrun --sdk iphonesimulator --show-sdk-path
 
 # 4. Android is unaffected by the upgrade
-./gradlew ktlintCheck detektAll testDebugUnitTest assembleDebug
+#    Same command as steps 2 and 6. detektAll does not exist until 20-01; the JAVA_HOME
+#    prefix is required until 10-00 pins it. Once both are DONE, this becomes the
+#    canonical `./gradlew ktlintCheck detektAll testDebugUnitTest assembleDebug` (ADR-010).
+JAVA_HOME="/Applications/Android Studio Panda.app/Contents/jbr/Contents/Home" \
+  ./gradlew ktlintCheck detektMain testDebugUnitTest assembleDebug
 ```

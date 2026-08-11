@@ -36,7 +36,7 @@ Format:
 
 **Consequence:** `iosApp/` lives at the root of this repository, sibling to `app/`. Any proposal to move iOS source out reopens D-02 and must be argued there.
 
-**Status:** deletion pending — the `gh` token lacks the `delete_repo` scope. See `BLOCKERS.md`.
+**Status:** **done** — the owner deleted the repository manually on 2026-08-06; `gh repo view beratbaran40/DoneBot-iOS` returns `Could not resolve to a Repository`. See the resolved entry in `BLOCKERS.md`. D-02's consequence line was corrected to match on 2026-08-11 — it still described the deleted repository as "reserved for release runbooks and store assets", which is the exact misreading this ADR exists to prevent.
 
 ---
 
@@ -162,3 +162,92 @@ Format:
 **Alternatives rejected:** *Soften rule 2 to "verify where practical"* — the rule is the reason the migration is trustworthy. The commands were wrong, not the rule.
 
 **Consequence:** Any future `verify:` line must be runnable, from the repo root, at the moment the task ends. If a check is aspirational, it belongs in §9 as a survey with the expected failure stated, never in the front matter.
+
+---
+
+## ADR-010 [2026-08-11] `10-05`'s gate command drops to `detektMain` with an explicit `JAVA_HOME`
+
+**Task:** 10-05
+
+**Context:** `10-05` §5.2, §5.6 and §9.4 all ran `./gradlew ktlintCheck detektAll testDebugUnitTest assembleDebug`. That command cannot execute when the task is actually performed. `10-05` has `depends_on: []` and is human-paced, so it runs early — before `10-00` (which pins the JDK) and before `20-01` (which *creates* `detektAll`). Today it fails twice over: a plain `./gradlew` selects JDK 24 and dies with `Type T not present`, and `detektAll` does not exist, so Gradle reports `Task 'detektAll' not found`.
+
+This is not cosmetic. The entire safety argument of `10-05` is "green gate immediately before the OS upgrade, green gate immediately after, no code change in between" — that is what attributes post-upgrade breakage to the OS instead of the migration. An unrunnable gate command silently deletes that property, and the failure reads like OS breakage, which is the exact misattribution the step exists to prevent.
+
+**Decision:** Steps 2, 6 and §9.4 use `JAVA_HOME="/Applications/Android Studio Panda.app/Contents/jbr/Contents/Home" ./gradlew ktlintCheck detektMain testDebugUnitTest assembleDebug`, with a pitfall in §8 explaining why it differs from the canonical gate.
+
+**Alternatives rejected:**
+- *Add `10-00` and `20-01` to `10-05`'s `depends_on`* — puts a 2-hour JDK pin and a 6-hour dependency cleanup in front of a task whose whole point (D-12) is that it runs on the owner's clock, independently of the code queue. It would also re-couple the human-gated toolchain to the migration, which is what ADR-004 separated.
+- *Leave it and rely on the reader noticing* — the reader is the owner, mid-OS-upgrade, and the error message names neither cause.
+
+**Consequence:** When both `10-00` and `20-01` are `DONE` and `10-05` is still `TODO`, the command should be raised back to the canonical gate. §8's pitfall states this; the task file is the only place the downgrade is recorded.
+
+---
+
+## ADR-011 [2026-08-11] `10-04` depends on `20-01`; its nightly-iOS acceptance defers to `20-13`
+
+**Task:** 10-04, 20-01, 20-13
+
+**Context:** Two independent defects in one file.
+
+1. **A dependency that exists in prose but not in the graph.** `10-04` declared `depends_on: [10-00]`, so the pick rule schedules it directly after `10-02`. But its own §5 step 1 reads "Confirm the `detektAll` swap landed in `20-01`", and its acceptance requires the `lint-test` job to run `detektAll` — a Gradle task that `20-01` creates. Following the pick rule points CI at a task that does not exist and turns the build red on unchanged code.
+2. **An acceptance box that cannot be ticked for months.** The same file requires `ios-nightly.yml` to "run successfully via `workflow_dispatch`". That workflow invokes `:composeApp:linkDebugFrameworkIosSimulatorArm64` (`20-13`) against `iosApp/iosApp.xcodeproj` (`10-03`). Under README §0 rule 2 the task can never be marked `DONE`, so it sits `IN_PROGRESS` indefinitely and its `owner_files` glob (`.github/workflows/**`) blocks every later task that touches CI — including `20-09`'s ceiling raise.
+
+**Decision:** `depends_on: [10-00, 20-01]`. The nightly workflow is still authored and committed in `10-04` — it is the artifact `20-13` verifies rather than writes — but the "runs successfully" box moves to a clearly-labelled deferred section, and §9 checks registration and the absence of a `pull_request` trigger instead of dispatching a run.
+
+**Alternatives rejected:**
+- *Move the whole nightly workflow into `20-13`* — `20-13` is already the task that switches on every iOS target and fixes the resulting common-code compile errors; adding CI authoring to it grows a task that is large and `reversible`-sensitive. Keeping the CI story in one file was `10-04`'s stated purpose and it is still right.
+- *Drop the nightly job from the spec until iOS compiles* — the 10× macOS billing rationale is the reason it is nightly rather than per-PR, and that reasoning is worth recording where CI is described, not eight tasks later.
+
+**Consequence:** `10-04` is now genuinely completable when it runs. `20-13` inherits one verification it did not previously own: the first successful `gh workflow run ios-nightly.yml`. Reachability is unchanged — `20-01` was already reachable well before `10-04` in every scenario.
+
+---
+
+## ADR-012 [2026-08-11] The owner takes `10-01` and `10-05` first; code work starts after
+
+**Task:** 10-01, 10-05, sequencing
+
+**Context:** `README.md` §0 states that neither the Apple Developer account nor Xcode has to exist before `20-13`, and advises starting the migration immediately rather than waiting. That advice was verified independently on 2026-08-11 by parsing the `depends_on` front-matter of all 107 task files and computing reachability: **107/107 with nothing blocked, 97/107 (1,456 h) with `10-01` blocked, 32/107 (712 h) with both blocked**, and no dangling dependencies. The numbers match the ledger exactly.
+
+The owner chose the opposite sequence: obtain the Apple membership and install macOS + Xcode **first**, in parallel with each other, and begin code work afterwards. This is not a correction of the spec — the spec's claim holds — it is a scheduling preference.
+
+**Decision:** `10-01` and `10-05` are `IN_PROGRESS`, owner-executed. No code task starts until they resolve. **`feat/ios-port` is not cut and `v1.2-preKMP` is not tagged yet** — both happen on the day migration actually begins, against that day's `main`.
+
+**Alternatives rejected:**
+- *Cut the branch and tag now anyway* — Android feature work is not frozen (the owner deferred that too), so `main` keeps moving. A branch cut today is stale before its first commit, and `v1.2-preKMP` would mark a commit that is not the pre-migration state by the time migration starts. The tag's only value is being the reference point for "did this change Android behaviour?", which requires it to sit at the real boundary.
+- *Start `10-00` in the meantime* — it is 2 hours and harmless, but it commits to a branch that per the point above should not exist yet, and its AAB baseline measurement is only meaningful as the number the migration is measured against.
+
+**Consequence:** When code work starts, **all 107 tasks are reachable** and no human-gated prerequisite remains anywhere in the graph — `20-13` and `10-03` are unblocked the moment `20-12` lands, and `80-RELEASE` needs no further waiting. The runway tables in `README.md` §0 and `PROGRESS.md` become historical: they document why the graph is shaped the way it is (D-12), not an operative constraint. Do not delete them — they are the argument against re-coupling human-gated tasks to the critical path.
+
+Because Android is not frozen, the offsetting cost is merge distance: `git merge main` into `feat/ios-port` at the start of every session and before every `reversible: false` task. After the ~400-file sweeps in `20-09` and `20-11`, a neglected merge is a day of conflict resolution.
+
+---
+
+## ADR-013 [2026-08-11] Spec-maintenance commits land on `main`
+
+**Task:** spec maintenance
+
+**Context:** D-11 says every task in this spec is committed to `feat/ios-port`, never `main`. But `ios-spec/` itself is tracked on `main` — README §6.1 says so explicitly ("the spec is tracked on `main`, the ledger is written here") — and the eight commits that authored this spec are all on `main`. Corrections to task files made *before any branch exists* have nowhere else to go, and a session that reads D-11 literally could flag them as a violation.
+
+**Decision:** Corrections to task files, `00-CONTEXT/` and `README.md` are `docs(ios-spec):` commits on `main`, matching how the spec was authored. The rule that `90-STATE/` is written on the branch takes effect when the branch exists; until then the ledger lives on `main` with the rest of the spec.
+
+**Alternatives rejected:** *Cut `feat/ios-port` early just to hold doc fixes* — creates the stale branch ADR-012 rejects, and puts spec corrections behind a merge before any code exists to justify one.
+
+**Consequence:** Once `feat/ios-port` exists, `90-STATE/` edits go there and this ADR stops applying to them. Task-file corrections discovered mid-migration still merge cleanly from `main`, which is the direction D-11 already mandates.
+
+---
+
+## ADR-014 [2026-08-11] Sweep every `verify:` and §9 command for runnability, once
+
+**Task:** all
+
+**Context:** README §0 rule 2 makes `verify:` load-bearing — a task may not be `DONE` until every command in it passes. Five instances have now been found where a command could not pass at the moment its task ends: `20-03`, `20-02` and `20-07` (ADR-009), then `10-05` (ADR-010) and `10-04` (ADR-011). They were found by reading, one at a time, months apart in planning time. The failure mode is consistent and quiet: the command names a Gradle task, file or module that a *later* task creates, so it fails with `Task not found` or an empty grep — which reads as breakage, or worse, passes vacuously.
+
+Two of the five were in the two tasks the owner is executing this week. That is not a coincidence: the earliest tasks reference the most machinery that does not exist yet.
+
+**Decision:** Before the first code session, sweep all 107 task files mechanically. For each, evaluate every front-matter `verify:` line and every §9 command against the repo state *at that task's completion point* — that is, with all its `depends_on` satisfied and nothing later applied. Flag any command that references a Gradle task, module path, file or directory created by a task that is not a transitive dependency. Fix in place; record only the ones that change behaviour as ADRs.
+
+**Alternatives rejected:**
+- *Keep finding them one at a time* — the cost lands on whoever executes the task, usually mid-flight, and the error message never names the real cause.
+- *Weaken rule 2* — ADR-009 already rejected this and the reasoning stands: the commands were wrong, not the rule.
+
+**Consequence:** A vacuous-pass check belongs in the sweep too, not just a hard failure: a `grep` over a directory that does not exist yet exits non-zero, but a `--tests '*Foo*'` filter matching nothing exits **zero**. ADR-007 records exactly that trap in `20-04`. The sweep is cheap once and expensive never.

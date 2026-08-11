@@ -41,7 +41,9 @@ The three estimates overlap more than they look. The deciding factor is not the 
 
 **Why.** With shared Kotlin, a split repo forces publish→version→consume round trips on every shared change. For a single developer that friction compounds daily.
 
-**Consequence.** The separate `DoneBot-iOS` GitHub repository is reserved for release runbooks, store assets and fastlane configuration — not source. See `90-STATE/DECISIONS.md`.
+**Consequence.** Everything lives here — Kotlin, Swift, the spec, release runbooks and store assets. The separate `DoneBot-iOS` GitHub repository was created before this decision settled, holds nothing, and **has been deleted** (ADR-001, resolved 2026-08-06). An empty repository with a plausible name is exactly what a later session mistakes for the intended home of iOS source; do not recreate it.
+
+Because both platforms release from one history, tag names are namespaced — `android/vX`, `ios/vY` — after the one-off `v1.2-preKMP` marker. The full release-model comparison, including what the monorepo changes about shipping, is `00-CONTEXT/05-release-model.md`.
 
 ---
 
