@@ -94,3 +94,4 @@ RELEASE_20*.md
 # app/src/main/res/raw/ (which ARE tracked — they ship), so the originals only need to
 # exist on the machine that regenerates them.
 /pomodoro_background_noises/
+/TASK_CREATION_TEST_MATRIX.md
