@@ -586,7 +586,12 @@ private fun HomeGreetingRow(
             modifier = Modifier.size(24.dp),
         )
         Spacer(Modifier.width(8.dp))
+        // The greeting is weighted and the clock is not. It used to be the other way round by
+        // omission: both were unweighted, the greeting was measured first and took what it needed,
+        // and the clock — last in the row — got whatever remained, which at a large font size is
+        // nothing. The clock is a fixed five characters, so it should be the one holding its width.
         TDText(
+            modifier = Modifier.weight(1f, fill = false),
             text = greetingText,
             style = TDTheme.typography.subheading1,
             color = TDTheme.colors.onBackground.copy(alpha = 0.85f),

@@ -311,12 +311,17 @@ private fun PomodoroStepperCard(
             modifier = Modifier.size(22.dp),
         )
         Spacer(Modifier.width(10.dp))
+        // The label carries the weight, replacing a Spacer that carried it before. Unweighted and
+        // measured first, "Odaklanma Süresi" claimed its full ~128dp of a ~296dp card and the
+        // stepper behind it — two 36dp buttons, the value and the "dk" unit — was measured against
+        // what was left, so the unit was the first thing to be cut. The label is the only part of
+        // this row that can afford a second line, so it is the part that should give way.
         TDText(
+            modifier = Modifier.weight(1f),
             text = label,
             style = TDTheme.typography.heading6,
             color = TDTheme.colors.onBackground,
         )
-        Spacer(Modifier.weight(1f))
 
         IconButton(
             onClick = {

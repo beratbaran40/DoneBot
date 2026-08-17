@@ -289,17 +289,24 @@ private fun MetadataRow(
     label: String,
     content: @Composable () -> Unit,
 ) {
+    // SpaceBetween only distributes the LEFTOVER room, so with two unweighted children the label was
+    // measured first and the value got the remainder. "Tekrar Sıklığı" next to a rule as long as
+    // "Her 2 günde bir · Pzt · Çar · Cum" left the value nothing to sit in. Weighting both — the
+    // label loosely, the value with the larger share — makes them share the squeeze instead.
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         TDText(
+            modifier = Modifier.weight(1f),
             text = label,
             style = TDTheme.typography.subheading1,
             color = TDTheme.colors.gray,
         )
-        content()
+        Box(modifier = Modifier.weight(1.4f), contentAlignment = Alignment.CenterEnd) {
+            content()
+        }
     }
 }
 
