@@ -24,9 +24,12 @@ import com.todoapp.mobile.navigation.Screen
 import com.todoapp.mobile.navigation.ThemedApp
 import com.todoapp.mobile.ui.common.AppPixelIcons
 import com.todoapp.mobile.ui.common.LocalReduceMotion
+import com.todoapp.uikit.components.LocalTDTextOverflowReporter
+import com.todoapp.uikit.components.TDTextOverflowReporter
 import com.todoapp.uikit.extensions.collectWithLifecycle
 import com.todoapp.uikit.image.LocalPixelIconMap
 import com.todoapp.uikit.image.UikitPixelIcons
+import timber.log.Timber
 
 @Composable
 fun MainContent() {
@@ -41,6 +44,7 @@ fun MainContent() {
         LocalNavController provides navController,
         LocalReduceMotion provides reduceMotion,
         LocalPixelIconMap provides pixelIcons,
+        LocalTDTextOverflowReporter provides rememberTextFitReporter(),
     ) {
         var dialogMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -112,6 +116,44 @@ fun MainContent() {
             },
         )
         ThemedApp()
+    }
+}
+
+/**
+ * The debug text-fit probe. Returns `null` in release, which is what keeps `TDText` on Compose's
+ * String fast path — see `LocalTDTextOverflowReporter`. `BuildConfig.DEBUG` is a compile-time
+ * constant, so R8 removes this whole branch from the shipping build.
+ *
+ * Reports are de-duplicated for the life of the process: an overflowing label re-lays-out on every
+ * scroll frame, and without this a single walkthrough buries the findings in thousands of repeats.
+ * Read it back with `adb logcat -d -s TDTextFit:W`.
+ */
+@Composable
+private fun rememberTextFitReporter(): TDTextOverflowReporter? = remember {
+    if (!BuildConfig.DEBUG) {
+        null
+    } else {
+        val seen = mutableSetOf<String>()
+        TDTextOverflowReporter { report ->
+            val key = "${report.slot}|${report.text}|${report.widthPx}"
+            if (seen.add(key)) {
+                val kind = when {
+                    report.midWordBreak -> "MIDWORD"
+                    report.clipped -> "CLIPPED"
+                    else -> "CRAMPED"
+                }
+                Timber.tag("TDTextFit").w(
+                    "%s | %s | lines=%d maxLines=%s | %.0fsp in %dpx | \"%s\"",
+                    kind,
+                    report.slot ?: "?",
+                    report.lineCount,
+                    if (report.maxLines == Int.MAX_VALUE) "∞" else report.maxLines.toString(),
+                    report.fontSizeSp,
+                    report.widthPx,
+                    report.text,
+                )
+            }
+        }
     }
 }
 
