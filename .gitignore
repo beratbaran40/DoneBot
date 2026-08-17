@@ -107,3 +107,7 @@ RELEASE_20*.md
 # exist on the machine that regenerates them.
 /pomodoro_background_noises/
 /TASK_CREATION_TEST_MATRIX.md
+
+# Bytecode from the Python tools under tools/ (genpixelicons.py, textfit.py).
+__pycache__/
+*.pyc

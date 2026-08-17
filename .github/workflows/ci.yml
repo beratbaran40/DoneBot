@@ -50,6 +50,13 @@ jobs:
       - name: ktlint + detekt + unit tests + debug build
         run: ./gradlew ktlintCheck detektMain testDebugUnitTest assembleDebug --continue --max-workers=2 --stacktrace
 
+      # Narrow-phone text fit. Measures the shipped TTFs against a hand-maintained table of the
+      # tightest text slots, so a lengthened Turkish label fails here rather than on someone's
+      # Galaxy A25. Stdlib only — no pip install, no device. See the module docstring for what it
+      # cannot see (user-typed content; that is covered by the debug probe instead).
+      - name: Label fit on narrow screens
+        run: python3 tools/textfit.py
+
   # ── §3.6 AAB size budget. Builds an UNSIGNED release bundle (no keystore) and checks bytes. ──
   size-budget:
     runs-on: ubuntu-latest
