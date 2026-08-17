@@ -14,8 +14,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -34,12 +36,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
 import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.modifier.tdShadow
 import com.todoapp.uikit.previews.TDPreview
+import com.todoapp.uikit.previews.TDPreviewNarrow
 import com.todoapp.uikit.theme.TDTheme
 import com.todoapp.uikit.theme.tdOutlineColor
 import kotlinx.coroutines.launch
@@ -93,56 +95,57 @@ fun TDStatisticCard(
                 },
             )
 
+    // The icon sits ABOVE the labels rather than beside them. Two of these cards share a phone row,
+    // so a 44dp icon plus its 14dp gutter used to leave the text column 68dp at 360dp — narrower
+    // than the single word "Tamamlandı" (77dp), which is why the label shipped with an ellipsis and
+    // truncated in Turkish AND in English ("Task Pendin…"). Stacking gives the text the card's full
+    // 126dp interior, which clears every current label with the system font at 1.3, so the labels no
+    // longer need to be cut. Shaving the icon instead only buys 16dp and does not reach.
     val content: @Composable () -> Unit = {
-        Row(
+        Column(
             modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalArrangement = Arrangement.Center,
         ) {
             StatisticIcon(
                 isCompleted = isCompleted,
                 backgroundColor = iconBg,
             )
-            Spacer(Modifier.width(14.dp))
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Center,
-            ) {
-                AnimatedContent(
-                    modifier = Modifier.fillMaxWidth(),
-                    targetState = taskAmount,
-                    transitionSpec = {
-                        if (targetState > initialState) {
-                            slideInVertically { -it } + fadeIn(tween(250)) togetherWith
-                                slideOutVertically { it } + fadeOut(tween(250))
-                        } else {
-                            slideInVertically { it } + fadeIn(tween(250)) togetherWith
-                                slideOutVertically { -it } + fadeOut(tween(250))
-                        }
-                    },
-                    label = "taskAmountAnim",
-                ) { amount ->
-                    TDText(
-                        text = amount.toString(),
-                        style = TDTheme.typography.heading5.copy(fontWeight = FontWeight.Bold),
-                        color = numberColor,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                Spacer(Modifier.height(2.dp))
+            Spacer(Modifier.height(12.dp))
+            AnimatedContent(
+                modifier = Modifier.fillMaxWidth(),
+                targetState = taskAmount,
+                transitionSpec = {
+                    if (targetState > initialState) {
+                        slideInVertically { -it } + fadeIn(tween(250)) togetherWith
+                            slideOutVertically { it } + fadeOut(tween(250))
+                    } else {
+                        slideInVertically { it } + fadeIn(tween(250)) togetherWith
+                            slideOutVertically { -it } + fadeOut(tween(250))
+                    }
+                },
+                label = "taskAmountAnim",
+            ) { amount ->
                 TDText(
-                    text = stringResource(R.string.weekly),
-                    style = TDTheme.typography.subheading4,
+                    text = amount.toString(),
+                    style = TDTheme.typography.heading5.copy(fontWeight = FontWeight.Bold),
                     color = numberColor,
                 )
-                TDText(
-                    text = text,
-                    style = TDTheme.typography.subheading1,
-                    color = TDTheme.colors.onBackground.copy(alpha = 0.6f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
             }
+            Spacer(Modifier.height(2.dp))
+            TDText(
+                text = stringResource(R.string.weekly),
+                style = TDTheme.typography.subheading4,
+                color = numberColor,
+                fitPolicy = TDFitPolicy.BOUNDED,
+                slot = "TDStatisticCard.period",
+            )
+            TDText(
+                text = text,
+                style = TDTheme.typography.subheading1,
+                color = TDTheme.colors.onBackground.copy(alpha = 0.6f),
+                fitPolicy = TDFitPolicy.BOUNDED,
+                slot = "TDStatisticCard.label",
+            )
         }
     }
 
@@ -278,5 +281,40 @@ private fun TDStatisticCardClickablePreview() {
             isCompleted = false,
             onClick = {},
         )
+    }
+}
+
+/**
+ * The regression test for this card: Home's real 2-up row with the real Turkish labels, squeezed.
+ * "Tamamlandı" is one unbreakable word, so if the text column ever narrows again it cannot wrap —
+ * it breaks mid-word or truncates. Both cards must also stay the same height.
+ */
+@TDPreviewNarrow
+@Composable
+private fun TDStatisticCardNarrowRowPreview() {
+    TDTheme {
+        Row(
+            modifier = Modifier
+                .height(IntrinsicSize.Min)
+                .padding(16.dp),
+        ) {
+            TDStatisticCard(
+                text = "Tamamlandı",
+                taskAmount = 12,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                isCompleted = true,
+            )
+            Spacer(Modifier.width(12.dp))
+            TDStatisticCard(
+                text = "Bekliyor",
+                taskAmount = 3,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                isCompleted = false,
+            )
+        }
     }
 }
