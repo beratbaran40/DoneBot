@@ -398,10 +398,13 @@ constructor(
                     // the last row never got its markers.
                     val endDate = startDate.plusDays(GRID_SPAN_DAYS)
                     combine(
-                        taskRepository.observeRange(startDate, endDate),
+                        // Expanded, not `observeRange { it.date }`: that is the anchor day, so a
+                        // routine marked only the day it began — and one that started before this
+                        // month marked nothing, since the query is a `WHERE date BETWEEN`. The group
+                        // branch below has always expanded; this is the personal half catching up.
+                        taskRepository.observeTaskDatesInRange(startDate, endDate),
                         groupRepository.observeAllGroupTasks(),
-                    ) { personalTasks, groupTasks ->
-                        val personalDates = personalTasks.map { it.date }
+                    ) { personalDates, groupTasks ->
                         // A repeating group task marks every day it fires on, not just its start —
                         // otherwise a daily chore leaves the rest of the month looking empty.
                         val visibleDays = generateSequence(startDate) { it.plusDays(1) }
@@ -410,7 +413,7 @@ constructor(
                         val groupDates = groupTasks.flatMap { task ->
                             visibleDays.filter { task.firesOnDate(it) }
                         }
-                        (personalDates + groupDates).toSet()
+                        personalDates + groupDates
                     }
                 }.collect { taskDates ->
                     updateSuccessState { it.copy(taskDatesInMonth = taskDates) }

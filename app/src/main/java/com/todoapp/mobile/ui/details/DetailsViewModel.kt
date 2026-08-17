@@ -19,7 +19,8 @@ import com.todoapp.mobile.domain.repository.TaskRepository
 import com.todoapp.mobile.domain.usecase.SetTaskCompletionUseCase
 import com.todoapp.mobile.navigation.NavigationEffect
 import com.todoapp.mobile.ui.common.taskform.capabilities
-import com.todoapp.mobile.ui.common.taskform.taskFormType
+import com.todoapp.mobile.ui.common.taskform.derivedTaskType
+import com.todoapp.mobile.ui.common.taskform.resolvedType
 import com.todoapp.mobile.ui.details.DetailsContract.UiAction
 import com.todoapp.mobile.ui.details.DetailsContract.UiEffect
 import com.todoapp.mobile.ui.details.DetailsContract.UiState
@@ -102,9 +103,15 @@ constructor(
     }
 
     /**
-     * Reminder times drive [TaskCapabilities.hasMultipleReminders], so the capability snapshot has to
-     * be recomputed with them — otherwise the very edit that adds a second reminder wouldn't switch
-     * the task to CUSTOM until it was reloaded.
+     * Reminder times drive `TaskCapabilities.hasMultipleReminders`, so the capability snapshot has to
+     * be recomputed with them — that is what makes the multi-reminder section appear straight away
+     * instead of only after a reload.
+     *
+     * The badge, though, holds still. It used to be recomputed here too, so adding a second alarm to
+     * a task the user had created as a Routine relabelled it "Custom" mid-edit — the label chasing
+     * the data, which is the same failure this screen exists to stop. A task with no declaration
+     * (created before the column, or synced down) keeps the old live behaviour, because deriving is
+     * all it has.
      */
     private fun changeReminderTimes(transform: (List<LocalTime>) -> List<LocalTime>) = updateSuccessState { state ->
         val times = transform(state.reminderTimes)
@@ -112,7 +119,7 @@ constructor(
         state.copy(
             reminderTimes = times,
             capabilities = capabilities,
-            taskType = taskFormType(capabilities),
+            taskType = originalTask?.declaredType ?: derivedTaskType(capabilities),
         )
     }
 
@@ -133,6 +140,9 @@ constructor(
             emptyList()
         }
         val capabilities = task.capabilities()
+        // What the user declared, falling back to the derivation only for a task that never declared
+        // one — every row older than the column, and every row that arrived from the server.
+        val resolvedType = task.resolvedType()
         return UiState.Success(
             taskId = task.remoteId ?: -1L,
             taskTitle = task.title,
@@ -140,7 +150,6 @@ constructor(
             taskTimeEnd = task.timeEnd,
             taskDate = task.date,
             taskDescription = task.description.orEmpty(),
-            dialogSelectedDate = task.date,
             isDirty = false,
             titleError = null,
             isSaving = false,
@@ -154,7 +163,7 @@ constructor(
             selectedRecurrence = task.recurrence,
             reminderOffsetMinutes = task.reminderOffsetMinutes,
             isAllDay = task.isAllDay,
-            taskType = taskFormType(capabilities),
+            taskType = resolvedType,
             capabilities = capabilities,
             reminderTimes = task.reminderTimes,
             recurrenceUntil = task.recurrenceUntil,
@@ -181,8 +190,6 @@ constructor(
             is UiAction.OnTaskDateEdit -> updateDate(uiAction.date)
             is UiAction.OnTaskTimeStartEdit -> updateTimeStart(uiAction.time)
             is UiAction.OnTaskTimeEndEdit -> updateTimeEnd(uiAction.time)
-            is UiAction.OnDialogDateSelect -> selectDialogDate(uiAction.date)
-            UiAction.OnDialogDateDeselect -> deselectDialogDate()
             UiAction.OnRetry -> retry()
             is UiAction.OnPhotoPicked -> stagePhotoUpload(uiAction.bytes, uiAction.mimeType)
             is UiAction.OnPhotoDelete -> stagePhotoDelete(uiAction.photoId)
@@ -447,12 +454,6 @@ constructor(
         updateSuccessState { it.copy(taskTimeEnd = time) }
     }
 
-    private fun selectDialogDate(date: LocalDate) {
-        updateSuccessState {
-            it.copy(dialogSelectedDate = date, taskDate = date, recurrenceUntil = it.endAfter(date))
-        }
-    }
-
     /**
      * The routine's end, dropped if the new start has moved past it — the same guard
      * `CreationHubViewModel` applies when creating one.
@@ -463,10 +464,6 @@ constructor(
      * throw the end away", so the end goes rather than becoming unreachable.
      */
     private fun UiState.Success.endAfter(start: LocalDate): LocalDate? = recurrenceUntil?.takeUnless { it.isBefore(start) }
-
-    private fun deselectDialogDate() {
-        updateSuccessState { it.copy(dialogSelectedDate = null) }
-    }
 
     /**
      * Toggles whole-task completion immediately (independent of the Save flow). The detail screen

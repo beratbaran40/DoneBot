@@ -54,6 +54,16 @@ interface TaskRepository {
         includeRecurring: Boolean = true,
     ): Flow<Map<LocalDate, Int>>
 
+    /**
+     * The days in [startDate]..[endDate] that carry at least one task, recurring tasks expanded to
+     * every day they actually fire on. For calendar/date-strip dot markers — mapping a task list to
+     * `it.date` gives the anchor day only, which leaves a routine's whole span unmarked.
+     */
+    fun observeTaskDatesInRange(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): Flow<Set<LocalDate>>
+
     fun observeMonthlyWeekBuckets(
         monthStart: LocalDate,
         includeRecurring: Boolean = true,

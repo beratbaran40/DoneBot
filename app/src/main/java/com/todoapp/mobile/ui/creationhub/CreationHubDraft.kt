@@ -2,9 +2,9 @@ package com.todoapp.mobile.ui.creationhub
 
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.TaskCategory
+import com.todoapp.mobile.domain.model.TaskType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.Step
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskScope
-import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiState
 import kotlinx.serialization.Serializable
 import java.time.DayOfWeek

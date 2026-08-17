@@ -70,6 +70,20 @@ data class TaskEntity(
      * honoured by Recurrence.firesOn and the earlier one wins.
      */
     @ColumnInfo(name = "recurrence_until") val recurrenceUntil: Long? = null,
+    /**
+     * The task shape the user declared when creating it (a `TaskType` name), or null for "never
+     * declared" — every row older than this column, and every row that reached this device from the
+     * server. Readers derive the type for those; see `Task.resolvedType()`.
+     *
+     * Nullable with NO default, unlike [category] and [recurrence] which took NOT NULL + a default.
+     * Those defaults were behaviourally correct for legacy rows; here none of the four values is —
+     * any of them would be a claim about a task nobody made a claim about.
+     *
+     * Stored as the enum's name rather than through a TypeConverter, matching [recurrence] and
+     * [category]: a name written by a newer build then reads back as null on an older one instead of
+     * throwing.
+     */
+    @ColumnInfo(name = "declared_type") val declaredType: String? = null,
 )
 
 enum class SyncStatus {

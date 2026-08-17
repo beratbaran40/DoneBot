@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -542,6 +543,76 @@ class TaskRepositoryImplTest {
         // This is what setTaskLocation has been doing all along: server row correct, device unchanged.
         assertEquals(1, toUpdate.size)
         assertEquals("Kadıköy", toUpdate.first().locationName)
+    }
+
+    // --- declared_type: local-only for as long as the wire stays silent about it ---
+
+    @Test
+    fun `a server pull does not wipe the declared type of a synced row`() {
+        val local = taskEntity(id = 1L, remoteId = 50L, syncStatus = SyncStatus.SYNCED)
+            .copy(declaredType = "CUSTOM")
+        // The server does not model the field, so every incoming row carries null. Taking it
+        // wholesale would clear the user's choice on the very next fifteen-minute sync.
+        val incoming = local.copy(title = "Edited elsewhere", declaredType = null)
+        val toUpdate = mutableListOf<TaskEntity>()
+
+        repository().reconcileRemote(incoming, local, emptyMap(), emptyMap(), mutableSetOf(), mutableListOf(), toUpdate)
+
+        assertEquals(1, toUpdate.size)
+        assertEquals("the off-device edit still applies", "Edited elsewhere", toUpdate.first().title)
+        assertEquals("but not at the cost of the declaration", "CUSTOM", toUpdate.first().declaredType)
+    }
+
+    @Test
+    fun `promoting a pending-create row keeps the type it was created with`() {
+        // The path that actually bites: this fires on the race between insert()'s local commit and
+        // addTask returning, i.e. seconds after the user tapped Create.
+        val pending = taskEntity(id = 9L, syncStatus = SyncStatus.PENDING_CREATE)
+            .copy(clientTaskId = "key-1", declaredType = "CUSTOM")
+        val incoming = taskEntity(id = 0L, remoteId = 50L, syncStatus = SyncStatus.SYNCED)
+            .copy(clientTaskId = "key-1", declaredType = null)
+        val toUpdate = mutableListOf<TaskEntity>()
+
+        repository().reconcileRemote(
+            incoming,
+            null,
+            emptyMap(),
+            mapOf("key-1" to pending),
+            mutableSetOf(),
+            mutableListOf(),
+            toUpdate,
+        )
+
+        assertEquals(1, toUpdate.size)
+        assertEquals("CUSTOM", toUpdate.first().declaredType)
+    }
+
+    @Test
+    fun `a declared-type difference alone does not trigger a write`() {
+        // Why declaredType is deliberately absent from comparableFields. Incoming is always null
+        // while local usually is not, so comparing them would report EVERY task as changed on EVERY
+        // pull — a full-table write plus a full alarm re-arm, applying no actual change.
+        val local = taskEntity(id = 1L, remoteId = 50L, syncStatus = SyncStatus.SYNCED)
+            .copy(declaredType = "CUSTOM")
+        val incoming = local.copy(declaredType = null)
+        val toUpdate = mutableListOf<TaskEntity>()
+
+        repository().reconcileRemote(incoming, local, emptyMap(), emptyMap(), mutableSetOf(), mutableListOf(), toUpdate)
+
+        assertTrue("nothing user-visible differs, so nothing should be written", toUpdate.isEmpty())
+    }
+
+    @Test
+    fun `a brand-new server row arrives undeclared`() {
+        val incoming = taskEntity(id = 0L, remoteId = 50L, syncStatus = SyncStatus.SYNCED)
+        val toInsert = mutableListOf<TaskEntity>()
+
+        repository().reconcileRemote(incoming, null, emptyMap(), emptyMap(), mutableSetOf(), toInsert, mutableListOf())
+
+        // No local declaration exists for a row this device has never seen — deriving is the honest
+        // answer, and null is how the reader is told to derive.
+        assertEquals(1, toInsert.size)
+        assertNull(toInsert.first().declaredType)
     }
 
     private companion object {

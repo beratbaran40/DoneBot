@@ -34,6 +34,7 @@ import com.todoapp.mobile.domain.constants.DailyPlanDefaults
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.Subtask
 import com.todoapp.mobile.domain.model.Task
+import com.todoapp.mobile.domain.model.TaskType
 import com.todoapp.mobile.domain.model.firesOn
 import com.todoapp.mobile.domain.model.recurrenceRule
 import com.todoapp.mobile.domain.model.toAlarmItem
@@ -189,7 +190,12 @@ constructor(
                         entity.recurrenceUntil?.let { today.toEpochDay() > it } == true,
                 )
             }
-        }
+            // The one observe that used to skip this, so every row arrived with subtaskTotal = 0 and
+            // the card's "2/5 + chevron" block (gated on subtaskTotal > 0) never rendered — a task
+            // that both repeats AND has steps was unopenable here, which is exactly the shape a
+            // custom task takes. The whole-routine counts, not the day-scoped ones: this tab manages
+            // the routine rather than showing one occurrence of it.
+        }.withSubtaskCounts()
     }
 
     override fun observeOverdueTasks(today: LocalDate): Flow<List<Task>> = localDataSource.observeOverdueTasks(today.toEpochDay()).map { list ->
@@ -435,6 +441,23 @@ constructor(
         endDate: LocalDate,
         includeRecurring: Boolean,
     ): Flow<Map<LocalDate, Int>> = observeRangeCounts(startDate, endDate, includeRecurring).map { (completed, _) -> completed }
+
+    /**
+     * Every day in the window that has at least one task on it — the dot markers under the Calendar
+     * month grid and the Home date strip.
+     *
+     * Both used to map `observeRange { it.date }`, which is the task's ANCHOR day: a routine marked
+     * only the day it started, and one anchored before the visible month marked nothing at all
+     * (`observeRange` is a `WHERE date BETWEEN`, so it never even loads it). The group branch sitting
+     * two lines away in CalendarViewModel already expanded its tasks with `firesOnDate`; this closes
+     * the asymmetry using the same [observeRangeCounts] walk that the Activity heatmap is built on,
+     * so all three surfaces answer "which days does this fire on?" identically.
+     */
+    override fun observeTaskDatesInRange(
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): Flow<Set<LocalDate>> = observeRangeCounts(startDate, endDate, includeRecurring = true)
+        .map { (completed, pending) -> completed.keys + pending.keys }
 
     override fun observeMonthlyWeekBuckets(
         monthStart: LocalDate,
@@ -755,7 +778,15 @@ constructor(
         // Finish-state (finishedOn) is owned exclusively by setRoutineFinished, never by the edit form
         // (which always carries finishedOn = null). Preserve the stored value across an edit — locally
         // AND on the wire — so editing a finished routine doesn't silently resurrect it.
-        val preserved = task.copy(finishedOn = taskEntity?.finishedOn?.let { LocalDate.ofEpochDay(it) })
+        //
+        // The declared type gets the same treatment for the same reason: no edit form offers a type
+        // picker, so a caller that simply didn't carry it must not be read as "clear it". `task.
+        // declaredType ?:` rather than a plain overwrite, so an explicit declaration still wins and a
+        // future "change the type" feature isn't walled off here.
+        val preserved = task.copy(
+            finishedOn = taskEntity?.finishedOn?.let { LocalDate.ofEpochDay(it) },
+            declaredType = task.declaredType ?: TaskType.fromStorage(taskEntity?.declaredType),
+        )
 
         // Reminder rows must land BEFORE the alarms are re-armed — scheduleRecurringAlarmIfNeeded
         // reads them back from the table, so writing after would arm the previous set.
@@ -1149,7 +1180,14 @@ constructor(
             if (local.syncStatus == SyncStatus.SYNCED && !local.contentEquals(incoming)) {
                 // Off-device edit (chatbot, web, another phone). Reconcile, preserving
                 // local id and orderIndex so UI ordering isn't disturbed.
-                toUpdate += incoming.copy(id = local.id, orderIndex = local.orderIndex)
+                toUpdate += incoming.copy(
+                    id = local.id,
+                    orderIndex = local.orderIndex,
+                    // `incoming` is built from the server DTO, which does not carry the declaration
+                    // yet — so taking it wholesale would wipe the type the user picked on the very
+                    // next pull. Local wins for exactly as long as the wire stays silent.
+                    declaredType = local.declaredType,
+                )
             }
             // else: identical, or local has pending CRUD — leave alone.
             return
@@ -1160,7 +1198,14 @@ constructor(
             ?: pendingCreateBySignature[incoming.contentSignature()]
         if (pending != null && pending.id !in promoted) {
             promoted += pending.id
-            toUpdate += incoming.copy(id = pending.id, orderIndex = pending.orderIndex)
+            // Same preservation as the SYNCED branch, and this is the path that actually bites: it
+            // fires on the race between insert()'s local commit and addTask returning, i.e. seconds
+            // after the user taps Create on the task whose type they just declared.
+            toUpdate += incoming.copy(
+                id = pending.id,
+                orderIndex = pending.orderIndex,
+                declaredType = pending.declaredType,
+            )
         } else {
             toInsert += incoming.copy(id = 0L)
         }
@@ -1183,6 +1228,12 @@ constructor(
      *
      * Deliberately NOT the entity's own equals: id, remoteId, orderIndex and syncStatus are local
      * bookkeeping and differ by design on the two sides of a reconcile.
+     *
+     * `declaredType` is absent for the same reason and must STAY absent until the wire carries it.
+     * The server never sends it today, so `incoming.declaredType` is always null while the local one
+     * usually isn't: comparing them would report every task as changed on every pull, i.e. a
+     * full-table write plus a full alarm re-arm every fifteen minutes, applying no actual change.
+     * Add it the day `TaskData` carries the field, not before.
      */
     private fun TaskEntity.comparableFields(): List<Any?> = listOf(
         title,

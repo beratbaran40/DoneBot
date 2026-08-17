@@ -98,6 +98,16 @@ data class Task(
      * before" reminder on a one-off task.
      */
     val reminderTimes: List<LocalTime> = emptyList(),
+    /**
+     * The shape the user picked in the Creation Hub. Set once at creation and never changed by an
+     * edit — the detail screen has no type picker, and a declaration that re-derived itself on every
+     * edit would just be the derivation with extra steps.
+     *
+     * Null means "not declared", which is the permanent state of every row created before the column
+     * existed and of every row that arrives from the server (the wire does not carry it yet). Readers
+     * fall back to `derivedTaskType` — see `Task.resolvedType()`.
+     */
+    val declaredType: TaskType? = null,
 )
 
 /**

@@ -299,8 +299,7 @@ constructor(
                     val initialTaskDates =
                         if (isFirstSuccess) {
                             val ym = YearMonth.from(date)
-                            taskRepository.observeRange(ym.atDay(1), ym.atEndOfMonth()).first()
-                                .map { it.date }.toSet()
+                            taskRepository.observeTaskDatesInRange(ym.atDay(1), ym.atEndOfMonth()).first()
                         } else {
                             emptySet()
                         }
@@ -413,14 +412,18 @@ constructor(
         fetchDailyTask(earliest)
     }
 
+    /**
+     * The dots under the date strip. Expanded per firing day, not per anchor: mapping the task list
+     * to `it.date` marked only the day a routine started, and left a month-long task looking like a
+     * single-day one — the same gap the Calendar grid had.
+     */
     private fun setupTaskDatesFlow() {
         viewModelScope.launch {
             displayedMonthFlow
                 .flatMapLatest { month ->
-                    taskRepository.observeRange(month.atDay(1), month.atEndOfMonth())
+                    taskRepository.observeTaskDatesInRange(month.atDay(1), month.atEndOfMonth())
                 }
-                .collect { tasks ->
-                    val dates = tasks.map { it.date }.toSet()
+                .collect { dates ->
                     updateSuccessState { it.copy(taskDatesInMonth = dates) }
                 }
         }

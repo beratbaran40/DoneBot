@@ -4,13 +4,16 @@ import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.Task
+import com.todoapp.mobile.domain.model.TaskType
 import com.todoapp.mobile.domain.repository.PendingPhotoRepository
 import com.todoapp.mobile.domain.repository.TaskRepository
 import com.todoapp.mobile.domain.usecase.SetTaskCompletionUseCase
 import com.todoapp.mobile.util.MainDispatcherRule
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -58,7 +61,12 @@ class DetailsViewModelTest {
         recurrenceByDay = setOf(DayOfWeek.MONDAY),
         recurrenceUntil = LocalDate.of(2026, 9, 6),
         reminderTimes = listOf(LocalTime.of(8, 0)),
+        declaredType = TaskType.ROUTINE,
     )
+
+    /** The same task as it exists on any device that hasn't declared a type: created before the
+     *  column, or pulled down from the server. It still has to track its own shape. */
+    private val undeclaredRoutine = routine.copy(declaredType = null)
 
     @Before
     fun setUp() {
@@ -127,7 +135,7 @@ class DetailsViewModelTest {
         advanceUntilIdle()
 
         // Routine runs 6 Aug → 6 Sep. Push the start to December.
-        vm.onAction(DetailsContract.UiAction.OnDialogDateSelect(LocalDate.of(2026, 12, 1)))
+        vm.onAction(DetailsContract.UiAction.OnTaskDateEdit(LocalDate.of(2026, 12, 1)))
         advanceUntilIdle()
 
         // firesOn rejects every day before the anchor and every day after `until`, so a crossed
@@ -140,7 +148,7 @@ class DetailsViewModelTest {
         val vm = viewModel()
         advanceUntilIdle()
 
-        vm.onAction(DetailsContract.UiAction.OnDialogDateSelect(LocalDate.of(2026, 8, 20)))
+        vm.onAction(DetailsContract.UiAction.OnTaskDateEdit(LocalDate.of(2026, 8, 20)))
         advanceUntilIdle()
 
         // The guard is about a crossing, not about touching the date at all.
@@ -156,6 +164,49 @@ class DetailsViewModelTest {
         advanceUntilIdle()
 
         assertTrue("reminder-time change must mark the form dirty", vm.success().isDirty)
+    }
+
+    @Test
+    fun `a declared routine keeps its badge when a second reminder time is added`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        val vm = viewModel()
+        advanceUntilIdle()
+
+        vm.onAction(DetailsContract.UiAction.OnReminderTimeAdd(LocalTime.of(20, 0)))
+        advanceUntilIdle()
+
+        // The two halves are the point. The capability must move, because it is what puts the
+        // multi-reminder section on screen; the badge must not, because a label that re-reads the
+        // data on every edit is the bug the declaration exists to fix.
+        assertTrue("the section has to appear immediately", vm.success().capabilities.hasMultipleReminders)
+        assertEquals(TaskType.ROUTINE, vm.success().taskType)
+    }
+
+    @Test
+    fun `an undeclared task still tracks its own shape`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        coEvery { taskRepository.getTaskById(TASK_ID) } returns undeclaredRoutine
+        val vm = viewModel()
+        advanceUntilIdle()
+        assertEquals(TaskType.ROUTINE, vm.success().taskType)
+
+        vm.onAction(DetailsContract.UiAction.OnReminderTimeAdd(LocalTime.of(20, 0)))
+        advanceUntilIdle()
+
+        // Deriving is all this row has, so the old live-flip behaviour is preserved verbatim.
+        assertEquals(TaskType.CUSTOM, vm.success().taskType)
+    }
+
+    @Test
+    fun `saving does not change the declared type`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+        val vm = viewModel()
+        advanceUntilIdle()
+
+        vm.onAction(DetailsContract.UiAction.OnTaskTitleEdit("Vitamin D"))
+        vm.onAction(DetailsContract.UiAction.OnSaveChanges)
+        advanceUntilIdle()
+
+        val saved = slot<Task>()
+        coVerify { taskRepository.update(capture(saved)) }
+        assertEquals(TaskType.ROUTINE, saved.captured.declaredType)
     }
 
     private companion object {

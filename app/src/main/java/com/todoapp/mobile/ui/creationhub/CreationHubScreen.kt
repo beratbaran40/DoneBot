@@ -49,12 +49,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import com.todoapp.mobile.R
 import com.todoapp.mobile.domain.model.Recurrence
+import com.todoapp.mobile.domain.model.TaskType
 import com.todoapp.mobile.ui.common.components.taskTypeAccent
-import com.todoapp.mobile.ui.common.taskform.TaskFormType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.GroupOption
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.Step
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskScope
-import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiAction
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiEffect
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiState
@@ -240,25 +239,25 @@ private fun TypeHeaderBlock(taskType: TaskType) {
     when (taskType) {
         TaskType.ONE_TIME -> {
             icon = tdPainter(UiKitR.drawable.ic_edit_task)
-            accent = taskTypeAccent(TaskFormType.ONE_TIME)
+            accent = taskTypeAccent(TaskType.ONE_TIME)
             nameRes = R.string.type_one_time_title
             subtitleRes = R.string.type_one_time_subtitle
         }
         TaskType.ROUTINE -> {
             icon = tdPainter(R.drawable.ic_calendar)
-            accent = taskTypeAccent(TaskFormType.ROUTINE)
+            accent = taskTypeAccent(TaskType.ROUTINE)
             nameRes = R.string.type_routine_title
             subtitleRes = R.string.type_routine_subtitle
         }
         TaskType.STAGED -> {
             icon = tdPainter(R.drawable.ic_staged)
-            accent = taskTypeAccent(TaskFormType.STAGED)
+            accent = taskTypeAccent(TaskType.STAGED)
             nameRes = R.string.type_staged_title
             subtitleRes = R.string.type_staged_subtitle
         }
         TaskType.CUSTOM -> {
             icon = tdPainter(R.drawable.ic_custom)
-            accent = taskTypeAccent(TaskFormType.CUSTOM)
+            accent = taskTypeAccent(TaskType.CUSTOM)
             nameRes = R.string.type_custom_title
             subtitleRes = R.string.type_custom_subtitle
         }
@@ -315,7 +314,7 @@ private fun CreationHubCarousel(onAction: (UiAction) -> Unit) {
             R.string.create_task_card_subtitle,
             tdPainter(UiKitR.drawable.ic_edit_task),
             TDTheme.colors.lightPending,
-            taskTypeAccent(TaskFormType.ONE_TIME),
+            taskTypeAccent(TaskType.ONE_TIME),
             UiAction.OnCreateTaskCardTap,
         ),
         HubFeature(

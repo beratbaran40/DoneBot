@@ -3,6 +3,7 @@ package com.todoapp.mobile.ui.creationhub
 import androidx.compose.runtime.Immutable
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.TaskCategory
+import com.todoapp.mobile.domain.model.TaskType
 import com.todoapp.mobile.ui.home.PendingPhoto
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -19,7 +20,8 @@ object CreationHubContract {
      */
     enum class TaskScope { PERSONAL, GROUP }
 
-    enum class TaskType { ONE_TIME, ROUTINE, STAGED, CUSTOM }
+    // The shape lives in `domain.model.TaskType` now that it is stored on the task rather than
+    // re-derived on every read. There used to be a second, identical enum right here.
 
     /** A group the current user administers — carries both ids: local for members, remote for create. */
     @Immutable

@@ -3,9 +3,9 @@ package com.todoapp.mobile.ui.creationhub
 import androidx.lifecycle.SavedStateHandle
 import com.todoapp.mobile.domain.engine.PomodoroEngine
 import com.todoapp.mobile.domain.model.Recurrence
+import com.todoapp.mobile.domain.model.TaskType
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.TaskRepository
-import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiAction
 import com.todoapp.mobile.util.MainDispatcherRule
 import io.mockk.every

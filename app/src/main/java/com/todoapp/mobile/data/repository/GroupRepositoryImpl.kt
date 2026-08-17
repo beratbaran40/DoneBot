@@ -486,6 +486,11 @@ constructor(
         locationLat: Double?,
         locationLng: Double?,
         clearLocation: Boolean,
+        recurrence: String?,
+        recurrenceInterval: Int?,
+        recurrenceByDay: String?,
+        recurrenceUntil: Long?,
+        reminderTimes: List<Int>?,
     ): Result<Unit> {
         val localGroup = groupLocalDataSource.getAllGroupsOrdered().first().find { it.remoteId == groupId }
         val assigneeMember =
@@ -514,6 +519,11 @@ constructor(
                     locationLat = locationLat,
                     locationLng = locationLng,
                     clearLocation = clearLocation,
+                    recurrence = recurrence,
+                    recurrenceInterval = recurrenceInterval,
+                    recurrenceByDay = recurrenceByDay,
+                    recurrenceUntil = recurrenceUntil,
+                    reminderTimes = reminderTimes,
                 ),
             ).map { }
             .onSuccess {

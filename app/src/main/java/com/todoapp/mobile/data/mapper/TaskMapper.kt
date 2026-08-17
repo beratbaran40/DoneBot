@@ -7,6 +7,7 @@ import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.RecurrenceRule
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.domain.model.TaskCategory
+import com.todoapp.mobile.domain.model.TaskType
 import com.todoapp.mobile.domain.model.dayOfWeekSetFromStorage
 import com.todoapp.mobile.domain.model.toStorageCsv
 import java.time.LocalDate
@@ -64,6 +65,10 @@ fun TaskEntity.toDomain(): Task = Task(
     recurrenceInterval = recurrenceInterval,
     recurrenceByDay = dayOfWeekSetFromStorage(recurrenceByDay),
     recurrenceUntil = recurrenceUntil?.toLocalDate(),
+    // Null stays null. Deriving a value here would make a plain read-modify-write silently WRITE a
+    // derived type into the column, freezing the very guess this field exists to replace — the
+    // fallback belongs at the one read site (Task.resolvedType), not at the storage boundary.
+    declaredType = TaskType.fromStorage(declaredType),
 )
 
 fun Task.toEntity(syncStatus: SyncStatus = SyncStatus.SYNCED): TaskEntity {
@@ -93,5 +98,6 @@ fun Task.toEntity(syncStatus: SyncStatus = SyncStatus.SYNCED): TaskEntity {
         recurrenceInterval = recurrenceInterval.coerceAtLeast(1),
         recurrenceByDay = recurrenceByDay.toStorageCsv(),
         recurrenceUntil = recurrenceUntil?.toEpochDayLong(),
+        declaredType = declaredType?.name,
     )
 }
