@@ -296,6 +296,19 @@ interface ToDoApi {
     suspend fun updateUserPreferences(
         @Body request: UpdateUserPreferencesRequest,
     ): Response<BaseResponse<UserPreferencesData?>>
+
+    /** Batch upload of recorded focus sessions. Idempotent on `clientSessionId`; repeats answer 200. */
+    @POST("pomodoro/sessions")
+    suspend fun uploadPomodoroSessions(
+        @Body request: com.todoapp.mobile.data.model.network.request.PomodoroSessionUploadRequest,
+    ): Response<BaseResponse<com.todoapp.mobile.data.model.network.data.PomodoroUploadData?>>
+
+    /** Sign-in backfill. [from] and [to] are epoch days in the device's own zone. */
+    @GET("pomodoro/sessions")
+    suspend fun getPomodoroSessions(
+        @Query("from") from: Long,
+        @Query("to") to: Long,
+    ): Response<BaseResponse<com.todoapp.mobile.data.model.network.data.PomodoroSessionListData?>>
 }
 
 interface TodoAuthApi {

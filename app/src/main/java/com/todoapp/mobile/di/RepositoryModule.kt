@@ -147,6 +147,12 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
+    abstract fun bindPomodoroRemoteDataSource(
+        impl: com.todoapp.mobile.data.source.remote.datasource.PomodoroRemoteDataSourceImpl,
+    ): com.todoapp.mobile.data.source.remote.datasource.PomodoroRemoteDataSource
+
+    @Binds
+    @Singleton
     abstract fun bindPomodoroSessionRecorder(
         pomodoroSessionRecorderImpl: com.todoapp.mobile.data.engine.PomodoroSessionRecorderImpl,
     ): com.todoapp.mobile.domain.engine.PomodoroSessionRecorder

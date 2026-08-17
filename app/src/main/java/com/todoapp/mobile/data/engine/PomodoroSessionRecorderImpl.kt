@@ -35,6 +35,9 @@ class PomodoroSessionRecorderImpl
 @Inject
 constructor(
     private val dao: PomodoroSessionDao,
+    // The shared "flush pending writes" chain. Its name is now a misnomer — it enqueues SyncWorker,
+    // which pushes tasks AND pomodoro — but renaming it is a separate change.
+    private val taskSyncRepository: com.todoapp.mobile.domain.repository.TaskSyncRepository,
     private val dataStoreHelper: DataStoreHelper,
     private val clock: Clock,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
@@ -51,8 +54,17 @@ constructor(
         }
     }
 
+    /**
+     * One enqueue per run, never per session.
+     *
+     * Without it a run finishing at 22:00 would sit unsent until the next Home or Calendar visit —
+     * SyncWorker only runs today after a token refresh or a fetchTasks() from one of those screens.
+     * Unique work with KEEP, so this folds onto an in-flight sync rather than restarting it, and
+     * WorkManager simply defers it while offline.
+     */
     override fun onRunEnded() {
-        // Nothing to flush while sessions stay on the device. The upload trigger lands here.
+        runCatching { taskSyncRepository.syncPendingTasks() }
+            .onFailure { Timber.tag(TAG).w(it, "failed to enqueue sync after run") }
     }
 
     override fun shutdown() {

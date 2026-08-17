@@ -30,7 +30,17 @@ import org.robolectric.annotation.Config
 class SyncWorkerTest {
     private val context: Context = RuntimeEnvironment.getApplication()
 
-    private fun workerFor(repository: TaskRepository, attempt: Int): SyncWorker = TestListenableWorkerBuilder<SyncWorker>(context)
+    /**
+     * Pomodoro defaults to a no-op success so the existing cases keep testing exactly what they did.
+     * The cases that care pass their own stub.
+     */
+    private fun workerFor(
+        repository: TaskRepository,
+        attempt: Int,
+        pomodoro: com.todoapp.mobile.domain.repository.PomodoroSessionRepository = mockk(relaxed = true) {
+            coEvery { pushPending() } returns Result.success(Unit)
+        },
+    ): SyncWorker = TestListenableWorkerBuilder<SyncWorker>(context)
         .setRunAttemptCount(attempt)
         .setWorkerFactory(
             object : WorkerFactory() {
@@ -38,7 +48,7 @@ class SyncWorkerTest {
                     appContext: Context,
                     workerClassName: String,
                     workerParameters: WorkerParameters,
-                ): ListenableWorker = SyncWorker(appContext, workerParameters, repository)
+                ): ListenableWorker = SyncWorker(appContext, workerParameters, repository, pomodoro)
             },
         ).build()
 
@@ -70,5 +80,33 @@ class SyncWorkerTest {
         coEvery { repository.syncLocalTasksToServer() } returns Result.failure(DomainException.Server("boom"))
         // MAX_ATTEMPT = 2, so attempt 3 exhausts the retries.
         assertEquals(ListenableWorker.Result.failure(), workerFor(repository, attempt = 3).doWork())
+    }
+
+    @Test
+    fun `a retryable pomodoro failure retries even though the task sync succeeded`() = runBlocking {
+        val repository = mockk<TaskRepository>()
+        coEvery { repository.syncLocalTasksToServer() } returns Result.success(Unit)
+        val pomodoro = mockk<com.todoapp.mobile.domain.repository.PomodoroSessionRepository>(relaxed = true)
+        coEvery { pomodoro.pushPending() } returns Result.failure(DomainException.NoInternet())
+
+        // Otherwise the rows sit pending until something else happens to enqueue a sync.
+        assertEquals(
+            ListenableWorker.Result.retry(),
+            workerFor(repository, attempt = 1, pomodoro = pomodoro).doWork(),
+        )
+    }
+
+    @Test
+    fun `a thrown pomodoro push cannot fail a task sync that already succeeded`() = runBlocking {
+        val repository = mockk<TaskRepository>()
+        coEvery { repository.syncLocalTasksToServer() } returns Result.success(Unit)
+        val pomodoro = mockk<com.todoapp.mobile.domain.repository.PomodoroSessionRepository>(relaxed = true)
+        coEvery { pomodoro.pushPending() } throws IllegalStateException("boom")
+
+        // Pomodoro is the newcomer here; an unexpected throw in it must not regress task syncing.
+        assertEquals(
+            ListenableWorker.Result.success(),
+            workerFor(repository, attempt = 1, pomodoro = pomodoro).doWork(),
+        )
     }
 }

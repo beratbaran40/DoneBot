@@ -53,6 +53,16 @@ constructor(
     private var totalFocusSeconds: Long = 0L
     private var totalBreakSeconds: Long = 0L
 
+    /**
+     * The last non-null run id the engine reported.
+     *
+     * Read here rather than at navigation time on purpose: the engine emits PomodoroFinished and then
+     * closes the run, and this collector is asynchronous, so `engine.currentRunId` is already null by
+     * the time the summary is built. Latching the last non-null value sidesteps that race without the
+     * engine having to keep a second field alive for one consumer.
+     */
+    private var finishedRunId: String? = null
+
     fun onAction(action: UiAction) {
         when (action) {
             UiAction.SkipSession -> onSkipSession()
@@ -217,9 +227,14 @@ constructor(
             NavigationEffect.Navigate(
                 route =
                 Screen.PomodoroSummary(
+                    // These three are a seed only — accurate when the screen stayed mounted, and wrong
+                    // for any run the user backgrounded, because they accumulate in onSessionFinished()
+                    // which never runs without a subscriber. The run id lets the summary replace them
+                    // with what was actually recorded.
                     focusSessions = sessionQueue.count { it.mode == PomodoroMode.Focus },
                     totalFocusMinutes = (totalFocusSeconds / SECONDS_PER_MINUTE).toInt(),
                     totalBreakMinutes = (totalBreakSeconds / SECONDS_PER_MINUTE).toInt(),
+                    clientRunId = finishedRunId,
                 ),
                 popUpTo = Screen.Home,
             ),
@@ -262,6 +277,7 @@ constructor(
     private fun observeEngineState() {
         viewModelScope.launch {
             engineState.collect { engineSnapshot ->
+                engine.currentRunId?.let { finishedRunId = it }
                 mapEngineStateToUiState(engineSnapshot)
             }
         }

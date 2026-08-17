@@ -19,6 +19,16 @@ interface PomodoroSessionRepository {
     /** Totals for one sitting, so the Summary screen can report persisted truth rather than counters. */
     fun observeRun(clientRunId: String): Flow<PomodoroRunSummary>
 
+    /** Uploads everything not yet synced, in batches. Safe to call repeatedly. */
+    suspend fun pushPending(): Result<Unit>
+
+    /**
+     * Downloads the account's sessions for a device-local day range and merges them in.
+     *
+     * Self-throttled, so callers do not have to reason about how often they fire.
+     */
+    suspend fun backfill(fromEpochDay: Long, toEpochDay: Long): Result<Unit>
+
     /** Attaches rows produced while signed out to the user who just signed in. */
     suspend fun claimOrphansForCurrentUser()
 
