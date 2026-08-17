@@ -40,6 +40,12 @@ thesis-screenshots/
 .screenshots-review/
 # Prod-readiness working docs — local-only, never tracked (report, session notes, screenshots)
 /donebot prod/
+# iOS port spec — 116 markdown task files (00-CONTEXT … 90-STATE) plus the agent manual.
+# The whole folder, root-anchored: it holds nothing but .md, so this is exactly the spec
+# and it also covers files added later. These WERE tracked (11 `docs(ios-spec):` commits
+# are on origin/main), so `git rm -r --cached ios-spec` is what actually stops the
+# tracking — the ignore alone does nothing to files git already knows about.
+/ios-spec/
 
 # Secrets, signing & environment (never commit)
 # Environment files
@@ -58,6 +64,12 @@ signing.properties
 *.cer
 *.der
 *.key
+# Apple private keys (PKCS#8 PEM, EC P-256), both named AuthKey_<KEYID>.p8:
+# the APNs auth key (→ Firebase) and the App Store Connect API key (→ xcrun altool).
+# Each downloads exactly once. *.pem and *.key do NOT catch these — gitignore globs the
+# filename, not the contents. Note this also hides them from `git status`, so the leak
+# check must read the index instead: git ls-files | grep -E '\.p8$'
+*.p8
 # Service-account / credential JSON & secret properties
 *-service-account*.json
 *service_account*.json
