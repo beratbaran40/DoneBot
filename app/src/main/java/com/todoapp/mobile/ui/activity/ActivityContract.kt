@@ -30,6 +30,26 @@ object ActivityContract {
         val count: Int,
     )
 
+    /**
+     * Focus totals for the selected month.
+     *
+     * [focusSeconds] sums elapsed time, never planned time — a run abandoned six minutes into
+     * twenty-five contributes six minutes, which is the whole reason partial sessions are recorded.
+     *
+     * [weekSessionCounts] is sized and bucketed from [UiState.Success.monthlyWeekBuckets], not from its
+     * own partitioning: two charts on one screen disagreeing about how many weeks a month has is a bug
+     * nobody reports, they just stop trusting the screen.
+     */
+    @Immutable
+    data class PomodoroMonthStats(
+        val focusSeconds: Long = 0L,
+        val completedSessions: Int = 0,
+        val weekSessionCounts: List<Int> = emptyList(),
+        val bestDaySeconds: Long = 0L,
+    ) {
+        val hasData: Boolean get() = completedSessions > 0 || focusSeconds > 0L
+    }
+
     @Immutable
     data class YearStripMonth(
         val month: YearMonth,
@@ -56,6 +76,7 @@ object ActivityContract {
             val slideDirection: Int = 0,
             val expandedWeekIndex: Int? = null,
             val expandedWeekDays: List<DailyBucket> = emptyList(),
+            val pomodoro: PomodoroMonthStats = PomodoroMonthStats(),
             val yearlyCompleted: Int = 0,
             val yearlyTotal: Int = 0,
             val yearlyProgress: Float = 0f,

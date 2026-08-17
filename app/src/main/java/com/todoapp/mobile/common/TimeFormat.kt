@@ -33,6 +33,28 @@ fun rememberDeviceTimePattern(): String {
  * "in 1440 minutes". Both the tray notification and the overlay card format through here, so the two
  * can no longer word the same moment differently.
  */
+/**
+ * A focus total as a compact "3h 20m" / "3 sa 20 dk", or "45m" / "45 dk" under an hour.
+ *
+ * The compact counterpart to [reminderLeadDuration], which writes prose for notification bodies. These
+ * land in a dense stat tile where "2 hours 15 minutes" does not fit, and the abbreviations do not
+ * inflect in either language, so this deliberately does not go through `<plurals>`.
+ *
+ * Seconds are floored to whole minutes. A focus total is read at a glance; the remainder is noise.
+ */
+fun focusDuration(context: Context, seconds: Long): String {
+    val totalMinutes = (seconds.coerceAtLeast(0L)) / SECONDS_PER_MINUTE
+    val hours = totalMinutes / MINUTES_PER_HOUR
+    val minutes = totalMinutes % MINUTES_PER_HOUR
+    return if (hours > 0L) {
+        context.getString(R.string.pomodoro_duration_hours_minutes, hours.toInt(), minutes.toInt())
+    } else {
+        context.getString(R.string.pomodoro_duration_minutes, totalMinutes.toInt())
+    }
+}
+
+private const val SECONDS_PER_MINUTE = 60L
+
 fun reminderLeadDuration(context: Context, minutesBefore: Long): String {
     val minutes = minutesBefore.coerceAtLeast(0L)
     return when {
