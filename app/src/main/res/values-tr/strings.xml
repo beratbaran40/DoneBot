@@ -4,7 +4,7 @@
     <string name="pomodoro_summary">Özet</string>
     <string name="pomodoro_great_work">Harika iş!</string>
     <string name="pomodoro_focus_sessions">Seanslar</string>
-    <string name="pomodoro_total_focus">Odaklanma</string>
+    <string name="pomodoro_total_focus">Odak Süresi</string>
     <string name="pomodoro_break_time">Mola Süresi</string>
     <string name="pomodoro_start_again">Yeniden Başla</string>
     <string name="pomodoro_edit_settings">Ayarları Düzenle</string>
