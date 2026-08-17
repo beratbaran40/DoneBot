@@ -52,6 +52,7 @@ constructor(
     private val dataStoreHelper: DataStoreHelper,
     private val userRepository: UserRepository,
     private val pomodoroEngine: PomodoroEngine,
+    private val pomodoroSessionRepository: com.todoapp.mobile.domain.repository.PomodoroSessionRepository,
     private val taskSyncRepository: TaskSyncRepository,
     private val currentRouteTracker: CurrentRouteTracker,
     private val pendingPhotoRepository: PendingPhotoRepository,
@@ -265,8 +266,16 @@ constructor(
             .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: deleteAllTasks failed") }
         groupRepository.deleteAllLocalGroups()
             .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: deleteAllLocalGroups failed") }
-        runCatching { pomodoroEngine.finish() }
-            .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: pomodoroEngine.finish failed") }
+        // stop(record = false), not finish(). Two bugs close here at once: finish() emits
+        // PomodoroFinished, which could navigate a mounted Pomodoro screen to the Summary in the middle
+        // of signing out; and recording during sign-out races the deleteAllLocal below — the recorder
+        // writes on an IO scope while this chain deletes, so a row that wins would surface in the next
+        // account. Dropping the in-flight session is consistent with deleteAllTasks discarding unsynced
+        // work, and a forced sign-out could not have pushed it anyway.
+        runCatching { pomodoroEngine.stop(record = false) }
+            .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: pomodoroEngine.stop failed") }
+        runCatching { pomodoroSessionRepository.deleteAllLocal() }
+            .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: deleteAllLocal failed") }
         runCatching { dataStoreHelper.clearUser() }
             .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: clearUser failed") }
         runCatching { taskSyncRepository.resetCooldown() }

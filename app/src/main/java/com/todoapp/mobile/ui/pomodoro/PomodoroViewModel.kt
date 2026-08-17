@@ -158,7 +158,10 @@ constructor(
 
     private fun onConfirmEndSession() {
         _uiState.update { it.copy(showFinishEarlyDialog = false) }
-        engine.pause()
+        // stop(record = true) rather than pause(): ending a session early is exactly the partial run
+        // worth keeping, and it is what makes the completion rate honest instead of counting only wins.
+        // The setSessionQueue below still clears the queue; its own recordActive is a no-op by then.
+        engine.stop(record = true)
         engine.setSessionQueue(ArrayDeque())
         _navEffect.trySend(NavigationEffect.Navigate(route = Screen.PomodoroLaunch, popUpTo = Screen.Home))
     }

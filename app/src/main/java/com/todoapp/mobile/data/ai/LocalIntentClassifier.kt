@@ -147,6 +147,9 @@ class LocalIntentClassifier @Inject constructor(
                 context.getString(R.string.chat_local_pomodoro_not_running),
             )
         }
+        // stop() first so the partial session is recorded; resetState() deliberately records nothing, so
+        // calling it alone would drop every session DoneBot was asked to stop.
+        pomodoroEngine.stop(record = true)
         pomodoroEngine.resetState()
         return Match(
             Intent.POMODORO_STOP,

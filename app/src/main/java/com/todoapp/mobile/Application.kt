@@ -55,6 +55,9 @@ class Application :
     lateinit var pomodoroEngine: PomodoroEngine
 
     @Inject
+    lateinit var pomodoroSessionRecorder: com.todoapp.mobile.domain.engine.PomodoroSessionRecorder
+
+    @Inject
     lateinit var rescheduleAllAlarmsUseCase: RescheduleAllAlarmsUseCase
 
     @Inject
@@ -230,6 +233,9 @@ class Application :
     override fun onDestroy(owner: LifecycleOwner) {
         super.onDestroy(owner)
         pomodoroEngine.shutdown()
+        // Immediately after the engine, never before: the recorder owns a separate IO scope precisely so
+        // a record handed over during teardown is not cancelled with the engine's.
+        pomodoroSessionRecorder.shutdown()
         ambienceCoordinator.shutdown()
         ambiencePlayer.shutdown()
         networkMonitor.shutdown()
