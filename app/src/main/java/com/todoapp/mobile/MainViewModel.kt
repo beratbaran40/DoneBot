@@ -33,6 +33,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -52,6 +53,7 @@ constructor(
     private val dataStoreHelper: DataStoreHelper,
     private val userRepository: UserRepository,
     private val pomodoroEngine: PomodoroEngine,
+    private val pomodoroSessionRepository: com.todoapp.mobile.domain.repository.PomodoroSessionRepository,
     private val taskSyncRepository: TaskSyncRepository,
     private val currentRouteTracker: CurrentRouteTracker,
     private val pendingPhotoRepository: PendingPhotoRepository,
@@ -133,6 +135,29 @@ constructor(
             // trigger the claim.
             runCatching { journalRepository.claimOrphansForCurrentUser() }
                 .onFailure { Timber.tag("Journal").w(it, "claimOrphansForCurrentUser failed") }
+        }
+
+        viewModelScope.launch {
+            // Bound to observeUser(), NOT observeRefreshToken(): the token flow can flip before
+            // dataStoreHelper.setUser() completes, and the claim would then silently no-op against
+            // owner 0. By the time an id appears here it is already persisted.
+            //
+            // No one-shot "claimed" flag either — unlike the journal claim above. Sign-out deletes
+            // these rows, so a user really can produce a second batch of guest rows (sign out → run a
+            // pomodoro → sign in), and distinctUntilChanged lets the 5 → 0 → 5 round trip through.
+            dataStoreHelper.observeUser()
+                .map { it?.id ?: 0L }
+                .distinctUntilChanged()
+                .filter { it != 0L }
+                .collect {
+                    runCatching { pomodoroSessionRepository.claimOrphansForCurrentUser() }
+                        .onFailure { e -> Timber.tag("Pomodoro").w(e, "claimOrphans failed") }
+                    val today = java.time.LocalDate.now().toEpochDay()
+                    // One call covers the whole history; the server refuses a range over 366 days, and
+                    // the repository's own six-hour cooldown makes re-emissions free.
+                    runCatching { pomodoroSessionRepository.backfill(today - BACKFILL_DAYS, today) }
+                        .onFailure { e -> Timber.tag("Pomodoro").w(e, "backfill failed") }
+                }
         }
 
         // Tag every crash report with the signed-in user so Crashlytics groups issues per account.
@@ -253,6 +278,9 @@ constructor(
     companion object {
         /** MainActivity intent extra carrying the task id from a tapped local reminder (notification/overlay). */
         const val EXTRA_REMINDER_TASK_ID = "reminder_task_id"
+
+        /** A year of focus history in one call — just under the server's 366-day range ceiling. */
+        private const val BACKFILL_DAYS = 365L
     }
 
     private suspend fun clearLocalSession() {
@@ -265,8 +293,16 @@ constructor(
             .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: deleteAllTasks failed") }
         groupRepository.deleteAllLocalGroups()
             .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: deleteAllLocalGroups failed") }
-        runCatching { pomodoroEngine.finish() }
-            .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: pomodoroEngine.finish failed") }
+        // stop(record = false), not finish(). Two bugs close here at once: finish() emits
+        // PomodoroFinished, which could navigate a mounted Pomodoro screen to the Summary in the middle
+        // of signing out; and recording during sign-out races the deleteAllLocal below — the recorder
+        // writes on an IO scope while this chain deletes, so a row that wins would surface in the next
+        // account. Dropping the in-flight session is consistent with deleteAllTasks discarding unsynced
+        // work, and a forced sign-out could not have pushed it anyway.
+        runCatching { pomodoroEngine.stop(record = false) }
+            .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: pomodoroEngine.stop failed") }
+        runCatching { pomodoroSessionRepository.deleteAllLocal() }
+            .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: deleteAllLocal failed") }
         runCatching { dataStoreHelper.clearUser() }
             .onFailure { Timber.tag("AuthLogout").w(it, "clearLocalSession: clearUser failed") }
         runCatching { taskSyncRepository.resetCooldown() }

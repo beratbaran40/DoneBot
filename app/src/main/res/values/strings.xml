@@ -161,6 +161,22 @@
     <string name="activity_heatmap_title">Last 6 months</string>
     <string name="activity_heatmap_legend_less">Less</string>
     <string name="activity_heatmap_legend_more">More</string>
+    <!-- Activity → focus (pomodoro) section -->
+    <string name="activity_pomodoro_title">Focus</string>
+    <string name="activity_pomodoro_focus_time">Focus time</string>
+    <string name="activity_pomodoro_sessions">Sessions completed</string>
+    <string name="activity_pomodoro_best_day">Best day</string>
+    <string name="activity_pomodoro_chart_title">Sessions per week</string>
+    <string name="activity_pomodoro_week_label">W%1$d</string>
+    <string name="activity_pomodoro_empty">No focus sessions this month.</string>
+    <string name="activity_pomodoro_start">Start one</string>
+    <!--
+      Compact, not prose: these land in a dense stat tile where "2 hours 15 minutes" does not fit.
+      Deliberately NOT plurals — neither "h"/"m" nor the Turkish "sa"/"dk" inflect, so six <plurals>
+      blocks would buy nothing. reminderLeadDuration is the prose counterpart, for notification bodies.
+    -->
+    <string name="pomodoro_duration_hours_minutes">%1$dh %2$dm</string>
+    <string name="pomodoro_duration_minutes">%1$dm</string>
     <string name="activity_month_summary">%1$d done · %2$d pending this month</string>
     <string name="activity_trend_up_month">↑ %1$d%% vs last month</string>
     <string name="activity_trend_down_month">↓ %1$d%% vs last month</string>

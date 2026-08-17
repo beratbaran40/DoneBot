@@ -20,6 +20,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -31,6 +32,7 @@ class PomodoroSummaryViewModel
 constructor(
     savedStateHandle: SavedStateHandle,
     private val pomodoroRepository: PomodoroRepository,
+    private val pomodoroSessionRepository: com.todoapp.mobile.domain.repository.PomodoroSessionRepository,
     private val engine: PomodoroEngine,
     @ApplicationContext private val appContext: Context,
 ) : ViewModel() {
@@ -52,6 +54,31 @@ constructor(
 
     private val _navEffect = Channel<NavigationEffect>(Channel.BUFFERED)
     val navEffect = _navEffect.receiveAsFlow()
+
+    init {
+        // Hybrid on purpose. The state above is seeded from the navigation arguments so the screen
+        // renders instantly with no flicker, then the recorded rows overwrite it. Those arguments come
+        // from counters that only accumulate while this screen's ViewModel is alive, so any run the user
+        // backgrounded arrives here under-reported — which is the same bug the whole feature exists to
+        // fix. Reading the rows makes the summary agree with the statistics screen.
+        //
+        // Seeding first also means a recorder failure degrades to "slightly wrong" instead of "empty".
+        // Null only for an entry that was already on the back stack before the id existed; that one
+        // keeps the seeded numbers rather than showing nothing.
+        route.clientRunId?.let { runId ->
+            viewModelScope.launch {
+                pomodoroSessionRepository.observeRun(runId).collect { summary ->
+                    _uiState.update {
+                        it.copy(
+                            focusSessions = summary.focusSessions,
+                            totalFocusMinutes = summary.totalFocusMinutes,
+                            totalBreakMinutes = summary.totalBreakMinutes,
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     fun onAction(action: UiAction) {
         when (action) {

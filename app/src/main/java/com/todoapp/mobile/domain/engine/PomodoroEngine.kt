@@ -15,6 +15,13 @@ interface PomodoroEngine {
      */
     val sessionsSnapshot: List<Session>
 
+    /**
+     * Id shared by every interval of the run in flight, or null when nothing is queued. Read by
+     * PomodoroViewModel so the Summary screen can look its own run up in the recorded rows instead of
+     * trusting counters that only accumulate while the screen is alive.
+     */
+    val currentRunId: String?
+
     fun setSessionQueue(queue: ArrayDeque<Session>)
 
     fun prepare()
@@ -26,6 +33,19 @@ interface PomodoroEngine {
     fun skip(autoStart: Boolean)
 
     fun finish()
+
+    /**
+     * Tears the run down without emitting anything.
+     *
+     * Exists because [finish] emits [PomodoroEvent.PomodoroFinished], which is correct when a run ends
+     * but wrong for every other teardown: logout used to call it and could navigate a mounted Pomodoro
+     * screen to the Summary in the middle of signing out.
+     *
+     * @param record whether the interval in flight should be persisted as abandoned. False on logout —
+     *   the recorder writes on an IO scope while the sign-out chain deletes, and a row that wins that
+     *   race leaks into the next account.
+     */
+    fun stop(record: Boolean)
 
     fun updateBannerVisibility(isVisible: Boolean)
 

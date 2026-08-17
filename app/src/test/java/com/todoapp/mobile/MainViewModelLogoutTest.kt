@@ -51,6 +51,8 @@ class MainViewModelLogoutTest {
     private val dataStoreHelper = mockk<DataStoreHelper>(relaxed = true)
     private val userRepository = mockk<UserRepository>(relaxed = true)
     private val pomodoroEngine = mockk<PomodoroEngine>(relaxed = true)
+    private val pomodoroSessionRepository =
+        mockk<com.todoapp.mobile.domain.repository.PomodoroSessionRepository>(relaxed = true)
     private val taskSyncRepository = mockk<TaskSyncRepository>(relaxed = true)
     private val currentRouteTracker = mockk<CurrentRouteTracker>(relaxed = true)
     private val pendingPhotoRepository = mockk<PendingPhotoRepository>(relaxed = true)
@@ -77,6 +79,7 @@ class MainViewModelLogoutTest {
             dataStoreHelper = dataStoreHelper,
             userRepository = userRepository,
             pomodoroEngine = pomodoroEngine,
+            pomodoroSessionRepository = pomodoroSessionRepository,
             taskSyncRepository = taskSyncRepository,
             currentRouteTracker = currentRouteTracker,
             pendingPhotoRepository = pendingPhotoRepository,
@@ -99,7 +102,12 @@ class MainViewModelLogoutTest {
         coVerify(exactly = 1) { sessionPreferences.clear() }
         coVerify(exactly = 1) { taskRepository.deleteAllTasks() }
         coVerify(exactly = 1) { groupRepository.deleteAllLocalGroups() }
-        coVerify(exactly = 1) { pomodoroEngine.finish() }
+        // stop(record = false), not finish(): finish() emits PomodoroFinished, which could navigate a
+        // mounted Pomodoro screen to the Summary mid-logout, and recording here would race the
+        // deleteAllLocal below — a row that won that race would surface in the next account.
+        coVerify(exactly = 1) { pomodoroEngine.stop(record = false) }
+        coVerify(exactly = 0) { pomodoroEngine.finish() }
+        coVerify(exactly = 1) { pomodoroSessionRepository.deleteAllLocal() }
         coVerify(exactly = 1) { dataStoreHelper.clearUser() }
         coVerify(exactly = 1) { taskSyncRepository.resetCooldown() }
         coVerify(exactly = 1) { pendingPhotoRepository.clearAll() }

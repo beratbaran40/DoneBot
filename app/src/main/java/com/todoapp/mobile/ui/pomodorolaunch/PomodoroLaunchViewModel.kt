@@ -40,7 +40,12 @@ constructor(
 
     private fun loadSettings() {
         viewModelScope.launch {
-            val pomodoro = pomodoroRepository.getSavedPomodoroSettings() ?: return@launch
+            // getOrCreate, not getSaved: on a first launch there is no settings row yet, and returning
+            // early there left isLoading stuck true forever — so the three stat cards, which the screen
+            // gates on !isLoading, never appeared for exactly the user seeing Pomodoro for the first
+            // time. This screen is the default entry point from Home and the Creation Hub whenever
+            // nothing is running, so that was the common path, not an edge case.
+            val pomodoro = pomodoroRepository.getOrCreateDefaultSettings()
             _uiState.update {
                 it.copy(
                     sessionCount = pomodoro.sessionCount,

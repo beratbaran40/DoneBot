@@ -166,6 +166,22 @@
     <string name="activity_heatmap_title">Son 6 ay</string>
     <string name="activity_heatmap_legend_less">Az</string>
     <string name="activity_heatmap_legend_more">Çok</string>
+    <!-- Aktivite → odak (pomodoro) bölümü -->
+    <string name="activity_pomodoro_title">Odak</string>
+    <string name="activity_pomodoro_focus_time">Odak süresi</string>
+    <string name="activity_pomodoro_sessions">Tamamlanan seans</string>
+    <string name="activity_pomodoro_best_day">En iyi gün</string>
+    <string name="activity_pomodoro_chart_title">Haftalık seans</string>
+    <string name="activity_pomodoro_week_label">H%1$d</string>
+    <string name="activity_pomodoro_empty">Bu ay hiç odak seansı yok.</string>
+    <string name="activity_pomodoro_start">Hemen başla</string>
+    <!--
+      Düzyazı değil, sıkışık: bunlar yoğun bir istatistik kutusuna giriyor, "2 saat 15 dakika" sığmıyor.
+      Bilerek <plurals> DEĞİL — ne "sa"/"dk" ne de İngilizcedeki "h"/"m" çekimleniyor, altı çoğul bloğu
+      hiçbir şey kazandırmazdı. Düzyazı karşılığı reminderLeadDuration (bildirim gövdeleri için).
+    -->
+    <string name="pomodoro_duration_hours_minutes">%1$d sa %2$d dk</string>
+    <string name="pomodoro_duration_minutes">%1$d dk</string>
     <string name="activity_month_summary">%1$d tamamlandı · %2$d bekliyor (bu ay)</string>
     <string name="activity_trend_up_month">↑ %1$d%% geçen aya göre</string>
     <string name="activity_trend_down_month">↓ %1$d%% geçen aya göre</string>

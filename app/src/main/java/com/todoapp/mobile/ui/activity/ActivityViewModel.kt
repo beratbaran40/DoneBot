@@ -8,12 +8,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.todoapp.mobile.common.error.toUserMessage
 import com.todoapp.mobile.domain.engine.PomodoroEngine
+import com.todoapp.mobile.domain.model.PomodoroDayStat
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.domain.model.TaskCategory
 import com.todoapp.mobile.domain.repository.ActivityPreferences
 import com.todoapp.mobile.domain.repository.HealthPointsPreferences
 import com.todoapp.mobile.domain.repository.MAX_HALF_HEARTS
+import com.todoapp.mobile.domain.repository.MonthlyWeekBucket
 import com.todoapp.mobile.domain.repository.TaskRepository
 import com.todoapp.mobile.domain.usecase.ComputeHealthPointsUseCase
 import com.todoapp.mobile.domain.usecase.HealthPoints
@@ -52,6 +54,7 @@ class ActivityViewModel
 constructor(
     private val taskRepository: TaskRepository,
     private val pomodoroEngine: PomodoroEngine,
+    private val pomodoroSessionRepository: com.todoapp.mobile.domain.repository.PomodoroSessionRepository,
     private val activityPreferences: ActivityPreferences,
     private val observeOverdueSummary: ObserveOverdueSummaryUseCase,
     private val computeHealthPoints: ComputeHealthPointsUseCase,
@@ -134,6 +137,9 @@ constructor(
         val rangeMonthFlow = taskRepository.observeRange(monthStart, monthEnd)
         val heatmapMonthFlow = taskRepository.observeCompletedCountsByDateRange(monthStart, monthEnd, includeRecurring)
         val yearStripFlow = taskRepository.observeCompletedCountsByDateRange(yearStart, today, includeRecurring)
+        // Lives inside buildSuccessState so month navigation re-subscribes it for free, exactly like the
+        // task flows above.
+        val pomodoroFlow = pomodoroSessionRepository.observeFocusByDay(monthStart, monthEnd)
         val ytdCompletedFlow = taskRepository.countCompletedTasksYearToDate(today)
         val ytdPendingFlow = taskRepository.observePendingTasksYearToDate(today)
         // Drill-in: derive the week's date range from the calendar partition (1-7, 8-14, ...).
@@ -186,25 +192,72 @@ constructor(
             baseFlow,
             heatmapMonthFlow,
             yearStripFlow,
-            kotlinx.coroutines.flow.combine(ytdCompletedFlow, ytdPendingFlow, healthFlow) { completed, pending, health ->
-                Triple(completed, pending, health)
+            // A named class rather than a fourth stage. The outer combine is at its 5-arity ceiling, and
+            // widening this inner one keeps pomodoro on the same stage — a third stage would re-emit the
+            // whole state graph on every pomodoro DB tick. It also retires a Triple destructuring.
+            kotlinx.coroutines.flow.combine(
+                ytdCompletedFlow,
+                ytdPendingFlow,
+                healthFlow,
+                pomodoroFlow,
+            ) { completed, pending, health, pomodoroDays ->
+                SideInputs(completed, pending, health, pomodoroDays)
             },
             expandedDailyFlow,
-        ) { state, heatmap, yearCounts, ytdBundle, expandedDays ->
-            val (ytdCompleted, ytdPending, health) = ytdBundle
-            val ytdTotal = ytdCompleted + ytdPending
-            val ytdProgress = if (ytdTotal > 0) ytdCompleted.toFloat() / ytdTotal else 0f
+        ) { state, heatmap, yearCounts, side, expandedDays ->
+            // Read by name, not destructured. Detekt caps destructuring at three entries, and naming
+            // this class was the point anyway — positional reads are exactly what it replaced.
+            val ytdTotal = side.ytdCompleted + side.ytdPending
+            val ytdProgress = if (ytdTotal > 0) side.ytdCompleted.toFloat() / ytdTotal else 0f
             state.copy(
                 heatmapData = heatmap,
                 yearStripBuckets = computeYearStrip(yearCounts),
                 expandedWeekDays = expandedDays,
-                yearlyCompleted = ytdCompleted,
+                yearlyCompleted = side.ytdCompleted,
                 yearlyTotal = ytdTotal,
                 yearlyProgress = ytdProgress,
-                healthHalfHearts = health.halfHearts,
-                showDepletionDialog = health.showDepletionDialog,
+                healthHalfHearts = side.health.halfHearts,
+                showDepletionDialog = side.health.showDepletionDialog,
+                // Bucketed against the state's own week partition, so the two charts on this screen can
+                // never disagree about how many weeks the month has.
+                pomodoro = toMonthStats(side.pomodoroDays, state.monthlyWeekBuckets),
             )
         }
+    }
+
+    /** The fourth slot of the second stage, named so nobody destructures a Triple by position again. */
+    private data class SideInputs(
+        val ytdCompleted: Int,
+        val ytdPending: Int,
+        val health: HealthPoints,
+        val pomodoroDays: List<PomodoroDayStat>,
+    )
+
+    /**
+     * Folds per-day focus rows into the month figures the screen renders.
+     *
+     * Days outside the month's buckets are dropped rather than clamped into the first or last week —
+     * they can only come from a range mismatch, and silently folding them in would make a wrong total
+     * look plausible.
+     */
+    private fun toMonthStats(
+        days: List<PomodoroDayStat>,
+        buckets: List<MonthlyWeekBucket>,
+    ): ActivityContract.PomodoroMonthStats {
+        val weekCounts = IntArray(buckets.size)
+        days.forEach { day ->
+            val date = LocalDate.ofEpochDay(day.date)
+            val index = buckets.indexOfFirst { !date.isBefore(it.rangeStart) && !date.isAfter(it.rangeEnd) }
+            if (index >= 0) weekCounts[index] += day.completedSessions
+        }
+        return ActivityContract.PomodoroMonthStats(
+            focusSeconds = days.sumOf { it.focusSeconds },
+            completedSessions = days.sumOf { it.completedSessions },
+            // Correctly sized even when empty, which is what keeps TDWeeklyBarChart from taking its
+            // "values.size != days.size" early return on a month with no sessions.
+            weekSessionCounts = weekCounts.toList(),
+            bestDaySeconds = days.maxOfOrNull { it.focusSeconds } ?: 0L,
+        )
     }
 
     private fun computeMonthTrend(current: Int, prior: Int): MonthTrend? {

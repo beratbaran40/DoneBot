@@ -202,6 +202,9 @@ private fun ActivitySuccessContent(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
+            ActivityPomodoroSection(state = uiState, onAction = onAction)
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             ActivityCard {
                 YearlyProgressSection(

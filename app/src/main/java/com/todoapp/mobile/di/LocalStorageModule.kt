@@ -20,6 +20,7 @@ import com.todoapp.mobile.data.source.local.JournalEntryDao
 import com.todoapp.mobile.data.source.local.MIGRATION_12_13
 import com.todoapp.mobile.data.source.local.MIGRATION_25_26
 import com.todoapp.mobile.data.source.local.PomodoroDao
+import com.todoapp.mobile.data.source.local.PomodoroSessionDao
 import com.todoapp.mobile.data.source.local.SubtaskDao
 import com.todoapp.mobile.data.source.local.TaskDao
 import com.todoapp.mobile.data.source.local.datasource.GroupDao
@@ -191,6 +192,10 @@ object LocalStorageModule {
     @Provides
     @Singleton
     fun providePomodoro(database: AppDatabase): PomodoroDao = database.pomodoroDao()
+
+    @Provides
+    @Singleton
+    fun providePomodoroSessionDao(database: AppDatabase): PomodoroSessionDao = database.pomodoroSessionDao()
 
     @Provides
     @Singleton

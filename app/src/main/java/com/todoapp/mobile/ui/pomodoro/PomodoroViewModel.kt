@@ -53,6 +53,16 @@ constructor(
     private var totalFocusSeconds: Long = 0L
     private var totalBreakSeconds: Long = 0L
 
+    /**
+     * The last non-null run id the engine reported.
+     *
+     * Read here rather than at navigation time on purpose: the engine emits PomodoroFinished and then
+     * closes the run, and this collector is asynchronous, so `engine.currentRunId` is already null by
+     * the time the summary is built. Latching the last non-null value sidesteps that race without the
+     * engine having to keep a second field alive for one consumer.
+     */
+    private var finishedRunId: String? = null
+
     fun onAction(action: UiAction) {
         when (action) {
             UiAction.SkipSession -> onSkipSession()
@@ -158,7 +168,10 @@ constructor(
 
     private fun onConfirmEndSession() {
         _uiState.update { it.copy(showFinishEarlyDialog = false) }
-        engine.pause()
+        // stop(record = true) rather than pause(): ending a session early is exactly the partial run
+        // worth keeping, and it is what makes the completion rate honest instead of counting only wins.
+        // The setSessionQueue below still clears the queue; its own recordActive is a no-op by then.
+        engine.stop(record = true)
         engine.setSessionQueue(ArrayDeque())
         _navEffect.trySend(NavigationEffect.Navigate(route = Screen.PomodoroLaunch, popUpTo = Screen.Home))
     }
@@ -214,9 +227,14 @@ constructor(
             NavigationEffect.Navigate(
                 route =
                 Screen.PomodoroSummary(
+                    // These three are a seed only — accurate when the screen stayed mounted, and wrong
+                    // for any run the user backgrounded, because they accumulate in onSessionFinished()
+                    // which never runs without a subscriber. The run id lets the summary replace them
+                    // with what was actually recorded.
                     focusSessions = sessionQueue.count { it.mode == PomodoroMode.Focus },
                     totalFocusMinutes = (totalFocusSeconds / SECONDS_PER_MINUTE).toInt(),
                     totalBreakMinutes = (totalBreakSeconds / SECONDS_PER_MINUTE).toInt(),
+                    clientRunId = finishedRunId,
                 ),
                 popUpTo = Screen.Home,
             ),
@@ -259,6 +277,7 @@ constructor(
     private fun observeEngineState() {
         viewModelScope.launch {
             engineState.collect { engineSnapshot ->
+                engine.currentRunId?.let { finishedRunId = it }
                 mapEngineStateToUiState(engineSnapshot)
             }
         }

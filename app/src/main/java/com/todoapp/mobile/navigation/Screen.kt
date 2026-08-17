@@ -99,6 +99,14 @@ interface Screen {
         val focusSessions: Int,
         val totalFocusMinutes: Int,
         val totalBreakMinutes: Int,
+        /**
+         * The run whose recorded rows are the real totals.
+         *
+         * The three numbers above are kept as a seed so the screen renders instantly and a recorder
+         * failure degrades to "slightly wrong" rather than "empty". Nullable and defaulted, so an entry
+         * already on the back stack from before this field existed still deserializes.
+         */
+        val clientRunId: String? = null,
     ) : Screen
 
     @Serializable

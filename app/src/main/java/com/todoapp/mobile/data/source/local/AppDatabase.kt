@@ -18,6 +18,7 @@ import com.todoapp.mobile.data.model.entity.GroupTaskEntity
 import com.todoapp.mobile.data.model.entity.JournalEntryEntity
 import com.todoapp.mobile.data.model.entity.PendingPhotoEntity
 import com.todoapp.mobile.data.model.entity.PomodoroEntity
+import com.todoapp.mobile.data.model.entity.PomodoroSessionEntity
 import com.todoapp.mobile.data.model.entity.SubtaskDailyCompletionEntity
 import com.todoapp.mobile.data.model.entity.SubtaskEntity
 import com.todoapp.mobile.data.model.entity.SyncStatus
@@ -28,9 +29,10 @@ import com.todoapp.mobile.data.source.local.converter.StringListConverter
 import com.todoapp.mobile.data.source.local.datasource.GroupDao
 
 @Database(
-    version = 30,
+    version = 31,
     entities = [
         TaskEntity::class,
+        PomodoroSessionEntity::class,
         SubtaskEntity::class,
         TaskReminderEntity::class,
         SubtaskDailyCompletionEntity::class,
@@ -88,6 +90,10 @@ import com.todoapp.mobile.data.source.local.datasource.GroupDao
         // mirrors. Purely additive — the defaults describe the flat, non-repeating task a group task
         // used to be, so every cached row keeps rendering exactly as before until a sync refills it.
         AutoMigration(from = 29, to = 30),
+        // pomodoro_sessions: the history the single-row `pomodoro` settings table never kept. Purely
+        // additive — one new table, nothing existing is touched — so an auto-migration is enough, the
+        // same shape as 28→29 which added two tables at once.
+        AutoMigration(from = 30, to = 31),
     ],
 )
 @TypeConverters(AppDatabase.SyncStatusConverter::class, StringListConverter::class)
@@ -135,6 +141,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun groupActivityDao(): GroupActivityDao
 
     abstract fun pomodoroDao(): PomodoroDao
+
+    abstract fun pomodoroSessionDao(): PomodoroSessionDao
 
     abstract fun pendingPhotoDao(): PendingPhotoDao
 
