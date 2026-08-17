@@ -83,9 +83,11 @@ fun TDButton(
     icon: Painter? = null,
     fullWidth: Boolean = false,
     /**
-     * Unbounded by default — exactly today's behaviour. A button whose height is pinned (rather than
-     * left to `heightIn(min=)`) clips a wrapped label instead of growing, so any caller squeezing one
-     * into a weighted slot should pass 1 and let the label ellipsise.
+     * Unbounded on purpose. The app's policy is "grow, don't cut": the button's height is a
+     * `heightIn(min=)`, so a label that needs two lines gets two lines and the button grows with it.
+     * Do NOT pass 1 to make something fit — that trades a visible wrap for silent truncation, and
+     * the Turkish labels this would bite are the ones users most need to read. If a label genuinely
+     * cannot fit, weight the button, widen the slot, or shorten the string.
      */
     maxLines: Int = Int.MAX_VALUE,
     onClick: () -> Unit,
@@ -95,6 +97,11 @@ fun TDButton(
     val width = if (size == TDButtonSize.SMALL) 140.dp else 200.dp
     val paddingValues = if (size == TDButtonSize.SMALL) buttonSmallPadding else buttonMediumPadding
 
+    // The width floor comes AFTER `modifier`, which looks like it would override the caller but does
+    // not: `widthIn` enforces the incoming constraints, so a caller's `.weight(1f)` or `.width(x)`
+    // arrives as an exact constraint and the floor is coerced into it. Two unweighted buttons in a
+    // Row are likewise coerced rather than overflowing — the second one just comes out narrower.
+    // That is why the fix for a cramped button row is `weight`, never a smaller floor here.
     val sizeModifier =
         Modifier
             .heightIn(min = height)

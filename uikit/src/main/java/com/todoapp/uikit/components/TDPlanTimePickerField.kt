@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -147,11 +148,19 @@ fun TDPlanTimePickerField(
                                 colors = timePickerColors(),
                             )
 
+                            // Weighted, not left to TDButton's own 140dp floor: this Column is capped
+                            // at 320dp and spends 48 of it on padding, so two SMALL buttons want
+                            // 140 + 12 + 140 = 292dp of the 272dp there is. A min-width child in an
+                            // over-full Row is coerced into what is left rather than overflowing, so
+                            // the second button silently rendered 20dp narrower than the first at
+                            // every screen size. Weight splits the room evenly instead.
                             Row(
+                                modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 TDButton(
+                                    modifier = Modifier.weight(1f),
                                     text = stringResource(R.string.cancel),
                                     onClick = { isDialogOpen = false },
                                     size = TDButtonSize.SMALL,
@@ -159,6 +168,7 @@ fun TDPlanTimePickerField(
                                 )
 
                                 TDButton(
+                                    modifier = Modifier.weight(1f),
                                     text = stringResource(R.string.ok),
                                     onClick = {
                                         onTimeChange(LocalTime.of(timePickerState.hour, timePickerState.minute))

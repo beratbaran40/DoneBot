@@ -239,12 +239,16 @@ private fun InvitationCard(
             }
         }
         Spacer(Modifier.height(14.dp))
+        // Two SMALL buttons ask for 140 + 10 + 140 = 290dp; a card on a 360dp screen offers 296dp.
+        // Six dp is not headroom, and at 320dp the pair is over-subscribed outright, which makes the
+        // second button render narrower than the first. Weighting removes the cliff.
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.End),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             TDButton(
+                modifier = Modifier.weight(1f),
                 text = stringResource(R.string.invitations_decline),
                 isEnable = !isProcessing,
                 type = TDButtonType.OUTLINE,
@@ -252,6 +256,7 @@ private fun InvitationCard(
                 onClick = onDecline,
             )
             TDButton(
+                modifier = Modifier.weight(1f),
                 text = stringResource(R.string.invitations_accept),
                 isEnable = !isProcessing,
                 type = TDButtonType.PRIMARY,
