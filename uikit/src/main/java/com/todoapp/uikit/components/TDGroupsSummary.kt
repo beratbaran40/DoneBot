@@ -41,6 +41,7 @@ import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.image.tdPixelFilterQuality
 import com.todoapp.uikit.modifier.tdShadow
 import com.todoapp.uikit.previews.TDPreview
+import com.todoapp.uikit.previews.TDPreviewNarrow
 import com.todoapp.uikit.theme.TDTheme
 import com.todoapp.uikit.theme.tdOutlineColor
 
@@ -463,6 +464,28 @@ private fun TdFamilyGroupCardDimmedPreview() {
             isAnyDragging = true,
             isDragging = false,
             modifier = Modifier.padding(16.dp),
+        )
+    }
+}
+
+/**
+ * A long, user-typed group name on an admin card — the case where the name used to run under the
+ * delete icon — plus the Turkish footer, where the date and the details button compete for one row.
+ */
+@TDPreviewNarrow
+@Composable
+private fun TdFamilyGroupCardNarrowPreview() {
+    TDTheme {
+        TDFamilyGroupCard(
+            name = "Pazartesi Akşamı Kitap Kulübü",
+            role = "Admin",
+            description = "Her ay bir kitap okuyup tartışıyoruz.",
+            memberCount = 12,
+            pendingTaskCount = 7,
+            createdDate = "12 Oca 2026",
+            membersIcon = R.drawable.ic_members,
+            tasksIcon = R.drawable.ic_tasks_done,
+            modifier = Modifier.padding(12.dp),
         )
     }
 }

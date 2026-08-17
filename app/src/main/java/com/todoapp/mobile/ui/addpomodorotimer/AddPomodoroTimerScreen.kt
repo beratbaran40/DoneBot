@@ -435,6 +435,43 @@ private fun PomodoroStepperCardPreview() {
     }
 }
 
+/** The stepper's label competes with two buttons, the value and the unit for one row of a card. */
+@com.todoapp.uikit.previews.TDPreviewNarrow
+@Composable
+private fun PomodoroStepperCardNarrowPreview() {
+    TDTheme {
+        Column(
+            Modifier
+                .background(TDTheme.colors.background)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            PomodoroStepperCard(
+                value = 120,
+                label = stringResource(R.string.pomodoro_focus_time),
+                unit = stringResource(R.string.pomodoro_unit_min),
+                iconRes = UiKitR.drawable.ic_sand_clock,
+                cardBgColor = TDTheme.colors.lightGreen,
+                iconTintColor = TDTheme.colors.darkGreen,
+                range = 5..120,
+                step = 5,
+                onValueChange = {},
+            )
+            PomodoroStepperCard(
+                value = 15,
+                label = stringResource(R.string.pomodoro_long_break_label),
+                unit = stringResource(R.string.pomodoro_unit_min),
+                iconRes = UiKitR.drawable.ic_sand_clock,
+                cardBgColor = TDTheme.colors.lightRed,
+                iconTintColor = TDTheme.colors.crossRed,
+                range = 1..60,
+                step = 1,
+                onValueChange = {},
+            )
+        }
+    }
+}
+
 @com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun AddPomodoroTimerContentPreview() {

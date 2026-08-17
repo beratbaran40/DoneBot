@@ -374,3 +374,36 @@ private fun InvitationsScreenPreview(
         )
     }
 }
+
+/**
+ * The Turkish accept/decline pair inside a card: two SMALL buttons want 290dp of the ~296dp a card
+ * on a narrow phone offers, so this is where an unweighted pair went lopsided.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@com.todoapp.uikit.previews.TDPreviewNarrow
+@Composable
+private fun InvitationsScreenNarrowPreview() {
+    TDTheme {
+        InvitationsScreen(
+            uiState =
+            UiState.Success(
+                items =
+                listOf(
+                    Invitation(
+                        id = 1,
+                        groupId = 100,
+                        groupName = "Pazartesi Akşamı Kitap Kulübü",
+                        groupAvatarUrl = null,
+                        inviterUserId = 10,
+                        inviterName = "Berat Baran",
+                        inviterAvatarUrl = null,
+                        inviteeEmail = "you@example.com",
+                        createdAt = 0L,
+                    ),
+                ),
+            ),
+            uiEffect = emptyFlow(),
+            onAction = {},
+        )
+    }
+}

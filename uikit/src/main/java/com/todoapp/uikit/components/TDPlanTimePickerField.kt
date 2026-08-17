@@ -38,6 +38,7 @@ import androidx.compose.ui.window.Dialog
 import com.example.uikit.R
 import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
+import com.todoapp.uikit.previews.TDPreviewNarrow
 import com.todoapp.uikit.theme.TDTheme
 import com.todoapp.uikit.theme.tdCorner
 import com.todoapp.uikit.theme.timePickerColors
@@ -148,35 +149,13 @@ fun TDPlanTimePickerField(
                                 colors = timePickerColors(),
                             )
 
-                            // Weighted, not left to TDButton's own 140dp floor: this Column is capped
-                            // at 320dp and spends 48 of it on padding, so two SMALL buttons want
-                            // 140 + 12 + 140 = 292dp of the 272dp there is. A min-width child in an
-                            // over-full Row is coerced into what is left rather than overflowing, so
-                            // the second button silently rendered 20dp narrower than the first at
-                            // every screen size. Weight splits the room evenly instead.
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                TDButton(
-                                    modifier = Modifier.weight(1f),
-                                    text = stringResource(R.string.cancel),
-                                    onClick = { isDialogOpen = false },
-                                    size = TDButtonSize.SMALL,
-                                    type = TDButtonType.SECONDARY,
-                                )
-
-                                TDButton(
-                                    modifier = Modifier.weight(1f),
-                                    text = stringResource(R.string.ok),
-                                    onClick = {
-                                        onTimeChange(LocalTime.of(timePickerState.hour, timePickerState.minute))
-                                        isDialogOpen = false
-                                    },
-                                    size = TDButtonSize.SMALL,
-                                )
-                            }
+                            PlanTimePickerActions(
+                                onCancel = { isDialogOpen = false },
+                                onConfirm = {
+                                    onTimeChange(LocalTime.of(timePickerState.hour, timePickerState.minute))
+                                    isDialogOpen = false
+                                },
+                            )
                         }
                     }
                 }
@@ -202,6 +181,57 @@ fun TDPlanTimePicker_DefaultPreview() {
                 time = timeState.value,
                 onTimeChange = { timeState.value = it },
             )
+        }
+    }
+}
+
+/**
+ * Extracted so it can be previewed — the dialog it lives in opens off internal state, so the only
+ * way to see this row at 320dp was to run the app.
+ *
+ * Weighted, not left to TDButton's own 140dp floor: the dialog Column is capped at 320dp and spends
+ * 48 of it on padding, so two SMALL buttons want 140 + 12 + 140 = 292dp of the 272dp there is. A
+ * min-width child in an over-full Row is coerced into what is left rather than overflowing, so the
+ * second button silently rendered 20dp narrower than the first at every screen size.
+ */
+@Composable
+private fun PlanTimePickerActions(
+    onCancel: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        TDButton(
+            modifier = Modifier.weight(1f),
+            text = stringResource(R.string.cancel),
+            onClick = onCancel,
+            size = TDButtonSize.SMALL,
+            type = TDButtonType.SECONDARY,
+        )
+
+        TDButton(
+            modifier = Modifier.weight(1f),
+            text = stringResource(R.string.ok),
+            onClick = onConfirm,
+            size = TDButtonSize.SMALL,
+        )
+    }
+}
+
+/** The dialog footer inside the real 320dp box it lives in. Both buttons must be the same width. */
+@TDPreviewNarrow
+@Composable
+private fun TDPlanTimePickerActionsNarrowPreview() {
+    TDTheme {
+        Column(
+            modifier = Modifier
+                .widthIn(max = 320.dp)
+                .padding(24.dp),
+        ) {
+            PlanTimePickerActions(onCancel = {}, onConfirm = {})
         }
     }
 }
