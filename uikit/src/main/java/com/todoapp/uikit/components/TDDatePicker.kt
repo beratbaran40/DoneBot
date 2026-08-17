@@ -120,16 +120,21 @@ fun TDDatePicker(
                     )
                 }
             }
-            Spacer(Modifier.weight(1f))
+            // Same shape as TDMonthlyDatePicker's header, which already carries this fix: a label
+            // wedged between two icon buttons with no weight of its own. The two Spacers centred it
+            // but gave it nothing, so a long month name ("Aralık"/"September") pushed the forward
+            // button towards the edge on a narrow screen. Weighting the label centres it and makes
+            // it the child that absorbs the squeeze.
             TDText(
+                modifier = Modifier.weight(1f),
                 text = "${
                     selectedMonth.month.getDisplayName(TextStyle.FULL, locale)
                         .replaceFirstChar { if (it.isLowerCase()) it.titlecase(locale) else it.toString() }
                 } ${selectedMonth.year}",
                 style = TDTheme.typography.heading5,
                 color = TDTheme.colors.onBackground,
+                textAlign = TextAlign.Center,
             )
-            Spacer(Modifier.weight(1f))
             IconButton(
                 onClick = onMonthForward,
                 modifier = Modifier.size(40.dp),

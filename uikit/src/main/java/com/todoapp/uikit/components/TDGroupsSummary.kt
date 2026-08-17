@@ -44,6 +44,9 @@ import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 import com.todoapp.uikit.theme.tdOutlineColor
 
+/** Width an admin card must keep clear for the delete IconButton overlaid at its TopEnd. */
+private val DeleteButtonReserve = 40.dp
+
 @Composable
 fun TDFamilyGroupCard(
     name: String,
@@ -168,12 +171,19 @@ fun TDFamilyGroupCard(
 
                         Spacer(modifier = Modifier.width(14.dp))
 
-                        Column {
+                        // The delete button is drawn over this Row, aligned to the card's TopEnd, so
+                        // the name has to be both weighted AND kept clear of it — a long group name
+                        // used to run underneath the icon. It wraps rather than ellipsising now: a
+                        // group name is user content, and truncating the one thing that identifies
+                        // the card is worse than a taller header.
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = if (isAdmin) DeleteButtonReserve else 0.dp),
+                        ) {
                             TDText(
                                 text = name,
                                 style = TDTheme.typography.heading3,
-                                overflow = TextOverflow.Ellipsis,
-                                maxLines = 1,
                                 color = TDTheme.colors.onBackground,
                             )
                             Spacer(modifier = Modifier.height(4.dp))
@@ -234,23 +244,26 @@ fun TDFamilyGroupCard(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
+                    // The date takes the weight rather than a Spacer between the two. Measured first
+                    // and unweighted, "Oluşturuldu: 12 Oca 2023" claimed its full 130dp and left the
+                    // button below its own 140dp floor once the system font grew, so the button was
+                    // the thing that got squeezed. Weighted, the date wraps and the button keeps its
+                    // width — the right way round, since the button is the tap target.
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         TDText(
                             text = stringResource(R.string.group_card_created_label, createdDate),
                             style = TDTheme.typography.subheading4,
                             color = TDTheme.colors.statusCardGray,
+                            modifier = Modifier.weight(1f),
                         )
-
-                        Spacer(modifier = Modifier.weight(1f))
 
                         TDButton(
                             onClick = onViewDetailsClick,
                             text = stringResource(R.string.group_card_view_details),
-                            modifier = Modifier.padding(start = 8.dp, end = 8.dp),
                             type = TDButtonType.OUTLINE,
                             size = TDButtonSize.SMALL,
                         )

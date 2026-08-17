@@ -9,8 +9,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -165,7 +167,10 @@ fun TDTaskCardWithCheckbox(
                     onToggle = { onCheckBoxClick(!isChecked) },
                 )
                 Spacer(Modifier.width(10.dp))
-                Column {
+                // Weighted so the text column has a definite width: the subtask progress bar and the
+                // meta-chip row below both size themselves against it, and a content-derived width
+                // makes both of them jump around with the length of the title.
+                Column(modifier = Modifier.weight(1f)) {
                     TDText(
                         text = taskText,
                         color = TDTheme.colors.onBackground,
@@ -224,7 +229,15 @@ fun TDTaskCardWithCheckbox(
                         !locationLabel.isNullOrBlank()
                     if (hasMetaChips || isPendingSync) {
                         Spacer(Modifier.height(6.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        // FlowRow, not Row. A task can carry a sync badge, an overdue chip, a
+                        // category chip AND a location pill, and on a narrow phone the text column
+                        // is ~230dp. In a Row the trailing chips are measured against whatever is
+                        // left, so the location pill was squeezed to nothing and disappeared off the
+                        // right edge. Flowing them drops the overflow onto a second line intact.
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
                             if (isPendingSync) {
                                 Box(
                                     modifier = Modifier
@@ -238,9 +251,6 @@ fun TDTaskCardWithCheckbox(
                                         tint = TDTheme.colors.darkPending,
                                         modifier = Modifier.size(12.dp),
                                     )
-                                }
-                                if (hasMetaChips) {
-                                    Spacer(Modifier.width(6.dp))
                                 }
                             }
                             if (resolvedOverdueLabel != null) {
@@ -265,9 +275,6 @@ fun TDTaskCardWithCheckbox(
                                         color = TDTheme.colors.background,
                                         style = TDTheme.typography.subheading2,
                                     )
-                                }
-                                if (!categoryLabel.isNullOrBlank() || !locationLabel.isNullOrBlank()) {
-                                    Spacer(Modifier.width(6.dp))
                                 }
                             }
                             if (!categoryLabel.isNullOrBlank()) {
@@ -295,7 +302,6 @@ fun TDTaskCardWithCheckbox(
                                         style = TDTheme.typography.subheading2,
                                     )
                                 }
-                                if (!locationLabel.isNullOrBlank()) Spacer(Modifier.width(6.dp))
                             }
                             if (!locationLabel.isNullOrBlank()) {
                                 val pillModifier = Modifier
