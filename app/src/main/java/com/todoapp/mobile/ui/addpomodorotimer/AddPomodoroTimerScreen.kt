@@ -323,78 +323,84 @@ private fun PomodoroStepperCard(
             color = TDTheme.colors.onBackground,
         )
 
-        IconButton(
-            onClick = {
-                val next = (value - step).coerceAtLeast(range.first)
-                if (next != value) onValueChange(next.toFloat())
-            },
-            modifier = Modifier.size(36.dp),
-        ) {
-            Box(
-                modifier =
-                Modifier
-                    .size(28.dp)
-                    .clip(TDTheme.shapes.small)
-                    .border(
-                        width = 1.dp,
-                        color = iconTintColor.copy(alpha = if (canDecrement) 0.5f else 0.2f),
-                        shape = TDTheme.shapes.small,
-                    ),
-                contentAlignment = Alignment.Center,
+        // The stepper is one indivisible block. As four siblings of the label its parts were measured
+        // and shrunk independently, so at the largest accessibility sizes the value dropped under its
+        // own minimum, the label ran under the minus button and the plus overflowed the card and was
+        // clipped by its rounded corner. Grouped, it is measured once at the size it actually needs
+        // and the label — the only part here that can wrap — absorbs the rest.
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(
+                onClick = {
+                    val next = (value - step).coerceAtLeast(range.first)
+                    if (next != value) onValueChange(next.toFloat())
+                },
+                modifier = Modifier.size(36.dp),
             ) {
-                TDText(
-                    text = "\u2212",
-                    style = TDTheme.typography.heading5,
-                    color = iconTintColor.copy(alpha = if (canDecrement) 1f else 0.3f),
-                    textAlign = TextAlign.Center,
-                )
+                Box(
+                    modifier =
+                    Modifier
+                        .size(28.dp)
+                        .clip(TDTheme.shapes.small)
+                        .border(
+                            width = 1.dp,
+                            color = iconTintColor.copy(alpha = if (canDecrement) 0.5f else 0.2f),
+                            shape = TDTheme.shapes.small,
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    TDText(
+                        text = "\u2212",
+                        style = TDTheme.typography.heading5,
+                        color = iconTintColor.copy(alpha = if (canDecrement) 1f else 0.3f),
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
-        }
 
-        TDText(
-            text = "$value",
-            style = TDTheme.typography.heading4,
-            color = iconTintColor,
-            modifier = Modifier.widthIn(min = 52.dp),
-            textAlign = TextAlign.Center,
-        )
-
-        IconButton(
-            onClick = {
-                val next = (value + step).coerceAtMost(range.last)
-                if (next != value) onValueChange(next.toFloat())
-            },
-            modifier = Modifier.size(36.dp),
-        ) {
-            Box(
-                modifier =
-                Modifier
-                    .size(28.dp)
-                    .clip(TDTheme.shapes.small)
-                    .border(
-                        width = 1.dp,
-                        color = iconTintColor.copy(alpha = if (canIncrement) 0.5f else 0.2f),
-                        shape = TDTheme.shapes.small,
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = tdPainter(UiKitR.drawable.ic_plus),
-                    contentDescription = null,
-                    tint = iconTintColor.copy(alpha = if (canIncrement) 1f else 0.3f),
-                    modifier = Modifier.size(16.dp),
-                )
-            }
-        }
-
-        if (unit.isNotEmpty()) {
-            Spacer(Modifier.width(4.dp))
             TDText(
-                text = unit,
-                style = TDTheme.typography.subheading2,
-                color = iconTintColor.copy(alpha = 0.7f),
-                modifier = Modifier.widthIn(min = 40.dp),
+                text = "$value",
+                style = TDTheme.typography.heading4,
+                color = iconTintColor,
+                modifier = Modifier.widthIn(min = 52.dp),
+                textAlign = TextAlign.Center,
             )
+
+            IconButton(
+                onClick = {
+                    val next = (value + step).coerceAtMost(range.last)
+                    if (next != value) onValueChange(next.toFloat())
+                },
+                modifier = Modifier.size(36.dp),
+            ) {
+                Box(
+                    modifier =
+                    Modifier
+                        .size(28.dp)
+                        .clip(TDTheme.shapes.small)
+                        .border(
+                            width = 1.dp,
+                            color = iconTintColor.copy(alpha = if (canIncrement) 0.5f else 0.2f),
+                            shape = TDTheme.shapes.small,
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = tdPainter(UiKitR.drawable.ic_plus),
+                        contentDescription = null,
+                        tint = iconTintColor.copy(alpha = if (canIncrement) 1f else 0.3f),
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
+            }
+
+            if (unit.isNotEmpty()) {
+                Spacer(Modifier.width(4.dp))
+                TDText(
+                    text = unit,
+                    style = TDTheme.typography.subheading2,
+                    color = iconTintColor.copy(alpha = 0.7f),
+                )
+            }
         }
     }
 }
