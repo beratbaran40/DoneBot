@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.todoapp.uikit.modifier.GridStyle
+import com.todoapp.uikit.theme.JetBrainsMono
 import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.PixelCornerShape
 import com.todoapp.uikit.theme.PixelifySans
@@ -38,7 +39,9 @@ import org.junit.Test
 class PaletteStyleTest {
     @Test
     fun `rounded kits keep the literal corner radii the call sites used to hardcode`() {
-        for (kit in listOf(PaletteKit.ORIGINAL, PaletteKit.MONOCHROME)) {
+        // TERMINAL belongs here even though it forks the face and the texture: it shares
+        // roundedShapes(), so a tweak there must not be able to fork the geometry silently.
+        for (kit in listOf(PaletteKit.ORIGINAL, PaletteKit.MONOCHROME, PaletteKit.TERMINAL)) {
             val shapes = kit.style().shapes
             assertEquals(kit.name, TDCornerStyle.ROUNDED, shapes.cornerStyle)
             assertEquals(kit.name, RoundedCornerShape(4.dp), shapes.tiny)
@@ -65,12 +68,21 @@ class PaletteStyleTest {
     }
 
     @Test
-    fun `rounded kits keep soft elevation, hairline borders and the 24dp grid`() {
-        for (kit in listOf(PaletteKit.ORIGINAL, PaletteKit.MONOCHROME)) {
+    fun `soft-elevation kits keep hairline borders and no hard shadow offset`() {
+        // Split from the grid assertions below when TERMINAL arrived: it shares the elevation and
+        // border language but paints scanlines instead of graph paper.
+        for (kit in listOf(PaletteKit.ORIGINAL, PaletteKit.MONOCHROME, PaletteKit.TERMINAL)) {
             val style = kit.style()
             assertEquals(kit.name, TDElevationStyle.SOFT, style.elevationStyle)
             assertEquals(kit.name, 0.dp, style.hardShadowOffset)
             assertEquals(kit.name, 1.dp, style.borderWidth)
+        }
+    }
+
+    @Test
+    fun `rounded kits keep the 24dp graph-paper grid`() {
+        for (kit in listOf(PaletteKit.ORIGINAL, PaletteKit.MONOCHROME)) {
+            val style = kit.style()
             assertEquals(kit.name, GridStyle.Lines, style.gridStyle)
             assertEquals(kit.name, 24.dp, style.gridSpacing)
             assertEquals(kit.name, 1.dp, style.gridLineWidth)
@@ -117,6 +129,50 @@ class PaletteStyleTest {
             assertTrue("dark=$dark grid must contrast with the base", line != base)
         }
         assertTrue("ORIGINAL must keep opting out", PaletteKit.ORIGINAL.gridColors(false).second.alpha == 0f)
+    }
+
+    @Test
+    fun `terminal kit keeps rounded geometry but forks face, scale, texture and motion`() {
+        val style = PaletteKit.TERMINAL.style()
+        // Rounded on purpose. Every `cornerStyle == PIXEL` gate stays a no-op, which is how this kit
+        // gets the smooth vectors, `ic_heart` and un-pixelated raster art without shipping any.
+        assertEquals(TDCornerStyle.ROUNDED, style.shapes.cornerStyle)
+        assertSame(JetBrainsMono, style.fontFamily)
+        assertSame(JetBrainsMono, style.displayFontFamily)
+        assertSame(JetBrainsMono, style.fallbackFontFamily)
+        // Measured against tools/textfit.py, not chosen: 1.0 puts one gated slot over the line, and
+        // this face's x-height matches Poppins', so anything lower is a legibility cost for nothing.
+        assertEquals(0.96f, style.fontScale, 0f)
+        // Only `subheading2` is clamped by this; everything else actually scales.
+        assertEquals(10.sp, style.minFontSize)
+        // The neon hairline carries card separation, so elevation stays soft and unoffset.
+        assertEquals(TDElevationStyle.SOFT, style.elevationStyle)
+        assertEquals(0.dp, style.hardShadowOffset)
+        assertEquals(1.dp, style.borderWidth)
+        // Same "never Dots" invariant as PIXEL: at a 4dp cell that path is ~23,000 drawCircle calls
+        // per invalidation. Scanlines is O(1) — one drawRect with a cached repeating shader.
+        assertNotEquals(GridStyle.Dots, style.gridStyle)
+        assertEquals(GridStyle.Scanlines, style.gridStyle)
+        assertEquals(4.dp, style.gridSpacing)
+        assertEquals(true, style.motion.stepped)
+        assertNotEquals(LinearEasing, style.motion.revealEasing)
+    }
+
+    @Test
+    fun `terminal kit turns the scanlines on in both modes`() {
+        for (dark in listOf(false, true)) {
+            val (base, line) = PaletteKit.TERMINAL.gridColors(dark)
+            assertTrue("dark=$dark scanlines must be visible", line.alpha > 0f)
+            assertTrue("dark=$dark scanlines must contrast with the base", line != base)
+        }
+    }
+
+    /** Makes "adding fontScale left the other kits byte-identical" an invariant, not a claim. */
+    @Test
+    fun `the three pre-existing kits keep an unscaled type ramp`() {
+        for (kit in listOf(PaletteKit.ORIGINAL, PaletteKit.MONOCHROME, PaletteKit.PIXEL)) {
+            assertEquals(kit.name, 1f, kit.style().fontScale, 0f)
+        }
     }
 
     @Test
