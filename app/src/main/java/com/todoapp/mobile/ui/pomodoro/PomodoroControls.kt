@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -58,7 +57,7 @@ fun PomodoroControls(
                     darkShadow = darkShadow,
                     cornerRadius = 44.dp,
                     elevation = 10.dp,
-                ).clip(CircleShape)
+                ).clip(TDTheme.shapes.circle)
                 .background(surfaceColor)
                 .clickable {
                     if (isRunning && !isOvertime) {
@@ -82,7 +81,7 @@ fun PomodoroControls(
             modifier =
             Modifier
                 .size(48.dp)
-                .clip(CircleShape)
+                .clip(TDTheme.shapes.circle)
                 .clickable { onAction(UiAction.SkipSession) },
             contentAlignment = Alignment.Center,
         ) {

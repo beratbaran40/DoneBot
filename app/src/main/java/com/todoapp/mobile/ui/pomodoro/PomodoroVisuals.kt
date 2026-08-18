@@ -44,12 +44,17 @@ fun rememberPomodoroVisuals(uiState: UiState): PomodoroVisuals {
             PomodoroModeTheme.resolve(uiState.mode.colorKey, isDark, palette, colors)
         }
 
-    val background by animateColorAsState(target.background, tween(COLOR_ANIM_MS), "pomoBg")
-    val surface by animateColorAsState(target.surface, tween(COLOR_ANIM_MS), "pomoSurface")
-    val content by animateColorAsState(target.content, tween(COLOR_ANIM_MS), "pomoContent")
-    val track by animateColorAsState(target.track, tween(COLOR_ANIM_MS), "pomoTrack")
-    val lightShadow by animateColorAsState(target.lightShadow, tween(COLOR_ANIM_MS), "pomoLightShadow")
-    val darkShadow by animateColorAsState(target.darkShadow, tween(COLOR_ANIM_MS), "pomoDarkShadow")
+    // A stepped kit ticks its animations in whole frames instead of gliding. Both here and on the
+    // ring below the rounded kits keep exactly the curve they had: emphasizedEasing is FastOutSlowIn
+    // for them, which is what tween() already defaulted to, and the ring's sweep stays linear.
+    val motion = TDTheme.motion
+    val colorSpec = tween<Color>(COLOR_ANIM_MS, easing = motion.emphasizedEasing)
+    val background by animateColorAsState(target.background, colorSpec, "pomoBg")
+    val surface by animateColorAsState(target.surface, colorSpec, "pomoSurface")
+    val content by animateColorAsState(target.content, colorSpec, "pomoContent")
+    val track by animateColorAsState(target.track, colorSpec, "pomoTrack")
+    val lightShadow by animateColorAsState(target.lightShadow, colorSpec, "pomoLightShadow")
+    val darkShadow by animateColorAsState(target.darkShadow, colorSpec, "pomoDarkShadow")
 
     // derivedStateOf so the ring is recomputed only when the clock actually moves, not when an
     // unrelated field of UiState changes.
@@ -62,7 +67,11 @@ fun rememberPomodoroVisuals(uiState: UiState): PomodoroVisuals {
     }
     val progress by animateFloatAsState(
         targetValue = progressFraction,
-        animationSpec = tween(durationMillis = PROGRESS_ANIM_MS, easing = LinearEasing),
+        animationSpec =
+        tween(
+            durationMillis = PROGRESS_ANIM_MS,
+            easing = if (motion.stepped) motion.standardEasing else LinearEasing,
+        ),
         label = "pomoProgress",
     )
 

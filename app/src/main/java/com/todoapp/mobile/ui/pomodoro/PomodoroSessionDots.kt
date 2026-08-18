@@ -6,13 +6,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.todoapp.uikit.theme.TDTheme
 
 /**
  * Session progress dots — one dot per phase (each focus period and each short/long break).
@@ -51,7 +51,7 @@ fun PomodoroSessionDots(
                     modifier =
                     Modifier
                         .size(dotSize)
-                        .clip(CircleShape)
+                        .clip(TDTheme.shapes.circle)
                         .background(dotColor),
                 )
             }

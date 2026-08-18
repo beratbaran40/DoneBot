@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -226,7 +225,7 @@ fun PomodoroAmbienceButton(
         modifier =
         modifier
             .size(44.dp)
-            .clip(CircleShape)
+            .clip(TDTheme.shapes.circle)
             .background(contentColor.copy(alpha = BUTTON_FILL_ALPHA))
             .clickable(onClick = onClick)
             .semantics { contentDescription = description },

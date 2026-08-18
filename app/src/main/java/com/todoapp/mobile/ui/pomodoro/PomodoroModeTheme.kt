@@ -92,6 +92,36 @@ object PomodoroModeTheme {
         )
 
     /**
+     * Monochrome and 8-Bit both draw their chrome from the kit and spend colour only on the mode.
+     * They share this because the difference between them is already in the tokens: the same four
+     * names resolve to Notion-neutral greys plus four accents in one kit and to a saturated NES ramp
+     * in the other, so restating either here would only give them somewhere to drift apart.
+     *
+     * The ORIGINAL pastels stay literal below — that kit's washes are the design, not a derivation.
+     */
+    private fun fromKitTokens(
+        colorKey: ModeColorKey,
+        isDark: Boolean,
+        colors: TDColor,
+    ): PomodoroModePalette {
+        val accent = when (colorKey) {
+            ModeColorKey.Focus -> colors.mediumGreen
+            ModeColorKey.ShortBreak -> colors.orange
+            ModeColorKey.LongBreak -> colors.purple
+            ModeColorKey.OverTime -> colors.crossRed
+        }
+        return PomodoroModePalette(
+            background = colors.background,
+            surface = colors.lightPending,
+            content = accent,
+            // Neutral, so the ring's filled arc is the only place colour appears on the dial.
+            track = colors.lightGray,
+            lightShadow = colors.white.copy(alpha = if (isDark) 0.10f else 0.85f),
+            darkShadow = colors.onBackground.copy(alpha = if (isDark) 0.45f else 0.18f),
+        )
+    }
+
+    /**
      * The Terminal kit does not tint a mode, it changes the tube. Each mode becomes a single-phosphor
      * screen in its own colour — green for focus, amber for a short break, blue for a long one, red
      * for overtime — which is what a monochrome CRT actually was: one phosphor, chosen at the
@@ -133,7 +163,8 @@ object PomodoroModeTheme {
         colors: TDColor,
     ): PomodoroModePalette = when (palette) {
         PaletteKit.TERMINAL -> terminal(colorKey, isDark, colors)
-        PaletteKit.ORIGINAL, PaletteKit.MONOCHROME, PaletteKit.PIXEL -> when (colorKey) {
+        PaletteKit.MONOCHROME, PaletteKit.PIXEL -> fromKitTokens(colorKey, isDark, colors)
+        PaletteKit.ORIGINAL -> when (colorKey) {
             ModeColorKey.Focus -> if (isDark) focusDark else focusLight
             ModeColorKey.ShortBreak -> if (isDark) shortBreakDark else shortBreakLight
             ModeColorKey.LongBreak -> if (isDark) longBreakDark else longBreakLight
