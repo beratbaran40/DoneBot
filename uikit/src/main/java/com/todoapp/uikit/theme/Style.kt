@@ -88,6 +88,13 @@ data class TDStyle(
     val fallbackFontFamily: FontFamily?,
     /** Floor applied to the small end of the type ramp only. `0.sp` is the identity. */
     val minFontSize: TextUnit,
+    /**
+     * Multiplier on every size in [TDTypography], applied BEFORE [minFontSize]. It exists so a kit
+     * whose face runs materially wider than Poppins can absorb the difference in one token instead
+     * of fifteen hand-tuned sizes. `1f` is the identity — a kit that leaves it alone renders exactly
+     * as it did before this token existed.
+     */
+    val fontScale: Float = 1f,
     val borderWidth: Dp,
     val elevationStyle: TDElevationStyle,
     /** Hard drop-shadow offset; used only when [elevationStyle] is [TDElevationStyle.HARD]. */

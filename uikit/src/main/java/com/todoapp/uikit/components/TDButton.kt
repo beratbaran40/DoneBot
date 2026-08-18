@@ -39,11 +39,18 @@ import com.todoapp.uikit.theme.TDTheme
  * top-level `FontFamily` val, which cannot read composition and so pinned every label to Poppins).
  */
 @Composable
-private fun buttonTextStyle(size: TDButtonSize): TextStyle = TextStyle(
-    fontSize = if (size == TDButtonSize.SMALL) 14.sp else 18.sp,
-    fontWeight = if (size == TDButtonSize.SMALL) FontWeight.Medium else FontWeight.SemiBold,
-    fontFamily = TDTheme.style.fontFamily,
-)
+private fun buttonTextStyle(size: TDButtonSize): TextStyle {
+    val small = size == TDButtonSize.SMALL
+    return TextStyle(
+        // The kit's scale is applied by hand because this style never passes through TDTypography.
+        // It matters most here: a button label is centred, single-line and boxed, which makes it the
+        // tightest slot in the app (see tools/textfit.py). The small-end floor is deliberately NOT
+        // applied — these sizes are 14sp and up, well clear of any kit's floor.
+        fontSize = ((if (small) 14f else 18f) * TDTheme.style.fontScale).sp,
+        fontWeight = if (small) FontWeight.Medium else FontWeight.SemiBold,
+        fontFamily = TDTheme.style.fontFamily,
+    )
+}
 
 private val buttonSmallPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)
 private val buttonMediumPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp)

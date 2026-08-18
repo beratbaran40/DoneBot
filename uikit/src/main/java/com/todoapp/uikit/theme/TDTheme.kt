@@ -99,6 +99,7 @@ fun TDTheme(
                 fontFamily = style.fontFamily,
                 displayFontFamily = style.displayFontFamily,
                 minFontSize = style.minFontSize,
+                fontScale = style.fontScale,
             )
         }
     // Catches the handful of bare `Text(...)` / `TextField` sites that never set a style. A kit with

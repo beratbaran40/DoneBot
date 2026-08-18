@@ -53,13 +53,25 @@ class TDTypography(
     private val fontFamily: FontFamily = Poppins,
     private val displayFontFamily: FontFamily = fontFamily,
     private val minFontSize: TextUnit = 0.sp,
+    private val fontScale: Float = 1f,
 ) {
+    /** The kit's size multiplier alone. Identity at `1f`, down to the same instance. */
+    private fun TextUnit.kitScaled(): TextUnit = if (fontScale == 1f) this else (value * fontScale).sp
+
+    /**
+     * The kit's full size transform: **scale first, floor second**. The floor is an absolute
+     * legibility minimum in real sp, so flooring first would just let the scale push the value back
+     * under it. `fontScale = 1f` with `minFontSize = 0.sp` returns the receiver untouched, which is
+     * why applying this to every style leaves the existing kits byte-identical.
+     */
+    private fun TextUnit.kitSize(): TextUnit = kitScaled().atLeast(minFontSize)
+
     val pomodoro: TextStyle
         @Composable
         get() =
             TextStyle(
                 fontFamily = displayFontFamily,
-                fontSize = 96.sp,
+                fontSize = 96.sp.kitSize(),
                 fontWeight = FontWeight.W800,
                 lineHeightStyle =
                 LineHeightStyle(
@@ -73,7 +85,7 @@ class TDTypography(
         get() =
             TextStyle(
                 fontFamily = fontFamily,
-                fontSize = 24.sp,
+                fontSize = 24.sp.kitSize(),
                 fontWeight = FontWeight.W600,
                 lineHeightStyle =
                 LineHeightStyle(
@@ -87,7 +99,7 @@ class TDTypography(
         get() =
             TextStyle(
                 fontFamily = fontFamily,
-                fontSize = 22.sp,
+                fontSize = 22.sp.kitSize(),
                 fontWeight = FontWeight.W600,
                 lineHeightStyle =
                 LineHeightStyle(
@@ -101,7 +113,7 @@ class TDTypography(
         get() =
             TextStyle(
                 fontFamily = fontFamily,
-                fontSize = 18.sp,
+                fontSize = 18.sp.kitSize(),
                 fontWeight = FontWeight.W600,
                 lineHeightStyle =
                 LineHeightStyle(
@@ -115,7 +127,7 @@ class TDTypography(
         get() =
             TextStyle(
                 fontFamily = fontFamily,
-                fontSize = 18.sp,
+                fontSize = 18.sp.kitSize(),
                 fontWeight = FontWeight.W500,
                 lineHeightStyle =
                 LineHeightStyle(
@@ -129,7 +141,7 @@ class TDTypography(
         get() =
             TextStyle(
                 fontFamily = fontFamily,
-                fontSize = 16.sp,
+                fontSize = 16.sp.kitSize(),
                 fontWeight = FontWeight.W600,
                 lineHeightStyle =
                 LineHeightStyle(
@@ -143,7 +155,7 @@ class TDTypography(
         get() =
             TextStyle(
                 fontFamily = fontFamily,
-                fontSize = 16.sp,
+                fontSize = 16.sp.kitSize(),
                 fontWeight = FontWeight.W500,
                 lineHeightStyle =
                 LineHeightStyle(
@@ -157,7 +169,7 @@ class TDTypography(
         get() =
             TextStyle(
                 fontFamily = fontFamily,
-                fontSize = 14.sp,
+                fontSize = 14.sp.kitSize(),
                 fontWeight = FontWeight.W500,
                 lineHeightStyle =
                 LineHeightStyle(
@@ -171,7 +183,7 @@ class TDTypography(
         get() =
             TextStyle(
                 fontFamily = fontFamily,
-                fontSize = 12.sp.atLeast(minFontSize),
+                fontSize = 12.sp.kitSize(),
                 fontWeight = FontWeight.W600,
                 lineHeightStyle =
                 LineHeightStyle(
@@ -186,7 +198,7 @@ class TDTypography(
         get() =
             TextStyle(
                 fontFamily = fontFamily,
-                fontSize = 14.sp,
+                fontSize = 14.sp.kitSize(),
                 fontWeight = FontWeight.W500,
                 lineHeightStyle =
                 LineHeightStyle(
@@ -200,7 +212,7 @@ class TDTypography(
         get() =
             TextStyle(
                 fontFamily = fontFamily,
-                fontSize = 12.sp.atLeast(minFontSize),
+                fontSize = 12.sp.kitSize(),
                 fontWeight = FontWeight.W400,
                 lineHeightStyle =
                 LineHeightStyle(
@@ -214,7 +226,7 @@ class TDTypography(
         get() =
             TextStyle(
                 fontFamily = fontFamily,
-                fontSize = 10.sp.atLeast(minFontSize),
+                fontSize = 10.sp.kitSize(),
                 fontWeight = FontWeight.W400,
                 lineHeightStyle =
                 LineHeightStyle(
@@ -227,7 +239,7 @@ class TDTypography(
         get() =
             TextStyle(
                 fontFamily = fontFamily,
-                fontSize = 14.sp,
+                fontSize = 14.sp.kitSize(),
                 fontWeight = FontWeight.W500,
                 lineHeightStyle =
                 LineHeightStyle(
@@ -241,7 +253,7 @@ class TDTypography(
         get() =
             TextStyle(
                 fontFamily = fontFamily,
-                fontSize = 12.sp.atLeast(minFontSize),
+                fontSize = 12.sp.kitSize(),
                 fontWeight = FontWeight.W500,
                 lineHeightStyle =
                 LineHeightStyle(
@@ -260,9 +272,9 @@ class TDTypography(
         get() =
             TextStyle(
                 fontFamily = fontFamily,
-                fontSize = 16.sp,
+                fontSize = 16.sp.kitSize(),
                 fontWeight = FontWeight.Normal,
-                lineHeight = 28.sp,
+                lineHeight = 28.sp.kitScaled(),
                 lineHeightStyle =
                 LineHeightStyle(
                     alignment = LineHeightStyle.Alignment.Center,
