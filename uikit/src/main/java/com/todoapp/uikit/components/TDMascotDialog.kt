@@ -44,7 +44,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.uikit.R.drawable
 import com.todoapp.uikit.extensions.ObscuredTouchGuard
-import com.todoapp.uikit.image.rememberPixelPainter
+import com.todoapp.uikit.image.rememberKitArtPainter
+import com.todoapp.uikit.modifier.crtScreen
 import com.todoapp.uikit.theme.TDTheme
 import com.todoapp.uikit.theme.tdCorner
 import kotlinx.coroutines.delay
@@ -195,11 +196,12 @@ private fun MascotWithHalo(
                 .scale(breathingScale)
                 .size(96.dp)
                 .clip(CircleShape)
-                .background(TDTheme.colors.lightPending),
+                .background(TDTheme.colors.lightPending)
+                .crtScreen(diameter = 96.dp),
             contentAlignment = Alignment.Center,
         ) {
             Image(
-                painter = rememberPixelPainter(painterResource(avatarRes), 88.dp),
+                painter = rememberKitArtPainter(painterResource(avatarRes), 88.dp),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier

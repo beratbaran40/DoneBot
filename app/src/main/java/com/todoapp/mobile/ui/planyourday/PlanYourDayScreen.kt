@@ -30,7 +30,7 @@ import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.components.TDWheelTimePicker
 import com.todoapp.uikit.extensions.collectWithLifecycle
-import com.todoapp.uikit.image.rememberPixelPainter
+import com.todoapp.uikit.image.rememberKitArtPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.flow.Flow
@@ -86,7 +86,7 @@ fun PlanYourDayScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Image(
-                painter = rememberPixelPainter(
+                painter = rememberKitArtPainter(
                     painterResource(
                         if (TDTheme.isDark) {
                             com.example.uikit.R.drawable.img_donebot_plan_your_day_light

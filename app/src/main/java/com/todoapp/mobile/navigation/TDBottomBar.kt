@@ -30,8 +30,9 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.todoapp.mobile.LocalNavController
 import com.todoapp.mobile.R
-import com.todoapp.uikit.image.rememberPixelPainter
+import com.todoapp.uikit.image.rememberKitArtPainter
 import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.modifier.crtScreen
 import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
 
@@ -93,11 +94,12 @@ fun TDBottomBar() {
                             Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
-                                .background(TDTheme.colors.pendingGray),
+                                .background(TDTheme.colors.pendingGray)
+                                .crtScreen(diameter = 40.dp),
                             contentAlignment = Alignment.Center,
                         ) {
                             Image(
-                                painter = rememberPixelPainter(painterResource(id = chatImage), 40.dp),
+                                painter = rememberKitArtPainter(painterResource(id = chatImage), 40.dp),
                                 contentDescription = stringResource(screen.title),
                                 modifier = Modifier.size(40.dp),
                             )

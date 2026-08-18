@@ -131,8 +131,11 @@ private fun CacheDrawScope.ditherBrush(baseColor: Color, lineColor: Color, cellP
  * tile is 1px wide because the pattern has no horizontal structure, so repeating in X is free and
  * the bitmap stays a few dozen bytes. Sized in device pixels so the shader samples 1:1 and the band
  * edge stays hard, exactly as the dither tile does.
+ *
+ * Internal rather than private because [com.todoapp.uikit.modifier.crtScreen] paints the same bands
+ * over artwork, with a transparent base so the image shows through between them.
  */
-private fun CacheDrawScope.scanlineBrush(
+internal fun CacheDrawScope.scanlineBrush(
     baseColor: Color,
     lineColor: Color,
     cellPx: Int,

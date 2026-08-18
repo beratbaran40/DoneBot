@@ -38,8 +38,9 @@ import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonSize
 import com.todoapp.uikit.components.TDOutlinedTextField
 import com.todoapp.uikit.components.TDText
-import com.todoapp.uikit.image.rememberPixelPainter
+import com.todoapp.uikit.image.rememberKitArtPainter
 import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.modifier.crtScreen
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 import com.todoapp.uikit.theme.tdCorner
@@ -153,7 +154,7 @@ private fun MascotHero() {
         contentAlignment = Alignment.Center,
     ) {
         Image(
-            painter = rememberPixelPainter(
+            painter = rememberKitArtPainter(
                 tdPainter(com.example.uikit.R.drawable.img_donebot_recurring_yearly_night),
                 96.dp,
             ),
@@ -162,6 +163,7 @@ private fun MascotHero() {
             modifier = Modifier
                 .size(96.dp)
                 .clip(CircleShape)
+                .crtScreen(diameter = 96.dp, bezel = false)
                 .border(2.dp, TDTheme.colors.lightPurple.copy(alpha = 0.6f), CircleShape),
         )
     }

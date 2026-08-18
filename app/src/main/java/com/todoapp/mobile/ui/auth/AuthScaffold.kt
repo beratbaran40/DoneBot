@@ -30,7 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.LocalWindowSizeClass
 import com.todoapp.uikit.components.TDText
-import com.todoapp.uikit.image.rememberPixelPainter
+import com.todoapp.uikit.image.rememberKitArtPainter
 import com.todoapp.uikit.modifier.gridBackground
 import com.todoapp.uikit.theme.TDTheme
 import com.todoapp.uikit.theme.tdCorner
@@ -165,7 +165,7 @@ fun AuthBrandPanel(
         verticalArrangement = Arrangement.Center,
     ) {
         Image(
-            painter = rememberPixelPainter(
+            painter = rememberKitArtPainter(
                 painterResource(com.example.uikit.R.drawable.img_donebot_alarm_reminder_light),
                 illustrationSize * BRAND_ROBOT_ZOOM,
             ),

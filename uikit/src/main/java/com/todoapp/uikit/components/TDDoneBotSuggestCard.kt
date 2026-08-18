@@ -25,8 +25,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
-import com.todoapp.uikit.image.rememberPixelPainter
+import com.todoapp.uikit.image.rememberKitArtPainter
 import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.modifier.crtScreen
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
@@ -52,11 +53,12 @@ fun TDDoneBotSuggestCard(
     ) {
         Row(verticalAlignment = Alignment.Top) {
             Image(
-                painter = rememberPixelPainter(painterResource(avatarRes), 96.dp),
+                painter = rememberKitArtPainter(painterResource(avatarRes), 96.dp),
                 contentDescription = null,
                 modifier = Modifier
                     .size(96.dp)
-                    .clip(RoundedCornerShape(percent = 50)),
+                    .clip(RoundedCornerShape(percent = 50))
+                    .crtScreen(diameter = 96.dp),
             )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.fillMaxWidth()) {

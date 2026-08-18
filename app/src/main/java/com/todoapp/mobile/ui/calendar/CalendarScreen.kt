@@ -55,8 +55,9 @@ import com.todoapp.uikit.components.TDStatusChipTone
 import com.todoapp.uikit.components.TDTaskCard
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.extensions.collectWithLifecycle
-import com.todoapp.uikit.image.rememberPixelPainter
+import com.todoapp.uikit.image.rememberKitArtPainter
 import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.modifier.crtScreen
 import com.todoapp.uikit.modifier.tdDropShadow
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.previews.TDPreviewWide
@@ -379,7 +380,7 @@ private fun CalendarEmptyState() {
         verticalArrangement = Arrangement.Center,
     ) {
         Image(
-            painter = rememberPixelPainter(
+            painter = rememberKitArtPainter(
                 tdPainter(
                     if (TDTheme.isDark) {
                         com.todoapp.mobile.R.drawable.ic_idle_robot_dark
@@ -399,6 +400,7 @@ private fun CalendarEmptyState() {
                     ambientColor = TDTheme.colors.pendingGray.copy(alpha = 0.3f),
                 )
                 .clip(TDTheme.shapes.circle)
+                .crtScreen(diameter = 160.dp, bezel = false)
                 .border(
                     width = 2.dp,
                     color = TDTheme.colors.darkPending.copy(alpha = 0.6f),

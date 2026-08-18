@@ -24,7 +24,7 @@ import com.todoapp.uikit.theme.TDTheme
 import kotlin.math.roundToInt
 
 /** Target edge, in px, of one output block. Six reads as clearly 8-bit without erasing the subject. */
-private const val DEFAULT_BLOCK_SIZE = 6
+internal const val DEFAULT_BLOCK_SIZE = 6
 
 /**
  * Renders [painter] once into a small offscreen bitmap and returns a painter that magnifies it with
@@ -49,7 +49,7 @@ private const val DEFAULT_BLOCK_SIZE = 6
  *   collapses to a handful of cells anyway — give icons a pixel drawable variant instead.
  */
 @Composable
-fun rememberPixelPainter(
+internal fun rememberPixelPainter(
     painter: Painter,
     size: Dp,
     blockSize: Int = DEFAULT_BLOCK_SIZE,

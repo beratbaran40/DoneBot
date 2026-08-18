@@ -70,8 +70,9 @@ import com.todoapp.mobile.domain.model.ChatMessage
 import com.todoapp.uikit.components.TDLoadingBar
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.extensions.collectWithLifecycle
-import com.todoapp.uikit.image.rememberPixelPainter
+import com.todoapp.uikit.image.rememberKitArtPainter
 import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.modifier.crtScreen
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.previews.TDPreviewWide
 import com.todoapp.uikit.theme.TDTheme
@@ -377,11 +378,12 @@ private fun ChatPersonaHeader(
                 modifier = Modifier
                     .size(55.dp)
                     .clip(CircleShape)
-                    .background(TDTheme.colors.pendingGray),
+                    .background(TDTheme.colors.pendingGray)
+                    .crtScreen(diameter = 55.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    painter = rememberPixelPainter(painterResource(R.drawable.img_splash), 55.dp),
+                    painter = rememberKitArtPainter(painterResource(R.drawable.img_splash), 55.dp),
                     contentDescription = null,
                     tint = Color.Unspecified,
                     modifier = Modifier.size(55.dp),
@@ -442,11 +444,12 @@ private fun ChatEmptyState(
             modifier = Modifier
                 .size(88.dp)
                 .clip(CircleShape)
-                .background(TDTheme.colors.pendingGray),
+                .background(TDTheme.colors.pendingGray)
+                .crtScreen(diameter = 88.dp),
             contentAlignment = Alignment.Center,
         ) {
             Image(
-                painter = rememberPixelPainter(painterResource(R.drawable.img_splash), 88.dp),
+                painter = rememberKitArtPainter(painterResource(R.drawable.img_splash), 88.dp),
                 contentDescription = null,
                 modifier = Modifier.size(88.dp),
             )

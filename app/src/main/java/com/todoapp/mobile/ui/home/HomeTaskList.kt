@@ -55,8 +55,9 @@ import com.todoapp.mobile.ui.common.components.taskChipLabel
 import com.todoapp.mobile.ui.common.rememberOpenLocation
 import com.todoapp.uikit.components.TDTaskCardWithCheckbox
 import com.todoapp.uikit.components.TDText
-import com.todoapp.uikit.image.rememberPixelPainter
+import com.todoapp.uikit.image.rememberKitArtPainter
 import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.modifier.crtScreen
 import com.todoapp.uikit.modifier.tdDropShadow
 import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
@@ -109,7 +110,7 @@ fun HomeTaskList(
                         com.todoapp.mobile.R.drawable.ic_idle_robot_light
                     }
                     Image(
-                        painter = rememberPixelPainter(painterResource(emptyImageRes ?: defaultIdleImage), 180.dp),
+                        painter = rememberKitArtPainter(painterResource(emptyImageRes ?: defaultIdleImage), 180.dp),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
@@ -120,6 +121,7 @@ fun HomeTaskList(
                                 ambientColor = TDTheme.colors.purple.copy(alpha = 0.3f),
                             )
                             .clip(TDTheme.shapes.circle)
+                            .crtScreen(diameter = 180.dp, bezel = false)
                             .border(
                                 width = 2.dp,
                                 color = TDTheme.colors.lightPurple.copy(alpha = 0.6f),

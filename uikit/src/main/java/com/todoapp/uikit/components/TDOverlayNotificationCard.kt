@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.uikit.R
-import com.todoapp.uikit.image.rememberPixelPainter
+import com.todoapp.uikit.image.rememberKitArtPainter
 import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
@@ -145,7 +145,7 @@ private fun NotificationCardContent(
                     verticalAlignment = Alignment.Top,
                 ) {
                     Image(
-                        painter = rememberPixelPainter(
+                        painter = rememberKitArtPainter(
                             tdPainter(
                                 if (TDTheme.isDark) {
                                     R.drawable.img_donebot_alarm_reminder_light

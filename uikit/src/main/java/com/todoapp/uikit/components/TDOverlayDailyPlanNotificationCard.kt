@@ -34,8 +34,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
-import com.todoapp.uikit.image.rememberPixelPainter
+import com.todoapp.uikit.image.rememberKitArtPainter
 import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.modifier.crtScreen
 import com.todoapp.uikit.previews.TDPreviewDialog
 import com.todoapp.uikit.theme.TDTheme
 import com.todoapp.uikit.theme.tdCorner
@@ -118,11 +119,12 @@ fun TDOverlayDailyPlanNotificationCard(
                     Modifier
                         .size(70.dp)
                         .clip(CircleShape)
-                        .background(TDTheme.colors.background.copy(alpha = 0.14f)),
+                        .background(TDTheme.colors.background.copy(alpha = 0.14f))
+                        .crtScreen(diameter = 70.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Image(
-                        painter = rememberPixelPainter(
+                        painter = rememberKitArtPainter(
                             tdPainter(
                                 if (TDTheme.isDark) {
                                     R.drawable.img_donebot_overlay_notification_light

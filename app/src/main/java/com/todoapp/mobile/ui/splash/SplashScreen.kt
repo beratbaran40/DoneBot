@@ -30,7 +30,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
-import com.todoapp.uikit.image.rememberPixelPainter
+import com.todoapp.uikit.image.rememberKitArtPainter
+import com.todoapp.uikit.modifier.crtScreen
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -95,11 +96,12 @@ fun TDSplashScreen(onAnimationComplete: () -> Unit = {}) {
             Modifier
                 .size(BADGE_SIZE_DP.dp)
                 .clip(CircleShape)
-                .background(badgeColor),
+                .background(badgeColor)
+                .crtScreen(diameter = BADGE_SIZE_DP.dp),
             contentAlignment = Alignment.Center,
         ) {
             Image(
-                painter = rememberPixelPainter(painterResource(R.drawable.img_splash), LOGO_SIZE_DP.dp),
+                painter = rememberKitArtPainter(painterResource(R.drawable.img_splash), LOGO_SIZE_DP.dp),
                 contentDescription = null,
                 modifier =
                 Modifier
