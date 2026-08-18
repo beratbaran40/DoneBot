@@ -66,8 +66,14 @@ android {
         targetSdk = 36
         // 9 was consumed by a Play draft that was uploaded and then deleted — an uploaded versionCode
         // is spent forever, deleting the release does not give it back.
-        versionCode = 10
-        versionName = "1.2"
+        //
+        // 11 / 1.3 is the pre-migration release: the Terminal palette kit and the per-kit rendering
+        // pass behind it, Pomodoro session history, the declared task type, the narrow-screen text
+        // fitting sweep, and the -1 reminder sentinel that 1.2 shipped without. It is also the tree
+        // v1.3-preKMP tags — the reference point for every later "did the KMP port change Android
+        // behaviour?" question, which only works if it sits where the migration starts.
+        versionCode = 11
+        versionName = "1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
