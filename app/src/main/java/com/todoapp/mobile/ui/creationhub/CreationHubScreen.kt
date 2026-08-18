@@ -1,6 +1,5 @@
 package com.todoapp.mobile.ui.creationhub
 
-import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -11,42 +10,42 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.lerp
 import com.todoapp.mobile.R
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.TaskType
@@ -62,11 +61,10 @@ import com.todoapp.uikit.components.TDFeatureExplainer
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
+import com.todoapp.uikit.previews.TDPreviewNarrow
 import com.todoapp.uikit.theme.TDTheme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.launch
-import kotlin.math.absoluteValue
 import com.example.uikit.R as UiKitR
 
 @Composable
@@ -110,7 +108,7 @@ fun CreationHubScreen(
                 .fillMaxWidth(),
         ) { step ->
             when (step) {
-                Step.HUB_ROOT -> CreationHubCarousel(onAction = onAction)
+                Step.HUB_ROOT -> CreationHubGrid(onAction = onAction)
                 Step.TASK_SCOPE ->
                     CreationHubScopeStep(
                         hasGroups = state.adminGroups.isNotEmpty(),
@@ -306,8 +304,15 @@ private data class HubFeature(
     val action: UiAction,
 )
 
+/**
+ * Everything the hub can create, all four on one screen: two rows of two, a quarter of the body each.
+ *
+ * This replaced a `HorizontalPager` carousel with page dots. Four is few enough to show at once, and
+ * paging hid three of them behind a swipe and cost an extra tap — a tap on an off-centre page only
+ * scrolled to it, it did not open it.
+ */
 @Composable
-private fun CreationHubCarousel(onAction: (UiAction) -> Unit) {
+private fun CreationHubGrid(onAction: (UiAction) -> Unit) {
     val features = listOf(
         HubFeature(
             R.string.create_task_card_title,
@@ -342,97 +347,112 @@ private fun CreationHubCarousel(onAction: (UiAction) -> Unit) {
             UiAction.OnGroupCardTap,
         ),
     )
-    val pagerState = rememberPagerState(pageCount = { features.size })
-    val scope = rememberCoroutineScope()
-    val reduceMotion = rememberReduceMotion()
-    Column(modifier = Modifier.fillMaxSize()) {
-        HorizontalPager(
-            state = pagerState,
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        // Half of what is left once the gap and the bottom margin are taken out: when the copy fits —
+        // every phone held in portrait — the two rows ARE the two halves and there is nothing to
+        // scroll. A short landscape viewport or a large system font pushes a row past this floor, and
+        // then the column scrolls rather than clipping a description off the bottom of a card.
+        val boundedHeight = constraints.hasBoundedHeight
+        val rowFloor =
+            if (boundedHeight) {
+                ((maxHeight - CREATION_GRID_GAP - CREATION_GRID_BOTTOM) / 2).coerceAtLeast(0.dp)
+            } else {
+                0.dp
+            }
+        // A cell has to be roomy both ways to earn the big card: a tablet held in landscape is wide
+        // enough and nowhere near tall enough, and a 76dp medallion there just forces a scroll.
+        val compactCells =
+            (maxWidth - CREATION_GRID_GAP) / 2 < ROOMY_CELL_MIN_WIDTH ||
+                (boundedHeight && rowFloor < ROOMY_CELL_MIN_HEIGHT)
+        Column(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 44.dp, vertical = 8.dp),
-            pageSpacing = 16.dp,
-        ) { page ->
-            val feature = features[page]
-            val rawOffset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
-            val offset = rawOffset.absoluteValue.coerceIn(0f, 1f)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = CREATION_GRID_BOTTOM),
+            verticalArrangement = Arrangement.spacedBy(CREATION_GRID_GAP),
+        ) {
+            features.chunked(CREATION_GRID_COLUMNS).forEach { row ->
+                CreationHubGridRow(
+                    features = row,
+                    minHeight = rowFloor,
+                    compact = compactCells,
+                    onAction = onAction,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CreationHubGridRow(
+    features: List<HubFeature>,
+    minHeight: Dp,
+    compact: Boolean,
+    onAction: (UiAction) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = minHeight)
+            // IntrinsicSize.Max + fillMaxHeight keeps the pair the same height when one card's
+            // description wraps onto more lines than its neighbour's.
+            .height(IntrinsicSize.Max),
+        horizontalArrangement = Arrangement.spacedBy(CREATION_GRID_GAP),
+    ) {
+        features.forEach { feature ->
             TDFeatureCard(
                 title = stringResource(feature.titleRes),
                 subtitle = stringResource(feature.subtitleRes),
                 icon = feature.icon,
                 cardColor = feature.cardColor,
                 accentColor = feature.accentColor,
-                onClick = {
-                    if (page == pagerState.currentPage) {
-                        onAction(feature.action)
-                    } else {
-                        scope.launch {
-                            if (reduceMotion) pagerState.scrollToPage(page) else pagerState.animateScrollToPage(page)
-                        }
-                    }
-                },
+                compact = compact,
+                onClick = { onAction(feature.action) },
                 modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        val scale = if (reduceMotion) 1f else lerp(MIN_SCALE, 1f, 1f - offset)
-                        scaleX = scale
-                        scaleY = scale
-                        alpha = if (reduceMotion) 1f else lerp(MIN_ALPHA, 1f, 1f - offset)
-                    },
-            )
-        }
-        Spacer(Modifier.height(20.dp))
-        PageDots(count = features.size, current = pagerState.currentPage)
-        Spacer(Modifier.height(24.dp))
-    }
-}
-
-@Composable
-private fun PageDots(count: Int, current: Int) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        repeat(count) { index ->
-            val selected = index == current
-            Box(
-                modifier = Modifier
-                    .padding(horizontal = 4.dp)
-                    .size(if (selected) 10.dp else 8.dp)
-                    .clip(CircleShape)
-                    .background(if (selected) TDTheme.colors.primary else TDTheme.colors.lightGray),
+                    .weight(1f)
+                    .fillMaxHeight(),
             )
         }
     }
 }
 
-@Composable
-private fun rememberReduceMotion(): Boolean {
-    val context = LocalContext.current
-    // ANIMATOR_DURATION_SCALE == 0 is Android's "remove animations" signal (Settings > Accessibility).
-    return remember(context) {
-        Settings.Global.getFloat(
-            context.contentResolver,
-            Settings.Global.ANIMATOR_DURATION_SCALE,
-            1f,
-        ) == 0f
-    }
-}
+private const val CREATION_GRID_COLUMNS = 2
 
-private const val MIN_SCALE = 0.86f
-private const val MIN_ALPHA = 0.55f
+/** Gap between the cards, both ways. `tools/textfit.py` reads this line. */
+private val CREATION_GRID_GAP = 12.dp
+
+/** Bottom margin under the grid, matching the one the task form leaves. */
+private val CREATION_GRID_BOTTOM = 24.dp
+
+/** Below either of these a cell is a phone quarter and the card packs itself; above both, a tablet's. */
+private val ROOMY_CELL_MIN_WIDTH = 240.dp
+private val ROOMY_CELL_MIN_HEIGHT = 240.dp
 
 @TDPreview
 @Composable
-private fun CreationHubCarouselPreview() {
+private fun CreationHubGridPreview() {
     TDTheme {
-        CreationHubScreen(
-            state = UiState(step = Step.HUB_ROOT),
-            effect = emptyFlow(),
-            onAction = {},
-        )
+        Box(modifier = Modifier.height(720.dp)) {
+            CreationHubScreen(
+                state = UiState(step = Step.HUB_ROOT),
+                effect = emptyFlow(),
+                onAction = {},
+            )
+        }
+    }
+}
+
+@TDPreviewNarrow
+@Composable
+private fun CreationHubGridNarrowPreview() {
+    TDTheme {
+        Box(modifier = Modifier.height(640.dp)) {
+            CreationHubScreen(
+                state = UiState(step = Step.HUB_ROOT),
+                effect = emptyFlow(),
+                onAction = {},
+            )
+        }
     }
 }
 
