@@ -181,7 +181,7 @@ flowchart TD
 ## Tasarım sistemi
 
 - `:uikit` içinde **~60 paylaşılan `TD*` bileşeni** — kartlar, sheet'ler, skeleton yükleyiciler, boş/hata durumları, konfeti, polaroid çerçeve seti ve dahası.
-- Tüm stiller **`TDTheme` token'larından** akar (semantik renkler, Poppins tipografisi, özel polaroid paleti) — feature kodunda sabit yazılmış renk ya da metin stili yok.
+- Tüm stiller **`TDTheme` token'larından** akar (semantik renkler, kit başına tipografi, özel polaroid paleti) — feature kodunda sabit yazılmış renk ya da metin stili yok.
 - Koyu mod uygulama kontrolündedir; her token iki tema için de çözümlenir.
 - Özel preview anotasyon seti (`@TDPreview`, `@TDPreviewDevices`, …) **açık + koyu temayı tek preview'da** ve 344/360/411 dp cihaz genişliği matrisinde çizer; her ekran durumu ve bileşen varyantı preview'larıyla birlikte gelir.
 

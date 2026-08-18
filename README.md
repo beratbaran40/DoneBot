@@ -181,7 +181,7 @@ flowchart TD
 ## Design system
 
 - **~60 shared `TD*` components** in `:uikit` — cards, sheets, skeleton loaders, empty/error states, confetti, the polaroid frame set and more.
-- All styling flows through **`TDTheme` tokens** (semantic colors, Poppins typography, a dedicated polaroid palette) — no hardcoded colors or text styles in feature code.
+- All styling flows through **`TDTheme` tokens** (semantic colors, per-kit typography, a dedicated polaroid palette) — no hardcoded colors or text styles in feature code.
 - Dark mode is app-driven and every token resolves for both themes.
 - A custom preview annotation suite (`@TDPreview`, `@TDPreviewDevices`, …) renders **light + dark in a single preview** and a 344/360/411 dp device-width matrix; every screen state and component variant ships with previews.
 
