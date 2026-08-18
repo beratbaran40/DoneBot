@@ -25,6 +25,8 @@ import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -82,10 +84,22 @@ fun TDTaskCardWithCheckbox(
     subtaskContent: (@Composable () -> Unit)? = null,
     isPendingSync: Boolean = false,
 ) {
+    // A counter rather than a flag. Setting a flag that is already set does nothing, so completing a
+    // task while the previous burst was still in the air silently skipped its celebration — tick,
+    // untick, tick in quick succession fired once instead of twice. The count keys the effect below,
+    // so every completion gets its own run from the start.
+    var burst by remember { mutableIntStateOf(0) }
     var showConfetti by remember { mutableStateOf(false) }
     var prevChecked by remember { mutableStateOf(isChecked) }
     LaunchedEffect(isChecked) {
-        if (isChecked && !prevChecked) showConfetti = true
+        when {
+            isChecked && !prevChecked -> {
+                burst++
+                showConfetti = true
+            }
+            // Undoing the completion takes the celebration with it.
+            !isChecked -> showConfetti = false
+        }
         prevChecked = isChecked
     }
 
@@ -340,13 +354,15 @@ fun TDTaskCardWithCheckbox(
         }
 
         if (showConfetti) {
-            ConfettiEffect(
-                modifier =
-                Modifier
-                    .matchParentSize()
-                    .clip(shape),
-                onAnimFinished = { showConfetti = false },
-            )
+            key(burst) {
+                ConfettiEffect(
+                    modifier =
+                    Modifier
+                        .matchParentSize()
+                        .clip(shape),
+                    onAnimFinished = { showConfetti = false },
+                )
+            }
         }
     }
 }
