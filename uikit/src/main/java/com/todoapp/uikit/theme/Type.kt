@@ -37,6 +37,24 @@ val PixelifySans =
     )
 
 /**
+ * The Terminal kit's face (JetBrains Mono, SIL OFL 1.1) — a monospace drawn for code at UI sizes,
+ * which is what lets this app's dense 10-14sp rows survive a face whose advances run wider than
+ * Poppins'.
+ *
+ * All four masters the type ramp asks for ship, subset to latin + latin-ext by `tools/prep_fonts.sh`
+ * (the app's only locales are en and tr). The ligature-free "NL" masters are used deliberately:
+ * JetBrains Mono's coding ligatures would rewrite a task titled "A -> B" into an arrow glyph, and a
+ * substitution is something `tools/textfit.py` cannot model.
+ */
+val JetBrainsMono =
+    FontFamily(
+        Font(R.font.jetbrains_mono_regular, FontWeight.Normal),
+        Font(R.font.jetbrains_mono_medium, FontWeight.Medium),
+        Font(R.font.jetbrains_mono_semi_bold, FontWeight.SemiBold),
+        Font(R.font.jetbrains_mono_extra_bold, FontWeight.ExtraBold),
+    )
+
+/**
  * Raises only the small end of the type ramp. Pixel typefaces have a fixed one-pixel stem; below
  * roughly 12sp the stems land between device pixels and the glyphs turn to mush. Styles at 14sp and
  * above are left alone so nothing laid out against a heading size moves. `0.sp` is the identity.

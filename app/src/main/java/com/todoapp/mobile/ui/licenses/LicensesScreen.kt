@@ -64,6 +64,7 @@ private val ossLicenses = listOf(
     OssLicense("Reorderable", "Calvin Liang", APACHE_2, "https://github.com/Calvin-LL/Reorderable"),
     OssLicense("Poppins", "Indian Type Foundry, Jonny Pinhorn", OFL_1_1, "https://fonts.google.com/specimen/Poppins"),
     OssLicense("Pixelify Sans", "The Pixelify Sans Project Authors", OFL_1_1, "https://github.com/eifetx/Pixelify-Sans"),
+    OssLicense("JetBrains Mono", "JetBrains s.r.o.", OFL_1_1, "https://github.com/JetBrains/JetBrainsMono"),
 )
 
 @Composable
