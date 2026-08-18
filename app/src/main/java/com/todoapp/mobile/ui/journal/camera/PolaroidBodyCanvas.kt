@@ -29,6 +29,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import com.todoapp.uikit.image.rememberPixelBitmap
+import com.todoapp.uikit.image.tdPhosphorFilter
 import com.todoapp.uikit.image.tdPixelFilterQuality
 import com.todoapp.uikit.theme.PolaroidColors
 import com.todoapp.uikit.theme.TDTheme
@@ -57,6 +58,7 @@ internal fun SkeuomorphicPolaroidCanvas(
         ImageBitmap.imageResource(com.todoapp.mobile.R.drawable.img_donebot_new_logo),
     )
     val brandFilter = tdPixelFilterQuality()
+    val brandInk = tdPhosphorFilter()
 
     Spacer(
         modifier = Modifier
@@ -283,7 +285,7 @@ internal fun SkeuomorphicPolaroidCanvas(
                         drawEjectSlot(m.slotMouth, colors)
                         drawPerspectiveStripe(w, m.topBodyBottomW, m.stripeStartY, ledgeTopY, lipTopY, trayTopY, colors)
                         drawLensAssembly(m.lensCenter, m.lensSize, shadowPaint25, specularPaint, colors)
-                        drawBranding(m.brandingRect, shadowPaint8, colors, brandIcon, brandFilter)
+                        drawBranding(m.brandingRect, shadowPaint8, colors, brandIcon, brandFilter, brandInk)
                         drawFlash(m.flashCenter, m.flashSize, shadowPaint15, colors)
                         drawShutterButton(m.shutterCenter, m.shutterRadius, isShutterPressed, shadowPaint12, colors)
                         drawExposureDial(m.dialCenter, m.dialRadius, shadowPaint10, dialHighlightPaint, colors)

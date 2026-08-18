@@ -55,6 +55,7 @@ import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDSpannableText
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.image.tdPainter
+import com.todoapp.uikit.image.tdPhosphorFilter
 import com.todoapp.uikit.image.tdPixelFilterQuality
 import com.todoapp.uikit.theme.TDCornerStyle
 import com.todoapp.uikit.theme.TDTheme
@@ -124,6 +125,9 @@ fun OnboardingScreen(
                 contentScale = ContentScale.Crop,
                 alignment = Alignment.Center,
                 filterQuality = tdPixelFilterQuality(),
+                // Coil owns this bitmap, so the kit's ramp has to arrive as a filter rather than a
+                // painter. Null outside the Terminal kit, which is what this parameter wants anyway.
+                colorFilter = tdPhosphorFilter(),
                 // Coil skips its async pipeline under LocalInspectionMode, so @TDPreview would render
                 // this screen with no background at all. Feed the raw resource as the placeholder in
                 // that case only — the IDE decodes it, the device never does.

@@ -68,8 +68,19 @@ fun rememberKitArtPainter(
     blockSize: Int = DEFAULT_BLOCK_SIZE,
 ): Painter {
     val pixelated = rememberPixelPainter(painter, size, blockSize)
+    val filter = tdPhosphorFilter() ?: return pixelated
+    return remember(pixelated, filter) { PhosphorPainter(pixelated, filter) }
+}
+
+/**
+ * The same ramp as a bare [ColorFilter], for the two draw paths that cannot take a [Painter]: Coil's
+ * `AsyncImage`, and a raw `drawImage` in a `DrawScope`. `null` for every kit but Terminal, which is
+ * exactly what both of those parameters want when nothing should be applied.
+ */
+@Composable
+fun tdPhosphorFilter(): ColorFilter? {
     if (TDTheme.palette != PaletteKit.TERMINAL) {
-        return pixelated
+        return null
     }
     // The ramp inverts between modes because the physics do. A dark screen EMITS light, so the
     // brightest part of the image is the phosphor and the darkest is the unlit glass. Paper ABSORBS
@@ -81,6 +92,5 @@ fun rememberKitArtPainter(
         } else {
             colors.primary to colors.background
         }
-    val filter = remember(ramp) { phosphorFilter(ramp.first, ramp.second) }
-    return remember(pixelated, filter) { PhosphorPainter(pixelated, filter) }
+    return remember(ramp) { phosphorFilter(ramp.first, ramp.second) }
 }

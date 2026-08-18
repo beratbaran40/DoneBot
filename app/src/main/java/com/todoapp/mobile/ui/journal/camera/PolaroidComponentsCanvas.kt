@@ -8,6 +8,7 @@ import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Paint
@@ -426,6 +427,7 @@ internal fun DrawScope.drawBranding(
     colors: PolaroidColors,
     brandIcon: ImageBitmap,
     brandFilterQuality: FilterQuality,
+    brandColorFilter: ColorFilter?,
 ) {
     val stickerSize = bounds.width
     val stickerX = bounds.left
@@ -462,6 +464,7 @@ internal fun DrawScope.drawBranding(
         dstOffset = IntOffset((stickerX + pad).roundToInt(), (stickerY + pad).roundToInt()),
         dstSize = IntSize(iconSize, iconSize),
         filterQuality = brandFilterQuality,
+        colorFilter = brandColorFilter,
     )
 }
 
