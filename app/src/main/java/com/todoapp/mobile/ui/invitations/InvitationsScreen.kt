@@ -239,12 +239,16 @@ private fun InvitationCard(
             }
         }
         Spacer(Modifier.height(14.dp))
+        // Two SMALL buttons ask for 140 + 10 + 140 = 290dp; a card on a 360dp screen offers 296dp.
+        // Six dp is not headroom, and at 320dp the pair is over-subscribed outright, which makes the
+        // second button render narrower than the first. Weighting removes the cliff.
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.End),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             TDButton(
+                modifier = Modifier.weight(1f),
                 text = stringResource(R.string.invitations_decline),
                 isEnable = !isProcessing,
                 type = TDButtonType.OUTLINE,
@@ -252,6 +256,7 @@ private fun InvitationCard(
                 onClick = onDecline,
             )
             TDButton(
+                modifier = Modifier.weight(1f),
                 text = stringResource(R.string.invitations_accept),
                 isEnable = !isProcessing,
                 type = TDButtonType.PRIMARY,
@@ -364,6 +369,39 @@ private fun InvitationsScreenPreview(
     TDTheme {
         InvitationsScreen(
             uiState = state,
+            uiEffect = emptyFlow(),
+            onAction = {},
+        )
+    }
+}
+
+/**
+ * The Turkish accept/decline pair inside a card: two SMALL buttons want 290dp of the ~296dp a card
+ * on a narrow phone offers, so this is where an unweighted pair went lopsided.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@com.todoapp.uikit.previews.TDPreviewNarrow
+@Composable
+private fun InvitationsScreenNarrowPreview() {
+    TDTheme {
+        InvitationsScreen(
+            uiState =
+            UiState.Success(
+                items =
+                listOf(
+                    Invitation(
+                        id = 1,
+                        groupId = 100,
+                        groupName = "Pazartesi Akşamı Kitap Kulübü",
+                        groupAvatarUrl = null,
+                        inviterUserId = 10,
+                        inviterName = "Berat Baran",
+                        inviterAvatarUrl = null,
+                        inviteeEmail = "you@example.com",
+                        createdAt = 0L,
+                    ),
+                ),
+            ),
             uiEffect = emptyFlow(),
             onAction = {},
         )

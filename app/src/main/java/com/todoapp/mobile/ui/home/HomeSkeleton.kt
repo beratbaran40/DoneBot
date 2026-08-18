@@ -108,6 +108,13 @@ private fun HomeSkeletonCalendarStrip() {
 
 private const val HOME_SKELETON_DATE_PILL_COUNT = 8
 
+/**
+ * Must match TDStatisticCard, which stacks its icon above the labels so the text gets the card's
+ * full width: 16 pad + 44 icon + 12 + 24 (heading5) + 2 + 18 (subheading4) + 18 (subheading1) + 16
+ * pad = 150dp. It was 96 while the card was a Row; re-derive this if the card's stack changes.
+ */
+private val StatCardHeight = 150.dp
+
 @Composable
 private fun HomeSkeletonStatsRow() {
     Row(
@@ -117,13 +124,13 @@ private fun HomeSkeletonStatsRow() {
         TDSkeletonBox(
             modifier = Modifier
                 .weight(1f)
-                .height(96.dp),
+                .height(StatCardHeight),
             shape = TDTheme.shapes.xLarge,
         )
         TDSkeletonBox(
             modifier = Modifier
                 .weight(1f)
-                .height(96.dp),
+                .height(StatCardHeight),
             shape = TDTheme.shapes.xLarge,
         )
     }

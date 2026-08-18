@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
@@ -506,8 +507,12 @@ private fun CategoryBreakdownSection(stats: List<CategoryStat>) {
                     modifier = Modifier.size(16.dp),
                 )
                 Spacer(modifier = Modifier.width(8.dp))
+                // widthIn, not width: customLabel is user-entered, so a fixed 96dp made a long
+                // category name wrap into as many lines as it liked while the bar beside it stayed
+                // one row tall, and the whole chart went out of alignment. A floor keeps the bars
+                // starting on a common x, and the cap stops one long name from eating the chart.
                 TDText(
-                    modifier = Modifier.width(96.dp),
+                    modifier = Modifier.widthIn(min = 96.dp, max = 132.dp),
                     text = stat.customLabel ?: stringResource(categoryLabelRes(stat.category)),
                     style = TDTheme.typography.heading6,
                     color = TDTheme.colors.onBackground,

@@ -311,12 +311,17 @@ private fun PomodoroStepperCard(
             modifier = Modifier.size(22.dp),
         )
         Spacer(Modifier.width(10.dp))
+        // The label carries the weight, replacing a Spacer that carried it before. Unweighted and
+        // measured first, "Odaklanma Süresi" claimed its full ~128dp of a ~296dp card and the
+        // stepper behind it — two 36dp buttons, the value and the "dk" unit — was measured against
+        // what was left, so the unit was the first thing to be cut. The label is the only part of
+        // this row that can afford a second line, so it is the part that should give way.
         TDText(
+            modifier = Modifier.weight(1f),
             text = label,
             style = TDTheme.typography.heading6,
             color = TDTheme.colors.onBackground,
         )
-        Spacer(Modifier.weight(1f))
 
         IconButton(
             onClick = {
@@ -423,6 +428,43 @@ private fun PomodoroStepperCardPreview() {
                 cardBgColor = TDTheme.colors.lightRed,
                 iconTintColor = TDTheme.colors.crossRed,
                 range = 1..30,
+                step = 1,
+                onValueChange = {},
+            )
+        }
+    }
+}
+
+/** The stepper's label competes with two buttons, the value and the unit for one row of a card. */
+@com.todoapp.uikit.previews.TDPreviewNarrow
+@Composable
+private fun PomodoroStepperCardNarrowPreview() {
+    TDTheme {
+        Column(
+            Modifier
+                .background(TDTheme.colors.background)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            PomodoroStepperCard(
+                value = 120,
+                label = stringResource(R.string.pomodoro_focus_time),
+                unit = stringResource(R.string.pomodoro_unit_min),
+                iconRes = UiKitR.drawable.ic_sand_clock,
+                cardBgColor = TDTheme.colors.lightGreen,
+                iconTintColor = TDTheme.colors.darkGreen,
+                range = 5..120,
+                step = 5,
+                onValueChange = {},
+            )
+            PomodoroStepperCard(
+                value = 15,
+                label = stringResource(R.string.pomodoro_long_break_label),
+                unit = stringResource(R.string.pomodoro_unit_min),
+                iconRes = UiKitR.drawable.ic_sand_clock,
+                cardBgColor = TDTheme.colors.lightRed,
+                iconTintColor = TDTheme.colors.crossRed,
+                range = 1..60,
                 step = 1,
                 onValueChange = {},
             )

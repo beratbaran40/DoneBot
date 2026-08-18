@@ -5,8 +5,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
@@ -31,6 +34,7 @@ import com.todoapp.mobile.ui.pomodorosummary.PomodoroSummaryContract.UiAction
 import com.todoapp.mobile.ui.pomodorosummary.PomodoroSummaryContract.UiState
 import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonType
+import com.todoapp.uikit.components.TDFitPolicy
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.modifier.tdShadow
@@ -91,22 +95,33 @@ fun PomodoroSummaryScreen(
 
             Spacer(Modifier.height(32.dp))
 
+            // A third of a 360dp screen leaves each label ~80dp. That is enough for every label to
+            // wrap onto a second line, but not for a word to be BROKEN, so IntrinsicSize.Min keeps
+            // the three cards level when one of them takes two lines and the others don't.
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 PomodoroStatCard(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
                     label = stringResource(R.string.pomodoro_focus_sessions),
                     value = uiState.focusSessions.toString(),
                 )
                 PomodoroStatCard(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
                     label = stringResource(R.string.pomodoro_total_focus),
                     value = stringResource(R.string.pomodoro_minutes_abbrev, uiState.totalFocusMinutes),
                 )
                 PomodoroStatCard(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
                     label = stringResource(R.string.pomodoro_break_time),
                     value = stringResource(R.string.pomodoro_minutes_abbrev, uiState.totalBreakMinutes),
                 )
@@ -192,6 +207,9 @@ private fun PomodoroStatCard(
             text = label,
             style = TDTheme.typography.subheading1,
             color = TDTheme.colors.onBackground.copy(alpha = 0.6f),
+            textAlign = TextAlign.Center,
+            fitPolicy = TDFitPolicy.BOUNDED,
+            slot = "PomodoroStatCard.label",
         )
     }
 }
@@ -240,6 +258,24 @@ private fun PomodoroSummaryLongPreview() {
                 focusSessions = 8,
                 totalFocusMinutes = 200,
                 totalBreakMinutes = 60,
+                completedAt = "Wed, May 13 · 18:42",
+            ),
+            onAction = {},
+        )
+    }
+}
+
+/** The three stat cards are the tightest text slots on this screen — ~80dp each at 360dp. */
+@com.todoapp.uikit.previews.TDPreviewNarrow
+@Composable
+private fun PomodoroSummaryNarrowPreview() {
+    TDTheme {
+        PomodoroSummaryScreen(
+            uiState =
+            UiState(
+                focusSessions = 12,
+                totalFocusMinutes = 300,
+                totalBreakMinutes = 75,
                 completedAt = "Wed, May 13 · 18:42",
             ),
             onAction = {},
