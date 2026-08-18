@@ -66,16 +66,23 @@ private fun DrawScope.drawGlow(
 ) {
     val breath = wave(time, GLOW_SPEED, 0f)
     val flicker = wave(time, FLICKER_SPEED, 1.7f)
-    val radius = size.maxDimension * (GLOW_RADIUS_BASE + breath * GLOW_RADIUS_SWING)
-    val core = glow.copy(alpha = alpha * (GLOW_CORE + flicker * GLOW_FLICKER))
+    // Hardware with a handful of colours lit a small area brightly rather than washing the screen,
+    // and a banded falloff over a huge radius is just a stack of flat panels. Pulling the reach in
+    // lets the bands read as light instead of as backdrop.
+    val reach = if (grid.quantised) BLOCK_GLOW_REACH else 1f
+    val radius = size.maxDimension * (GLOW_RADIUS_BASE + breath * GLOW_RADIUS_SWING) * reach
+    val core = glow.copy(alpha = alpha * (GLOW_CORE + flicker * GLOW_FLICKER) * if (grid.quantised) BLOCK_GLOW_ALPHA else 1f)
     val center = Offset(size.width * HEARTH_X, size.height * HEARTH_Y)
     // On a grid the light falls off in steps: hardware with a handful of colours could not fade, so
     // it banded. Doubling each stop makes the gradient hold its value and then jump.
     val stops =
         if (grid.quantised) {
-            Array(GLOW_BANDS) { i ->
-                val edge = (i + 1).toFloat() / GLOW_BANDS
-                edge to core.copy(alpha = core.alpha * (1f - i.toFloat() / GLOW_BANDS))
+            // Each band is entered and left at the same alpha, so the gradient holds its value and
+            // then jumps. A single stop per band would just be a piecewise-linear fade.
+            Array(GLOW_BANDS * 2) { i ->
+                val band = i / 2
+                val edge = (if (i % 2 == 0) band else band + 1).toFloat() / GLOW_BANDS
+                edge to core.copy(alpha = core.alpha * (1f - band.toFloat() / GLOW_BANDS))
             }
         } else {
             arrayOf(0f to core, 1f to Color.Transparent)
@@ -270,6 +277,8 @@ private const val TIP_ALPHA = 0.15f
 
 private const val BLOCK_RAMP_STEPS = 4
 private const val GLOW_BANDS = 5
+private const val BLOCK_GLOW_REACH = 0.45f
+private const val BLOCK_GLOW_ALPHA = 0.55f
 private const val BLOCK_TAPER = 0.35f
 
 private const val EMBER_COUNT = 22
