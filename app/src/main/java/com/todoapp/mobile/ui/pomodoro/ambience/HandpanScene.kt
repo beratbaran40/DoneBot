@@ -7,9 +7,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
 /**
  * Resonance made visible: rings expanding from the centre of the screen on a steady cadence, with
@@ -24,6 +27,7 @@ fun HandpanScene(
     tint: Color,
     ink: AmbienceInk,
     isDark: Boolean,
+    cell: Dp,
     modifier: Modifier = Modifier,
 ) {
     val motes = remember { motes(seed = 5_501) }
@@ -33,8 +37,9 @@ fun HandpanScene(
         modifier.drawBehind {
             val t = clock.value
             drawRect(tint)
-            drawRipples(t, rippleInk)
-            drawMotes(motes, t, rippleInk)
+            val grid = SceneGrid(if (cell > 0.dp) cell.toPx() else 1f)
+            drawRipples(grid, t, rippleInk)
+            drawMotes(grid, motes, t, rippleInk)
         },
     )
 }
@@ -44,6 +49,7 @@ fun HandpanScene(
  * outermost fades — a continuous swell rather than a repeating pulse.
  */
 private fun DrawScope.drawRipples(
+    grid: SceneGrid,
     time: Float,
     ink: Color,
 ) {
@@ -53,16 +59,27 @@ private fun DrawScope.drawRipples(
         val progress = fract(time / RING_PERIOD + index.toFloat() / RING_COUNT)
         // Ease out: rings sprint away from the centre, then linger as they thin out.
         val eased = 1f - (1f - progress) * (1f - progress)
-        drawCircle(
-            color = ink.copy(alpha = ink.alpha * (1f - progress) * RING_ALPHA),
-            radius = maxRadius * eased,
-            center = center,
-            style = Stroke(width = RING_WIDTH_MAX - (RING_WIDTH_MAX - RING_WIDTH_MIN) * progress),
-        )
+        val radius = maxRadius * eased
+        val color = ink.copy(alpha = ink.alpha * (1f - progress) * RING_ALPHA)
+        val width = RING_WIDTH_MAX - (RING_WIDTH_MAX - RING_WIDTH_MIN) * progress
+        if (grid.quantised) {
+            // A square swell rather than a stepped circle: an expanding frame is what this effect
+            // looked like on the hardware, and it costs one rect instead of a ring of cells.
+            val side = grid.span(radius * 2f)
+            drawRect(
+                color = color,
+                topLeft = Offset(grid.snap(center.x - side / 2f), grid.snap(center.y - side / 2f)),
+                size = Size(side, side),
+                style = Stroke(width = grid.span(width)),
+            )
+        } else {
+            drawCircle(color = color, radius = radius, center = center, style = Stroke(width = width))
+        }
     }
 }
 
 private fun DrawScope.drawMotes(
+    grid: SceneGrid,
     motes: List<Mote>,
     time: Float,
     ink: Color,

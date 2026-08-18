@@ -10,6 +10,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
 /**
  * Rain seen through a window: two parallax sheets of falling streaks, plus a handful of droplets
@@ -24,6 +26,7 @@ fun RainScene(
     tint: Color,
     ink: AmbienceInk,
     isDark: Boolean,
+    cell: Dp,
     modifier: Modifier = Modifier,
 ) {
     // Fractional coordinates, so the layers survive rotation and never depend on pixel size.
@@ -36,15 +39,17 @@ fun RainScene(
     Spacer(
         modifier.drawBehind {
             val t = clock.value
+            val grid = SceneGrid(if (cell > 0.dp) cell.toPx() else 1f)
             drawRect(tint)
-            drawStreaks(far, t, streak.copy(alpha = FAR_ALPHA), FAR_WIDTH, FAR_LENGTH)
-            drawStreaks(near, t, streak.copy(alpha = NEAR_ALPHA), NEAR_WIDTH, NEAR_LENGTH)
-            drawGlass(glass, t, streak.copy(alpha = GLASS_ALPHA))
+            drawStreaks(grid, far, t, streak.copy(alpha = FAR_ALPHA), FAR_WIDTH, FAR_LENGTH)
+            drawStreaks(grid, near, t, streak.copy(alpha = NEAR_ALPHA), NEAR_WIDTH, NEAR_LENGTH)
+            drawGlass(grid, glass, t, streak.copy(alpha = GLASS_ALPHA))
         },
     )
 }
 
 private fun DrawScope.drawStreaks(
+    grid: SceneGrid,
     layer: List<Streak>,
     time: Float,
     color: Color,
@@ -68,6 +73,7 @@ private fun DrawScope.drawStreaks(
 
 /** Droplets that cling, swell and slide — much slower than the rain behind them. */
 private fun DrawScope.drawGlass(
+    grid: SceneGrid,
     droplets: List<Streak>,
     time: Float,
     color: Color,

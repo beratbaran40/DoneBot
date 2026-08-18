@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.domain.ambience.PomodoroAmbience
 import com.todoapp.uikit.previews.TDPreviewWide
+import com.todoapp.uikit.theme.PaletteKit
 import com.todoapp.uikit.theme.TDTheme
 
 /**
@@ -41,6 +42,8 @@ fun PomodoroAmbienceScene(
     // one kit paints the whole scene in it, another drains it away entirely.
     val palette = TDTheme.palette
     val colors = TDTheme.colors
+    // 8-Bit draws the scene on a grid; every other kit passes 0.dp, which is the identity.
+    val cell = if (palette == PaletteKit.PIXEL) SceneCell else 0.dp
     val ink = remember(palette, isDark, colors, accent, tint) {
         ambienceInk(palette = palette, isDark = isDark, colors = colors, accent = accent, ground = tint)
     }
@@ -48,9 +51,9 @@ fun PomodoroAmbienceScene(
     Box(modifier) {
         when (ambience) {
             PomodoroAmbience.None -> Spacer(Modifier.fillMaxSize().background(tint))
-            PomodoroAmbience.Fireplace -> FireplaceScene(clock, tint, ink, isDark, Modifier.fillMaxSize())
-            PomodoroAmbience.Rain -> RainScene(clock, tint, ink, isDark, Modifier.fillMaxSize())
-            PomodoroAmbience.Handpan -> HandpanScene(clock, tint, ink, isDark, Modifier.fillMaxSize())
+            PomodoroAmbience.Fireplace -> FireplaceScene(clock, tint, ink, isDark, cell, Modifier.fillMaxSize())
+            PomodoroAmbience.Rain -> RainScene(clock, tint, ink, isDark, cell, Modifier.fillMaxSize())
+            PomodoroAmbience.Handpan -> HandpanScene(clock, tint, ink, isDark, cell, Modifier.fillMaxSize())
         }
 
         if (ambience != PomodoroAmbience.None) {
@@ -71,6 +74,9 @@ fun PomodoroAmbienceScene(
         }
     }
 }
+
+/** Coarse enough that a flame reads as a stack of blocks, fine enough that it still reads as a flame. */
+private val SceneCell = 5.dp
 
 private const val SCRIM_ALPHA = 0.55f
 

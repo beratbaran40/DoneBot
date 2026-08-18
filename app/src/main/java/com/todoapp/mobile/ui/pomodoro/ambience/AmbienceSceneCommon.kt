@@ -6,7 +6,18 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameMillis
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.lerp
 import kotlin.math.PI
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.hypot
+import kotlin.math.max
+import kotlin.math.round
 import kotlin.math.sin
 import kotlin.random.Random
 
@@ -67,3 +78,80 @@ internal fun wave(
 internal const val TAU: Float = (2.0 * PI).toFloat()
 private const val MILLIS_PER_SECOND: Float = 1000f
 private const val HALF: Float = 0.5f
+
+/**
+ * Quantises a scene onto whole cells, so the 8-Bit kit's ambience is drawn by the hardware it is
+ * imitating rather than merely coloured like it.
+ *
+ * The scenes are already pure functions of time, which is what makes this cheap: snapping happens in
+ * the arithmetic, not in an offscreen buffer, so a blocky fire costs the same as a smooth one. A cell
+ * of 1px or less is the identity and every kit but 8-Bit passes that.
+ *
+ * Positions are snapped, never rounded from a moving value — a block's cell index is a function of
+ * time the same way its position was, so the fire steps between cells instead of shimmering along
+ * their edges.
+ */
+@JvmInline
+value class SceneGrid(val cell: Float) {
+    val quantised: Boolean get() = cell > 1f
+
+    /** Down to the cell boundary at or before [v]. */
+    fun snap(v: Float): Float = if (quantised) floor(v / cell) * cell else v
+
+    /** At least one whole cell, rounded to a whole number of them. */
+    fun span(v: Float): Float = if (quantised) max(cell, round(v / cell) * cell) else v
+}
+
+/** A dot in the scene: a circle normally, one square cell when the kit is drawing on a grid. */
+fun DrawScope.sceneDot(
+    grid: SceneGrid,
+    color: Color,
+    center: Offset,
+    radius: Float,
+) {
+    if (!grid.quantised) {
+        drawCircle(color = color, radius = radius, center = center)
+        return
+    }
+    val side = grid.span(radius * 2f)
+    drawRect(
+        color = color,
+        topLeft = Offset(grid.snap(center.x - side / 2f), grid.snap(center.y - side / 2f)),
+        size = Size(side, side),
+    )
+}
+
+/** A streak in the scene: a round-capped line normally, a run of cells on a grid. */
+fun DrawScope.sceneStreak(
+    grid: SceneGrid,
+    color: Color,
+    start: Offset,
+    end: Offset,
+    width: Float,
+) {
+    if (!grid.quantised) {
+        drawLine(color = color, start = start, end = end, strokeWidth = width, cap = StrokeCap.Round)
+        return
+    }
+    val thickness = grid.span(width)
+    val steps = max(1, ceil(hypot(end.x - start.x, end.y - start.y) / grid.cell).toInt())
+    for (i in 0..steps) {
+        val f = i.toFloat() / steps
+        drawRect(
+            color = color,
+            topLeft = Offset(
+                grid.snap(start.x + (end.x - start.x) * f),
+                grid.snap(start.y + (end.y - start.y) * f),
+            ),
+            size = Size(thickness, grid.cell),
+        )
+    }
+}
+
+/** Steps a 0..1 ramp into [steps] bands, so a gradient becomes a palette. */
+fun banded(
+    from: Color,
+    to: Color,
+    fraction: Float,
+    steps: Int,
+): Color = lerp(from, to, floor(fraction * steps).coerceIn(0f, steps - 1f) / (steps - 1f))

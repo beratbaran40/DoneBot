@@ -75,6 +75,23 @@ private fun terminalInk(phosphor: Color, ground: Color) = AmbienceInk(
 )
 
 /**
+ * 8-Bit gets the NES ramp it already carries in its tokens: three saturated steps rather than the
+ * fifteen a photoreal fire needs. The scene is drawn on a grid in this kit, and a smooth gradient
+ * over hard cells is the thing that reads as a filter rather than as the hardware.
+ */
+private fun pixelInk(colors: TDColor, isDark: Boolean) = AmbienceInk(
+    glow = colors.orange,
+    ember = colors.lightYellow,
+    flames = listOf(
+        FlameInk(root = colors.crossRed, tip = colors.lightYellow),
+        FlameInk(root = colors.orange, tip = colors.lightYellow),
+        FlameInk(root = colors.crossRed, tip = colors.orange),
+    ),
+    streak = if (isDark) colors.lightPurple else colors.purple,
+    ripple = if (isDark) colors.lightPurple else colors.purple,
+)
+
+/**
  * [accent] is the mode's own colour — the same one the ring and numerals are drawn in — and [ground]
  * the surface it burns against.
  */
@@ -87,7 +104,8 @@ fun ambienceInk(
 ): AmbienceInk = when (palette) {
     PaletteKit.MONOCHROME -> monochromeInk(colors)
     PaletteKit.TERMINAL -> terminalInk(accent, ground)
-    PaletteKit.ORIGINAL, PaletteKit.PIXEL -> originalInk(isDark)
+    PaletteKit.PIXEL -> pixelInk(colors, isDark)
+    PaletteKit.ORIGINAL -> originalInk(isDark)
 }
 
 private const val GLOW_MIX = 0.60f

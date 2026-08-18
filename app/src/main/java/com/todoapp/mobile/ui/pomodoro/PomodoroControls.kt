@@ -20,6 +20,7 @@ import com.todoapp.mobile.R
 import com.todoapp.mobile.ui.pomodoro.PomodoroContract.UiAction
 import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.modifier.tdShadow
+import com.todoapp.uikit.theme.TDElevationStyle
 import com.todoapp.uikit.theme.TDTheme
 import com.example.uikit.R as UiKitR
 
@@ -34,9 +35,13 @@ fun PomodoroControls(
     onAction: (UiAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // A hard-elevation kit draws the play button as a solid key with a shadow block behind it. Next
+    // to that, a bare glyph reads as a rendering fault rather than as a quieter action, so skip gets
+    // a surface of its own there — the same reasoning that put the outline on the calendar tab.
+    val skipOnSurface = TDTheme.style.elevationStyle == TDElevationStyle.HARD
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
+        horizontalArrangement = Arrangement.spacedBy(ControlGap, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // Center play/pause — large neumorphic circle
@@ -50,8 +55,7 @@ fun PomodoroControls(
         Box(
             modifier =
             Modifier
-                .padding(horizontal = 32.dp)
-                .size(88.dp)
+                .size(PlayDiameter)
                 .tdShadow(
                     lightShadow = lightShadow,
                     darkShadow = darkShadow,
@@ -80,16 +84,28 @@ fun PomodoroControls(
         Box(
             modifier =
             Modifier
-                .size(48.dp)
-                .clip(TDTheme.shapes.circle)
+                .size(if (skipOnSurface) SkipDiameterOnSurface else SkipDiameter)
+                .then(
+                    if (skipOnSurface) {
+                        Modifier.tdShadow(
+                            lightShadow = lightShadow,
+                            darkShadow = darkShadow,
+                            cornerRadius = SkipDiameterOnSurface / 2,
+                            elevation = SkipElevation,
+                        )
+                    } else {
+                        Modifier
+                    },
+                ).clip(TDTheme.shapes.circle)
+                .then(if (skipOnSurface) Modifier.background(surfaceColor) else Modifier)
                 .clickable { onAction(UiAction.SkipSession) },
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 painter = tdPainter(UiKitR.drawable.ic_skip_next),
                 contentDescription = stringResource(R.string.skip),
-                tint = contentColor.copy(alpha = 0.65f),
-                modifier = Modifier.size(28.dp),
+                tint = contentColor.copy(alpha = SKIP_INK_ALPHA),
+                modifier = Modifier.size(SkipIcon),
             )
         }
     }
@@ -186,3 +202,12 @@ private fun PomodoroControlsShortBreakPreview() {
         )
     }
 }
+
+/** The play key, and the gap that keeps skip clear of its shadow block in a hard-elevation kit. */
+private val PlayDiameter = 88.dp
+private val ControlGap = 24.dp
+private val SkipDiameter = 48.dp
+private val SkipDiameterOnSurface = 56.dp
+private val SkipElevation = 6.dp
+private val SkipIcon = 28.dp
+private const val SKIP_INK_ALPHA = 0.65f
