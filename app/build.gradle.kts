@@ -23,6 +23,13 @@ val debugBaseUrl: String = localProps.getProperty("debugBaseUrl", "https://doneb
 // for CI/local-only-no-key dev. Production releases must set the key.
 val mapsApiKey: String = localProps.getProperty("MAPS_API_KEY", "")
 
+// Debug-only escape hatch for the "a newer version is out" dialog. Play answers UPDATE_NOT_AVAILABLE
+// for anything it did not install — which is every debug build — so this is the only way to look at
+// the dialog before shipping it. Add `forceUpdateAvailable=true` to local.properties (gitignored, so
+// it can never ride along in a commit). Release keeps defaultConfig's hardcoded false and R8 drops
+// the whole branch.
+val forceUpdateAvailable: Boolean = localProps.getProperty("forceUpdateAvailable", "false").toBoolean()
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -74,6 +81,11 @@ android {
         // and to BuildConfig for Places SDK initialization in Application.onCreate.
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
         buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
+
+        // Declared here, not in debug{}, because PlayAppUpdateChecker lives in src/main and therefore
+        // compiles into release and releaseLocal too — a debug-only field is an Unresolved reference
+        // there. releaseLocal inherits this false via initWith(release).
+        buildConfigField("boolean", "FORCE_UPDATE_AVAILABLE", "false")
     }
 
     signingConfigs {
@@ -110,6 +122,7 @@ android {
                 "\"https://donebot-backend.onrender.com/legal/terms.html\"",
             )
             buildConfigField("String", "SUPPORT_EMAIL", "\"donebotapp@gmail.com\"")
+            buildConfigField("boolean", "FORCE_UPDATE_AVAILABLE", "$forceUpdateAvailable")
         }
         release {
             isMinifyEnabled = true

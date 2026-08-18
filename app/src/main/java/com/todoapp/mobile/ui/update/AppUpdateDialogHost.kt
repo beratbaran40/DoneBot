@@ -3,8 +3,6 @@ package com.todoapp.mobile.ui.update
 import android.content.Context
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -13,16 +11,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.android.play.core.appupdate.AppUpdateManagerFactory
-import com.google.android.play.core.appupdate.AppUpdateOptions
-import com.google.android.play.core.install.model.AppUpdateType
-import com.google.android.play.core.install.model.UpdateAvailability
-import com.google.android.play.core.ktx.requestAppUpdateInfo
 import com.todoapp.mobile.R
 import com.todoapp.mobile.ui.common.LocalReduceMotion
 import com.todoapp.uikit.components.TDUpdateAvailableDialog
-import kotlinx.coroutines.CancellationException
 import timber.log.Timber
 
 /**
@@ -41,11 +35,22 @@ fun AppUpdateDialogHost() {
     val updateLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { }
 
+    // Play requires an app that started an immediate update to re-enter the flow when it comes back —
+    // the update does not resume on its own, and until it does the user is stuck in a half-updated
+    // install. This doubles as the retry for a check that could not reach Play at cold start.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.onAction(AppUpdateContract.UiAction.OnAppResumed)
+    }
+
     LaunchedEffect(viewModel.uiEffect) {
         viewModel.uiEffect.collect { effect ->
             when (effect) {
                 AppUpdateContract.UiEffect.LaunchUpdateFlow ->
-                    if (!startImmediateUpdate(context, updateLauncher)) openPlayStoreListing(context)
+                    if (!viewModel.startUpdateFlow(updateLauncher)) openPlayStoreListing(context)
+
+                // No store-listing fallback here: if Play cannot resume the update it started itself,
+                // a listing page accomplishes nothing.
+                AppUpdateContract.UiEffect.ResumeUpdateFlow -> viewModel.resumeUpdateFlow(updateLauncher)
             }
         }
     }
@@ -62,36 +67,6 @@ fun AppUpdateDialogHost() {
         onDismiss = { viewModel.onAction(AppUpdateContract.UiAction.OnDismiss) },
         reduceMotion = LocalReduceMotion.current,
     )
-}
-
-/**
- * Starts Play's in-app update flow, re-requesting the info first: an `AppUpdateInfo` is good for one
- * `startUpdateFlowForResult` call, so the one the availability check used cannot be reused here.
- *
- * @return false when Play declines to run the flow, which is the caller's cue to fall back to the
- *   store listing rather than leave the button doing nothing.
- */
-private suspend fun startImmediateUpdate(
-    context: Context,
-    launcher: ActivityResultLauncher<IntentSenderRequest>,
-): Boolean = try {
-    val manager = AppUpdateManagerFactory.create(context)
-    val info = manager.requestAppUpdateInfo()
-    val canStart = info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE &&
-        info.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
-    if (canStart) {
-        manager.startUpdateFlowForResult(
-            info,
-            launcher,
-            AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build(),
-        )
-    }
-    canStart
-} catch (e: CancellationException) {
-    throw e
-} catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-    Timber.tag(TAG).d(e, "in-app update flow unavailable; falling back to the store listing")
-    false
 }
 
 /**

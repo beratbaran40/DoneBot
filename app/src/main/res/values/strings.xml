@@ -1247,7 +1247,7 @@
 
     <!-- Update available dialog -->
     <string name="update_available_bubble">I\'ve learned a few new tricks! Grab the latest version so we stay in sync.</string>
-    <string name="update_available_detail">The update installs from Google Play and only takes a moment.</string>
+    <string name="update_available_detail">Google Play takes over the screen while it installs, then DoneBot restarts. Nothing you\'ve saved is lost.</string>
     <string name="update_available_action">Update</string>
     <string name="update_available_later">Not now</string>
 </resources>

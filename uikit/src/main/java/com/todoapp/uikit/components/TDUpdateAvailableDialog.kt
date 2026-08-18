@@ -72,13 +72,16 @@ fun TDUpdateAvailableDialog(
     }
 }
 
+// Preview copy mirrors :app's update_available_* strings — :uikit cannot read :app resources,
+// so these are hand-kept. Change both together, or the only rendering surface this dialog has in the
+// repo (there are no Compose UI tests) is showing text that will never ship.
 @TDPreviewDialog
 @Composable
 private fun TDUpdateAvailableDialogPreviewEn() {
     TDTheme {
         TDUpdateAvailableDialog(
-            speechBubbleText = "I've picked up a few new tricks! Grab the latest version so we stay in sync.",
-            detailText = "The update installs from Google Play and takes a moment.",
+            speechBubbleText = "I've learned a few new tricks! Grab the latest version so we stay in sync.",
+            detailText = "Google Play takes over the screen while it installs, then DoneBot restarts. Nothing you've saved is lost.",
             updateButtonText = "Update",
             laterButtonText = "Not now",
             avatarRes = drawable.ic_bot,
@@ -93,8 +96,8 @@ private fun TDUpdateAvailableDialogPreviewEn() {
 private fun TDUpdateAvailableDialogPreviewTr() {
     TDTheme {
         TDUpdateAvailableDialog(
-            speechBubbleText = "Birkaç yeni numara öğrendim! En son sürüme geçelim de aynı yerde olalım.",
-            detailText = "Güncelleme Google Play üzerinden kurulur, kısa sürer.",
+            speechBubbleText = "Birkaç yeni numara öğrendim! En son sürüme geç de aynı yerde olalım.",
+            detailText = "Google Play kurulum boyunca ekranı devralır, sonra DoneBot yeniden başlar. Kaydettiklerin yerinde kalır.",
             updateButtonText = "Güncelle",
             laterButtonText = "Şimdi değil",
             avatarRes = drawable.ic_bot,
@@ -112,7 +115,7 @@ private fun TDUpdateAvailableDialogPreviewLongCopy() {
             speechBubbleText =
             "There's a newer version of DoneBot waiting for you, with fixes for reminders, " +
                 "the calendar and a handful of things you told me were annoying.",
-            detailText = "The update installs from Google Play and takes a moment.",
+            detailText = "Google Play takes over the screen while it installs, then DoneBot restarts. Nothing you've saved is lost.",
             updateButtonText = "Update now",
             laterButtonText = "Maybe later",
             avatarRes = drawable.ic_bot,
@@ -127,8 +130,8 @@ private fun TDUpdateAvailableDialogPreviewLongCopy() {
 private fun TDUpdateAvailableDialogPreviewReducedMotion() {
     TDTheme {
         TDUpdateAvailableDialog(
-            speechBubbleText = "I've picked up a few new tricks! Grab the latest version so we stay in sync.",
-            detailText = "The update installs from Google Play and takes a moment.",
+            speechBubbleText = "I've learned a few new tricks! Grab the latest version so we stay in sync.",
+            detailText = "Google Play takes over the screen while it installs, then DoneBot restarts. Nothing you've saved is lost.",
             updateButtonText = "Update",
             laterButtonText = "Not now",
             avatarRes = drawable.ic_bot,

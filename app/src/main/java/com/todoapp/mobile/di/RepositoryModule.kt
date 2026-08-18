@@ -244,4 +244,10 @@ abstract class RepositoryModule {
     abstract fun bindAppUpdateChecker(
         impl: com.todoapp.mobile.data.update.PlayAppUpdateChecker,
     ): com.todoapp.mobile.domain.update.AppUpdateChecker
+
+    @Binds
+    @Singleton
+    abstract fun bindAppUpdateFlowStarter(
+        impl: com.todoapp.mobile.data.update.PlayAppUpdateFlowStarter,
+    ): com.todoapp.mobile.domain.update.AppUpdateFlowStarter
 }

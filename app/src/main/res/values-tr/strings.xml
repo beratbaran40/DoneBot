@@ -1248,7 +1248,7 @@
 
     <!-- Güncelleme mevcut diyaloğu -->
     <string name="update_available_bubble">Birkaç yeni numara öğrendim! En son sürüme geç de aynı yerde olalım.</string>
-    <string name="update_available_detail">Güncelleme Google Play üzerinden kurulur, kısa sürer.</string>
+    <string name="update_available_detail">Google Play kurulum boyunca ekranı devralır, sonra DoneBot yeniden başlar. Kaydettiklerin yerinde kalır.</string>
     <string name="update_available_action">Güncelle</string>
     <string name="update_available_later">Şimdi değil</string>
 </resources>
