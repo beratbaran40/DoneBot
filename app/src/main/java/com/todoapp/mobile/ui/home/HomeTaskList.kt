@@ -121,7 +121,7 @@ fun HomeTaskList(
                                 ambientColor = TDTheme.colors.purple.copy(alpha = 0.3f),
                             )
                             .clip(TDTheme.shapes.circle)
-                            .crtScreen(diameter = 180.dp, bezel = false)
+                            .crtScreen(minSide = 180.dp, bezel = false)
                             .border(
                                 width = 2.dp,
                                 color = TDTheme.colors.lightPurple.copy(alpha = 0.6f),

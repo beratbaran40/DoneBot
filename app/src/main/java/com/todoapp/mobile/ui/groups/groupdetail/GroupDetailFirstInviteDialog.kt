@@ -163,7 +163,7 @@ private fun MascotHero() {
             modifier = Modifier
                 .size(96.dp)
                 .clip(CircleShape)
-                .crtScreen(diameter = 96.dp, bezel = false)
+                .crtScreen(minSide = 96.dp, bezel = false)
                 .border(2.dp, TDTheme.colors.lightPurple.copy(alpha = 0.6f), CircleShape),
         )
     }

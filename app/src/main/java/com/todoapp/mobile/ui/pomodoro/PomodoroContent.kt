@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.domain.ambience.PomodoroAmbience
@@ -15,6 +17,7 @@ import com.todoapp.mobile.ui.common.rememberAnimationsEnabled
 import com.todoapp.mobile.ui.pomodoro.PomodoroContract.UiAction
 import com.todoapp.mobile.ui.pomodoro.PomodoroContract.UiState
 import com.todoapp.mobile.ui.pomodoro.ambience.PomodoroAmbienceScene
+import com.todoapp.uikit.modifier.crtScreen
 import com.todoapp.uikit.previews.TDPreview
 import com.todoapp.uikit.theme.TDTheme
 
@@ -33,10 +36,25 @@ fun PomodoroContent(
     onAction: (UiAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val isPortrait = LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
+    val configuration = LocalConfiguration.current
+    val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
     val visuals = rememberPomodoroVisuals(uiState)
+    val shortestSide = minOf(configuration.screenWidthDp, configuration.screenHeightDp).dp
 
-    Box(modifier.fillMaxSize()) {
+    Box(
+        modifier
+            .fillMaxSize()
+            // The Terminal kit turns the whole session into a tube. The bands go over everything —
+            // scene, ring and numerals alike — because on a real screen they do; the ground is left
+            // transparent since the scene already paints the mode's own. No bezel: at full bleed a
+            // frame would run under the status bar rather than around a window.
+            .crtScreen(
+                minSide = shortestSide,
+                shape = RectangleShape,
+                bezel = false,
+                ground = Color.Transparent,
+            ),
+    ) {
         PomodoroAmbienceScene(
             ambience = uiState.ambience,
             tint = visuals.background,

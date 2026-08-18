@@ -97,7 +97,7 @@ fun TDSplashScreen(onAnimationComplete: () -> Unit = {}) {
                 .size(BADGE_SIZE_DP.dp)
                 .clip(CircleShape)
                 .background(badgeColor)
-                .crtScreen(diameter = BADGE_SIZE_DP.dp),
+                .crtScreen(minSide = BADGE_SIZE_DP.dp),
             contentAlignment = Alignment.Center,
         ) {
             Image(

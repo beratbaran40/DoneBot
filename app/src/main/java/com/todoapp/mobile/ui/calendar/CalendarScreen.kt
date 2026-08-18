@@ -400,7 +400,7 @@ private fun CalendarEmptyState() {
                     ambientColor = TDTheme.colors.pendingGray.copy(alpha = 0.3f),
                 )
                 .clip(TDTheme.shapes.circle)
-                .crtScreen(diameter = 160.dp, bezel = false)
+                .crtScreen(minSide = 160.dp, bezel = false)
                 .border(
                     width = 2.dp,
                     color = TDTheme.colors.darkPending.copy(alpha = 0.6f),

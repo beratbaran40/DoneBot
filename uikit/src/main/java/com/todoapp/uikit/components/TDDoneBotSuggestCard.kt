@@ -58,7 +58,7 @@ fun TDDoneBotSuggestCard(
                 modifier = Modifier
                     .size(96.dp)
                     .clip(RoundedCornerShape(percent = 50))
-                    .crtScreen(diameter = 96.dp),
+                    .crtScreen(minSide = 96.dp),
             )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.fillMaxWidth()) {

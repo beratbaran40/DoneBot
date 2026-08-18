@@ -120,7 +120,7 @@ fun TDOverlayDailyPlanNotificationCard(
                         .size(70.dp)
                         .clip(CircleShape)
                         .background(TDTheme.colors.background.copy(alpha = 0.14f))
-                        .crtScreen(diameter = 70.dp),
+                        .crtScreen(minSide = 70.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Image(

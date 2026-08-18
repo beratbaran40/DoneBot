@@ -379,7 +379,7 @@ private fun ChatPersonaHeader(
                     .size(55.dp)
                     .clip(CircleShape)
                     .background(TDTheme.colors.pendingGray)
-                    .crtScreen(diameter = 55.dp),
+                    .crtScreen(minSide = 55.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -445,7 +445,7 @@ private fun ChatEmptyState(
                 .size(88.dp)
                 .clip(CircleShape)
                 .background(TDTheme.colors.pendingGray)
-                .crtScreen(diameter = 88.dp),
+                .crtScreen(minSide = 88.dp),
             contentAlignment = Alignment.Center,
         ) {
             Image(

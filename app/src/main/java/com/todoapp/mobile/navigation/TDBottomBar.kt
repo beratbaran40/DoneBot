@@ -95,7 +95,7 @@ fun TDBottomBar() {
                                 .size(40.dp)
                                 .clip(CircleShape)
                                 .background(TDTheme.colors.pendingGray)
-                                .crtScreen(diameter = 40.dp),
+                                .crtScreen(minSide = 40.dp),
                             contentAlignment = Alignment.Center,
                         ) {
                             Image(

@@ -197,7 +197,7 @@ private fun MascotWithHalo(
                 .size(96.dp)
                 .clip(CircleShape)
                 .background(TDTheme.colors.lightPending)
-                .crtScreen(diameter = 96.dp),
+                .crtScreen(minSide = 96.dp),
             contentAlignment = Alignment.Center,
         ) {
             Image(
