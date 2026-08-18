@@ -36,6 +36,7 @@ import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDFitPolicy
 import com.todoapp.uikit.components.TDText
+import com.todoapp.uikit.components.tdConfettiProperties
 import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.modifier.tdShadow
 import com.todoapp.uikit.theme.TDTheme
@@ -166,6 +167,7 @@ private fun ConfettiOverlay() {
         progress = { progress },
         modifier = Modifier.fillMaxSize(),
         contentScale = ContentScale.Crop,
+        dynamicProperties = tdConfettiProperties(),
     )
 }
 

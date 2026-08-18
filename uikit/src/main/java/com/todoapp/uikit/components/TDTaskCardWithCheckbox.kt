@@ -367,6 +367,7 @@ internal fun ConfettiEffect(
         progress = { progress },
         modifier = modifier,
         contentScale = ContentScale.FillWidth,
+        dynamicProperties = tdConfettiProperties(),
     )
 
     LaunchedEffect(progress) {
