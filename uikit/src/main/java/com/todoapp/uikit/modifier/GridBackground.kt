@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.CacheDrawScope
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -31,10 +32,12 @@ import kotlin.math.roundToInt
  * Background texture style for [gridBackground].
  *
  * [Dither] is the ordered 2-cell checkerboard 8-bit hardware used wherever a modern renderer would
- * use a gradient. It is drawn through a repeating shader rather than per cell: at a 2dp cell a
- * 411x900dp screen holds ~92,000 cells, which no per-cell loop can afford.
+ * use a gradient. [Scanlines] is the horizontal-only CRT band pattern — one rule every `spacing`,
+ * nothing vertical. Both are drawn through a repeating shader rather than per cell: at a 2dp cell a
+ * 411x900dp screen holds ~92,000 cells and at a 4dp scanline pitch a 900dp column holds ~640 bands,
+ * which no per-cell loop should pay for on every invalidation.
  */
-enum class GridStyle { Lines, Dots, Dither }
+enum class GridStyle { Lines, Dots, Dither, Scanlines }
 
 /**
  * Draws a texture behind content: a base fill, then hairline lines, dots, or a dither checkerboard
@@ -58,27 +61,23 @@ fun Modifier.gridBackground(
     val textured = lineColor.alpha > 0f && step > 0f
     val stroke = lineWidth.toPx()
 
-    // One 2x2-cell tile, repeated by the shader. Built here so it survives every frame that does not
-    // change the size or density.
-    val ditherBrush = if (textured && style == GridStyle.Dither) {
-        val cell = step.roundToInt().coerceAtLeast(1)
-        val tilePx = cell * 2
-        val tile = ImageBitmap(tilePx, tilePx, ImageBitmapConfig.Argb8888)
-        val tileSize = Size(tilePx.toFloat(), tilePx.toFloat())
-        CanvasDrawScope().draw(this, layoutDirection, Canvas(tile), tileSize) {
-            drawRect(baseColor)
-            val c = cell.toFloat()
-            drawRect(lineColor, topLeft = Offset(0f, 0f), size = Size(c, c))
-            drawRect(lineColor, topLeft = Offset(c, c), size = Size(c, c))
+    // Tiled textures build their bitmap here so it survives every frame that does not change the size
+    // or density; the per-frame cost is then one drawRect with a repeating shader.
+    val tileBrush = when {
+        !textured -> null
+        style == GridStyle.Dither -> ditherBrush(baseColor, lineColor, step.roundToInt().coerceAtLeast(1))
+        style == GridStyle.Scanlines -> {
+            // At least two rows per period, and a band that always leaves a gap — otherwise the tile
+            // degenerates into a solid fill and the texture silently disappears.
+            val cell = step.roundToInt().coerceAtLeast(2)
+            scanlineBrush(baseColor, lineColor, cell, stroke.roundToInt().coerceIn(1, cell - 1))
         }
-        ShaderBrush(ImageShader(tile, TileMode.Repeated, TileMode.Repeated))
-    } else {
-        null
+        else -> null
     }
 
     onDrawBehind {
-        if (ditherBrush != null) {
-            drawRect(ditherBrush)
+        if (tileBrush != null) {
+            drawRect(tileBrush)
             return@onDrawBehind
         }
         drawRect(color = baseColor)
@@ -107,10 +106,45 @@ fun Modifier.gridBackground(
                     y += step
                 }
             }
-            // Handled above through the cached shader.
-            GridStyle.Dither -> Unit
+            // Both handled above through the cached shader.
+            GridStyle.Dither, GridStyle.Scanlines -> Unit
         }
     }
+}
+
+/** One 2x2-cell ordered-dither tile: the checkerboard 8-bit hardware used in place of a gradient. */
+private fun CacheDrawScope.ditherBrush(baseColor: Color, lineColor: Color, cellPx: Int): ShaderBrush {
+    val tilePx = cellPx * 2
+    val tile = ImageBitmap(tilePx, tilePx, ImageBitmapConfig.Argb8888)
+    val tileSize = Size(tilePx.toFloat(), tilePx.toFloat())
+    CanvasDrawScope().draw(this, layoutDirection, Canvas(tile), tileSize) {
+        drawRect(baseColor)
+        val c = cellPx.toFloat()
+        drawRect(lineColor, topLeft = Offset(0f, 0f), size = Size(c, c))
+        drawRect(lineColor, topLeft = Offset(c, c), size = Size(c, c))
+    }
+    return ShaderBrush(ImageShader(tile, TileMode.Repeated, TileMode.Repeated))
+}
+
+/**
+ * One CRT scanline period: a single-pixel-wide column holding the band and the gap below it. The
+ * tile is 1px wide because the pattern has no horizontal structure, so repeating in X is free and
+ * the bitmap stays a few dozen bytes. Sized in device pixels so the shader samples 1:1 and the band
+ * edge stays hard, exactly as the dither tile does.
+ */
+private fun CacheDrawScope.scanlineBrush(
+    baseColor: Color,
+    lineColor: Color,
+    cellPx: Int,
+    bandPx: Int,
+): ShaderBrush {
+    val tile = ImageBitmap(1, cellPx, ImageBitmapConfig.Argb8888)
+    val tileSize = Size(1f, cellPx.toFloat())
+    CanvasDrawScope().draw(this, layoutDirection, Canvas(tile), tileSize) {
+        drawRect(baseColor)
+        drawRect(lineColor, topLeft = Offset.Zero, size = Size(1f, bandPx.toFloat()))
+    }
+    return ShaderBrush(ImageShader(tile, TileMode.Repeated, TileMode.Repeated))
 }
 
 @TDPreview
@@ -135,5 +169,29 @@ private fun TdGridBackgroundPreview() {
                     ),
             )
         }
+    }
+}
+
+/**
+ * Colours are literal rather than tokens because no shipping kit selects [GridStyle.Scanlines] yet —
+ * a preview reading `TDTheme.colors.gridLine` would resolve ORIGINAL's transparent line and render
+ * an empty box, hiding the very draw path this preview exists to show.
+ */
+@TDPreview
+@Composable
+private fun TdScanlineBackgroundPreview() {
+    TDTheme {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(140.dp)
+                .gridBackground(
+                    baseColor = Color(0xFF050705),
+                    lineColor = Color(0xFF0C130C),
+                    spacing = 4.dp,
+                    lineWidth = 1.dp,
+                    style = GridStyle.Scanlines,
+                ),
+        )
     }
 }
