@@ -37,9 +37,11 @@ data class PomodoroVisuals(
 @Composable
 fun rememberPomodoroVisuals(uiState: UiState): PomodoroVisuals {
     val isDark = TDTheme.isDark
+    val palette = TDTheme.palette
+    val colors = TDTheme.colors
     val target =
-        remember(uiState.mode.colorKey, isDark) {
-            PomodoroModeTheme.resolve(uiState.mode.colorKey, isDark)
+        remember(uiState.mode.colorKey, isDark, palette, colors) {
+            PomodoroModeTheme.resolve(uiState.mode.colorKey, isDark, palette, colors)
         }
 
     val background by animateColorAsState(target.background, tween(COLOR_ANIM_MS), "pomoBg")

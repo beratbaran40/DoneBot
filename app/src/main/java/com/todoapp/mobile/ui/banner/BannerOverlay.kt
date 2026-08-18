@@ -52,7 +52,13 @@ fun BannerContent(
     if (!uiState.isVisible) return
 
     val isDark = TDTheme.isDark
-    val palette = PomodoroModeTheme.resolve(uiState.mode.toModeColorKey(), isDark)
+    val palette =
+        PomodoroModeTheme.resolve(
+            colorKey = uiState.mode.toModeColorKey(),
+            isDark = isDark,
+            palette = TDTheme.palette,
+            colors = TDTheme.colors,
+        )
 
     TDPomodoroBanner(
         minutes = uiState.minutes ?: 0,

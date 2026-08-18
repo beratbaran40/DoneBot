@@ -99,7 +99,12 @@ fun PomodoroControls(
 @com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun PomodoroControlsPreview() {
-    val palette = PomodoroModeTheme.resolve(ModeColorKey.Focus, isDark = false)
+    val palette = PomodoroModeTheme.resolve(
+        colorKey = ModeColorKey.Focus,
+        isDark = false,
+        palette = TDTheme.palette,
+        colors = TDTheme.colors,
+    )
     TDTheme {
         PomodoroControls(
             isRunning = false,
@@ -117,7 +122,12 @@ private fun PomodoroControlsPreview() {
 @com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun PomodoroControlsRunningPreview() {
-    val palette = PomodoroModeTheme.resolve(ModeColorKey.Focus, isDark = false)
+    val palette = PomodoroModeTheme.resolve(
+        colorKey = ModeColorKey.Focus,
+        isDark = false,
+        palette = TDTheme.palette,
+        colors = TDTheme.colors,
+    )
     TDTheme {
         PomodoroControls(
             isRunning = true,
@@ -135,7 +145,12 @@ private fun PomodoroControlsRunningPreview() {
 @com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun PomodoroControlsOvertimePreview() {
-    val palette = PomodoroModeTheme.resolve(ModeColorKey.OverTime, isDark = false)
+    val palette = PomodoroModeTheme.resolve(
+        colorKey = ModeColorKey.OverTime,
+        isDark = false,
+        palette = TDTheme.palette,
+        colors = TDTheme.colors,
+    )
     TDTheme {
         PomodoroControls(
             isRunning = true,
@@ -153,7 +168,12 @@ private fun PomodoroControlsOvertimePreview() {
 @com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun PomodoroControlsShortBreakPreview() {
-    val palette = PomodoroModeTheme.resolve(ModeColorKey.ShortBreak, isDark = false)
+    val palette = PomodoroModeTheme.resolve(
+        colorKey = ModeColorKey.ShortBreak,
+        isDark = false,
+        palette = TDTheme.palette,
+        colors = TDTheme.colors,
+    )
     TDTheme {
         PomodoroControls(
             isRunning = true,

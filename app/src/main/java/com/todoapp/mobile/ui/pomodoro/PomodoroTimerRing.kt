@@ -69,7 +69,12 @@ fun PomodoroTimerRing(
 @Composable
 private fun PomodoroTimerRingPreview() {
     TDTheme {
-        val palette = PomodoroModeTheme.resolve(ModeColorKey.Focus, isSystemInDarkTheme())
+        val palette = PomodoroModeTheme.resolve(
+            colorKey = ModeColorKey.Focus,
+            isDark = isSystemInDarkTheme(),
+            palette = TDTheme.palette,
+            colors = TDTheme.colors,
+        )
         Box(modifier = Modifier.padding(16.dp)) {
             PomodoroTimerRing(
                 progress = 0.75f,
@@ -84,7 +89,12 @@ private fun PomodoroTimerRingPreview() {
 @Composable
 private fun PomodoroTimerRingEmptyPreview() {
     TDTheme {
-        val palette = PomodoroModeTheme.resolve(ModeColorKey.Focus, isSystemInDarkTheme())
+        val palette = PomodoroModeTheme.resolve(
+            colorKey = ModeColorKey.Focus,
+            isDark = isSystemInDarkTheme(),
+            palette = TDTheme.palette,
+            colors = TDTheme.colors,
+        )
         Box(modifier = Modifier.padding(16.dp)) {
             PomodoroTimerRing(
                 progress = 0f,
@@ -99,7 +109,12 @@ private fun PomodoroTimerRingEmptyPreview() {
 @Composable
 private fun PomodoroTimerRingFullPreview() {
     TDTheme {
-        val palette = PomodoroModeTheme.resolve(ModeColorKey.Focus, isSystemInDarkTheme())
+        val palette = PomodoroModeTheme.resolve(
+            colorKey = ModeColorKey.Focus,
+            isDark = isSystemInDarkTheme(),
+            palette = TDTheme.palette,
+            colors = TDTheme.colors,
+        )
         Box(modifier = Modifier.padding(16.dp)) {
             PomodoroTimerRing(
                 progress = 1f,
@@ -114,7 +129,12 @@ private fun PomodoroTimerRingFullPreview() {
 @Composable
 private fun PomodoroTimerRingShortBreakPreview() {
     TDTheme {
-        val palette = PomodoroModeTheme.resolve(ModeColorKey.ShortBreak, isSystemInDarkTheme())
+        val palette = PomodoroModeTheme.resolve(
+            colorKey = ModeColorKey.ShortBreak,
+            isDark = isSystemInDarkTheme(),
+            palette = TDTheme.palette,
+            colors = TDTheme.colors,
+        )
         Box(modifier = Modifier.padding(16.dp)) {
             PomodoroTimerRing(
                 progress = 0.4f,
@@ -129,7 +149,12 @@ private fun PomodoroTimerRingShortBreakPreview() {
 @Composable
 private fun PomodoroTimerRingOverTimePreview() {
     TDTheme {
-        val palette = PomodoroModeTheme.resolve(ModeColorKey.OverTime, isSystemInDarkTheme())
+        val palette = PomodoroModeTheme.resolve(
+            colorKey = ModeColorKey.OverTime,
+            isDark = isSystemInDarkTheme(),
+            palette = TDTheme.palette,
+            colors = TDTheme.colors,
+        )
         Box(modifier = Modifier.padding(16.dp)) {
             PomodoroTimerRing(
                 progress = 0.5f,

@@ -186,7 +186,12 @@ private fun PomodoroProgressRingLandscapePreview() {
 @Composable
 private fun PomodoroModeCardPreview() {
     TDTheme {
-        val palette = PomodoroModeTheme.resolve(ModeColorKey.Focus, TDTheme.isDark)
+        val palette = PomodoroModeTheme.resolve(
+            colorKey = ModeColorKey.Focus,
+            isDark = TDTheme.isDark,
+            palette = TDTheme.palette,
+            colors = TDTheme.colors,
+        )
         PomodoroModeCard(
             mode = PomodoroModeUiPreset.Focus.value,
             surfaceColor = palette.surface,
