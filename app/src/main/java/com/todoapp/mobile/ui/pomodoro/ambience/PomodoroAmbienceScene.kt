@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -30,18 +31,26 @@ import com.todoapp.uikit.theme.TDTheme
 fun PomodoroAmbienceScene(
     ambience: PomodoroAmbience,
     tint: Color,
+    accent: Color,
     isDark: Boolean,
     animate: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val clock = rememberSceneClock(enabled = animate && ambience != PomodoroAmbience.None)
+    // The scene used to see only the ground it burns against. It needs the mode's own colour too:
+    // one kit paints the whole scene in it, another drains it away entirely.
+    val palette = TDTheme.palette
+    val colors = TDTheme.colors
+    val ink = remember(palette, isDark, colors, accent, tint) {
+        ambienceInk(palette = palette, isDark = isDark, colors = colors, accent = accent, ground = tint)
+    }
 
     Box(modifier) {
         when (ambience) {
             PomodoroAmbience.None -> Spacer(Modifier.fillMaxSize().background(tint))
-            PomodoroAmbience.Fireplace -> FireplaceScene(clock, tint, isDark, Modifier.fillMaxSize())
-            PomodoroAmbience.Rain -> RainScene(clock, tint, isDark, Modifier.fillMaxSize())
-            PomodoroAmbience.Handpan -> HandpanScene(clock, tint, isDark, Modifier.fillMaxSize())
+            PomodoroAmbience.Fireplace -> FireplaceScene(clock, tint, ink, isDark, Modifier.fillMaxSize())
+            PomodoroAmbience.Rain -> RainScene(clock, tint, ink, isDark, Modifier.fillMaxSize())
+            PomodoroAmbience.Handpan -> HandpanScene(clock, tint, ink, isDark, Modifier.fillMaxSize())
         }
 
         if (ambience != PomodoroAmbience.None) {
@@ -76,6 +85,7 @@ private fun PomodoroAmbienceSceneFireplacePreview() {
         PomodoroAmbienceScene(
             ambience = PomodoroAmbience.Fireplace,
             tint = Color(0xFF1A2E23),
+            accent = Color(0xFF48BB78),
             isDark = true,
             animate = false,
             modifier = Modifier.size(360.dp, 720.dp),
@@ -90,6 +100,7 @@ private fun PomodoroAmbienceSceneRainPreview() {
         PomodoroAmbienceScene(
             ambience = PomodoroAmbience.Rain,
             tint = Color(0xFFEBF8FF),
+            accent = Color(0xFF48BB78),
             isDark = false,
             animate = false,
             modifier = Modifier.size(360.dp, 720.dp),
@@ -104,6 +115,7 @@ private fun PomodoroAmbienceSceneHandpanPreview() {
         PomodoroAmbienceScene(
             ambience = PomodoroAmbience.Handpan,
             tint = Color(0xFF0D1B2A),
+            accent = Color(0xFF48BB78),
             isDark = true,
             animate = false,
             modifier = Modifier.size(360.dp, 720.dp),
@@ -118,6 +130,7 @@ private fun PomodoroAmbienceSceneNonePreview() {
         PomodoroAmbienceScene(
             ambience = PomodoroAmbience.None,
             tint = Color(0xFFF0FFF4),
+            accent = Color(0xFF48BB78),
             isDark = false,
             animate = false,
             modifier = Modifier.size(360.dp, 720.dp),

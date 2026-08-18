@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 fun FireplaceScene(
     clock: State<Float>,
     tint: Color,
+    ink: AmbienceInk,
     isDark: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -36,9 +37,9 @@ fun FireplaceScene(
         modifier.drawBehind {
             val t = clock.value
             drawRect(tint)
-            drawGlow(t, glowAlpha)
-            TONGUES.forEach { tongue -> drawTongue(flamePath, t, tongue, flameAlpha) }
-            drawEmbers(embers, t, flameAlpha)
+            drawGlow(t, glowAlpha, ink.glow)
+            TONGUES.forEachIndexed { i, tongue -> drawTongue(flamePath, t, tongue, flameAlpha, ink.flames[i]) }
+            drawEmbers(embers, t, flameAlpha, ink.ember)
         },
     )
 }
@@ -47,6 +48,7 @@ fun FireplaceScene(
 private fun DrawScope.drawGlow(
     time: Float,
     alpha: Float,
+    glow: Color,
 ) {
     val breath = wave(time, GLOW_SPEED, 0f)
     val flicker = wave(time, FLICKER_SPEED, 1.7f)
@@ -54,7 +56,7 @@ private fun DrawScope.drawGlow(
     drawCircle(
         brush =
         Brush.radialGradient(
-            colors = listOf(GlowInner.copy(alpha = alpha * (GLOW_CORE + flicker * GLOW_FLICKER)), Color.Transparent),
+            colors = listOf(glow.copy(alpha = alpha * (GLOW_CORE + flicker * GLOW_FLICKER)), Color.Transparent),
             center = Offset(size.width * HEARTH_X, size.height * HEARTH_Y),
             radius = radius,
         ),
@@ -72,6 +74,7 @@ private fun DrawScope.drawTongue(
     time: Float,
     tongue: Tongue,
     alpha: Float,
+    flame: FlameInk,
 ) {
     val baseY = size.height
     val centerX = size.width * tongue.x
@@ -98,7 +101,7 @@ private fun DrawScope.drawTongue(
         path = path,
         brush =
         Brush.verticalGradient(
-            colors = listOf(tongue.tip.copy(alpha = alpha * TIP_ALPHA), tongue.root.copy(alpha = alpha)),
+            colors = listOf(flame.tip.copy(alpha = alpha * TIP_ALPHA), flame.root.copy(alpha = alpha)),
             startY = tipY,
             endY = baseY,
         ),
@@ -109,6 +112,7 @@ private fun DrawScope.drawEmbers(
     embers: List<Ember>,
     time: Float,
     alpha: Float,
+    emberInk: Color,
 ) {
     embers.forEach { ember ->
         val rise = fract(ember.phase + time * ember.speed)
@@ -117,7 +121,7 @@ private fun DrawScope.drawEmbers(
         val y = size.height * (1f - rise * ember.reach)
         val drift = kotlin.math.sin(time * ember.driftSpeed + ember.phase * TAU) * size.width * ember.driftReach
         drawCircle(
-            color = EmberColor.copy(alpha = alpha * presence * EMBER_ALPHA),
+            color = emberInk.copy(alpha = alpha * presence * EMBER_ALPHA),
             radius = size.minDimension * ember.radius * presence,
             center = Offset(size.width * ember.x + drift, y),
         )
@@ -145,8 +149,6 @@ private class Tongue(
     val height: Float,
     val speed: Float,
     val phase: Float,
-    val root: Color,
-    val tip: Color,
 )
 
 private class Ember(
@@ -160,14 +162,12 @@ private class Ember(
 )
 
 // Fire keeps its own colours in every palette kit, like the rest of the Pomodoro mode surface.
-private val GlowInner = Color(0xFFFF9D3D)
-private val EmberColor = Color(0xFFFFC163)
 
 private val TONGUES =
     listOf(
-        Tongue(0.5f, 0.30f, 0.34f, 1.10f, 0.0f, root = Color(0xFFE2521B), tip = Color(0xFFFFC163)),
-        Tongue(0.38f, 0.19f, 0.24f, 1.55f, 2.1f, root = Color(0xFFF4761F), tip = Color(0xFFFFD98A)),
-        Tongue(0.62f, 0.16f, 0.20f, 1.90f, 4.3f, root = Color(0xFFFF8C2B), tip = Color(0xFFFFE7B0)),
+        Tongue(0.5f, 0.30f, 0.34f, 1.10f, 0.0f),
+        Tongue(0.38f, 0.19f, 0.24f, 1.55f, 2.1f),
+        Tongue(0.62f, 0.16f, 0.20f, 1.90f, 4.3f),
     )
 
 private const val HEARTH_X = 0.5f

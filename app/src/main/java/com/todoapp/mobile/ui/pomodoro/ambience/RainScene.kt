@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 fun RainScene(
     clock: State<Float>,
     tint: Color,
+    ink: AmbienceInk,
     isDark: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -30,7 +31,7 @@ fun RainScene(
     val near = remember { rainLayer(seed = 2_203, count = NEAR_COUNT, minSpeed = 0.55f, maxSpeed = 0.85f) }
     val glass = remember { glassDroplets(seed = 3_307) }
 
-    val streak = if (isDark) DarkStreak else LightStreak
+    val streak = ink.streak
 
     Spacer(
         modifier.drawBehind {
@@ -129,9 +130,6 @@ private class Streak(
     val drift: Float,
     val slant: Float,
 )
-
-private val DarkStreak = Color(0xFFBFD8F0)
-private val LightStreak = Color(0xFF3D5A80)
 
 private const val FAR_COUNT = 60
 private const val NEAR_COUNT = 30

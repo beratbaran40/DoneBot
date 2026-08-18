@@ -40,6 +40,7 @@ fun PomodoroContent(
         PomodoroAmbienceScene(
             ambience = uiState.ambience,
             tint = visuals.background,
+            accent = visuals.content,
             isDark = TDTheme.isDark,
             animate = rememberAnimationsEnabled(),
             modifier = Modifier.matchParentSize(),

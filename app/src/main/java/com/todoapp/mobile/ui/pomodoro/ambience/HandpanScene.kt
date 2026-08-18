@@ -22,18 +22,19 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 fun HandpanScene(
     clock: State<Float>,
     tint: Color,
+    ink: AmbienceInk,
     isDark: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val motes = remember { motes(seed = 5_501) }
-    val ink = if (isDark) DarkInk else LightInk
+    val rippleInk = ink.ripple
 
     Spacer(
         modifier.drawBehind {
             val t = clock.value
             drawRect(tint)
-            drawRipples(t, ink)
-            drawMotes(motes, t, ink)
+            drawRipples(t, rippleInk)
+            drawMotes(motes, t, rippleInk)
         },
     )
 }
@@ -101,9 +102,6 @@ private class Mote(
     val swaySpeed: Float,
     val swayReach: Float,
 )
-
-private val DarkInk = Color(0xFFCBB8F5)
-private val LightInk = Color(0xFF4C3D80)
 
 private const val CENTER_X = 0.5f
 private const val CENTER_Y = 0.45f
