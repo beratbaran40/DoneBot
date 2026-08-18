@@ -10,11 +10,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,7 +51,18 @@ fun PomodoroProgressRing(
     // with it.
     val scale = size / ProgressRingReferenceSize
     val timerStyle = TDTheme.typography.pomodoro.let { it.copy(fontSize = (it.fontSize.value * scale).sp) }
-    val digitMinWidth = ProgressRingDigitMinWidth * scale
+
+    // The digit minimum exists to stop the countdown twitching as the numbers change, which only
+    // happens when the face gives its digits different advances — Poppins runs from 376 to 677 per
+    // em. A tabular face has no such twitch, and forcing its digits into a wider cell would push the
+    // row past the ring's inner diameter, because a monospace `:` also claims a full digit advance.
+    // So ask the face rather than assume it.
+    val measurer = rememberTextMeasurer()
+    val digitMinWidth =
+        remember(timerStyle, measurer, scale) {
+            val widths = (0..9).map { measurer.measure(it.toString(), timerStyle).size.width }
+            if (widths.distinct().size == 1) 0.dp else ProgressRingDigitMinWidth * scale
+        }
 
     Box(
         modifier = modifier.size(size),
@@ -143,6 +156,7 @@ fun PomodoroEndSessionChip(
 // shrinking proportionally for the smaller 220dp phone-landscape ring so mm:ss never overflows.
 internal val ProgressRingReferenceSize = 320.dp
 private val ProgressRingDigitMinWidth = 64.dp
+
 private val RingStrokeWidth = 16.dp
 private val ModeCardCornerRadius = 20.dp
 private val ModeCardElevation = 8.dp
