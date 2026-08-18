@@ -111,34 +111,43 @@ fun TDStatisticCard(
                 backgroundColor = iconBg,
             )
             Spacer(Modifier.height(12.dp))
-            AnimatedContent(
+            // The count and the period share a line: the card is one of two in a fixed row above a
+            // list, so every text line it spends is a line the list below loses. The period takes
+            // the remaining width rather than its intrinsic one, so a long translation wraps inside
+            // its own column instead of pushing the count off the card.
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                targetState = taskAmount,
-                transitionSpec = {
-                    if (targetState > initialState) {
-                        slideInVertically { -it } + fadeIn(tween(250)) togetherWith
-                            slideOutVertically { it } + fadeOut(tween(250))
-                    } else {
-                        slideInVertically { it } + fadeIn(tween(250)) togetherWith
-                            slideOutVertically { -it } + fadeOut(tween(250))
-                    }
-                },
-                label = "taskAmountAnim",
-            ) { amount ->
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                AnimatedContent(
+                    targetState = taskAmount,
+                    transitionSpec = {
+                        if (targetState > initialState) {
+                            slideInVertically { -it } + fadeIn(tween(250)) togetherWith
+                                slideOutVertically { it } + fadeOut(tween(250))
+                        } else {
+                            slideInVertically { it } + fadeIn(tween(250)) togetherWith
+                                slideOutVertically { -it } + fadeOut(tween(250))
+                        }
+                    },
+                    label = "taskAmountAnim",
+                ) { amount ->
+                    TDText(
+                        text = amount.toString(),
+                        style = TDTheme.typography.heading5.copy(fontWeight = FontWeight.Bold),
+                        color = numberColor,
+                    )
+                }
                 TDText(
-                    text = amount.toString(),
-                    style = TDTheme.typography.heading5.copy(fontWeight = FontWeight.Bold),
+                    text = stringResource(R.string.weekly),
+                    modifier = Modifier.weight(1f, fill = false),
+                    style = TDTheme.typography.subheading4,
                     color = numberColor,
+                    fitPolicy = TDFitPolicy.BOUNDED,
+                    slot = "TDStatisticCard.period",
                 )
             }
-            Spacer(Modifier.height(2.dp))
-            TDText(
-                text = stringResource(R.string.weekly),
-                style = TDTheme.typography.subheading4,
-                color = numberColor,
-                fitPolicy = TDFitPolicy.BOUNDED,
-                slot = "TDStatisticCard.period",
-            )
             TDText(
                 text = text,
                 style = TDTheme.typography.subheading1,

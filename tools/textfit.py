@@ -175,6 +175,7 @@ class Style:
 
 HEADING3 = Style("heading3", 18, "semi_bold")
 HEADING5 = Style("heading5", 16, "semi_bold")
+HEADING5_BOLD = Style("heading5 (bold)", 16, "bold")
 HEADING6 = Style("heading6", 16, "medium")
 REGULAR = Style("regularTextStyle", 14, "medium")
 SUBHEADING3 = Style("subheading3", 14, "medium")
@@ -288,8 +289,19 @@ SLOTS = [
         # The icon stacks above the text, so the only chrome is the card's own 16dp padding.
         geometry=NUp(n=2, gap=12, outer=32, chrome=32),
         style=SUBHEADING1,
-        keys=["task_complete", "task_pending", "weekly"],
+        keys=["task_complete", "task_pending"],
         note="was a Row: a 44dp icon + 14dp gutter left 68dp and truncated 'Tamamlandı'",
+    ),
+    Slot(
+        id="home.statcard.period",
+        source="uikit/src/main/java/com/todoapp/uikit/components/TDStatisticCard.kt",
+        expect="horizontalArrangement = Arrangement.spacedBy(6.dp)",
+        # Same card interior as the label above, minus the count sharing its line. Three digits of
+        # heading5-bold at font scale 1.3 is ~42dp, plus the row's 6dp gap.
+        geometry=NUp(n=2, gap=12, outer=32, chrome=32 + 48),
+        style=SUBHEADING4,
+        keys=["weekly"],
+        note="the count moved onto this line to buy the list below a row of height",
     ),
     Slot(
         id="pomodoro.summary.statlabel",
@@ -384,6 +396,36 @@ SLOTS = [
         geometry=Full(outer=32, chrome=40 + 140 + 8),
         style=SUBHEADING4,
         keys=["group_card_created_label"],
+    ),
+    Slot(
+        id="creationhub.card.title",
+        source="app/src/main/java/com/todoapp/mobile/ui/creationhub/CreationHubScreen.kt",
+        expect="private val CREATION_GRID_GAP = 12.dp",
+        # 20dp screen padding both sides, 12dp between the two columns, 8dp card padding both sides.
+        geometry=NUp(n=2, gap=12, outer=40, chrome=16),
+        style=HEADING5_BOLD,
+        keys=[
+            "create_task_card_title",
+            "journal_card_title",
+            "pomodoro_card_title",
+            "group_card_title",
+        ],
+        note="was a full-width pager page at heading2; the 2x2 grid cut the column to 126dp at 360dp",
+    ),
+    Slot(
+        id="creationhub.card.subtitle",
+        source="uikit/src/main/java/com/todoapp/uikit/components/TDFeatureCard.kt",
+        expect="private val COMPACT_PADDING_H = 8.dp",
+        # Same cell as creationhub.card.title; this entry pins the card's half of the arithmetic.
+        geometry=NUp(n=2, gap=12, outer=40, chrome=16),
+        style=SUBHEADING1,
+        keys=[
+            "create_task_card_subtitle",
+            "journal_card_subtitle",
+            "pomodoro_card_subtitle",
+            "group_card_subtitle",
+        ],
+        note="wrapping is expected here — the row grows to its tallest card, so only a broken word fails",
     ),
     # --- rows checked for hard-minimum over-subscription rather than text ---
     Slot(
