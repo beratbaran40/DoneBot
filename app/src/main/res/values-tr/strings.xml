@@ -585,6 +585,7 @@
     <string name="home_permission_overlay_title">Günlük planını her ekranda gör</string>
     <string name="home_permission_overlay_body">Günlük plan kartını göstermek için diğer uygulamaların üzerine çizme izni ver.</string>
     <string name="error_task_title_required">Görev başlığı zorunludur</string>
+    <string name="error_fill_required_fields">Lütfen zorunlu alanları doldur</string>
     <string name="error_task_date_required">Lütfen bir tarih seç</string>
     <string name="error_task_time_required">Başlangıç ve bitiş saatini ayarla</string>
     <string name="error_task_end_before_start">Bitiş saati başlangıç saatinden sonra olmalıdır</string>

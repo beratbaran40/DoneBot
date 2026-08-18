@@ -39,7 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.todoapp.mobile.R
-import com.todoapp.mobile.ui.common.taskform.TaskFormType
+import com.todoapp.mobile.domain.model.TaskType
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
@@ -224,7 +224,7 @@ private fun TaskPhotoBannerEditablePreview() {
                 displayModel = "https://example.com/photo.jpg",
                 onCropped = {},
                 onRemove = {},
-                badge = { TaskTypeBadge(TaskFormType.STAGED) },
+                badge = { TaskTypeBadge(TaskType.STAGED) },
             )
         }
     }

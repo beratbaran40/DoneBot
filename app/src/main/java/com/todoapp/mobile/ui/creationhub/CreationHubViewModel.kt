@@ -10,6 +10,7 @@ import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.Subtask
 import com.todoapp.mobile.domain.model.Task
 import com.todoapp.mobile.domain.model.TaskCategory
+import com.todoapp.mobile.domain.model.TaskType
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.TaskRepository
 import com.todoapp.mobile.navigation.NavigationEffect
@@ -18,7 +19,6 @@ import com.todoapp.mobile.ui.creationhub.CreationHubContract.AssigneeOption
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.GroupOption
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.Step
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskScope
-import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiAction
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiEffect
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiState
@@ -429,6 +429,10 @@ constructor(
             } else {
                 emptyList()
             },
+            // The card the user tapped, recorded rather than re-derived later. Deriving it is what
+            // made a CUSTOM task with a start and an end report itself as a ROUTINE: those two are
+            // indistinguishable in the data, because an end sits beside the frequency in one rule.
+            declaredType = type,
         )
     }
 

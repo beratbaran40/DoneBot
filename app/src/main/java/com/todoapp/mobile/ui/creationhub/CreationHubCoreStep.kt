@@ -13,6 +13,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
 import com.todoapp.mobile.domain.model.Recurrence
+import com.todoapp.mobile.domain.model.TaskType
 import com.todoapp.mobile.ui.common.taskform.TaskFormDateField
 import com.todoapp.mobile.ui.common.taskform.TaskFrequencyChips
 import com.todoapp.mobile.ui.common.taskform.TaskIntervalStepper
@@ -22,7 +23,6 @@ import com.todoapp.mobile.ui.common.taskform.TaskRepeatUntilField
 import com.todoapp.mobile.ui.common.taskform.TaskSubtaskEditor
 import com.todoapp.mobile.ui.common.taskform.TaskWeekdayPicker
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskScope
-import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiAction
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiState
 import com.todoapp.uikit.components.TDButton

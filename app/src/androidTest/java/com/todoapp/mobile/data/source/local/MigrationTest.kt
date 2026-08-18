@@ -152,7 +152,7 @@ class MigrationTest {
     }
 
     @Test
-    fun migrate25To29_chainsManualDedupThroughEveryAdditiveHop() {
+    fun migrate25ToHead_chainsManualDedupThroughEveryAdditiveHop() {
         helper.createDatabase(TEST_DB, 25).apply {
             execSQL(
                 "INSERT INTO `groups` (id, name, description, remote_id, created_at, order_index) " +
@@ -164,11 +164,14 @@ class MigrationTest {
             )
             close()
         }
-        // The full ladder a real user on an older build actually walks: manual 25→26, then 26→29.
-        val db = helper.runMigrationsAndValidate(TEST_DB, 29, true, MIGRATION_25_26)
-        db.query("SELECT recurrence_interval FROM tasks WHERE id = 1").use { cursor ->
+        // The full ladder a real user on an older build actually walks: manual 25→26, then every
+        // additive hop up to the current head. Reaching the head (not an intermediate version) is
+        // what catches a mis-ordered or missing hop the moment one is added.
+        val db = helper.runMigrationsAndValidate(TEST_DB, 32, true, MIGRATION_25_26)
+        db.query("SELECT recurrence_interval, declared_type FROM tasks WHERE id = 1").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals(1, cursor.getInt(0))
+            assertTrue(cursor.isNull(1))
         }
     }
 
@@ -208,6 +211,33 @@ class MigrationTest {
         db.query("SELECT COUNT(*) FROM group_task_daily_completions").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals(0, cursor.getInt(0))
+        }
+    }
+
+    @Test
+    fun migrate31To32_leavesEveryLegacyTaskUndeclared() {
+        helper.createDatabase(TEST_DB, 31).apply {
+            execSQL(
+                "INSERT INTO tasks (id, title, date, time_start, time_end, is_completed, is_secret, recurrence, " +
+                    "recurrence_interval, recurrence_until) " +
+                    "VALUES (1, 'Vitamin', 0, 0, 0, 0, 0, 'WEEKLY', 2, 100)",
+            )
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(TEST_DB, 32, true)
+        // NULL, not a value: this column records what the user DECLARED, and backfilling it would
+        // mean running the derivation it exists to replace — freezing today's wrong answer into
+        // storage forever. Every pre-existing task keeps deriving its type exactly as before.
+        db.query("SELECT declared_type FROM tasks WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertTrue(cursor.isNull(0))
+        }
+        // The other half of "the UI is unchanged for a legacy row": nothing else moved.
+        db.query("SELECT recurrence, recurrence_interval, recurrence_until FROM tasks WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("WEEKLY", cursor.getString(0))
+            assertEquals(2, cursor.getInt(1))
+            assertEquals(100L, cursor.getLong(2))
         }
     }
 

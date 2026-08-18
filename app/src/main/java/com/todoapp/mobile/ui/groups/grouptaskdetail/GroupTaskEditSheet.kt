@@ -35,6 +35,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.uikit.R
 import com.todoapp.mobile.common.deviceTimeFormatter
+import com.todoapp.mobile.domain.model.Recurrence
+import com.todoapp.mobile.ui.common.taskform.TaskFormDateField
+import com.todoapp.mobile.ui.common.taskform.TaskFrequencyChips
+import com.todoapp.mobile.ui.common.taskform.TaskIntervalStepper
+import com.todoapp.mobile.ui.common.taskform.TaskReminderTimesEditor
+import com.todoapp.mobile.ui.common.taskform.TaskRepeatUntilField
+import com.todoapp.mobile.ui.common.taskform.TaskWeekdayPicker
 import com.todoapp.mobile.ui.common.taskform.rememberTimeFieldPlaceholder
 import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract
 import com.todoapp.mobile.ui.groups.grouptaskdetail.GroupTaskDetailContract.UiAction
@@ -42,7 +49,6 @@ import com.todoapp.mobile.ui.groups.grouptaskdetail.GroupTaskDetailContract.UiSt
 import com.todoapp.uikit.components.TDButton
 import com.todoapp.uikit.components.TDButtonSize
 import com.todoapp.uikit.components.TDCompactOutlinedTextField
-import com.todoapp.uikit.components.TDDatePickerDialog
 import com.todoapp.uikit.components.TDPickerField
 import com.todoapp.uikit.components.TDSwitch
 import com.todoapp.uikit.components.TDSwitchTone
@@ -51,6 +57,7 @@ import com.todoapp.uikit.components.TDWheelTimePickerDialog
 import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.theme.TDTheme
 import com.todoapp.uikit.theme.tdOutlineColor
+import java.time.LocalDate
 
 @Composable
 fun GroupTaskEditSheet(
@@ -100,11 +107,61 @@ fun GroupTaskEditSheet(
             onValueChange = { onAction(UiAction.OnEditTitleChange(it)) },
         )
         Spacer(Modifier.height(12.dp))
-        TDDatePickerDialog(
-            selectedDate = state.editDate,
-            onDateSelect = { onAction(UiAction.OnEditDateSelect(it)) },
-            onDateDeselect = { onAction(UiAction.OnEditDateDeselect) },
+        // The rule comes before the date, matching both personal forms: what repeats, then when it
+        // starts, then where it stops. None of this was editable here at all — a group task could be
+        // created as a routine and then never adjusted, while the fields were stored and armed.
+        TaskFrequencyChips(
+            selected = state.editRecurrence,
+            onSelect = { onAction(UiAction.OnEditRecurrenceChange(it)) },
+            allowNone = true,
         )
+        val groupRecurs = state.editRecurrence != Recurrence.NONE
+        if (groupRecurs) {
+            Spacer(Modifier.height(12.dp))
+            TaskIntervalStepper(
+                frequency = state.editRecurrence,
+                interval = state.editRecurrenceInterval,
+                onChange = { onAction(UiAction.OnEditIntervalChange(it)) },
+            )
+            if (state.editRecurrence == Recurrence.WEEKLY) {
+                Spacer(Modifier.height(12.dp))
+                TaskWeekdayPicker(
+                    selected = state.editRecurrenceByDay,
+                    onToggle = { onAction(UiAction.OnEditWeekdayToggle(it)) },
+                )
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        TaskFormDateField(
+            date = state.editDate,
+            onSelect = { onAction(UiAction.OnEditDateSelect(it)) },
+            // A group task may legitimately have no due date, unlike a personal one.
+            onDeselect = { onAction(UiAction.OnEditDateDeselect) },
+            onRangeSelect = if (groupRecurs) {
+                { start, end ->
+                    onAction(UiAction.OnEditDateSelect(start))
+                    onAction(UiAction.OnEditRecurrenceUntilChange(end))
+                }
+            } else {
+                null
+            },
+            rangeEnd = state.editRecurrenceUntil,
+        )
+        if (groupRecurs) {
+            Spacer(Modifier.height(12.dp))
+            TaskRepeatUntilField(
+                anchor = state.editDate ?: LocalDate.now(),
+                until = state.editRecurrenceUntil,
+                onSelect = { onAction(UiAction.OnEditRecurrenceUntilChange(it)) },
+                allowNoEnd = false,
+            )
+            Spacer(Modifier.height(12.dp))
+            TaskReminderTimesEditor(
+                times = state.editReminderTimes,
+                onAdd = { onAction(UiAction.OnEditReminderTimeAdd(it)) },
+                onRemove = { onAction(UiAction.OnEditReminderTimeRemove(it)) },
+            )
+        }
         Spacer(Modifier.height(12.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),

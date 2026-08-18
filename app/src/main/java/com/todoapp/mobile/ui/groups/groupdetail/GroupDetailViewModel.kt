@@ -20,6 +20,8 @@ import com.todoapp.mobile.domain.model.GroupMember
 import com.todoapp.mobile.domain.model.GroupTask
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.Task
+import com.todoapp.mobile.domain.model.TaskCategory
+import com.todoapp.mobile.domain.model.TaskType
 import com.todoapp.mobile.domain.repository.BlockedUsersPreferences
 import com.todoapp.mobile.domain.repository.GroupRepository
 import com.todoapp.mobile.domain.repository.LanguageRepository
@@ -502,7 +504,7 @@ constructor(
         val state = _uiState.value as? UiState.Success ?: return
         val form = state.taskFormState
         if (form.taskTitle.isBlank() || form.dialogSelectedDate == null) {
-            _uiEffect.trySend(UiEffect.ShowToast("Please fill in all required fields"))
+            _uiEffect.trySend(UiEffect.ShowToast(context.getString(R.string.error_fill_required_fields)))
             return
         }
         val timeStart = form.taskTimeStart ?: LocalTime.MIDNIGHT
@@ -552,6 +554,10 @@ constructor(
             return
         }
 
+        // Everything the sheet actually collects. This used to stop at the first eight fields, so a
+        // location the user had picked, the category they chose and the repeat they set were all
+        // dropped on the floor between the form and the request — the Creation Hub replaced its own
+        // version of this stripped-down builder for exactly that reason, and this copy stayed behind.
         val task =
             Task(
                 title = form.taskTitle,
@@ -561,6 +567,21 @@ constructor(
                 timeEnd = form.taskTimeEnd ?: timeStart,
                 isCompleted = false,
                 isSecret = form.isTaskSecret,
+                isAllDay = form.isAllDay,
+                category = form.selectedCategory,
+                customCategoryName = form.customCategoryName.takeIf {
+                    form.selectedCategory == TaskCategory.OTHER && it.isNotBlank()
+                },
+                recurrence = form.selectedRecurrence,
+                reminderOffsetMinutes = form.reminderOffsetMinutes,
+                locationName = form.locationName,
+                locationAddress = form.locationAddress,
+                locationLat = form.locationLat,
+                locationLng = form.locationLng,
+                // This sheet offers no frequency-plus-refinements editor, no step list and no second
+                // reminder, so a one-off is genuinely all it can express — stamped rather than left
+                // null so the value reads as a declaration and not as "nobody said".
+                declaredType = TaskType.ONE_TIME,
                 // Y6: carry a stable idempotency key so a timeout-then-retry dedups
                 // server-side instead of creating a duplicate group task (mirrors Home/CreationHub).
                 clientTaskId = form.clientTaskId,

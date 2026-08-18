@@ -146,6 +146,19 @@ interface GroupRepository {
         locationLat: Double? = null,
         locationLng: Double? = null,
         clearLocation: Boolean = false,
+        /** `Recurrence` name. Null leaves the stored frequency alone. */
+        recurrence: String? = null,
+        recurrenceInterval: Int? = null,
+        /** Weekday CSV, WEEKLY only. */
+        recurrenceByDay: String? = null,
+        /**
+         * Epoch day of the routine's scheduled end. Null means "leave it alone", like every other
+         * field here — there is no way to CLEAR it from this endpoint, which is why moving a start
+         * past an existing end has to carry a new end along with it rather than dropping one.
+         */
+        recurrenceUntil: Long? = null,
+        /** Second-of-day, like every other reminder-time field on the wire. */
+        reminderTimes: List<Int>? = null,
     ): Result<Unit>
 
     suspend fun assignGroupTask(

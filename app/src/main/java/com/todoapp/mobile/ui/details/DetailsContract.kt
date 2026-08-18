@@ -4,8 +4,8 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.TaskCategory
+import com.todoapp.mobile.domain.model.TaskType
 import com.todoapp.mobile.ui.common.taskform.TaskCapabilities
-import com.todoapp.mobile.ui.common.taskform.TaskFormType
 import com.todoapp.mobile.ui.home.PendingPhoto
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -25,7 +25,6 @@ object DetailsContract {
             val taskTimeEnd: LocalTime?,
             val taskDate: LocalDate,
             val taskDescription: String,
-            val dialogSelectedDate: LocalDate?,
             @StringRes val titleError: Int?,
             val photoUrls: List<String> = emptyList(),
             val locationName: String? = null,
@@ -46,7 +45,7 @@ object DetailsContract {
             // Existing photoIds that the user marked for deletion. Drained on Save.
             val pendingPhotoDeleteIds: Set<Long> = emptySet(),
             // Type is fixed at creation; derived from the loaded task and shown read-only.
-            val taskType: TaskFormType = TaskFormType.ONE_TIME,
+            val taskType: TaskType = TaskType.ONE_TIME,
             // What this task can do. Field visibility asks these, not the type — a custom task shows
             // whichever sections its capabilities enable, without every gate growing a CUSTOM arm.
             val capabilities: TaskCapabilities = TaskCapabilities(
@@ -90,6 +89,11 @@ object DetailsContract {
             val time: LocalTime,
         ) : UiAction
 
+        /**
+         * The task's start day. The single date action on this screen — there used to be a second
+         * one (`OnDialogDateSelect`) that did the same thing, while this one was declared, handled,
+         * and dispatched from nowhere.
+         */
         data class OnTaskDateEdit(
             val date: LocalDate,
         ) : UiAction
@@ -97,12 +101,6 @@ object DetailsContract {
         data class OnTaskDescriptionEdit(
             val description: String,
         ) : UiAction
-
-        data class OnDialogDateSelect(
-            val date: LocalDate,
-        ) : UiAction
-
-        data object OnDialogDateDeselect : UiAction
 
         data object OnSaveChanges : UiAction
 

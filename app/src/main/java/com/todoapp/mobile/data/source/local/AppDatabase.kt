@@ -29,7 +29,7 @@ import com.todoapp.mobile.data.source.local.converter.StringListConverter
 import com.todoapp.mobile.data.source.local.datasource.GroupDao
 
 @Database(
-    version = 31,
+    version = 32,
     entities = [
         TaskEntity::class,
         PomodoroSessionEntity::class,
@@ -94,6 +94,13 @@ import com.todoapp.mobile.data.source.local.datasource.GroupDao
         // additive — one new table, nothing existing is touched — so an auto-migration is enough, the
         // same shape as 28→29 which added two tables at once.
         AutoMigration(from = 30, to = 31),
+        // tasks.declared_type: the shape the user picked in the Creation Hub, which until now was
+        // re-derived from the row on every read — so "Custom, running between two dates" reported
+        // itself as a Routine. Nullable with no default and deliberately NO backfill: filling it in
+        // would mean running the very derivation this column exists to stop trusting, freezing
+        // today's wrong answer into storage. NULL everywhere means every existing task keeps
+        // deriving exactly as before.
+        AutoMigration(from = 31, to = 32),
     ],
 )
 @TypeConverters(AppDatabase.SyncStatusConverter::class, StringListConverter::class)

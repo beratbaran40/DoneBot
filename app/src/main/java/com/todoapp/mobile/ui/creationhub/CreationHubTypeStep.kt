@@ -6,9 +6,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
+import com.todoapp.mobile.domain.model.TaskType
 import com.todoapp.mobile.ui.common.components.taskTypeAccent
-import com.todoapp.mobile.ui.common.taskform.TaskFormType
-import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiAction
 import com.todoapp.uikit.components.TDOptionCard
 import com.todoapp.uikit.image.tdPainter
@@ -26,28 +25,28 @@ internal fun CreationHubTypeStep(onAction: (UiAction) -> Unit) {
             title = stringResource(R.string.type_one_time_title),
             subtitle = stringResource(R.string.type_one_time_subtitle),
             icon = tdPainter(UiKitR.drawable.ic_edit_task),
-            accentColor = taskTypeAccent(TaskFormType.ONE_TIME),
+            accentColor = taskTypeAccent(TaskType.ONE_TIME),
             onClick = { onAction(UiAction.OnTypeSelect(TaskType.ONE_TIME)) },
         )
         TDOptionCard(
             title = stringResource(R.string.type_routine_title),
             subtitle = stringResource(R.string.type_routine_subtitle),
             icon = tdPainter(R.drawable.ic_calendar),
-            accentColor = taskTypeAccent(TaskFormType.ROUTINE),
+            accentColor = taskTypeAccent(TaskType.ROUTINE),
             onClick = { onAction(UiAction.OnTypeSelect(TaskType.ROUTINE)) },
         )
         TDOptionCard(
             title = stringResource(R.string.type_staged_title),
             subtitle = stringResource(R.string.type_staged_subtitle),
             icon = tdPainter(R.drawable.ic_staged),
-            accentColor = taskTypeAccent(TaskFormType.STAGED),
+            accentColor = taskTypeAccent(TaskType.STAGED),
             onClick = { onAction(UiAction.OnTypeSelect(TaskType.STAGED)) },
         )
         TDOptionCard(
             title = stringResource(R.string.type_custom_title),
             subtitle = stringResource(R.string.type_custom_subtitle),
             icon = tdPainter(R.drawable.ic_custom),
-            accentColor = taskTypeAccent(TaskFormType.CUSTOM),
+            accentColor = taskTypeAccent(TaskType.CUSTOM),
             onClick = { onAction(UiAction.OnTypeSelect(TaskType.CUSTOM)) },
         )
     }

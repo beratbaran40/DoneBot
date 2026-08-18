@@ -36,18 +36,14 @@ import com.todoapp.mobile.R
 import com.todoapp.mobile.common.deviceTimeFormatter
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.TaskCategory
+import com.todoapp.mobile.domain.model.TaskType
 import com.todoapp.mobile.ui.common.categoryOptions
 import com.todoapp.mobile.ui.common.components.TaskPhotoBannerEditable
 import com.todoapp.mobile.ui.common.components.TaskTypeBadge
 import com.todoapp.mobile.ui.common.components.taskTypeAccent
-import com.todoapp.mobile.ui.common.taskform.TaskFormType
-import com.todoapp.mobile.ui.common.taskform.TaskFrequencyChips
-import com.todoapp.mobile.ui.common.taskform.TaskIntervalStepper
 import com.todoapp.mobile.ui.common.taskform.TaskReminderChips
 import com.todoapp.mobile.ui.common.taskform.TaskReminderTimesEditor
-import com.todoapp.mobile.ui.common.taskform.TaskRepeatUntilField
 import com.todoapp.mobile.ui.common.taskform.TaskTypeHeader
-import com.todoapp.mobile.ui.common.taskform.TaskWeekdayPicker
 import com.todoapp.mobile.ui.details.DetailsContract.UiAction
 import com.todoapp.mobile.ui.details.DetailsContract.UiEffect
 import com.todoapp.mobile.ui.details.DetailsContract.UiState
@@ -57,9 +53,7 @@ import com.todoapp.uikit.components.TDButtonSize
 import com.todoapp.uikit.components.TDButtonType
 import com.todoapp.uikit.components.TDCategoryPicker
 import com.todoapp.uikit.components.TDCompactOutlinedTextField
-import com.todoapp.uikit.components.TDDatePickerDialog
 import com.todoapp.uikit.components.TDPickerField
-import com.todoapp.uikit.components.TDRoutineProgress
 import com.todoapp.uikit.components.TDSwitch
 import com.todoapp.uikit.components.TDSwitchTone
 import com.todoapp.uikit.components.TDTaskCompletionCard
@@ -254,18 +248,7 @@ private fun DetailsSuccessContent(
                         DetailsRecurrenceBlock(uiState = uiState, onAction = onAction)
                     }
 
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TDText(
-                            text = stringResource(R.string.task_date),
-                            style = TDTheme.typography.heading6,
-                            color = TDTheme.colors.onSurface,
-                        )
-                        TDDatePickerDialog(
-                            selectedDate = uiState.dialogSelectedDate,
-                            onDateSelect = { onAction(UiAction.OnDialogDateSelect(it)) },
-                            onDateDeselect = { onAction(UiAction.OnDialogDateDeselect) },
-                        )
-                    }
+                    DetailsDateSection(uiState = uiState, onAction = onAction)
 
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
@@ -544,6 +527,7 @@ private fun DetailsSuccessPreview_OtherCategory() {
     }
 }
 
+/** Open-ended routine: frequency block, no scheduled end, so no span and no day-N-of-M. */
 @com.todoapp.uikit.previews.TDPreview
 @Composable
 private fun DetailsSuccessPreview_Routine() {
@@ -551,9 +535,29 @@ private fun DetailsSuccessPreview_Routine() {
         DetailsSuccessContent(
             DetailsPreviewData.successState(
                 taskTitle = "Su iç",
-                taskType = TaskFormType.ROUTINE,
+                taskType = TaskType.ROUTINE,
                 selectedRecurrence = com.todoapp.mobile.domain.model.Recurrence.DAILY,
-                reminderOffsetMinutes = 60L,
+                capabilities = recurringCapabilities,
+            ),
+        ) {}
+    }
+}
+
+/** The span case: a routine with a scheduled end, which is what the date field now has to show. */
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun DetailsSuccessPreview_BoundedRoutine() {
+    TDTheme {
+        DetailsSuccessContent(
+            DetailsPreviewData.successState(
+                taskTitle = "Antibiyotik",
+                taskType = TaskType.ROUTINE,
+                selectedRecurrence = com.todoapp.mobile.domain.model.Recurrence.DAILY,
+                capabilities = recurringCapabilities,
+                taskDate = java.time.LocalDate.of(2026, 8, 17),
+                recurrenceUntil = java.time.LocalDate.of(2026, 8, 30),
+                routineDayIndex = 3,
+                routineDayTotal = 14,
             ),
         ) {}
     }
@@ -566,7 +570,12 @@ private fun DetailsSuccessPreview_Staged() {
         DetailsSuccessContent(
             DetailsPreviewData.successState(
                 taskTitle = "Tez bölümünü bitir",
-                taskType = TaskFormType.STAGED,
+                taskType = TaskType.STAGED,
+                capabilities = com.todoapp.mobile.ui.common.taskform.TaskCapabilities(
+                    recurs = false,
+                    hasSteps = true,
+                    hasMultipleReminders = false,
+                ),
                 subtaskDrafts = listOf(
                     SubtaskDraft(1L, "Giriş", true),
                     SubtaskDraft(2L, "Yöntem", false),
@@ -576,6 +585,47 @@ private fun DetailsSuccessPreview_Staged() {
         ) {}
     }
 }
+
+/**
+ * The shape the whole declared-type change exists for: repeats, runs between two dates, has steps and
+ * reminds more than once a day. Every gated section on the screen is on at once.
+ */
+@com.todoapp.uikit.previews.TDPreview
+@Composable
+private fun DetailsSuccessPreview_Custom() {
+    TDTheme {
+        DetailsSuccessContent(
+            DetailsPreviewData.successState(
+                taskTitle = "Sabah rutini",
+                taskType = TaskType.CUSTOM,
+                selectedRecurrence = com.todoapp.mobile.domain.model.Recurrence.WEEKLY,
+                capabilities = com.todoapp.mobile.ui.common.taskform.TaskCapabilities(
+                    recurs = true,
+                    hasSteps = true,
+                    hasMultipleReminders = true,
+                ),
+                taskDate = java.time.LocalDate.of(2026, 8, 17),
+                recurrenceUntil = java.time.LocalDate.of(2026, 11, 16),
+                recurrenceInterval = 2,
+                recurrenceByDay = setOf(java.time.DayOfWeek.MONDAY, java.time.DayOfWeek.WEDNESDAY),
+                reminderTimes = listOf(LocalTime.of(8, 0), LocalTime.of(20, 0)),
+                routineDayIndex = 2,
+                routineDayTotal = 26,
+                subtaskDrafts = listOf(
+                    SubtaskDraft(1L, "Esneme", true),
+                    SubtaskDraft(2L, "Kahvaltı", false),
+                    SubtaskDraft(null, "", false),
+                ),
+            ),
+        ) {}
+    }
+}
+
+private val recurringCapabilities = com.todoapp.mobile.ui.common.taskform.TaskCapabilities(
+    recurs = true,
+    hasSteps = false,
+    hasMultipleReminders = false,
+)
 
 private fun detailsAbsoluteUrl(relative: String): String = BuildConfig.BASE_URL.trimEnd('/') + "/" + relative.trimStart('/')
 
@@ -605,8 +655,12 @@ private fun replaceBannerPhoto(
 }
 
 /**
- * A repeating task reminds at absolute times of day and can carry a scheduled end; a one-off reminds
- * relative to its start. Staged steps carry no reminder of their own, so they get neither.
+ * A repeating task reminds at absolute times of day; a one-off reminds relative to its start. Staged
+ * steps carry no reminder of their own, so they get neither.
+ *
+ * The scheduled end used to live here too, which put "Ends" below Category and a long way from the
+ * date it bounds — the reverse of the order the create form uses. It now sits directly under the
+ * date field, in [DetailsDateSection].
  */
 @Composable
 private fun DetailsReminderBlock(
@@ -618,11 +672,6 @@ private fun DetailsReminderBlock(
             times = uiState.reminderTimes,
             onAdd = { onAction(UiAction.OnReminderTimeAdd(it)) },
             onRemove = { onAction(UiAction.OnReminderTimeRemove(it)) },
-        )
-        TaskRepeatUntilField(
-            anchor = uiState.taskDate,
-            until = uiState.recurrenceUntil,
-            onSelect = { onAction(UiAction.OnRecurrenceUntilChange(it)) },
         )
         return
     }
@@ -655,67 +704,31 @@ private fun DetailsReminderBlock(
     }
 }
 
-/**
- * Frequency chips plus, for a bounded routine, how far along it is ("Day 12 of 30"). The counts are
- * computed in the ViewModel — the by-weekday case walks real firing days and must not run per frame.
- */
 @Composable
-private fun DetailsRecurrenceBlock(
-    uiState: UiState.Success,
-    onAction: (UiAction) -> Unit,
-) {
-    TaskFrequencyChips(
-        selected = uiState.selectedRecurrence,
-        onSelect = { onAction(UiAction.OnRecurrenceChange(it)) },
-    )
-    TaskIntervalStepper(
-        frequency = uiState.selectedRecurrence,
-        interval = uiState.recurrenceInterval,
-        onChange = { onAction(UiAction.OnIntervalChange(it)) },
-    )
-    if (uiState.selectedRecurrence == Recurrence.WEEKLY) {
-        TaskWeekdayPicker(
-            selected = uiState.recurrenceByDay,
-            onToggle = { onAction(UiAction.OnWeekdayToggle(it)) },
-        )
-    }
-    val dayIndex = uiState.routineDayIndex
-    val dayTotal = uiState.routineDayTotal
-    if (dayIndex != null && dayTotal != null) {
-        TDRoutineProgress(
-            current = dayIndex,
-            total = dayTotal,
-            label = stringResource(R.string.routine_day_progress, dayIndex, dayTotal),
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
-}
-
-@Composable
-private fun DetailsTypeHeader(type: TaskFormType) {
+private fun DetailsTypeHeader(type: TaskType) {
     when (type) {
-        TaskFormType.ONE_TIME -> TaskTypeHeader(
+        TaskType.ONE_TIME -> TaskTypeHeader(
             icon = tdPainter(com.example.uikit.R.drawable.ic_edit_task),
             name = stringResource(R.string.type_one_time_title),
             subtitle = stringResource(R.string.type_one_time_subtitle),
             accent = taskTypeAccent(type),
         )
 
-        TaskFormType.ROUTINE -> TaskTypeHeader(
+        TaskType.ROUTINE -> TaskTypeHeader(
             icon = tdPainter(R.drawable.ic_calendar),
             name = stringResource(R.string.type_routine_title),
             subtitle = stringResource(R.string.type_routine_subtitle),
             accent = taskTypeAccent(type),
         )
 
-        TaskFormType.STAGED -> TaskTypeHeader(
+        TaskType.STAGED -> TaskTypeHeader(
             icon = tdPainter(R.drawable.ic_staged),
             name = stringResource(R.string.type_staged_title),
             subtitle = stringResource(R.string.type_staged_subtitle),
             accent = taskTypeAccent(type),
         )
 
-        TaskFormType.CUSTOM -> TaskTypeHeader(
+        TaskType.CUSTOM -> TaskTypeHeader(
             icon = tdPainter(R.drawable.ic_custom),
             name = stringResource(R.string.type_custom_title),
             subtitle = stringResource(R.string.type_custom_subtitle),

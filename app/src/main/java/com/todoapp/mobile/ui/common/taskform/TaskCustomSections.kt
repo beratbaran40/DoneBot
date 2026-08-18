@@ -59,6 +59,13 @@ fun TaskRepeatUntilField(
     until: LocalDate?,
     onSelect: (LocalDate?) -> Unit,
     modifier: Modifier = Modifier,
+    /**
+     * Whether "No end" is offered. False for a group task: its update endpoint reads a null field as
+     * "leave it alone", so removing an end is not something the client can express there — and a chip
+     * that silently does nothing is worse than one that isn't shown. Flip it back on once the backend
+     * grows a `clearRecurrenceUntil` flag.
+     */
+    allowNoEnd: Boolean = true,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         TaskFormSectionLabel(stringResource(R.string.creation_end_label))
@@ -66,13 +73,15 @@ fun TaskRepeatUntilField(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            TDChoiceChip(
-                label = stringResource(R.string.creation_end_never),
-                selected = until == null,
-                onClick = { onSelect(null) },
-                selectedContainerColor = TDTheme.colors.pendingGray,
-                selectedContentColor = TDTheme.colors.white,
-            )
+            if (allowNoEnd) {
+                TDChoiceChip(
+                    label = stringResource(R.string.creation_end_never),
+                    selected = until == null,
+                    onClick = { onSelect(null) },
+                    selectedContainerColor = TDTheme.colors.pendingGray,
+                    selectedContentColor = TDTheme.colors.white,
+                )
+            }
             END_PRESET_MONTHS.forEach { months ->
                 val end = anchor.plusMonths(months).minusDays(1)
                 TDChoiceChip(

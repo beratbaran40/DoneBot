@@ -16,7 +16,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
-import com.todoapp.mobile.ui.common.taskform.TaskFormType
+import com.todoapp.mobile.domain.model.TaskType
 import com.todoapp.uikit.components.TDText
 import com.todoapp.uikit.image.tdPainter
 import com.todoapp.uikit.previews.TDPreview
@@ -30,26 +30,26 @@ import com.example.uikit.R as UiKitR
  */
 @Composable
 fun TaskTypeBadge(
-    type: TaskFormType,
+    type: TaskType,
     modifier: Modifier = Modifier,
 ) {
     val accent = taskTypeAccent(type)
     val icon: Painter
     val labelRes: Int
     when (type) {
-        TaskFormType.ONE_TIME -> {
+        TaskType.ONE_TIME -> {
             icon = tdPainter(UiKitR.drawable.ic_edit_task)
             labelRes = R.string.type_one_time_title
         }
-        TaskFormType.ROUTINE -> {
+        TaskType.ROUTINE -> {
             icon = tdPainter(R.drawable.ic_calendar)
             labelRes = R.string.type_routine_title
         }
-        TaskFormType.STAGED -> {
+        TaskType.STAGED -> {
             icon = tdPainter(R.drawable.ic_staged)
             labelRes = R.string.type_staged_title
         }
-        TaskFormType.CUSTOM -> {
+        TaskType.CUSTOM -> {
             icon = tdPainter(R.drawable.ic_custom)
             labelRes = R.string.type_custom_title
         }
@@ -83,20 +83,20 @@ fun TaskTypeBadge(
  * STAGED green) — 8-bit wants more hue separation, not less.
  */
 @Composable
-fun taskTypeAccent(type: TaskFormType): Color = when (TDTheme.palette) {
+fun taskTypeAccent(type: TaskType): Color = when (TDTheme.palette) {
     PaletteKit.MONOCHROME -> when (type) {
-        TaskFormType.ONE_TIME -> TDTheme.colors.purple
-        TaskFormType.ROUTINE -> TDTheme.colors.purple
-        TaskFormType.STAGED -> TDTheme.colors.mediumGreen
-        TaskFormType.CUSTOM -> TDTheme.colors.darkPending
+        TaskType.ONE_TIME -> TDTheme.colors.purple
+        TaskType.ROUTINE -> TDTheme.colors.purple
+        TaskType.STAGED -> TDTheme.colors.mediumGreen
+        TaskType.CUSTOM -> TDTheme.colors.darkPending
     }
     PaletteKit.ORIGINAL, PaletteKit.PIXEL -> when (type) {
-        TaskFormType.ONE_TIME -> TDTheme.colors.darkPending
-        TaskFormType.ROUTINE -> TDTheme.colors.purple
-        TaskFormType.STAGED -> TDTheme.colors.mediumGreen
+        TaskType.ONE_TIME -> TDTheme.colors.darkPending
+        TaskType.ROUTINE -> TDTheme.colors.purple
+        TaskType.STAGED -> TDTheme.colors.mediumGreen
         // A custom task combines the others, so it gets its own ink rather than borrowing one of
         // theirs — reusing ROUTINE's purple would make a routine+staged task read as a plain routine.
-        TaskFormType.CUSTOM -> TDTheme.colors.darkPurple
+        TaskType.CUSTOM -> TDTheme.colors.darkPurple
     }
 }
 
@@ -108,10 +108,10 @@ private fun TaskTypeBadgePreview() {
             modifier = Modifier.padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            TaskTypeBadge(TaskFormType.ONE_TIME)
-            TaskTypeBadge(TaskFormType.ROUTINE)
-            TaskTypeBadge(TaskFormType.STAGED)
-            TaskTypeBadge(TaskFormType.CUSTOM)
+            TaskTypeBadge(TaskType.ONE_TIME)
+            TaskTypeBadge(TaskType.ROUTINE)
+            TaskTypeBadge(TaskType.STAGED)
+            TaskTypeBadge(TaskType.CUSTOM)
         }
     }
 }

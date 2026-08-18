@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
+import com.todoapp.mobile.domain.model.TaskType
 import com.todoapp.mobile.ui.common.components.AssigneeUi
 import com.todoapp.mobile.ui.common.components.GroupTaskAssigneeSelector
 import com.todoapp.mobile.ui.common.components.PrioritySelector
@@ -19,7 +20,6 @@ import com.todoapp.mobile.ui.creationhub.CreationHubContract.AssigneeOption
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.GroupOption
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.Step
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskScope
-import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiAction
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiState
 import com.todoapp.uikit.components.TDChoiceChip

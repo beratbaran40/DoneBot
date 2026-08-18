@@ -29,11 +29,11 @@ import androidx.compose.ui.unit.dp
 import com.todoapp.mobile.R
 import com.todoapp.mobile.common.deviceTimeFormatter
 import com.todoapp.mobile.domain.model.TaskCategory
+import com.todoapp.mobile.domain.model.TaskType
 import com.todoapp.mobile.ui.common.categoryOptions
 import com.todoapp.mobile.ui.common.components.SecretCheckbox
 import com.todoapp.mobile.ui.common.rememberLocationPickerLauncher
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskScope
-import com.todoapp.mobile.ui.creationhub.CreationHubContract.TaskType
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiAction
 import com.todoapp.mobile.ui.creationhub.CreationHubContract.UiState
 import com.todoapp.mobile.ui.home.PendingPhotosRow

@@ -584,6 +584,7 @@
     <string name="home_permission_overlay_title">See your daily plan on top</string>
     <string name="home_permission_overlay_body">Let the app draw over other apps to show your daily plan card.</string>
     <string name="error_task_title_required">Task title is required</string>
+    <string name="error_fill_required_fields">Please fill in all required fields</string>
     <string name="error_task_date_required">Please pick a date</string>
     <string name="error_task_time_required">Please set start and end time</string>
     <string name="error_task_end_before_start">End time must be after start time</string>

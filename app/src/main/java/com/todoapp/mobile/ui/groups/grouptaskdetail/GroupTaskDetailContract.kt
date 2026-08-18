@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import com.todoapp.mobile.domain.model.Recurrence
 import com.todoapp.mobile.domain.model.Subtask
 import com.todoapp.mobile.domain.model.TaskCategory
+import com.todoapp.mobile.domain.model.TaskType
 import com.todoapp.mobile.ui.groups.groupdetail.GroupDetailContract
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -34,12 +35,24 @@ object GroupTaskDetailContract {
         val locationAddress: String? = null,
         val locationLat: Double? = null,
         val locationLng: Double? = null,
+        /**
+         * The task's shape, derived from its rule in the ViewModel. Group tasks carry no stored
+         * declaration — see `GroupTask.capabilities` for why that waits on the backend.
+         */
+        val taskType: TaskType = TaskType.ONE_TIME,
         /** The rule as raw fields — the chip needs string resources, so it renders in the screen. */
         val category: TaskCategory = TaskCategory.PERSONAL,
         val customCategoryName: String? = null,
         val recurrence: Recurrence = Recurrence.NONE,
         val recurrenceInterval: Int = 1,
         val recurrenceByDay: Set<DayOfWeek> = emptySet(),
+        /**
+         * The routine's scheduled last day. Stored and synced all along, but absent from this model,
+         * which is why the edit sheet could move the start past it and silently produce a routine
+         * that fires on no day at all.
+         */
+        val recurrenceUntil: LocalDate? = null,
+        val reminderTimes: List<LocalTime> = emptyList(),
         val subtasks: List<Subtask> = emptyList(),
         /** For a bounded routine: "Day 12 of 30". Null when the routine is open-ended or one-off. */
         val routineDayIndex: Int? = null,
@@ -67,6 +80,16 @@ object GroupTaskDetailContract {
             val editLocationAddress: String? = null,
             val editLocationLat: Double? = null,
             val editLocationLng: Double? = null,
+            /**
+             * The repeat rule, editable at last. It has been stored, synced and armed as alarms since
+             * group tasks reached parity with personal ones — the sheet just never asked about it, so
+             * a group routine could be created and then never adjusted from the app that made it.
+             */
+            val editRecurrence: Recurrence = Recurrence.NONE,
+            val editRecurrenceInterval: Int = 1,
+            val editRecurrenceByDay: Set<DayOfWeek> = emptySet(),
+            val editRecurrenceUntil: LocalDate? = null,
+            val editReminderTimes: List<LocalTime> = emptyList(),
         ) : UiState
 
         data class Error(
@@ -139,6 +162,18 @@ object GroupTaskDetailContract {
         ) : UiAction
 
         data object OnEditLocationCleared : UiAction
+
+        data class OnEditRecurrenceChange(val recurrence: Recurrence) : UiAction
+
+        data class OnEditIntervalChange(val interval: Int) : UiAction
+
+        data class OnEditWeekdayToggle(val day: DayOfWeek) : UiAction
+
+        data class OnEditRecurrenceUntilChange(val until: LocalDate?) : UiAction
+
+        data class OnEditReminderTimeAdd(val time: LocalTime) : UiAction
+
+        data class OnEditReminderTimeRemove(val time: LocalTime) : UiAction
     }
 
     sealed interface UiEffect {

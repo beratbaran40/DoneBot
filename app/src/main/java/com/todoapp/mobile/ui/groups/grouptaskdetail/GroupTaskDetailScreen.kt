@@ -32,6 +32,7 @@ import com.todoapp.mobile.BuildConfig
 import com.todoapp.mobile.R
 import com.todoapp.mobile.ui.common.components.SubtaskChecklist
 import com.todoapp.mobile.ui.common.components.TaskPhotoBannerEditable
+import com.todoapp.mobile.ui.common.components.TaskTypeBadge
 import com.todoapp.mobile.ui.common.components.recurrenceDisplayText
 import com.todoapp.mobile.ui.groups.groupdetail.AssigneeAvatar
 import com.todoapp.mobile.ui.groups.grouptaskdetail.GroupTaskDetailContract.TaskUiModel
@@ -148,6 +149,12 @@ private fun TaskDetailBody(
                 }
             }
 
+            // The shape of the task, which this screen never showed at all: a group routine, staged
+            // goal and custom task were three identical-looking rows. Derived from the rule the task
+            // already carries — group tasks have no stored declaration (see GroupTask.capabilities).
+            Spacer(modifier = Modifier.height(8.dp))
+            TaskTypeBadge(type = task.taskType)
+
             if (!task.description.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(16.dp))
                 TDText(
@@ -172,7 +179,16 @@ private fun TaskDetailBody(
                 onToggle = { onAction(UiAction.OnToggleComplete) },
             )
 
-            if (task.assigneeName != null || task.dueTime != null) {
+            // "Every 2 days", "Mon · Wed · Fri" — the same sentence a personal routine gets.
+            val ruleText = recurrenceDisplayText(
+                recurrence = task.recurrence,
+                recurrenceInterval = task.recurrenceInterval,
+                recurrenceByDay = task.recurrenceByDay,
+            )
+            // The rule used to be nested inside the assignee/due-date condition, so an unassigned
+            // group routine with no due time showed no repeat information at all — the one shape
+            // where the card is the ONLY place it could have appeared.
+            if (task.assigneeName != null || task.dueTime != null || ruleText != null) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Column(
@@ -213,15 +229,23 @@ private fun TaskDetailBody(
                         }
                     }
 
-                    // "Every 2 days", "Mon · Wed · Fri" — the same sentence a personal routine gets.
-                    recurrenceDisplayText(
-                        recurrence = task.recurrence,
-                        recurrenceInterval = task.recurrenceInterval,
-                        recurrenceByDay = task.recurrenceByDay,
-                    )?.let { rule ->
+                    ruleText?.let { rule ->
                         MetadataRow(label = stringResource(R.string.creation_frequency_label)) {
                             TDText(
                                 text = rule,
+                                style = TDTheme.typography.subheading2,
+                                color = TDTheme.colors.onBackground,
+                            )
+                        }
+                    }
+
+                    // The scheduled end, which the group screens carried in storage and in the
+                    // alarms but never once showed as a date — only indirectly, as the denominator
+                    // of the progress bar below.
+                    task.recurrenceUntil?.let { end ->
+                        MetadataRow(label = stringResource(R.string.creation_end_label)) {
+                            TDText(
+                                text = end.format(GROUP_END_DATE_FORMAT),
                                 style = TDTheme.typography.subheading2,
                                 color = TDTheme.colors.onBackground,
                             )
@@ -261,6 +285,9 @@ private fun TaskDetailBody(
         }
     }
 }
+
+private val GROUP_END_DATE_FORMAT: java.time.format.DateTimeFormatter =
+    java.time.format.DateTimeFormatter.ofPattern("d MMMM yyyy")
 
 private fun groupAbsoluteUrl(relative: String): String = BuildConfig.BASE_URL.trimEnd('/') + "/" + relative.trimStart('/')
 
