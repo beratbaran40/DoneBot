@@ -162,6 +162,7 @@ HEADING3 = Style("heading3", 18, "semi_bold")
 HEADING5 = Style("heading5", 16, "semi_bold")
 HEADING6 = Style("heading6", 16, "medium")
 REGULAR = Style("regularTextStyle", 14, "medium")
+SUBHEADING3 = Style("subheading3", 14, "medium")
 SUBHEADING1 = Style("subheading1", 12, "regular", pixel_floored=True)
 SUBHEADING2 = Style("subheading2", 10, "regular", pixel_floored=True)
 SUBHEADING4 = Style("subheading4", 12, "medium", pixel_floored=True)
@@ -277,6 +278,20 @@ SLOTS = [
         style=SUBHEADING1,
         keys=["pomodoro_focus_sessions", "pomodoro_total_focus", "pomodoro_break_time"],
         note="'Odaklanma' did not fit and could not wrap; renamed to 'Odak Süresi'",
+    ),
+    Slot(
+        id="activity.pomodoro.statlabel",
+        source="app/src/main/java/com/todoapp/mobile/ui/activity/ActivityPomodoroSection.kt",
+        expect="horizontalArrangement = Arrangement.spacedBy(12.dp)",
+        # 16dp screen padding + 16dp card padding, both sides.
+        geometry=NUp(n=3, gap=12, outer=64),
+        style=SUBHEADING3,
+        keys=[
+            "activity_pomodoro_focus_time",
+            "activity_pomodoro_sessions",
+            "activity_pomodoro_best_day",
+        ],
+        note="same three-up shape as pomodoro.summary.statlabel, one card deeper so 16dp tighter",
     ),
     Slot(
         id="pomodoro.launch.cta",

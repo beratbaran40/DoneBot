@@ -4,7 +4,7 @@
     <string name="pomodoro_summary">Özet</string>
     <string name="pomodoro_great_work">Harika iş!</string>
     <string name="pomodoro_focus_sessions">Seanslar</string>
-    <string name="pomodoro_total_focus">Odaklanma</string>
+    <string name="pomodoro_total_focus">Odak Süresi</string>
     <string name="pomodoro_break_time">Mola Süresi</string>
     <string name="pomodoro_start_again">Yeniden Başla</string>
     <string name="pomodoro_edit_settings">Ayarları Düzenle</string>
@@ -169,7 +169,7 @@
     <!-- Aktivite → odak (pomodoro) bölümü -->
     <string name="activity_pomodoro_title">Odak</string>
     <string name="activity_pomodoro_focus_time">Odak süresi</string>
-    <string name="activity_pomodoro_sessions">Tamamlanan seans</string>
+    <string name="activity_pomodoro_sessions">Biten seans</string>
     <string name="activity_pomodoro_best_day">En iyi gün</string>
     <string name="activity_pomodoro_chart_title">Haftalık seans</string>
     <string name="activity_pomodoro_week_label">H%1$d</string>

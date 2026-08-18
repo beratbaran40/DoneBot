@@ -164,7 +164,7 @@
     <!-- Activity → focus (pomodoro) section -->
     <string name="activity_pomodoro_title">Focus</string>
     <string name="activity_pomodoro_focus_time">Focus time</string>
-    <string name="activity_pomodoro_sessions">Sessions completed</string>
+    <string name="activity_pomodoro_sessions">Sessions done</string>
     <string name="activity_pomodoro_best_day">Best day</string>
     <string name="activity_pomodoro_chart_title">Sessions per week</string>
     <string name="activity_pomodoro_week_label">W%1$d</string>
