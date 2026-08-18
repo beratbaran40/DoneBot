@@ -141,12 +141,14 @@ private fun paletteTitleRes(kit: PaletteKit): Int = when (kit) {
     PaletteKit.ORIGINAL -> R.string.palette_original
     PaletteKit.MONOCHROME -> R.string.palette_monochrome
     PaletteKit.PIXEL -> R.string.palette_pixel
+    PaletteKit.TERMINAL -> R.string.palette_terminal
 }
 
 private fun paletteDescRes(kit: PaletteKit): Int = when (kit) {
     PaletteKit.ORIGINAL -> R.string.palette_original_desc
     PaletteKit.MONOCHROME -> R.string.palette_monochrome_desc
     PaletteKit.PIXEL -> R.string.palette_pixel_desc
+    PaletteKit.TERMINAL -> R.string.palette_terminal_desc
 }
 
 @TDPreview
@@ -172,5 +174,15 @@ private fun AppColorsMonochromePreview() {
 private fun AppColorsPixelPreview() {
     TDTheme(palette = PaletteKit.PIXEL) {
         AppColorsScreen(uiState = UiState(selected = PaletteKit.PIXEL), onAction = {})
+    }
+}
+
+// Doubles as the only preview of the scanline texture in situ: the Terminal card paints its own kit's
+// grid, and rendering the screen inside the kit puts the mono face on the titles too.
+@TDPreview
+@Composable
+private fun AppColorsTerminalPreview() {
+    TDTheme(palette = PaletteKit.TERMINAL) {
+        AppColorsScreen(uiState = UiState(selected = PaletteKit.TERMINAL), onAction = {})
     }
 }

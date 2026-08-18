@@ -204,6 +204,48 @@ internal fun pixelStyle(): TDStyle = TDStyle(
     gridLineWidth = 1.dp,
 )
 
+/**
+ * Tokens for [PaletteKit.TERMINAL] — a CRT phosphor terminal. It deliberately keeps ROUNDED corners
+ * and SOFT elevation: this kit's character is colour, texture and face, not geometry. Staying rounded
+ * also means every `cornerStyle == PIXEL` gate stays a no-op, so it inherits the smooth vectors,
+ * `ic_heart` and un-pixelated artwork for free rather than needing an icon set of its own.
+ *
+ * Card definition comes from the neon hairline instead of a shadow — a blurred shadow is invisible
+ * against a near-black ground, while `lightGray` is the app's hairline-border token, so the ~63
+ * `.border(1.dp, lightGray, …)` sites turn into glowing card edges without touching a call site.
+ *
+ * `fontScale = 0.96f` is measured, not guessed: `tools/textfit.py` puts exactly one gated slot over
+ * the line at 1.0 (the pomodoro stat label), and 0.96 clears every slot with roughly another 4% on
+ * top of the probe's own safety margin. JetBrains Mono's x-height matches Poppins' almost exactly,
+ * so every step below 1.0 is a real legibility cost and worth spending only where it buys something.
+ * `minFontSize = 10.sp` then stops the scale from pushing the smallest style under the smallest size
+ * the design already ships.
+ */
+internal fun terminalStyle(): TDStyle = TDStyle(
+    shapes = roundedShapes(),
+    motion = TDMotion(
+        // Frame-locked rather than 8-bit chunky: 8 steps is one cell of a `[########]` CLI bar, and a
+        // 12-step wipe reads as a screen repainting line by line instead of a sprite flipping.
+        standardEasing = SteppedEasing(steps = 8),
+        emphasizedEasing = SteppedEasing(steps = 6),
+        revealEasing = SteppedEasing(steps = 12),
+        stepped = true,
+    ),
+    fontFamily = JetBrainsMono,
+    displayFontFamily = JetBrainsMono,
+    fallbackFontFamily = JetBrainsMono,
+    minFontSize = 10.sp,
+    fontScale = 0.96f,
+    borderWidth = 1.dp,
+    elevationStyle = TDElevationStyle.SOFT,
+    hardShadowOffset = 0.dp,
+    // Horizontal bands only. Unlike the dither path this one DOES honour `gridLineWidth`: it is the
+    // band thickness inside each 4dp period.
+    gridStyle = GridStyle.Scanlines,
+    gridSpacing = 4.dp,
+    gridLineWidth = 1.dp,
+)
+
 private val PIXEL_UNIT_LARGE = 4.dp
 private val PIXEL_UNIT_MEDIUM = 3.dp
 private val PIXEL_UNIT_SMALL = 2.dp

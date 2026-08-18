@@ -63,7 +63,8 @@ fun TDNavigationRail() {
                     // Mirrors TDBottomBar — see the rationale there.
                     val useCalendarOutline = when (TDTheme.palette) {
                         PaletteKit.ORIGINAL, PaletteKit.PIXEL -> false
-                        PaletteKit.MONOCHROME -> selected && screen is AppDestination.Calendar
+                        PaletteKit.MONOCHROME, PaletteKit.TERMINAL ->
+                            selected && screen is AppDestination.Calendar
                     }
                     val iconId = (if (selected && !useCalendarOutline) screen.selectedIcon else screen.icon)
                         ?: return@NavigationRailItem
@@ -72,7 +73,7 @@ fun TDNavigationRail() {
                         contentDescription = stringResource(screen.title),
                         tint = when (TDTheme.palette) {
                             PaletteKit.ORIGINAL -> Color.Unspecified
-                            PaletteKit.MONOCHROME, PaletteKit.PIXEL ->
+                            PaletteKit.MONOCHROME, PaletteKit.PIXEL, PaletteKit.TERMINAL ->
                                 if (selected) TDTheme.colors.primary else TDTheme.colors.gray
                         },
                     )

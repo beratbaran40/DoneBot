@@ -28,12 +28,13 @@ WHAT IT CANNOT SEE, and you should not trust it to:
     hand-maintained. Each entry cites the file:line its numbers came from and the tool re-reads that
     line: if the code moved or the padding changed, you get a loud PROVENANCE error rather than a
     quietly wrong answer. Re-read an entry whenever you touch its file.
-  * Kerning. All six faces ship GPOS; this sums `hmtx` advances only, which over-estimates Latin by
+  * Kerning. All ten faces ship GPOS; this sums `hmtx` advances only, which over-estimates Latin by
     1-2%. That is the correct direction for a gate, but it means "fits by 3dp" is not a real pass —
     hence SAFETY_MARGIN.
 
-Two faces, not three: `Style.kt`'s `monochromeStyle()` returns `defaultStyle()`, so ORIGINAL and
-MONOCHROME share Poppins. Only PIXEL differs, and it also floors the small end of the ramp to 12sp.
+Three faces, not four: `Style.kt`'s `monochromeStyle()` returns `defaultStyle()`, so ORIGINAL and
+MONOCHROME share Poppins. PIXEL swaps in Pixelify Sans and floors the small end of the ramp to 12sp;
+TERMINAL swaps in JetBrains Mono, scales the whole ramp by `fontScale` and floors it at 10sp.
 
 Usage:
     tools/textfit.py                      # the gate: 360 and 384dp, fontScale 1.0 and 1.3
@@ -46,6 +47,7 @@ Exits 1 if anything FAILs. Requires: nothing — stdlib only.
 from __future__ import annotations
 
 import argparse
+import os
 import html
 import re
 import struct
@@ -140,9 +142,22 @@ class Face:
         return {ch for ch in text if ord(ch) not in self.cmap and not ch.isspace()}
 
 
-# Poppins sets USE_TYPO_METRICS: (1050 + 350 + 100) / 1000 em per line. PixelifySans is 1.200em.
+# Poppins sets USE_TYPO_METRICS: (1050 + 350 + 100) / 1000 em per line. PixelifySans is 1.200em,
+# JetBrains Mono 1.320em (it also sets USE_TYPO_METRICS).
 POPPINS = {w: Face(FONT_DIR / f"poppins_{w}.ttf", 1.500) for w in ("regular", "medium", "semi_bold", "bold")}
 PIXELIFY = {w: Face(FONT_DIR / f"pixelify_sans_{w}.ttf", 1.200) for w in ("regular", "bold")}
+# JetBrains Mono's heaviest shipped master is ExtraBold, which is the weight the 96sp pomodoro hero
+# asks for; the ramp never requests W700, so "bold" maps onto it rather than onto a missing file.
+JBMONO = {
+    w: Face(FONT_DIR / f"jetbrains_mono_{f}.ttf", 1.320)
+    for w, f in (("regular", "regular"), ("medium", "medium"), ("semi_bold", "semi_bold"), ("bold", "extra_bold"))
+}
+
+#: TERMINAL shrinks the whole ramp (Style.kt: terminalStyle().fontScale) because a monospace advance
+#: runs wider than Poppins' proportional one. Kept here so this probe measures what the kit renders;
+#: overridable from the environment so the value itself can be re-derived by sweeping it.
+TERMINAL_SCALE = float(os.environ.get("TEXTFIT_TERMINAL_SCALE", "0.96"))
+TERMINAL_FLOOR = 10.0
 
 
 @dataclass(frozen=True)
@@ -177,6 +192,12 @@ def faces_for(style: Style) -> list[tuple[str, Face, float]]:
     pixel_weight = "bold" if style.weight in ("semi_bold", "bold") else "regular"
     pixel_sp = max(style.size_sp, 12.0) if style.pixel_floored else style.size_sp
     out.append(("pixel", PIXELIFY[pixel_weight], pixel_sp))
+    # TERMINAL scales first, then floors — the same order as TDTypography.sz(). TDButton applies the
+    # scale itself but has no floor, which is why `button` styles skip the max().
+    term_sp = style.size_sp * TERMINAL_SCALE
+    if style.pixel_floored and not style.button:
+        term_sp = max(term_sp, TERMINAL_FLOOR)
+    out.append(("terminal", JBMONO[style.weight], term_sp))
     return out
 
 

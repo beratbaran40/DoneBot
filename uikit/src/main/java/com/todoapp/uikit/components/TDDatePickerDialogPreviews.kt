@@ -156,11 +156,22 @@ private fun TDDatePickerActionRowAtDialogWidthPreview() {
     }
 }
 
-/** Pixelify Sans is wider than Poppins and the kit draws 2dp borders — the tightest fit of the three. */
+/** Pixelify Sans is wider than Poppins and the kit draws 2dp borders — the tightest fit of the four. */
 @TDPreviewNarrow
 @Composable
 private fun TDDatePickerActionRowPixelPreview() {
     TDTheme(palette = PaletteKit.PIXEL) {
+        Box(Modifier.width(ACTION_ROW_WIDTH)) {
+            DatePickerActionRow(onToday = {}, onCancel = {}, onConfirm = {})
+        }
+    }
+}
+
+/** A monospace advance runs wider than Poppins' too; this row is where `fontScale` has to earn its keep. */
+@TDPreviewNarrow
+@Composable
+private fun TDDatePickerActionRowTerminalPreview() {
+    TDTheme(palette = PaletteKit.TERMINAL) {
         Box(Modifier.width(ACTION_ROW_WIDTH)) {
             DatePickerActionRow(onToday = {}, onCancel = {}, onConfirm = {})
         }

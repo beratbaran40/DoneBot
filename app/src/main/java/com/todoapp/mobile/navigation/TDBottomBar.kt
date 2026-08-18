@@ -104,22 +104,26 @@ fun TDBottomBar() {
                         }
                     } else {
                         // Under a flat tint the filled selected calendar art collapses into an
-                        // unreadable blob (its detail is white-on-fill), so MONOCHROME uses the clean
-                        // outline instead. PIXEL is exempt: its own art is already a flat silhouette.
+                        // unreadable blob (its detail is white-on-fill), so every tinting kit uses the
+                        // clean outline instead. PIXEL is exempt: its own art is already a flat
+                        // silhouette.
                         val useCalendarOutline = when (TDTheme.palette) {
                             PaletteKit.ORIGINAL, PaletteKit.PIXEL -> false
-                            PaletteKit.MONOCHROME -> selected && screen is AppDestination.Calendar
+                            PaletteKit.MONOCHROME, PaletteKit.TERMINAL ->
+                                selected && screen is AppDestination.Calendar
                         }
                         val iconId = (if (selected && !useCalendarOutline) screen.selectedIcon else screen.icon)
                             ?: return@NavigationBarItem
                         Icon(
                             painter = tdPainter(id = iconId),
                             contentDescription = stringResource(screen.title),
-                            // ORIGINAL keeps the drawable's own (blue) art; the other kits tint the
-                            // silhouette with the accent when selected, gray otherwise.
+                            // ORIGINAL keeps the drawable's own art; the other kits tint the
+                            // silhouette with the accent when selected, gray otherwise. That art
+                            // hardcodes a slate blue, which would sit untouched on TERMINAL's CRT
+                            // ground, so this kit has to tint too.
                             tint = when (TDTheme.palette) {
                                 PaletteKit.ORIGINAL -> Color.Unspecified
-                                PaletteKit.MONOCHROME, PaletteKit.PIXEL ->
+                                PaletteKit.MONOCHROME, PaletteKit.PIXEL, PaletteKit.TERMINAL ->
                                     if (selected) TDTheme.colors.primary else TDTheme.colors.gray
                             },
                         )

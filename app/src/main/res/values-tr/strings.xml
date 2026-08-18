@@ -219,6 +219,8 @@
     <string name="palette_monochrome_desc">Gri tonlama + arka plan</string>
     <string name="palette_pixel">8-Bit</string>
     <string name="palette_pixel_desc">Retro arcade pikselleri ve sert gölgeler</string>
+    <string name="palette_terminal">Terminal</string>
+    <string name="palette_terminal_desc">Asit yeşili CRT fosforu ve tarama çizgileri</string>
     <string name="language_english">İngilizce</string>
     <string name="language_english_short">EN</string>
     <string name="language_turkish">Türkçe</string>

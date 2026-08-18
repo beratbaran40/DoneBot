@@ -3,6 +3,7 @@
 package com.todoapp.uikit.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -61,7 +62,9 @@ enum class TDButtonSize { SMALL, MEDIUM }
 
 /**
  * ORIGINAL keeps the classic pendingGray fill. MONOCHROME uses a black fill in light / gray in dark.
- * PIXEL is a saturated accent block — an 8-bit button is a solid colour field, not neutral chrome.
+ * PIXEL and TERMINAL are a saturated accent block — an 8-bit button is a solid colour field rather
+ * than neutral chrome, and a terminal's focused control is inverse video, which comes to the same
+ * thing.
  *
  * Shared with [TDIconButton] rather than copied: one exhaustive `when` means a fourth kit is a compile
  * error in one place, not a compile error here and a silently wrong branch there.
@@ -70,14 +73,14 @@ enum class TDButtonSize { SMALL, MEDIUM }
 internal fun tdPrimaryFill(): Color = when (TDTheme.palette) {
     PaletteKit.ORIGINAL -> TDTheme.colors.pendingGray
     PaletteKit.MONOCHROME -> if (TDTheme.isDark) TDTheme.colors.gray else TDTheme.colors.black
-    PaletteKit.PIXEL -> TDTheme.colors.primary
+    PaletteKit.PIXEL, PaletteKit.TERMINAL -> TDTheme.colors.primary
 }
 
 /** The label/icon colour that goes on [tdPrimaryFill]. */
 @Composable
 internal fun tdPrimaryContent(): Color = when (TDTheme.palette) {
     PaletteKit.ORIGINAL -> TDTheme.colors.white
-    PaletteKit.MONOCHROME, PaletteKit.PIXEL -> TDTheme.colors.onPrimary
+    PaletteKit.MONOCHROME, PaletteKit.PIXEL, PaletteKit.TERMINAL -> TDTheme.colors.onPrimary
 }
 
 @Composable
@@ -467,5 +470,18 @@ private fun TDButtonFullWidthPreview() {
 private fun TDButtonSmallPreview() {
     TDTheme {
         TDButton(text = "OK", onClick = {}, type = TDButtonType.PRIMARY, size = TDButtonSize.SMALL)
+    }
+}
+
+// buttonTextStyle applies the kit's fontScale by hand, so this is the one label in the app whose size
+// is not covered by TDTypography's own previews.
+@TDPreview
+@Composable
+private fun TDButtonTerminalPreview() {
+    TDTheme(palette = PaletteKit.TERMINAL) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            TDButton(text = "Continue", onClick = {}, type = TDButtonType.PRIMARY, fullWidth = true)
+            TDButton(text = "OK", onClick = {}, type = TDButtonType.PRIMARY, size = TDButtonSize.SMALL)
+        }
     }
 }

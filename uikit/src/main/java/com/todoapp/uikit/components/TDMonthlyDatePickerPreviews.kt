@@ -85,11 +85,28 @@ private fun MonthlyDatePickerNarrowPreview() {
     }
 }
 
-/** Pixelify Sans is materially wider than Poppins at the same size — the tightest fit of the three kits. */
+/** Pixelify Sans is materially wider than Poppins at the same size — the widest face of the four kits. */
 @TDPreviewNarrow
 @Composable
 private fun MonthlyDatePickerPixelNarrowPreview() {
     TDTheme(palette = PaletteKit.PIXEL) {
+        var selected by remember { mutableStateOf(LocalDate.of(2026, 9, 3)) }
+        TDMonthlyDatePicker(
+            modifier = Modifier,
+            displayedMonth = YearMonth.of(2026, 9),
+            selectedDate = selected,
+            onDateSelect = { selected = it },
+            onPreviousMonth = {},
+            onNextMonth = {},
+        )
+    }
+}
+
+/** Twelve mono day cells plus seven weekday headers — the other end of the same squeeze. */
+@TDPreviewNarrow
+@Composable
+private fun MonthlyDatePickerTerminalNarrowPreview() {
+    TDTheme(palette = PaletteKit.TERMINAL) {
         var selected by remember { mutableStateOf(LocalDate.of(2026, 9, 3)) }
         TDMonthlyDatePicker(
             modifier = Modifier,

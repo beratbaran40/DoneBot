@@ -260,12 +260,15 @@ fun HomeTaskList(
                                         isChecked = task.isCompleted,
                                         onCheckBoxClick = { onTaskCheck(task) },
                                         isPendingSync = task.isPendingSync && isSignedIn,
-                                        // MONOCHROME and PIXEL mark one-time tasks (no recurrence, no
-                                        // subtasks) with an accent left stripe — it reads as a sprite
-                                        // edge in the 8-bit kit. ORIGINAL is unaffected.
+                                        // Every kit but ORIGINAL marks one-time tasks (no recurrence,
+                                        // no subtasks) with an accent left stripe — a sprite edge in
+                                        // the 8-bit kit, a gutter marker in the terminal one.
                                         categoryStripeColor = when (TDTheme.palette) {
                                             PaletteKit.ORIGINAL -> null
-                                            PaletteKit.MONOCHROME, PaletteKit.PIXEL ->
+                                            PaletteKit.MONOCHROME,
+                                            PaletteKit.PIXEL,
+                                            PaletteKit.TERMINAL,
+                                            ->
                                                 TDTheme.colors.purple.takeIf {
                                                     task.recurrence == Recurrence.NONE &&
                                                         task.subtaskTotal == 0

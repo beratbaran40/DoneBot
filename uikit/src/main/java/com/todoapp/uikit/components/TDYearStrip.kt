@@ -71,8 +71,12 @@ private fun MonthCell(
 ) {
     val colors = TDTheme.colors
     // MONOCHROME: neutral selection accent (near-white in dark) instead of blue for the current month.
+    // TERMINAL takes `primary`: the ring sits around a heatmap cell, and that ramp is already the
+    // dim-green-to-cyan family, so violet clashes and the pale phosphor ink is too close to read as a
+    // ring. The cursor green is the one saturated token the cells never use.
     val monthAccent = when (TDTheme.palette) {
         PaletteKit.MONOCHROME -> colors.onBackground
+        PaletteKit.TERMINAL -> colors.primary
         PaletteKit.ORIGINAL, PaletteKit.PIXEL -> colors.purple
     }
     Column(

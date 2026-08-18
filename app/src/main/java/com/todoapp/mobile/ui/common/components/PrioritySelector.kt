@@ -63,10 +63,12 @@ private fun PriorityChip(
     onClick: () -> Unit,
 ) {
     // The chromatic kits show the classic red/orange/blue ramp — an NES palette is small but
-    // maximally saturated, so PIXEL belongs here. MONOCHROME alone keeps HIGH red and encodes
+    // maximally saturated, so PIXEL belongs here. TERMINAL does too, and lands on exactly the ramp a
+    // terminal status line uses: its remapped tokens turn this branch into red ERROR, amber WARN and
+    // phosphor-green nominal, with no new code. MONOCHROME alone keeps HIGH red and encodes
     // MEDIUM/LOW/None by gray-ink intensity (the text labels disambiguate either way).
     val (bg, fg) = when (TDTheme.palette) {
-        PaletteKit.ORIGINAL, PaletteKit.PIXEL -> when (value?.uppercase()) {
+        PaletteKit.ORIGINAL, PaletteKit.PIXEL, PaletteKit.TERMINAL -> when (value?.uppercase()) {
             "HIGH" -> TDTheme.colors.lightRed to TDTheme.colors.crossRed
             "MEDIUM" -> TDTheme.colors.lightOrange to TDTheme.colors.orange
             "LOW" -> TDTheme.colors.lightPending to TDTheme.colors.darkPending

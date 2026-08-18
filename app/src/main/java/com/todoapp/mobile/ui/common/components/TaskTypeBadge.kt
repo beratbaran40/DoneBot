@@ -80,7 +80,8 @@ fun TaskTypeBadge(
  * Palette-aware accent for a task type. In MONOCHROME the characteristic blue (`purple`) marks
  * both ONE_TIME and ROUTINE (they stay distinct through their icons), STAGED keeps green. The
  * chromatic kits keep the classic per-type colors (ONE_TIME blue `darkPending`, ROUTINE `purple`,
- * STAGED green) — 8-bit wants more hue separation, not less.
+ * STAGED green) — 8-bit wants more hue separation, not less. TERMINAL gets its own mapping so the
+ * badge agrees with the home list's one-time gutter stripe.
  */
 @Composable
 fun taskTypeAccent(type: TaskType): Color = when (TDTheme.palette) {
@@ -96,6 +97,16 @@ fun taskTypeAccent(type: TaskType): Color = when (TDTheme.palette) {
         TaskType.STAGED -> TDTheme.colors.mediumGreen
         // A custom task combines the others, so it gets its own ink rather than borrowing one of
         // theirs — reusing ROUTINE's purple would make a routine+staged task read as a plain routine.
+        TaskType.CUSTOM -> TDTheme.colors.darkPurple
+    }
+    // TERMINAL separates all four by hue on a phosphor ground: violet for one-time, which matches the
+    // gutter stripe the home list already draws for exactly that case; the cursor green for a routine,
+    // because a repeating task is a running job; and cyan for STAGED, which keeps the success hue in
+    // every kit.
+    PaletteKit.TERMINAL -> when (type) {
+        TaskType.ONE_TIME -> TDTheme.colors.purple
+        TaskType.ROUTINE -> TDTheme.colors.primary
+        TaskType.STAGED -> TDTheme.colors.mediumGreen
         TaskType.CUSTOM -> TDTheme.colors.darkPurple
     }
 }

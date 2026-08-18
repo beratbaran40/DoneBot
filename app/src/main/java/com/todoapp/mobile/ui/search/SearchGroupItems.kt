@@ -167,7 +167,7 @@ private fun PriorityBadge(priority: String) {
         // Mirrors PrioritySelector: the chromatic kits get the red/orange/blue ramp, MONOCHROME
         // keeps HIGH red and encodes the rest by gray intensity.
         when (TDTheme.palette) {
-            PaletteKit.ORIGINAL, PaletteKit.PIXEL -> when (priority.uppercase()) {
+            PaletteKit.ORIGINAL, PaletteKit.PIXEL, PaletteKit.TERMINAL -> when (priority.uppercase()) {
                 "HIGH" -> TDTheme.colors.lightRed to TDTheme.colors.crossRed
                 "MEDIUM" -> TDTheme.colors.lightOrange to TDTheme.colors.orange
                 "LOW" -> TDTheme.colors.lightPending to TDTheme.colors.darkPending
