@@ -136,9 +136,22 @@ fun HomeTaskList(
                     )
                     Spacer(Modifier.height(8.dp))
                     TDText(
+                        // Two constraints pin this line, and only the type size satisfies both.
+                        //
+                        // Vertically: at heading6 these strings wrapped to two lines in every language
+                        // and face, and the second line landed under the bottom bar.
+                        //
+                        // Horizontally: the add-task FAB's left edge sits 339dp in, and the screen
+                        // centre is 213dp, so any centred line wider than ~251dp runs under it. That
+                        // is narrower than heading6 or the body size can make these strings, in the
+                        // mono face especially — widening the column to force one line just traded a
+                        // clipped tail for a tail behind the FAB.
+                        //
+                        // subheading1 clears both at once, and fixes a hierarchy that was never right:
+                        // a description two points under its own title reads as a second title.
                         text = stringResource(emptyDescriptionRes),
                         modifier = Modifier.padding(horizontal = 80.dp),
-                        style = TDTheme.typography.heading6,
+                        style = TDTheme.typography.subheading1,
                         color = TDTheme.colors.onBackground.copy(alpha = 0.6f),
                         textAlign = TextAlign.Center,
                     )
